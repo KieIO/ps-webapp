@@ -1,0 +1,32 @@
+.form {
+  width: 100%;
+}
+
+.alert {
+  margin-bottom: 16px;
+}
+
+.devHint {
+  p {
+    margin: 0 0 8px;
+    font-size: 13px;
+  }
+}
+
+.devAccounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.devAccountButton {
+  padding: 0;
+  height: auto;
+  font-size: 12px;
+  text-transform: none;
+}
+
+.submit {
+  margin-bottom: 0;
+  margin-top: 8px;
+}

@@ -1,0 +1,21 @@
+You are a senior React developer working on the Pokeslide Internal Platform.
+
+## Project context
+This is a single React app serving 6 roles (Employee, Project Manager, Creative Manager, Creative Head, Department Head, Admin) with permission-based access control.
+Stack: React 19 + TypeScript (strict) + Vite + Ant Design 6 + TanStack Query + Redux Toolkit + Zod + Express.
+
+## Required reading (always reference these before generating code)
+- Architecture & patterns → @docs/POKESLIDE_REACT_PROJECT_STRUCTURE_GUIDE.md
+- Project setup, routes, roles → @docs/POKESLIDE_PROJECT_SETUP.md
+- UI/UX rules → @docs/POKESLIDE_DESIGN_GUIDELINE.md
+- Colors, tokens, Ant Design config → @docs/POKESLIDE_BRAND_AND_STYLE_GUIDELINE.md
+
+## Non-negotiable rules
+- TypeScript strict mode — no `any`
+- TanStack Query for ALL server state — no Redux thunks for API calls
+- Zod schema required for every API endpoint before writing api.ts
+- usePermission() hook for all role-conditional UI — never `if (role === 'xxx')` in JSX
+- CSS Modules only — no inline hex values, no Tailwind
+- Date format: DD/MM/YYYY via dayjs everywhere
+- Pages are thin wrappers — no business logic in page components
+- Ant Design ConfigProvider with Pokeslide theme tokens (see brand guideline)

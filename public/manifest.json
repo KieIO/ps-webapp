@@ -1,0 +1,8 @@
+{
+  "name": "Pokeslide Internal Platform",
+  "short_name": "Pokeslide",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#2563EB"
+}

@@ -1,0 +1,83 @@
+// ─── Color tokens (map to theme.css) ─────────────────
+$color-bg: var(--color-bg);
+$color-surface: var(--color-surface);
+$color-text: var(--color-text);
+$color-text-body: var(--color-text-body);
+$color-text-muted: var(--color-text-muted);
+$color-text-disabled: var(--color-text-disabled);
+$color-primary: var(--color-primary);
+$color-primary-light: var(--color-primary-light);
+$color-primary-subtle: var(--color-primary-subtle);
+$color-success: var(--color-success);
+$color-warning: var(--color-warning);
+$color-error: var(--color-error);
+$color-info: var(--color-info);
+$color-border: var(--color-border);
+$color-divider: var(--color-divider);
+
+// ─── Typography (Brand Guideline §3) ─────────────────
+$font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+$font-size-base: 14px;
+$line-height-body: 1.6;
+$line-height-heading: 1.3;
+$font-size-page-title: 24px;
+$font-size-section-title: 18px;
+$font-size-subsection: 16px;
+$font-size-caption: 12px;
+$font-size-logo: 18px;
+$content-max-width: 1440px;
+$content-readable-max-width: 680px;
+$form-max-width: 700px;
+
+// ─── Spacing (Brand Guideline §4 — 4px base unit) ────
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 20px;
+$space-6: 24px;
+$space-8: 32px;
+$space-10: 40px;
+$space-12: 48px;
+$page-padding: $space-6;
+$card-padding: $space-6;
+$form-field-gap: $space-4;
+
+// ─── Layout (Brand Guideline §4) ─────────────────────
+$sidebar-width-expanded: 240px;
+$sidebar-width-collapsed: 64px;
+$sidebar-logo-height: 64px;
+$sidebar-logo-padding-left: 20px;
+$header-height: 64px;
+$header-padding: 0 $space-6;
+$content-min-height: calc(100vh - #{$header-height});
+
+// ─── Borders & radius (Brand Guideline §6) ───────────
+$border-width: 1px;
+$radius-input: 6px;
+$radius-card: 8px;
+$radius-tag: 4px;
+$radius-pill: 100px;
+$radius-login-card: 12px;
+
+// ─── Shadows (Brand Guideline §5) ────────────────────
+$shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06);
+$shadow-login-card: 0 8px 32px rgba(0, 0, 0, 0.16);
+$shadow-header: 0 1px 3px rgba(0, 0, 0, 0.08);
+$shadow-dropdown: 0 4px 16px rgba(0, 0, 0, 0.12);
+
+// ─── Login (Brand Guideline §7) ──────────────────────
+$login-gradient: linear-gradient(135deg, #1E3A5F 0%, #2563EB 100%);
+$login-card-max-width: 420px;
+
+// ─── Status pill colors (Brand Guideline §9) ─────────
+$status-completed-bg: #DCFCE7;
+$status-completed-text: #16A34A;
+$status-in-progress-bg: #DBEAFE;
+$status-in-progress-text: #2563EB;
+$status-pending-bg: #FEF9C3;
+$status-pending-text: #A16207;
+$status-overdue-bg: #FEE2E2;
+$status-overdue-text: #DC2626;
+$status-on-leave-bg: #F1F5F9;
+$status-on-leave-text: #64748B;

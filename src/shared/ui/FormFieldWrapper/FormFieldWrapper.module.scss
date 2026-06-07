@@ -1,0 +1,28 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.required {
+  color: var(--color-error);
+  margin-left: 4px;
+}
+
+.helper {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.error {
+  font-size: 12px;
+  color: var(--color-error);
+  margin: 0;
+}

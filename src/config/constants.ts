@@ -1,0 +1,55 @@
+export const ROUTES = {
+  // Auth
+  LOGIN: '/login',
+
+  // All roles
+  DASHBOARD: '/',
+  MY_TASKS: '/tasks',
+  TIME_LOG: '/time-log',
+  NOTIFICATIONS: '/notifications',
+
+  // PM / Manager
+  PROJECTS: '/projects',
+  PROJECT_DETAIL: '/projects/:id',
+  TASK_MANAGE: '/tasks/manage',
+  TASK_NEW: '/tasks/new',
+  TASK_EDIT: '/tasks/:id/edit',
+  WORKLOAD: '/workload',
+  QUALITY: '/quality',
+
+  // Creative Head
+  CREATIVE_REVIEW: '/creative/review',
+  DA_TRACKING: '/creative/da',
+
+  // Head / Admin / HR
+  CAPACITY: '/capacity',
+  CAPACITY_FORECAST: '/capacity/forecast',
+  PROJECT_TRACKER: '/tracker',
+  PERFORMANCE: '/performance',
+  KPI_SETTINGS: '/performance/settings',
+  OVERTIME: '/overtime',
+  REPORTS: '/reports',
+
+  // Admin / HR
+  USERS: '/users',
+  USER_DETAIL: '/users/:id',
+  AUDIT_LOG: '/audit',
+
+  // System
+  FORBIDDEN: '/403',
+  NOT_FOUND: '/404',
+} as const;
+
+// Dynamic route helpers
+export const buildProjectDetailPath = (id: string) => `/projects/${id}`;
+export const buildTaskEditPath = (id: string) => `/tasks/${id}/edit`;
+export const buildUserDetailPath = (id: string) => `/users/${id}`;
+
+export const APP_NAME = 'Pokeslide Internal Platform';
+
+export const PAGINATION = {
+  DEFAULT_PAGE_SIZE: 20,
+  PAGE_SIZE_OPTIONS: [10, 20, 50],
+} as const;
+
+export const DATE_FORMAT = 'DD/MM/YYYY';

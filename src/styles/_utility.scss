@@ -1,0 +1,119 @@
+@use 'variables' as *;
+
+// ─── Typography utilities ────────────────────────────
+.u-h1,
+.u-page-title {
+  font-size: $font-size-page-title;
+  font-weight: 600;
+  color: $color-text;
+  line-height: $line-height-heading;
+  margin: 0 0 $space-1;
+}
+
+.u-section-title {
+  font-size: $font-size-section-title;
+  font-weight: 600;
+  color: $color-text;
+  line-height: $line-height-heading;
+  margin: 0;
+}
+
+.u-subsection-title {
+  font-size: $font-size-subsection;
+  font-weight: 500;
+  color: $color-text;
+  line-height: $line-height-heading;
+  margin: 0;
+}
+
+.u-title {
+  font-size: $font-size-section-title;
+  font-weight: 600;
+  color: $color-text;
+  line-height: $line-height-heading;
+}
+
+.u-page-subtitle {
+  font-size: $font-size-base;
+  color: $color-text-muted;
+  margin: 0 0 $space-6;
+}
+
+.u-text-muted {
+  color: $color-text-muted;
+}
+
+.u-text-disabled {
+  color: $color-text-disabled;
+}
+
+.u-caption {
+  font-size: $font-size-caption;
+  font-weight: 400;
+  color: $color-text-muted;
+}
+
+.u-readable {
+  max-width: $content-readable-max-width;
+}
+
+// ─── Layout utilities ────────────────────────────────
+.u-page-content {
+  padding: $page-padding;
+  max-width: $content-max-width;
+  min-height: $content-min-height;
+}
+
+// ─── Card (Brand Guideline §12) ──────────────────────
+.u-card {
+  background: $color-bg;
+  border: $border-width solid $color-border;
+  border-radius: $radius-card;
+  padding: $card-padding;
+  box-shadow: $shadow-card;
+}
+
+// ─── Status pill (Brand Guideline §9) ────────────────
+.u-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: $radius-pill;
+  font-size: $font-size-caption;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.u-status-pill--completed {
+  background: $status-completed-bg;
+  color: $status-completed-text;
+}
+
+.u-status-pill--in-progress {
+  background: $status-in-progress-bg;
+  color: $status-in-progress-text;
+}
+
+.u-status-pill--pending {
+  background: $status-pending-bg;
+  color: $status-pending-text;
+}
+
+.u-status-pill--overdue {
+  background: $status-overdue-bg;
+  color: $status-overdue-text;
+}
+
+.u-status-pill--on-leave {
+  background: $status-on-leave-bg;
+  color: $status-on-leave-text;
+}
+
+// ─── Login background (Brand Guideline §7) ───────────
+.u-login-background {
+  background: $login-gradient;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

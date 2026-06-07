@@ -1,0 +1,26 @@
+:root {
+  /* Backgrounds */
+  --color-bg: #FFFFFF;
+  --color-surface: #F8FAFC;
+
+  /* Text */
+  --color-text: #0F172A;
+  --color-text-body: #334155;
+  --color-text-muted: #64748B;
+  --color-text-disabled: #94A3B8;
+
+  /* Brand */
+  --color-primary: #2563EB;
+  --color-primary-light: #3B82F6;
+  --color-primary-subtle: #EFF6FF;
+
+  /* Status */
+  --color-success: #16A34A;
+  --color-warning: #D97706;
+  --color-error: #DC2626;
+  --color-info: #0284C7;
+
+  /* Borders */
+  --color-border: #E2E8F0;
+  --color-divider: #F1F5F9;
+}

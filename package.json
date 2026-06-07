@@ -1,0 +1,81 @@
+{
+  "name": "pokeslide-internal-platform",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "start": "npm run build && tsx server/index.ts",
+    "server": "tsx server/index.ts",
+    "server:check": "tsc -p tsconfig.server.json",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "prepare": "husky",
+    "lint": "eslint src server",
+    "lint:fix": "eslint src server --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,json,scss}\" \"server/**/*.{ts,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,json,scss}\" \"server/**/*.{ts,json}\""
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,json,scss,css,md}": [
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.2.5",
+    "@reduxjs/toolkit": "^2.12.0",
+    "@tanstack/react-query": "^5.101.0",
+    "antd": "6.4.3",
+    "axios": "^1.17.0",
+    "classnames": "^2.5.1",
+    "compression": "^1.8.1",
+    "dayjs": "^1.11.21",
+    "express": "^5.2.1",
+    "helmet": "^8.2.0",
+    "http-proxy-middleware": "^4.1.0",
+    "javascript-time-ago": "^2.6.4",
+    "lucide-react": "^1.17.0",
+    "motion": "^12.40.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-redux": "^9.3.0",
+    "react-router-dom": "^7.17.0",
+    "use-debounce": "^10.1.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/compression": "^1.8.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.2",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "^4.7.0",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.4.0",
+    "husky": "^9.1.7",
+    "jsdom": "^25.0.1",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.6.2",
+    "rollup-plugin-visualizer": "^5.14.0",
+    "sass": "^1.100.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.46.2",
+    "vite": "^5.4.21",
+    "vitest": "^2.1.9"
+  }
+}
