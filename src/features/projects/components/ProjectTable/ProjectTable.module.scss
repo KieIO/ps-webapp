@@ -1,0 +1,30 @@
+.table {
+  :global(.ant-table-thead > tr > th) {
+    white-space: nowrap;
+  }
+
+  :global(.ant-table-cell-fix-right) {
+    overflow: visible;
+  }
+}
+
+.truncate,
+.members {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+  white-space: nowrap;
+  width: fit-content;
+}

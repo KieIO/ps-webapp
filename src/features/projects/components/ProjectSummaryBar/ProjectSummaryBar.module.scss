@@ -1,0 +1,49 @@
+@use '@/styles/variables' as *;
+
+.bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.pillTotal,
+.pillNotUpdated,
+.pillInProgress,
+.pillFinish,
+.pillCancel {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: $radius-pill;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pillTotal {
+  background: $status-on-leave-bg;
+  color: $status-on-leave-text;
+}
+
+.pillNotUpdated {
+  background: $status-pending-bg;
+  color: $status-pending-text;
+}
+
+.pillInProgress {
+  background: $status-in-progress-bg;
+  color: $status-in-progress-text;
+}
+
+.pillFinish {
+  background: $status-completed-bg;
+  color: $status-completed-text;
+}
+
+.pillCancel {
+  background: $status-on-leave-bg;
+  color: $status-on-leave-text;
+}

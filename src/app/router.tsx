@@ -15,7 +15,8 @@ import { useAppSelector } from '@/shared/hooks/useAppSelector';
 const LoginPage = lazy(() => import('@/pages/LoginPage/LoginPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage/DashboardPage'));
 const MyTasksPage = lazy(() => import('@/pages/MyTasksPage/MyTasksPage'));
-const TimeLogPage = lazy(() => import('@/pages/TimeLogPage/TimeLogPage'));
+const NonProjectTasksPage = lazy(() => import('@/pages/NonProjectTasksPage/NonProjectTasksPage'));
+const MyTaskDetailPage = lazy(() => import('@/pages/MyTaskDetailPage/MyTaskDetailPage'));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage/NotificationsPage'));
 const ProjectsPage = lazy(() => import('@/pages/ProjectsPage/ProjectsPage'));
 const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage/ProjectDetailPage'));
@@ -23,7 +24,6 @@ const TaskManagePage = lazy(() => import('@/pages/TaskManagePage/TaskManagePage'
 const TaskFormPage = lazy(() => import('@/pages/TaskFormPage/TaskFormPage'));
 const WorkloadPage = lazy(() => import('@/pages/WorkloadPage/WorkloadPage'));
 const QualityPage = lazy(() => import('@/pages/QualityPage/QualityPage'));
-const CreativeReviewPage = lazy(() => import('@/pages/CreativeReviewPage/CreativeReviewPage'));
 const DATrackingPage = lazy(() => import('@/pages/DATrackingPage/DATrackingPage'));
 const CapacityPage = lazy(() => import('@/pages/CapacityPage/CapacityPage'));
 const CapacityForecastPage = lazy(() => import('@/pages/CapacityForecastPage/CapacityForecastPage'));
@@ -34,6 +34,7 @@ const OvertimePage = lazy(() => import('@/pages/OvertimePage/OvertimePage'));
 const ReportsPage = lazy(() => import('@/pages/ReportsPage/ReportsPage'));
 const UsersPage = lazy(() => import('@/pages/UsersPage/UsersPage'));
 const UserDetailPage = lazy(() => import('@/pages/UserDetailPage/UserDetailPage'));
+const RolesPage = lazy(() => import('@/pages/RolesPage/RolesPage'));
 const AuditLogPage = lazy(() => import('@/pages/AuditLogPage/AuditLogPage'));
 const ForbiddenPage = lazy(() => import('@/pages/ForbiddenPage/ForbiddenPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage/NotFoundPage'));
@@ -66,8 +67,10 @@ const router = createBrowserRouter([
     element: <AuthenticatedLayout />,
     children: [
       { index: true, element: <DashboardPage /> },
-      { path: ROUTES.MY_TASKS.slice(1), element: <MyTasksPage /> },
-      { path: ROUTES.TIME_LOG.slice(1), element: <TimeLogPage /> },
+      { path: 'tasks', element: <Navigate to={ROUTES.PROJECT_TASKS} replace /> },
+      { path: ROUTES.PROJECT_TASKS.slice(1), element: <MyTasksPage /> },
+      { path: ROUTES.NON_PROJECT_TASKS.slice(1), element: <NonProjectTasksPage /> },
+      { path: 'tasks/detail/:id', element: <MyTaskDetailPage /> },
       { path: ROUTES.NOTIFICATIONS.slice(1), element: <NotificationsPage /> },
       {
         element: (
@@ -94,7 +97,6 @@ const router = createBrowserRouter([
       {
         element: <ProtectedRoute allowedRoles={[ROLES.CREATIVE_HEAD]} />,
         children: [
-          { path: 'creative/review', element: <CreativeReviewPage /> },
           { path: 'creative/da', element: <DATrackingPage /> },
         ],
       },
@@ -103,7 +105,12 @@ const router = createBrowserRouter([
         children: [
           { path: ROUTES.CAPACITY.slice(1), element: <CapacityPage /> },
           { path: 'capacity/forecast', element: <CapacityForecastPage /> },
-          { path: ROUTES.PROJECT_TRACKER.slice(1), element: <ProjectTrackerPage /> },
+          {
+            path: ROUTES.PROJECT_TRACKER.slice(1),
+            element: <ProjectTrackerPage />,
+            handle: { contentLayout: 'flush' },
+          },
+          { path: 'v2/tracker', element: <Navigate to={ROUTES.PROJECT_TRACKER} replace /> },
           { path: ROUTES.PERFORMANCE.slice(1), element: <PerformancePage /> },
           { path: 'performance/settings', element: <KPISettingsPage /> },
           { path: ROUTES.OVERTIME.slice(1), element: <OvertimePage /> },
@@ -115,6 +122,7 @@ const router = createBrowserRouter([
         children: [
           { path: ROUTES.USERS.slice(1), element: <UsersPage /> },
           { path: 'users/:id', element: <UserDetailPage /> },
+          { path: ROUTES.ROLES.slice(1), element: <RolesPage /> },
           { path: ROUTES.AUDIT_LOG.slice(1), element: <AuditLogPage /> },
         ],
       },

@@ -20,6 +20,12 @@ export const pokeslideTheme: ThemeConfig = {
 
     boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06)',
   },
+  components: {
+    Menu: {
+      // Match $sidebar-width-collapsed (64px); Ant Design default is 80px (controlHeightLG * 2)
+      collapsedWidth: 64,
+    },
+  },
 };
 
 interface AppProvidersProps {

@@ -1,41 +1,24 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { PERMISSIONS, type Permission, type Role } from '@/config/permissions';
-
-type PermissionState = Record<Permission, boolean>;
-
-const createEmptyPermissions = (): PermissionState =>
-  Object.keys(PERMISSIONS).reduce((acc, key) => {
-    acc[key as Permission] = false;
-    return acc;
-  }, {} as PermissionState);
-
-const derivePermissions = (role: Role): PermissionState => {
-  const result = createEmptyPermissions();
-  (Object.entries(PERMISSIONS) as [Permission, readonly Role[]][]).forEach(
-    ([permission, roles]) => {
-      result[permission] = roles.includes(role);
-    },
-  );
-  return result;
-};
+import type { UserPermissionState } from '@/features/rbac/utils/permissionDerivation';
+import { createEmptyUserPermissions } from '@/features/rbac/utils/permissionDerivation';
 
 interface PermissionSliceState {
-  permissions: PermissionState;
+  permissions: UserPermissionState;
 }
 
 const initialState: PermissionSliceState = {
-  permissions: createEmptyPermissions(),
+  permissions: createEmptyUserPermissions(),
 };
 
 const permissionSlice = createSlice({
   name: 'permission',
   initialState,
   reducers: {
-    setRolePermissions: (state, action: PayloadAction<Role>) => {
-      state.permissions = derivePermissions(action.payload);
+    setRolePermissions: (state, action: PayloadAction<UserPermissionState>) => {
+      state.permissions = action.payload;
     },
     clearPermissions: (state) => {
-      state.permissions = createEmptyPermissions();
+      state.permissions = createEmptyUserPermissions();
     },
   },
 });

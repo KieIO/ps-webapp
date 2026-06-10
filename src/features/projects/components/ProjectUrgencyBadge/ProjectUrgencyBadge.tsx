@@ -1,0 +1,20 @@
+import classNames from 'classnames';
+import { PROJECT_URGENCY_STYLES } from '../../constants';
+import type { ProjectUrgency } from '../../schemas/project.schema';
+import styles from './ProjectUrgencyBadge.module.scss';
+
+interface ProjectUrgencyBadgeProps {
+  urgency: ProjectUrgency;
+  className?: string;
+}
+
+export function ProjectUrgencyBadge({ urgency, className }: ProjectUrgencyBadgeProps) {
+  const { dot, label } = PROJECT_URGENCY_STYLES[urgency];
+
+  return (
+    <span className={classNames(styles.badge, className)}>
+      <span className={styles.dot} style={{ backgroundColor: dot }} aria-hidden />
+      {label}
+    </span>
+  );
+}

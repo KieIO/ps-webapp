@@ -1,15 +1,14 @@
+import { mockDelay } from '@/shared/mock/mockDelay';
 import type { LoginRequest, LoginResponse } from '../schemas/auth.schema';
 import { DEV_MOCK_USERS } from './devUsers';
 
 export { DEV_MOCK_USERS } from './devUsers';
 
-const MOCK_DELAY_MS = 400;
-
 const findDevUser = (email: string) =>
   DEV_MOCK_USERS.find((user) => user.email.toLowerCase() === email.toLowerCase());
 
 export const mockLogin = async (payload: LoginRequest): Promise<LoginResponse> => {
-  await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
+  await mockDelay();
 
   const user = findDevUser(payload.email);
 
@@ -30,5 +29,5 @@ export const mockLogin = async (payload: LoginRequest): Promise<LoginResponse> =
 };
 
 export const mockLogout = async (): Promise<void> => {
-  await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
+  await mockDelay();
 };

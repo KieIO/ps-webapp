@@ -1,0 +1,157 @@
+/**
+ * Zod schemas for My Tasks API responses.
+ * Backend contract: docs/MY_TASKS_BACKEND_TODO.md (index: docs/BACKEND_API.md)
+ */
+import { z } from 'zod';
+import { PROJECT_STATUSES } from '@/features/projects/schemas/project.schema';
+
+export const CLASSIFICATION_LEVELS = [1, 2, 3, 4] as const;
+
+export const TASK_CATEGORIES = ['project', 'non_project'] as const;
+
+export type TaskCategory = (typeof TASK_CATEGORIES)[number];
+
+export const TASK_CONFIRMATION_STATUSES = [
+  'not_updated',
+  'finished',
+  'confirmed',
+  'decline',
+] as const;
+
+export type ClassificationLevel = (typeof CLASSIFICATION_LEVELS)[number];
+export type TaskConfirmationStatus = (typeof TASK_CONFIRMATION_STATUSES)[number];
+
+export const TaskPersonSchema = z.object({
+  code: z.string(),
+  name: z.string(),
+});
+
+export const TaskAssigneeSchema = TaskPersonSchema.extend({
+  userId: z.string().optional(),
+});
+
+export const MyTaskSchema = z.object({
+  id: z.string(),
+  taskCategory: z.enum(TASK_CATEGORIES),
+  taskCode: z.string(),
+  /** Linked project record id — present for project tasks when API provides it. */
+  projectId: z.string().optional(),
+  projectName: z.string(),
+  projectManager: TaskPersonSchema,
+  taskName: z.string(),
+  level: z.number().int().min(1).max(4),
+  quantity: z.number().int().min(0),
+  date: z.string(),
+  description: z.string(),
+  staff: z.array(TaskAssigneeSchema),
+  designThinking: z.number().int().min(1).max(4),
+  technical: z.number().int().min(1).max(4),
+  contentProcessing: z.number().int().min(1).max(4),
+  additionalFactors: z.string(),
+  completionPercent: z.number().min(0).max(100).optional(),
+  pmEvaluation: z.string(),
+  pmNote: z.string(),
+  staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
+  staffNote: z.string(),
+  updatedAt: z.string().optional(),
+  /** Denormalized project fields — populated by API or mock for Department Head columns. */
+  projectStartDate: z.string().optional(),
+  projectEndDate: z.string().optional(),
+  projectLevel: z.number().int().min(1).max(4).optional(),
+  projectBrief: z.string().optional(),
+  projectVolume: z.number().int().min(1).max(4).optional(),
+  projectNature: z.number().int().min(1).max(4).optional(),
+  projectTime: z.number().int().min(1).max(4).optional(),
+  projectStatus: z.enum(PROJECT_STATUSES).optional(),
+  projectFinishedDate: z.string().optional(),
+});
+
+export const MyTaskListFiltersSchema = z.object({
+  taskCategory: z.enum(TASK_CATEGORIES).optional(),
+  search: z.string().optional(),
+  projectName: z.string().optional(),
+  staffName: z.string().optional(),
+  confirmation: z.enum(TASK_CONFIRMATION_STATUSES).optional(),
+});
+
+export const MyTaskListResponseSchema = z.object({
+  items: z.array(MyTaskSchema),
+  total: z.number(),
+});
+
+export const CreateMyTaskRequestSchema = z.object({
+  taskCategory: z.enum(TASK_CATEGORIES),
+  projectName: z.string().min(1, 'Project name is required'),
+  projectManager: TaskPersonSchema,
+  taskName: z.string().min(1, 'Task name is required'),
+  level: z.number().int().min(1).max(4),
+  quantity: z.number().int().min(0),
+  date: z.string(),
+  description: z.string(),
+  designThinking: z.number().int().min(1).max(4),
+  technical: z.number().int().min(1).max(4),
+  contentProcessing: z.number().int().min(1).max(4),
+  additionalFactors: z.string(),
+  staff: z.array(TaskAssigneeSchema),
+  staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
+  staffNote: z.string(),
+});
+
+export const UpdateMyTaskStatusRequestSchema = z.object({
+  staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
+  staffNote: z.string(),
+});
+
+export const UpdateMyTaskPmEvaluationRequestSchema = z.object({
+  completionPercent: z.number().min(0).max(100),
+  pmEvaluation: z.string(),
+  pmNote: z.string(),
+});
+
+export const AssignMyTaskRequestSchema = z.object({
+  staff: z.array(TaskAssigneeSchema).min(1, 'Select at least one staff member'),
+  staffNote: z.string(),
+});
+
+export const UpdateMyTaskRequestSchema = z.object({
+  taskName: z.string().min(1, 'Task name is required'),
+  quantity: z.number().int().min(0),
+  date: z.string(),
+  description: z.string(),
+  designThinking: z.number().int().min(1).max(4),
+  technical: z.number().int().min(1).max(4),
+  contentProcessing: z.number().int().min(1).max(4),
+  additionalFactors: z.string(),
+  staff: z.array(TaskAssigneeSchema),
+  staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
+  staffNote: z.string(),
+});
+
+/** Department Head — project-context fields on task rows (non-project or when no linked project). */
+export const UpdateHeadMyTaskRequestSchema = z.object({
+  projectStartDate: z.string(),
+  projectEndDate: z.string(),
+  projectBrief: z.string(),
+  projectVolume: z.number().int().min(1).max(4),
+  projectNature: z.number().int().min(1).max(4),
+  projectTime: z.number().int().min(1).max(4),
+  additionalFactors: z.string(),
+  pmEvaluation: z.string(),
+  pmNote: z.string(),
+  projectStatus: z.enum(PROJECT_STATUSES),
+  projectFinishedDate: z.string().optional(),
+});
+
+export type TaskPerson = z.infer<typeof TaskPersonSchema>;
+export type TaskAssignee = z.infer<typeof TaskAssigneeSchema>;
+export type MyTask = z.infer<typeof MyTaskSchema>;
+export type MyTaskListFilters = z.infer<typeof MyTaskListFiltersSchema>;
+export type MyTaskListResponse = z.infer<typeof MyTaskListResponseSchema>;
+export type CreateMyTaskRequest = z.infer<typeof CreateMyTaskRequestSchema>;
+export type UpdateMyTaskStatusRequest = z.infer<typeof UpdateMyTaskStatusRequestSchema>;
+export type UpdateMyTaskPmEvaluationRequest = z.infer<
+  typeof UpdateMyTaskPmEvaluationRequestSchema
+>;
+export type AssignMyTaskRequest = z.infer<typeof AssignMyTaskRequestSchema>;
+export type UpdateMyTaskRequest = z.infer<typeof UpdateMyTaskRequestSchema>;
+export type UpdateHeadMyTaskRequest = z.infer<typeof UpdateHeadMyTaskRequestSchema>;

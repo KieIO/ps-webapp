@@ -1,0 +1,23 @@
+@use '@/styles/variables' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: $color-bg;
+}
+
+.pageTitle {
+  display: flex;
+  align-items: center;
+  height: 56px;
+  min-height: 56px;
+  padding: 0 20px;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: $color-text;
+  flex-shrink: 0;
+}

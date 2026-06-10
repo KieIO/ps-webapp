@@ -1,4 +1,5 @@
 import { ROLES, type Role } from '@/config/permissions';
+import { mockDelay } from '@/shared/mock/mockDelay';
 import type { LoginRequest, LoginResponse } from '../schemas/auth.schema';
 
 export interface DevMockUser {
@@ -20,13 +21,11 @@ export const DEV_MOCK_USERS: DevMockUser[] = [
   { email: 'admin@pokeslide.dev', name: 'Dev Admin', role: ROLES.ADMIN },
 ];
 
-const MOCK_DELAY_MS = 400;
-
 const findDevUser = (email: string): DevMockUser | undefined =>
   DEV_MOCK_USERS.find((user) => user.email.toLowerCase() === email.toLowerCase());
 
 export const mockLogin = async (payload: LoginRequest): Promise<LoginResponse> => {
-  await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
+  await mockDelay();
 
   const user = findDevUser(payload.email);
 
@@ -47,5 +46,5 @@ export const mockLogin = async (payload: LoginRequest): Promise<LoginResponse> =
 };
 
 export const mockLogout = async (): Promise<void> => {
-  await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
+  await mockDelay();
 };

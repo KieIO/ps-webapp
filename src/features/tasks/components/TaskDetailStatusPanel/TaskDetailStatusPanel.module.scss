@@ -1,0 +1,121 @@
+.panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px 16px;
+  width: 100%;
+  max-width: 100%;
+  padding: 14px 18px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-right: 4px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1.5px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  background: transparent;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+}
+
+.chipActive {
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 3.5px currentColor;
+  font-weight: 600;
+}
+
+.chipCompleted {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.chipInProgress {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.chipPending {
+  background: #fef9c3;
+  color: #a16207;
+}
+
+.chipOverdue {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.noteGroup {
+  display: flex;
+  flex: 1 1 220px;
+  align-items: center;
+  gap: 10px;
+  min-width: min(100%, 280px);
+  max-width: 360px;
+}
+
+.noteInput {
+  flex: 1;
+  resize: none;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.cancelBtn {
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 768px) {
+  .panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chips {
+    justify-content: flex-start;
+  }
+
+  .noteGroup {
+    max-width: none;
+  }
+
+  .actions {
+    justify-content: flex-end;
+  }
+}

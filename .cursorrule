@@ -19,3 +19,25 @@ Stack: React 19 + TypeScript (strict) + Vite + Ant Design 6 + TanStack Query + R
 - Date format: DD/MM/YYYY via dayjs everywhere
 - Pages are thin wrappers — no business logic in page components
 - Ant Design ConfigProvider with Pokeslide theme tokens (see brand guideline)
+
+## RBAC — proactive check on any new surface area
+**Whenever you add or change a page, route, sidebar item, nav link, or feature module**, pause and ask: *does this need role-based access?*
+- **All authenticated users** (e.g. Dashboard, My Tasks) → no new permission key; optional `accessType: 'universal'` row only if it is a new top-level module
+- **Restricted to some roles** → apply the checklist below before marking the task done
+- **Not sure** → ask the user; default to gating if the feature exposes team/org data or admin actions
+
+Triggers that almost always require the RBAC checklist: new `src/pages/`, new route in `router.tsx`, new `SIDEBAR_ITEMS` entry, new `features/*/` module, admin/manager-only UI, export/report/approval flows.
+
+## RBAC — when adding a gated feature or protected route
+Every gated feature must stay in sync across four places. CI/tests will fail if coverage drifts.
+
+1. **`src/config/permissions.ts`** — add the `Permission` key with default roles in `PERMISSIONS`
+2. **`src/config/permissionModules.ts`** — add a module row (`accessType: 'permission'`) or mark as `planned` until shipped
+3. **`src/config/rbacCoverage.ts`** — add the key to `MATRIX_PERMISSION_COVERAGE` (compile-time guard)
+4. **`src/config/sidebar.ts`** and/or **`src/app/router.tsx`** — wire the same permission key (sidebar `permission`, route guard, or `can()` in UI)
+
+Before finishing:
+- Run `npm test` — `rbacCoverage.test.ts` must pass
+- Verify the row appears on `/roles` permission matrix
+- For pre-release features use `accessType: 'planned'` + `plannedPhase`; switch to `'permission'` when the feature ships
+- See `docs/RBAC_BACKEND_TODO.md` for backend migration notes

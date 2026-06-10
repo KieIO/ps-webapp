@@ -1,0 +1,26 @@
+.section {
+  &:not(:last-child) {
+    margin-bottom: 24px;
+  }
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 8px;
+}
+
+.content {
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.empty {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  margin: 0;
+}

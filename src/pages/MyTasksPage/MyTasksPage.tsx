@@ -1,13 +1,11 @@
-import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
-import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
+import { TaskManagementView } from '@/features/tasks/components/TaskManagementView/TaskManagementView';
 
 export default function MyTasksPage() {
   return (
-    <div>
-      <PageHeader title="My Tasks" subtitle="Personal task list and status" />
-      <CardWrapper title="Coming soon">
-        <p>This module will be implemented in a future phase.</p>
-      </CardWrapper>
-    </div>
+    <TaskManagementView
+      title="Project Tasks"
+      subtitle="Project task list and status"
+      taskCategory="project"
+    />
   );
 }

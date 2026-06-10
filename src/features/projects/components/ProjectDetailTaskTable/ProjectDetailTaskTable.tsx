@@ -1,0 +1,147 @@
+import { Avatar, Button, Table, Tooltip } from 'antd';
+import { EyeOutlined } from '@ant-design/icons';
+import type { ColumnsType } from 'antd/es/table';
+import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
+import { ClassificationLevelBadge } from '@/features/tasks/components/ClassificationLevelBadge/ClassificationLevelBadge';
+import { TaskConfirmationBadge } from '@/features/tasks/components/TaskConfirmationBadge/TaskConfirmationBadge';
+import { TaskNameBadge } from '@/features/tasks/components/TaskNameBadge/TaskNameBadge';
+import { MY_TASK_COLUMN_HEADERS } from '@/features/tasks/constants';
+import { formatTaskStaffNames } from '@/features/tasks/utils/staff';
+import {
+  PROJECT_TASKS_PAGE_SIZE,
+  PROJECT_TASKS_PAGE_SIZE_OPTIONS,
+} from '../../constants';
+import type { ClassificationLevel, MyTask } from '@/features/tasks/schemas/task.schema';
+import { getInitials } from '@/shared/utils/person';
+import styles from './ProjectDetailTaskTable.module.scss';
+
+interface ProjectDetailTaskTableProps {
+  tasks: MyTask[];
+  loading: boolean;
+  total: number;
+  onView?: (task: MyTask) => void;
+}
+
+export function ProjectDetailTaskTable({
+  tasks,
+  loading,
+  total,
+  onView,
+}: ProjectDetailTaskTableProps) {
+  const columns: ColumnsType<MyTask> = [
+    {
+      title: 'Task Code',
+      dataIndex: 'taskCode',
+      key: 'taskCode',
+      width: 200,
+      ellipsis: true,
+      render: (value: string) =>
+        value ? (
+          <Tooltip title={value}>
+            <span className={styles.truncate}>{value}</span>
+          </Tooltip>
+        ) : (
+          <span className={styles.empty}>—</span>
+        ),
+    },
+    {
+      title: MY_TASK_COLUMN_HEADERS.taskName,
+      dataIndex: 'taskName',
+      key: 'taskName',
+      width: 180,
+      render: (name: string) => <TaskNameBadge name={name} />,
+    },
+    {
+      title: 'Level',
+      dataIndex: 'level',
+      key: 'level',
+      width: 90,
+      align: 'center',
+      render: (level: ClassificationLevel) => <ClassificationLevelBadge level={level} />,
+    },
+    {
+      title: 'Assignee',
+      key: 'assignee',
+      width: 200,
+      render: (_, record) => {
+        const name = formatTaskStaffNames(record.staff);
+        if (record.staff.length === 0) {
+          return <span className={styles.empty}>{name}</span>;
+        }
+        const primaryStaff = record.staff[0];
+        return (
+          <span className={styles.staffCell}>
+            <Avatar size={28} className={styles.avatar}>
+              {getInitials(primaryStaff.name)}
+            </Avatar>
+            {name}
+          </span>
+        );
+      },
+    },
+    {
+      title: MY_TASK_COLUMN_HEADERS.completion,
+      dataIndex: 'completionPercent',
+      key: 'completionPercent',
+      width: 100,
+      align: 'right',
+      render: (value?: number) =>
+        value != null ? `${value}%` : <span className={styles.empty}>—</span>,
+    },
+    {
+      title: 'Qty',
+      dataIndex: 'quantity',
+      key: 'quantity',
+      width: 70,
+      align: 'right',
+    },
+    {
+      title: 'Status',
+      dataIndex: 'staffConfirmation',
+      key: 'staffConfirmation',
+      width: 130,
+      render: (status: MyTask['staffConfirmation']) => (
+        <TaskConfirmationBadge status={status} />
+      ),
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 80,
+      align: 'center',
+      fixed: 'right',
+      render: (_, record) => (
+        <Button
+          type="text"
+          icon={<EyeOutlined />}
+          aria-label={`View task ${record.taskName}`}
+          onClick={() => onView?.(record)}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <TableWrapper
+      loading={loading}
+      isEmpty={!loading && tasks.length === 0}
+      emptyTitle="No tasks yet"
+      emptyDescription="Assign a new task to get started on this project."
+    >
+      <Table
+        rowKey="id"
+        columns={columns}
+        dataSource={tasks}
+        scroll={{ x: 1050 }}
+        pagination={{
+          pageSize: PROJECT_TASKS_PAGE_SIZE,
+          total,
+          showSizeChanger: true,
+          pageSizeOptions: [...PROJECT_TASKS_PAGE_SIZE_OPTIONS],
+          showTotal: (count, range) =>
+            `Showing ${range[0]}-${range[1]} / ${count} tasks`,
+        }}
+      />
+    </TableWrapper>
+  );
+}

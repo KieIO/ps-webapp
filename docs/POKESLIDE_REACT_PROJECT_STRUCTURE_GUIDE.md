@@ -120,7 +120,7 @@ This document describes the React architecture, conventions, and patterns for th
 │   │   │   └── hooks/
 │   │   │       └── usePerformance.ts
 │   │   │
-│   │   ├── time-log/               # Work hour logging (Employee)
+│   │   ├── time-log/               # Work hour logging (Employee) — deferred
 │   │   │   ├── api.ts
 │   │   │   ├── schemas/
 │   │   │   │   └── timeLog.schema.ts
@@ -160,7 +160,7 @@ This document describes the React architecture, conventions, and patterns for th
 │   │   ├── TasksPage/
 │   │   │   ├── TasksPage.tsx
 │   │   │   └── TasksPage.module.scss
-│   │   ├── TimeLogPage/
+│   │   ├── TimeLogPage/            # deferred — not in sidebar/router
 │   │   │   ├── TimeLogPage.tsx
 │   │   │   └── TimeLogPage.module.scss
 │   │   ├── ProjectsPage/
@@ -395,7 +395,7 @@ export const useSubmitTask = () =>
 | Project list | `['projects', { status, pmId }]` |
 | Capacity | `['capacity', { month, employeeId }]` |
 | KPI / Review | `['performance', { period, employeeId }]` |
-| Time logs | `['time-logs', { date, employeeId }]` |
+| Time logs (deferred) | `['time-logs', { date, employeeId }]` |
 | Users | `['users', { role, status }]` |
 
 ### 3.6 Role-Based Access Control (RBAC)
@@ -592,7 +592,7 @@ export const ROUTES = {
   LOGIN:          '/login',
   DASHBOARD:      '/',
   TASKS:          '/tasks',
-  TIME_LOG:       '/time-log',
+  // TIME_LOG:    '/time-log',  // deferred — not in sidebar/router
   PROJECTS:       '/projects',
   CAPACITY:       '/capacity',
   PERFORMANCE:    '/performance',
@@ -655,7 +655,7 @@ import { ROLES } from '@/config/permissions';
 
 const DashboardPage   = lazy(() => import('@/pages/DashboardPage/DashboardPage'));
 const TasksPage       = lazy(() => import('@/pages/TasksPage/TasksPage'));
-const TimeLogPage     = lazy(() => import('@/pages/TimeLogPage/TimeLogPage'));
+// const TimeLogPage  = lazy(() => import('@/pages/TimeLogPage/TimeLogPage')); // deferred
 const ProjectsPage    = lazy(() => import('@/pages/ProjectsPage/ProjectsPage'));
 const CapacityPage    = lazy(() => import('@/pages/CapacityPage/CapacityPage'));
 const PerformancePage = lazy(() => import('@/pages/PerformancePage/PerformancePage'));
@@ -674,7 +674,7 @@ const router = createBrowserRouter([
     children: [
       { path: ROUTES.DASHBOARD,   element: <DashboardPage /> },
       { path: ROUTES.TASKS,       element: <TasksPage /> },
-      { path: ROUTES.TIME_LOG,    element: <TimeLogPage /> },
+      // { path: ROUTES.TIME_LOG, element: <TimeLogPage /> }, // deferred
       {
         element: <ProtectedRoute allowedRoles={[ROLES.PM, ROLES.HEAD, ROLES.ADMIN]} />,
         children: [

@@ -6,4 +6,12 @@ export const env = {
   enableQueryDevtools: import.meta.env.VITE_ENABLE_QUERY_DEVTOOLS === 'true',
   /** Dev-only: bypass API and use mock accounts (default on in `npm run dev`). */
   useAuthMock: import.meta.env.DEV && import.meta.env.VITE_USE_AUTH_MOCK !== 'false',
+  /** Dev-only: bypass API and use in-memory user data (default on in `npm run dev`). */
+  useUsersMock: import.meta.env.DEV && import.meta.env.VITE_USE_USERS_MOCK !== 'false',
+  /** Dev-only: bypass API and use in-memory project tracker data (default on in `npm run dev`). */
+  useTrackerMock: import.meta.env.DEV && import.meta.env.VITE_USE_TRACKER_MOCK !== 'false',
+  /** Dev-only: bypass API and use in-memory projects data (default on in `npm run dev`). */
+  useProjectsMock: import.meta.env.DEV && import.meta.env.VITE_USE_PROJECTS_MOCK !== 'false',
+  /** Dev-only: bypass API and use in-memory my-tasks data (default on in `npm run dev`). */
+  useTasksMock: import.meta.env.DEV && import.meta.env.VITE_USE_TASKS_MOCK !== 'false',
 } as const;

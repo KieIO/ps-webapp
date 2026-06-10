@@ -1,126 +1,122 @@
 import {
   DashboardOutlined,
   CheckSquareOutlined,
-  ClockCircleOutlined,
-  BellOutlined,
   ProjectOutlined,
-  TeamOutlined,
   BarChartOutlined,
-  CalendarOutlined,
   TrophyOutlined,
   FieldTimeOutlined,
   FileTextOutlined,
   UserOutlined,
-  AuditOutlined,
-  EyeOutlined,
-  FundOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
+import type { ComponentType } from 'react';
 import { ROUTES } from './constants';
+import type { Permission } from './permissions';
 
-export const SIDEBAR_ITEMS = [
-  // ── All roles ──────────────────────────────────────
+export interface SidebarChildItem {
+  label: string;
+  path: string;
+  permission?: Permission | null;
+}
+
+export interface SidebarItem {
+  key: string;
+  label: string;
+  path?: string;
+  icon: ComponentType;
+  permission: Permission | null;
+  children?: readonly SidebarChildItem[];
+}
+
+export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
   {
+    key: 'dashboard',
     label: 'Dashboard',
     path: ROUTES.DASHBOARD,
     icon: DashboardOutlined,
-    permission: null, // visible to all authenticated users
-  },
-  {
-    label: 'My Tasks',
-    path: ROUTES.MY_TASKS,
-    icon: CheckSquareOutlined,
     permission: null,
   },
   {
-    label: 'Time Log',
-    path: ROUTES.TIME_LOG,
-    icon: ClockCircleOutlined,
-    permission: null,
-  },
-  {
-    label: 'Notifications',
-    path: ROUTES.NOTIFICATIONS,
-    icon: BellOutlined,
-    permission: null,
-  },
-
-  // ── PM / Manager section ───────────────────────────
-  {
-    label: 'Projects',
-    path: ROUTES.PROJECTS,
-    icon: ProjectOutlined,
-    permission: 'MANAGE_PROJECTS' as const,
-  },
-  {
-    label: 'Task Management',
-    path: ROUTES.TASK_MANAGE,
-    icon: TeamOutlined,
-    permission: 'VIEW_ALL_TASKS' as const,
-  },
-  {
-    label: 'Workload',
-    path: ROUTES.WORKLOAD,
-    icon: FundOutlined,
-    permission: 'VIEW_WORKLOAD' as const,
-  },
-  {
-    label: 'Quality Control',
-    path: ROUTES.QUALITY,
-    icon: TrophyOutlined,
-    permission: 'VIEW_QUALITY' as const,
-  },
-
-  // ── Creative Head section ──────────────────────────
-  {
-    label: 'Creative Review',
-    path: ROUTES.CREATIVE_REVIEW,
-    icon: EyeOutlined,
-    permission: 'REVIEW_CREATIVE_TASK' as const,
-  },
-
-  // ── Head / Admin section ───────────────────────────
-  {
-    label: 'Capacity',
-    path: ROUTES.CAPACITY,
-    icon: CalendarOutlined,
-    permission: 'VIEW_CAPACITY_FULL' as const,
-  },
-  {
+    key: 'project-tracker',
     label: 'Project Tracker',
     path: ROUTES.PROJECT_TRACKER,
     icon: BarChartOutlined,
-    permission: 'VIEW_CAPACITY_FULL' as const,
+    permission: 'VIEW_CAPACITY_FULL',
   },
   {
+    key: 'projects',
+    label: 'Projects',
+    path: ROUTES.PROJECTS,
+    icon: ProjectOutlined,
+    permission: 'MANAGE_PROJECTS',
+  },
+  {
+    key: 'task-management',
+    label: 'Task management',
+    icon: CheckSquareOutlined,
+    permission: null,
+    children: [
+      { label: 'Project Tasks', path: ROUTES.PROJECT_TASKS },
+      { label: 'Non-project tasks', path: ROUTES.NON_PROJECT_TASKS },
+    ],
+  },
+  {
+    key: 'performance',
     label: 'Performance',
-    path: ROUTES.PERFORMANCE,
     icon: TrophyOutlined,
-    permission: 'VIEW_PERFORMANCE' as const,
+    permission: null,
+    children: [
+      { label: 'KPI Dashboard', path: ROUTES.PERFORMANCE, permission: 'VIEW_PERFORMANCE' },
+      { label: 'Workload', path: ROUTES.WORKLOAD, permission: 'VIEW_WORKLOAD' },
+      { label: 'Quality Control', path: ROUTES.QUALITY, permission: 'VIEW_QUALITY' },
+      { label: 'Capacity', path: ROUTES.CAPACITY, permission: 'VIEW_CAPACITY_FULL' },
+    ],
   },
   {
-    label: 'Overtime',
-    path: ROUTES.OVERTIME,
-    icon: FieldTimeOutlined,
-    permission: 'APPROVE_OT' as const,
-  },
-  {
+    key: 'reports',
     label: 'Reports',
     path: ROUTES.REPORTS,
     icon: FileTextOutlined,
-    permission: 'EXPORT_REPORT' as const,
+    permission: 'EXPORT_REPORT',
   },
-
-  // ── Admin / HR section ─────────────────────────────
   {
+    key: 'users',
     label: 'Users',
     path: ROUTES.USERS,
     icon: UserOutlined,
-    permission: 'MANAGE_USERS' as const,
+    permission: 'MANAGE_USERS',
   },
   {
-    label: 'Audit Log',
-    path: ROUTES.AUDIT_LOG,
-    icon: AuditOutlined,
-    permission: 'VIEW_AUDIT_LOG' as const,
+    key: 'settings',
+    label: 'Settings',
+    icon: SettingOutlined,
+    permission: null,
+    children: [
+      { label: 'Roles & Permissions', path: ROUTES.ROLES, permission: 'MANAGE_USERS' },
+      { label: 'Audit Log', path: ROUTES.AUDIT_LOG, permission: 'VIEW_AUDIT_LOG' },
+    ],
   },
-] as const;
+
+  // ── Additional items (permission-filtered) ─────────
+  {
+    key: 'overtime',
+    label: 'Overtime',
+    path: ROUTES.OVERTIME,
+    icon: FieldTimeOutlined,
+    permission: 'APPROVE_OT',
+  },
+];
+
+/** Prefix for my-task detail pages — nested under task management in the sidebar. */
+export const MY_TASK_DETAIL_PATH_PREFIX = '/tasks/detail/';
+
+/** Map task detail URL (+ optional navigation state) to the active sidebar child path. */
+export const resolveTaskManagementSelectedPath = (
+  pathname: string,
+  locationState?: unknown,
+): string | undefined => {
+  if (!pathname.startsWith(MY_TASK_DETAIL_PATH_PREFIX)) return undefined;
+
+  const from = (locationState as { from?: 'project' | 'non_project' } | null)?.from;
+  return from === 'non_project' ? ROUTES.NON_PROJECT_TASKS : ROUTES.PROJECT_TASKS;
+};

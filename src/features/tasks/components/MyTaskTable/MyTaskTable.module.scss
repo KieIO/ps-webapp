@@ -1,0 +1,51 @@
+.table {
+  :global(.ant-table-thead > tr > th) {
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  :global(.ant-table-cell-fix-right) {
+    overflow: visible;
+    z-index: 2;
+  }
+
+  :global(th.ant-table-cell-fix-right),
+  :global(td.ant-table-cell-fix-right) {
+    padding-inline: 8px 16px;
+  }
+
+  :global(.ant-table-container) {
+    overflow: auto;
+  }
+}
+
+.truncate {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taskNameLink {
+  color: var(--color-primary);
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.empty {
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+  white-space: nowrap;
+  min-width: max-content;
+}

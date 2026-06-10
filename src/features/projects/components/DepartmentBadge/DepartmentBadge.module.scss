@@ -1,0 +1,27 @@
+@use '@/styles/variables' as *;
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: $radius-pill;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.project {
+  background: $status-in-progress-bg;
+  color: $status-in-progress-text;
+}
+
+.creative {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.admin {
+  background: $status-on-leave-bg;
+  color: $status-on-leave-text;
+}

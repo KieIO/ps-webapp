@@ -1,0 +1,47 @@
+.table {
+  :global(.ant-table-cell) {
+    vertical-align: middle;
+  }
+}
+
+.moduleLabel {
+  font-weight: 600;
+}
+
+.actionLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.phaseTag {
+  margin: 0;
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.plannedTag {
+  margin: 0;
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  background: transparent;
+}
+
+.granted {
+  color: var(--color-success, #16a34a);
+  font-size: 14px;
+}
+
+.denied {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  opacity: 0.45;
+}
+
+.meta {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}

@@ -1,0 +1,134 @@
+/**
+ * Projects API client.
+ * Backend contract: docs/PROJECTS_BACKEND_TODO.md (index: docs/BACKEND_API.md)
+ */
+import api from '@/shared/api/base.api';
+import { env } from '@/config/env';
+import {
+  mockCreateProject,
+  mockGetProjectById,
+  mockGetProjectClientOptions,
+  mockDeleteProject,
+  mockGetProjectHeadNameOptions,
+  mockGetProjectHeadOptions,
+  mockGetProjectList,
+  mockGetProjectPmOptions,
+  mockUpdateProject,
+} from './mock/projects.mock';
+import {
+  CreateProjectRequestSchema,
+  ProjectListFiltersSchema,
+  ProjectListDerivedSchema,
+  ProjectListRecordResponseSchema,
+  ProjectListResponseSchema,
+  ProjectRecordSchema,
+  ProjectSchema,
+  UpdateProjectRequestSchema,
+  type CreateProjectRequest,
+  type Project,
+  type ProjectListFilters,
+  type ProjectListResponse,
+  type UpdateProjectRequest,
+} from './schemas/project.schema';
+import { withProjectListDefaults } from './utils/projectDefaults';
+
+const parseProjectListResponse = (data: unknown): ProjectListResponse => {
+  const parsed = ProjectListRecordResponseSchema.parse(data);
+  return {
+    items: parsed.items.map(withProjectListDefaults),
+    total: parsed.total,
+  };
+};
+
+const parseProjectResponse = (data: unknown): Project =>
+  withProjectListDefaults(
+    ProjectRecordSchema.merge(ProjectListDerivedSchema).parse(data),
+  );
+
+export const projectApi = {
+  getList: async (filters: ProjectListFilters): Promise<ProjectListResponse> => {
+    const params = ProjectListFiltersSchema.parse(filters);
+
+    if (env.useProjectsMock) {
+      return ProjectListResponseSchema.parse(await mockGetProjectList(params));
+    }
+
+    const response = await api.get('/projects', { params });
+    return parseProjectListResponse(response.data);
+  },
+
+  getById: async (id: string): Promise<Project> => {
+    if (env.useProjectsMock) {
+      return ProjectSchema.parse(await mockGetProjectById(id));
+    }
+
+    const response = await api.get(`/projects/${id}`);
+    return parseProjectResponse(response.data);
+  },
+
+  getClientOptions: async (): Promise<string[]> => {
+    if (env.useProjectsMock) {
+      return mockGetProjectClientOptions();
+    }
+
+    const response = await api.get('/projects/client-options');
+    return response.data as string[];
+  },
+
+  getPmOptions: async (): Promise<{ code: string; name: string }[]> => {
+    if (env.useProjectsMock) {
+      return mockGetProjectPmOptions();
+    }
+
+    const response = await api.get('/projects/pm-options');
+    return response.data as { code: string; name: string }[];
+  },
+
+  getHeadNameOptions: async (): Promise<string[]> => {
+    if (env.useProjectsMock) {
+      return mockGetProjectHeadNameOptions();
+    }
+
+    const response = await api.get('/projects/head-name-options');
+    return response.data as string[];
+  },
+
+  getHeadOptions: async (): Promise<{ code: string; name: string }[]> => {
+    if (env.useProjectsMock) {
+      return mockGetProjectHeadOptions();
+    }
+
+    const response = await api.get('/projects/head-options');
+    return response.data as { code: string; name: string }[];
+  },
+
+  create: async (payload: CreateProjectRequest): Promise<Project> => {
+    const data = CreateProjectRequestSchema.parse(payload);
+
+    if (env.useProjectsMock) {
+      return ProjectSchema.parse(await mockCreateProject(data));
+    }
+
+    const response = await api.post('/projects', data);
+    return parseProjectResponse(response.data);
+  },
+
+  update: async (id: string, payload: UpdateProjectRequest): Promise<Project> => {
+    const data = UpdateProjectRequestSchema.parse(payload);
+
+    if (env.useProjectsMock) {
+      return ProjectSchema.parse(await mockUpdateProject(id, data));
+    }
+
+    const response = await api.patch(`/projects/${id}`, data);
+    return parseProjectResponse(response.data);
+  },
+
+  delete: async (id: string, userId?: string): Promise<void> => {
+    if (env.useProjectsMock) {
+      return mockDeleteProject(id, userId);
+    }
+
+    await api.delete(`/projects/${id}`);
+  },
+};

@@ -1,0 +1,9 @@
+.summary {
+  margin-bottom: 24px;
+}
+
+.tabs {
+  :global(.ant-tabs-nav) {
+    margin-bottom: 16px;
+  }
+}

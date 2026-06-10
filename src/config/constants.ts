@@ -4,7 +4,11 @@ export const ROUTES = {
 
   // All roles
   DASHBOARD: '/',
-  MY_TASKS: '/tasks',
+  MY_TASKS: '/tasks/project',
+  PROJECT_TASKS: '/tasks/project',
+  NON_PROJECT_TASKS: '/tasks/non-project',
+  MY_TASK_DETAIL: '/tasks/detail/:id',
+  /** Reserved — page scaffold exists; not wired in sidebar/router yet */
   TIME_LOG: '/time-log',
   NOTIFICATIONS: '/notifications',
 
@@ -18,6 +22,7 @@ export const ROUTES = {
   QUALITY: '/quality',
 
   // Creative Head
+  /** Reserved — page scaffold exists; not wired in sidebar/router yet */
   CREATIVE_REVIEW: '/creative/review',
   DA_TRACKING: '/creative/da',
 
@@ -25,6 +30,8 @@ export const ROUTES = {
   CAPACITY: '/capacity',
   CAPACITY_FORECAST: '/capacity/forecast',
   PROJECT_TRACKER: '/tracker',
+  /** @deprecated Use `PROJECT_TRACKER` — kept for redirects from old bookmarks */
+  PROJECT_TRACKER_LEGACY_V2: '/v2/tracker',
   PERFORMANCE: '/performance',
   KPI_SETTINGS: '/performance/settings',
   OVERTIME: '/overtime',
@@ -33,6 +40,7 @@ export const ROUTES = {
   // Admin / HR
   USERS: '/users',
   USER_DETAIL: '/users/:id',
+  ROLES: '/roles',
   AUDIT_LOG: '/audit',
 
   // System
@@ -42,6 +50,7 @@ export const ROUTES = {
 
 // Dynamic route helpers
 export const buildProjectDetailPath = (id: string) => `/projects/${id}`;
+export const buildMyTaskDetailPath = (id: string) => `/tasks/detail/${id}`;
 export const buildTaskEditPath = (id: string) => `/tasks/${id}/edit`;
 export const buildUserDetailPath = (id: string) => `/users/${id}`;
 

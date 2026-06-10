@@ -9,10 +9,30 @@ export const ROLES = {
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
+export const ROLE_LABELS: Record<Role, string> = {
+  [ROLES.EMPLOYEE]: 'Employee',
+  [ROLES.PM]: 'Project Manager',
+  [ROLES.CREATIVE_MANAGER]: 'Creative Manager',
+  [ROLES.CREATIVE_HEAD]: 'Creative Head',
+  [ROLES.HEAD]: 'Department Head',
+  [ROLES.ADMIN]: 'Admin',
+};
+
+/** Column order for the permission matrix (least → most privileged). */
+export const ROLE_ORDER: Role[] = [
+  ROLES.EMPLOYEE,
+  ROLES.PM,
+  ROLES.CREATIVE_MANAGER,
+  ROLES.CREATIVE_HEAD,
+  ROLES.HEAD,
+  ROLES.ADMIN,
+];
+
 export const PERMISSIONS = {
   // Task & Project
   MANAGE_PROJECTS: [ROLES.PM, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
-  ASSIGN_TASK: [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD],
+  EDIT_PROJECT: [ROLES.PM, ROLES.HEAD, ROLES.ADMIN],
+  ASSIGN_TASK: [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD, ROLES.HEAD],
   REVIEW_CREATIVE_TASK: [ROLES.CREATIVE_HEAD],
   VIEW_ALL_TASKS: [
     ROLES.PM,
@@ -21,6 +41,7 @@ export const PERMISSIONS = {
     ROLES.HEAD,
     ROLES.ADMIN,
   ],
+  EVALUATE_TASK: [ROLES.PM, ROLES.HEAD, ROLES.ADMIN],
 
   // Capacity & Workload
   VIEW_CAPACITY: [ROLES.HEAD, ROLES.ADMIN, ROLES.PM],
