@@ -19,6 +19,10 @@ export const UserSchema = z.object({
   ]),
   status: z.enum(USER_STATUSES),
   department: z.enum(['project', 'creative', 'admin']),
+  /** FK to `JobTitle.id` — assigned by admin; null until set. */
+  jobTitleId: z.string().nullable(),
+  jobTitleCode: z.string().optional(),
+  jobTitleName: z.string().optional(),
   joinedAt: z.string(),
   updatedAt: z.string().optional(),
 });
@@ -70,6 +74,7 @@ export const UpdateUserRequestSchema = z.object({
   ]),
   status: z.enum(USER_STATUSES),
   department: z.enum(['project', 'creative', 'admin']),
+  jobTitleId: z.string().nullable(),
 });
 
 export type User = z.infer<typeof UserSchema>;

@@ -1,0 +1,74 @@
+.capacityTable {
+  width: 100%;
+
+  :global(.ant-table) {
+    table-layout: fixed;
+  }
+
+  :global(.ant-table-thead > tr > th) {
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  :global(.ant-table-cell) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.capacityInput {
+  width: 100%;
+
+  :global(.ant-input-number-input) {
+    text-align: right;
+  }
+}
+
+.row {
+  :global(td) {
+    transition: background-color 0.15s ease;
+  }
+}
+
+.groupStart {
+  :global(td) {
+    border-top: 2px solid #e85d4c;
+  }
+}
+
+.family-intern :global(td) {
+  background: #fff9e6;
+}
+
+.family-jpe :global(td) {
+  background: #fffdf5;
+}
+
+.family-pe :global(td) {
+  background: #fde8ef;
+}
+
+.family-spe :global(td) {
+  background: #edf7ed;
+}
+
+.family-pm :global(td) {
+  background: #eef4fb;
+}
+
+.family-jgd :global(td),
+.family-sgd :global(td) {
+  background: #fff;
+}
+
+.family-gd :global(td) {
+  background: #fde8ef;
+}
+
+.family-dm :global(td) {
+  background: #fff9e6;
+}
+
+.family-other :global(td) {
+  background: #fafafa;
+}

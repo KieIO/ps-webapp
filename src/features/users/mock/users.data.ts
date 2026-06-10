@@ -1,9 +1,21 @@
 import { ROLES } from '@/config/permissions';
-import type { User } from '../schemas/user.schema';
+
+/** Persisted user fields only (labels enriched on read in mock/API). */
+export interface UserRecord {
+  id: string;
+  name: string;
+  email: string;
+  role: (typeof ROLES)[keyof typeof ROLES];
+  status: 'active' | 'inactive' | 'invited';
+  department: 'project' | 'creative' | 'admin';
+  jobTitleId: string | null;
+  joinedAt: string;
+  updatedAt?: string;
+}
 
 const now = new Date().toISOString();
 
-export const INITIAL_MOCK_USERS: User[] = [
+export const INITIAL_MOCK_USERS: UserRecord[] = [
   {
     id: 'usr-001',
     name: 'Nguyen Van An',
@@ -11,6 +23,7 @@ export const INITIAL_MOCK_USERS: User[] = [
     role: ROLES.ADMIN,
     status: 'active',
     department: 'admin',
+    jobTitleId: 'title-pm-2',
     joinedAt: '2023-01-15T00:00:00.000Z',
     updatedAt: now,
   },
@@ -21,6 +34,7 @@ export const INITIAL_MOCK_USERS: User[] = [
     role: ROLES.HEAD,
     status: 'active',
     department: 'project',
+    jobTitleId: 'title-pm-2',
     joinedAt: '2023-03-10T00:00:00.000Z',
     updatedAt: now,
   },
@@ -31,6 +45,7 @@ export const INITIAL_MOCK_USERS: User[] = [
     role: ROLES.PM,
     status: 'active',
     department: 'project',
+    jobTitleId: 'title-pm-2',
     joinedAt: '2023-05-22T00:00:00.000Z',
     updatedAt: now,
   },
@@ -41,6 +56,7 @@ export const INITIAL_MOCK_USERS: User[] = [
     role: ROLES.PM,
     status: 'active',
     department: 'project',
+    jobTitleId: 'title-pm-1',
     joinedAt: '2024-01-08T00:00:00.000Z',
     updatedAt: now,
   },
@@ -51,6 +67,7 @@ export const INITIAL_MOCK_USERS: User[] = [
     role: ROLES.CREATIVE_HEAD,
     status: 'active',
     department: 'creative',
+    jobTitleId: 'title-sgd-2',
     joinedAt: '2023-06-01T00:00:00.000Z',
     updatedAt: now,
   },
@@ -61,6 +78,7 @@ export const INITIAL_MOCK_USERS: User[] = [
     role: ROLES.CREATIVE_MANAGER,
     status: 'active',
     department: 'creative',
+    jobTitleId: 'title-gd-2',
     joinedAt: '2023-08-14T00:00:00.000Z',
     updatedAt: now,
   },
@@ -71,6 +89,7 @@ export const INITIAL_MOCK_USERS: User[] = [
     role: ROLES.EMPLOYEE,
     status: 'active',
     department: 'project',
+    jobTitleId: 'title-jpe-1',
     joinedAt: '2024-02-20T00:00:00.000Z',
     updatedAt: now,
   },
@@ -81,6 +100,7 @@ export const INITIAL_MOCK_USERS: User[] = [
     role: ROLES.EMPLOYEE,
     status: 'active',
     department: 'creative',
+    jobTitleId: 'title-jgd-2',
     joinedAt: '2024-03-05T00:00:00.000Z',
     updatedAt: now,
   },
@@ -91,6 +111,7 @@ export const INITIAL_MOCK_USERS: User[] = [
     role: ROLES.EMPLOYEE,
     status: 'inactive',
     department: 'project',
+    jobTitleId: 'title-pe-1',
     joinedAt: '2022-11-30T00:00:00.000Z',
     updatedAt: now,
   },
@@ -101,6 +122,7 @@ export const INITIAL_MOCK_USERS: User[] = [
     role: ROLES.EMPLOYEE,
     status: 'invited',
     department: 'creative',
+    jobTitleId: null,
     joinedAt: '2025-05-01T00:00:00.000Z',
     updatedAt: now,
   },
@@ -111,6 +133,7 @@ export const INITIAL_MOCK_USERS: User[] = [
     role: ROLES.CREATIVE_MANAGER,
     status: 'invited',
     department: 'creative',
+    jobTitleId: null,
     joinedAt: '2025-05-15T00:00:00.000Z',
     updatedAt: now,
   },
@@ -121,19 +144,20 @@ export const INITIAL_MOCK_USERS: User[] = [
     role: ROLES.PM,
     status: 'inactive',
     department: 'project',
+    jobTitleId: 'title-spe-2',
     joinedAt: '2022-07-18T00:00:00.000Z',
     updatedAt: now,
   },
 ];
 
-let mockUsersStore: User[] = [...INITIAL_MOCK_USERS];
+let mockUsersStore: UserRecord[] = [...INITIAL_MOCK_USERS];
 
-export const getMockUsersStore = (): User[] => mockUsersStore;
+export const getMockUsersStore = (): UserRecord[] => mockUsersStore;
 
 export const resetMockUsersStore = (): void => {
   mockUsersStore = [...INITIAL_MOCK_USERS];
 };
 
-export const setMockUsersStore = (users: User[]): void => {
+export const setMockUsersStore = (users: UserRecord[]): void => {
   mockUsersStore = users;
 };

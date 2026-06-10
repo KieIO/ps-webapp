@@ -42,6 +42,9 @@ export const ROUTES = {
   USER_DETAIL: '/users/:id',
   ROLES: '/roles',
   AUDIT_LOG: '/audit',
+  TITLE_MANAGEMENT: '/settings/titles',
+  EMPLOYEE_CAPACITY_FORMULA: '/settings/employee-capacity-formula',
+  TASK_SCORE: '/settings/task-score',
 
   // System
   FORBIDDEN: '/403',
@@ -58,7 +61,7 @@ export const APP_NAME = 'Pokeslide Internal Platform';
 
 export const PAGINATION = {
   DEFAULT_PAGE_SIZE: 20,
-  PAGE_SIZE_OPTIONS: [10, 20, 50],
+  PAGE_SIZE_OPTIONS: [10, 20, 50, 100],
 } as const;
 
 export const DATE_FORMAT = 'DD/MM/YYYY';

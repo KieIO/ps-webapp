@@ -17,6 +17,9 @@ Start here for backend work on the Pokeslide Internal Platform frontend. Each fe
 | **Projects** | `/projects` | **List projects** (master registry: dates, evaluation levels, PM, brief) | UI live; mock data in dev | [PROJECTS_BACKEND_TODO.md](./PROJECTS_BACKEND_TODO.md) |
 | **My Tasks** | `/tasks/project`, `/tasks/non-project`, `/tasks/detail/:id` | **List tasks** (by `taskCategory`), task detail, status/assign — role-based table columns | UI live; mock data in dev | [MY_TASKS_BACKEND_TODO.md](./MY_TASKS_BACKEND_TODO.md) |
 | **Users** | `/users`, `/users/:id` | User registry — list, invite, edit role/status/department | UI live; mock data in dev | [USERS_BACKEND_TODO.md](./USERS_BACKEND_TODO.md) |
+| **Titles** | `/settings/titles` | Job titles, levels, groups — list + create | UI live; mock data in dev | [TITLES_BACKEND_TODO.md](./TITLES_BACKEND_TODO.md) |
+| **Employee capacity** | `/settings/employee-capacity-formula` | Per-title capacity/ratio (same `JobTitle` entity) | UI live; mock data in dev | [TITLES_BACKEND_TODO.md](./TITLES_BACKEND_TODO.md) |
+| **Task scores** | `/settings/task-score` | Task type score catalog — list, create, edit | UI live; mock data in dev | [TASK_SCORES_BACKEND_TODO.md](./TASK_SCORES_BACKEND_TODO.md) |
 ### Tracker vs Projects (do not merge)
 
 Both surfaces show projects in a table, but the backend APIs serve **different purposes** and return **different shapes**:
@@ -71,6 +74,20 @@ Implement as **separate endpoints**. The tracker may query the same underlying p
 | `GET` | `/users/:id` | Get one user record | `MANAGE_USERS` |
 | `POST` | `/users` | Invite / create user (`status` → `invited`) | `MANAGE_USERS` |
 | `PATCH` | `/users/:id` | Update user profile, role, status, department | `MANAGE_USERS` |
+| `GET` | `/job-levels` | List job levels | `MANAGE_TITLES` |
+| `POST` | `/job-levels` | Create job level | `MANAGE_TITLES` |
+| `GET` | `/job-groups` | List job groups | `MANAGE_TITLES` |
+| `POST` | `/job-groups` | Create job group | `MANAGE_TITLES` |
+| `DELETE` | `/job-groups/:id` | Delete job group (unused only) | `MANAGE_TITLES` |
+| `GET` | `/job-titles` | List job titles (with level/group labels) | `MANAGE_TITLES` |
+| `POST` | `/job-titles` | Create job title | `MANAGE_TITLES` |
+| `PATCH` | `/job-titles/:id/capacity` | Update title capacity formula fields | `MANAGE_TITLES` |
+| `GET` | `/task-score-groups` | List task score groups | `MANAGE_USERS` |
+| `POST` | `/task-score-groups` | Create task score group | `MANAGE_USERS` |
+| `DELETE` | `/task-score-groups/:id` | Delete task score group (unused only) | `MANAGE_USERS` |
+| `GET` | `/task-scores` | List task score catalog | `MANAGE_USERS` |
+| `POST` | `/task-scores` | Create task score row | `MANAGE_USERS` |
+| `PATCH` | `/task-scores/:id` | Update task score row | `MANAGE_USERS` |
 
 > Path prefixes may differ between features during early development. Each spec doc is the source of truth for that feature.
 
@@ -86,6 +103,8 @@ When a frontend feature ships with mock data or a local fallback:
 4. Update **§15 Questions?** in [POKESLIDE_PROJECT_SETUP.md](./POKESLIDE_PROJECT_SETUP.md) if needed.
 
 Planned specs (not yet written): Task manage, Notifications, etc.
+
+**Settings mock toggles:** `VITE_USE_TITLES_MOCK`, `VITE_USE_TASK_SCORES_MOCK` (see respective spec docs).
 
 ---
 

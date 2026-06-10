@@ -94,6 +94,13 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
     children: [
       { label: 'Roles & Permissions', path: ROUTES.ROLES, permission: 'MANAGE_USERS' },
       { label: 'Audit Log', path: ROUTES.AUDIT_LOG, permission: 'VIEW_AUDIT_LOG' },
+      { label: 'Title management', path: ROUTES.TITLE_MANAGEMENT, permission: 'MANAGE_TITLES' },
+      {
+        label: 'Capacity formula',
+        path: ROUTES.EMPLOYEE_CAPACITY_FORMULA,
+        permission: 'MANAGE_TITLES',
+      },
+      { label: 'Task types & scores', path: ROUTES.TASK_SCORE, permission: 'MANAGE_USERS' },
     ],
   },
 

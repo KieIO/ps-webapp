@@ -1,0 +1,40 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.implementation {
+  background: #fde8ef;
+  color: #b4234a;
+}
+
+.quality_control {
+  background: #fff4d6;
+  color: #9a6700;
+}
+
+.edit_others {
+  background: #f0f1f3;
+  color: #4b5563;
+}
+
+.accent_teal {
+  background: #e6f4f1;
+  color: #0d6e5f;
+}
+
+.accent_purple {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.other {
+  background: #eef2ff;
+  color: #4338ca;
+}

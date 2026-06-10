@@ -7,6 +7,7 @@ import type { Role } from '@/config/permissions';
 import { RoleAccessPreview } from '@/features/rbac/components/RoleAccessPreview/RoleAccessPreview';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import { StatusPill } from '@/shared/ui/StatusPill/StatusPill';
+import { useJobTitleOptions } from '@/features/titles/hooks/useJobTitleOptions';
 import {
   DEPARTMENT_LABELS,
   DEPARTMENT_OPTIONS,
@@ -35,6 +36,7 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
   const [form] = Form.useForm<UpdateUserRequest>();
   const { data: user, isLoading, error } = useUser(userId);
   const { mutate, isPending } = useUpdateUser();
+  const { options: jobTitleOptions, isLoading: jobTitlesLoading } = useJobTitleOptions();
   const selectedRole = Form.useWatch('role', form) as Role | undefined;
 
   useEffect(() => {
@@ -45,6 +47,7 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
         role: user.role,
         status: user.status,
         department: user.department,
+        jobTitleId: user.jobTitleId,
       });
     }
   }, [user, form]);
@@ -100,6 +103,7 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
           />
           <span className={styles.summaryText}>
             {ROLE_LABELS[user.role]} · {DEPARTMENT_LABELS[user.department]}
+            {user.jobTitleCode ? ` · ${user.jobTitleCode}` : ''}
           </span>
         </div>
 
@@ -149,12 +153,19 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
             </Form.Item>
           </div>
 
-          <Form.Item
-            name="department"
-            label="Department"
-            rules={[{ required: true, message: 'Department is required' }]}
-          >
+          <Form.Item name="department" label="Department" rules={[{ required: true, message: 'Department is required' }]}>
             <Select options={DEPARTMENT_OPTIONS} />
+          </Form.Item>
+
+          <Form.Item name="jobTitleId" label="Job title">
+            <Select
+              allowClear
+              placeholder="Unassigned — select a title from Title management"
+              options={jobTitleOptions}
+              loading={jobTitlesLoading}
+              showSearch
+              optionFilterProp="label"
+            />
           </Form.Item>
 
           <div className={styles.actions}>

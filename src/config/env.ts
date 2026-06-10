@@ -14,4 +14,8 @@ export const env = {
   useProjectsMock: import.meta.env.DEV && import.meta.env.VITE_USE_PROJECTS_MOCK !== 'false',
   /** Dev-only: bypass API and use in-memory my-tasks data (default on in `npm run dev`). */
   useTasksMock: import.meta.env.DEV && import.meta.env.VITE_USE_TASKS_MOCK !== 'false',
+  /** Dev-only: bypass API and use in-memory title data (default on in `npm run dev`). */
+  useTitlesMock: import.meta.env.DEV && import.meta.env.VITE_USE_TITLES_MOCK !== 'false',
+  /** Dev-only: bypass API and use in-memory task score data (default on in `npm run dev`). */
+  useTaskScoresMock: import.meta.env.DEV && import.meta.env.VITE_USE_TASK_SCORES_MOCK !== 'false',
 } as const;

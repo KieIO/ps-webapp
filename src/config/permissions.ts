@@ -70,6 +70,7 @@ export const PERMISSIONS = {
 
   // Users & Admin
   MANAGE_USERS: [ROLES.ADMIN],
+  MANAGE_TITLES: [ROLES.HEAD, ROLES.ADMIN],
   VIEW_AUDIT_LOG: [ROLES.ADMIN],
 } as const;
 

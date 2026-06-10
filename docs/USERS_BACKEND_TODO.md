@@ -70,6 +70,9 @@ interface User {
     | 'admin';
   status: 'active' | 'inactive' | 'invited';
   department: 'project' | 'creative' | 'admin';
+  jobTitleId: string | null;       // FK to JobTitle.id — null until admin assigns
+  jobTitleCode?: string;           // enriched on read when jobTitleId is set
+  jobTitleName?: string;           // enriched on read when jobTitleId is set
   joinedAt: string;                // ISO 8601 — set on create
   updatedAt?: string;              // ISO 8601 — set on update
 }
@@ -145,6 +148,7 @@ The v1 frontend does **not** send `page` / `pageSize` query params. It loads the
 | Email | `email` |
 | Role | `role` (via `ROLE_LABELS`) |
 | Department | `department` (via `DEPARTMENT_LABELS`) |
+| Job title | `jobTitleCode` or `—` if `jobTitleId` is null |
 | Status | `status` (via `STATUS_LABELS`) |
 | Joined | `joinedAt` (formatted `DD/MM/YYYY`) |
 | View | navigates to `/users/:id` |
@@ -184,6 +188,7 @@ interface CreateUserRequest {
 |-------|------|
 | `email` | Unique (case-insensitive). Return `409 Conflict` with a clear message if duplicate. |
 | `status` | **Not in request** — server sets `invited` |
+| `jobTitleId` | **Not in request** — server sets `null` (admin assigns on detail page) |
 | `joinedAt` | Set to current timestamp |
 | `id` | Server-generated |
 
@@ -212,6 +217,7 @@ interface UpdateUserRequest {
   role: User['role'];
   status: User['status'];
   department: User['department'];
+  jobTitleId: string | null;       // FK to JobTitle.id; null clears assignment
 }
 ```
 
@@ -220,6 +226,7 @@ interface UpdateUserRequest {
 | Field | Rule |
 |-------|------|
 | `email` | Unique among other users (case-insensitive). Return `409` on duplicate. |
+| `jobTitleId` | When non-null, must reference an existing `JobTitle` (`404` if missing). Enrich `jobTitleCode` / `jobTitleName` on response. |
 | `id`, `joinedAt` | Immutable — not in request body |
 | `updatedAt` | Set to current timestamp on success |
 
@@ -234,6 +241,8 @@ interface UpdateUserRequest {
 ---
 
 ## Out of scope for v1 Users API
+
+`jobTitleId` links to the **Title management** catalog ([TITLES_BACKEND_TODO.md](./TITLES_BACKEND_TODO.md)) — distinct from RBAC `role` and from task/project classification levels.
 
 The frontend `User` model does **not** include employee/staff codes (`PO.031`, etc.). Those appear on tasks and projects as separate `{ code, name }` pairs. A future `GET /users/staff-options` (or enriching `GET /tasks/my/staff-options` from the users table) may link `userId` to task assignees — see [MY_TASKS_BACKEND_TODO.md](./MY_TASKS_BACKEND_TODO.md).
 

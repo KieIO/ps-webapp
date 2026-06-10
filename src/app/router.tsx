@@ -36,6 +36,11 @@ const UsersPage = lazy(() => import('@/pages/UsersPage/UsersPage'));
 const UserDetailPage = lazy(() => import('@/pages/UserDetailPage/UserDetailPage'));
 const RolesPage = lazy(() => import('@/pages/RolesPage/RolesPage'));
 const AuditLogPage = lazy(() => import('@/pages/AuditLogPage/AuditLogPage'));
+const TitleManagementPage = lazy(() => import('@/pages/TitleManagementPage/TitleManagementPage'));
+const EmployeeCapacityFormulaPage = lazy(
+  () => import('@/pages/EmployeeCapacityFormulaPage/EmployeeCapacityFormulaPage'),
+);
+const TaskScorePage = lazy(() => import('@/pages/TaskScorePage/TaskScorePage'));
 const ForbiddenPage = lazy(() => import('@/pages/ForbiddenPage/ForbiddenPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage/NotFoundPage'));
 
@@ -115,6 +120,11 @@ const router = createBrowserRouter([
           { path: 'performance/settings', element: <KPISettingsPage /> },
           { path: ROUTES.OVERTIME.slice(1), element: <OvertimePage /> },
           { path: ROUTES.REPORTS.slice(1), element: <ReportsPage /> },
+          { path: ROUTES.TITLE_MANAGEMENT.slice(1), element: <TitleManagementPage /> },
+          {
+            path: ROUTES.EMPLOYEE_CAPACITY_FORMULA.slice(1),
+            element: <EmployeeCapacityFormulaPage />,
+          },
         ],
       },
       {
@@ -124,6 +134,7 @@ const router = createBrowserRouter([
           { path: 'users/:id', element: <UserDetailPage /> },
           { path: ROUTES.ROLES.slice(1), element: <RolesPage /> },
           { path: ROUTES.AUDIT_LOG.slice(1), element: <AuditLogPage /> },
+          { path: ROUTES.TASK_SCORE.slice(1), element: <TaskScorePage /> },
         ],
       },
     ],

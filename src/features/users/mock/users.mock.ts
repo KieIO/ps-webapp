@@ -6,9 +6,32 @@ import type {
   UserListResponse,
 } from '../schemas/user.schema';
 import { mockDelay } from '@/shared/mock/mockDelay';
-import { getMockUsersStore, setMockUsersStore } from './users.data';
+import { getMockJobTitlesStore } from '@/features/titles/mock/titles.data';
+import { getMockUsersStore, setMockUsersStore, type UserRecord } from './users.data';
 
-const filterUsers = (users: User[], filters: UserListFilters): User[] => {
+const enrichUser = (user: UserRecord): User => {
+  if (!user.jobTitleId) {
+    return { ...user };
+  }
+
+  const title = getMockJobTitlesStore().find((entry) => entry.id === user.jobTitleId);
+  return {
+    ...user,
+    jobTitleCode: title?.code,
+    jobTitleName: title?.name,
+  };
+};
+
+const assertJobTitleExists = (jobTitleId: string | null) => {
+  if (jobTitleId === null) return;
+
+  const title = getMockJobTitlesStore().find((entry) => entry.id === jobTitleId);
+  if (!title) {
+    throw new Error('Selected job title does not exist');
+  }
+};
+
+const filterUsers = (users: UserRecord[], filters: UserListFilters): UserRecord[] => {
   const search = filters.search?.trim().toLowerCase();
 
   return users.filter((user) => {
@@ -24,7 +47,7 @@ const filterUsers = (users: User[], filters: UserListFilters): User[] => {
 
 export const mockGetUserList = async (filters: UserListFilters): Promise<UserListResponse> => {
   await mockDelay();
-  const items = filterUsers(getMockUsersStore(), filters);
+  const items = filterUsers(getMockUsersStore(), filters).map(enrichUser);
   return { items, total: items.length };
 };
 
@@ -34,7 +57,7 @@ export const mockGetUserById = async (id: string): Promise<User> => {
   if (!user) {
     throw new Error('User not found');
   }
-  return user;
+  return enrichUser(user);
 };
 
 export const mockCreateUser = async (payload: CreateUserRequest): Promise<User> => {
@@ -48,23 +71,26 @@ export const mockCreateUser = async (payload: CreateUserRequest): Promise<User> 
     throw new Error('A user with this email already exists');
   }
 
-  const newUser: User = {
+  const newUser: UserRecord = {
     id: `usr-${Date.now()}`,
     name: payload.name,
     email: payload.email,
     role: payload.role,
     status: 'invited',
     department: payload.department,
+    jobTitleId: null,
     joinedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 
   setMockUsersStore([newUser, ...users]);
-  return newUser;
+  return enrichUser(newUser);
 };
 
 export const mockUpdateUser = async (id: string, payload: UpdateUserRequest): Promise<User> => {
   await mockDelay();
+
+  assertJobTitleExists(payload.jobTitleId);
 
   const users = getMockUsersStore();
   const index = users.findIndex((entry) => entry.id === id);
@@ -79,14 +105,19 @@ export const mockUpdateUser = async (id: string, payload: UpdateUserRequest): Pr
     throw new Error('A user with this email already exists');
   }
 
-  const updated: User = {
+  const updated: UserRecord = {
     ...users[index],
-    ...payload,
+    name: payload.name,
+    email: payload.email,
+    role: payload.role,
+    status: payload.status,
+    department: payload.department,
+    jobTitleId: payload.jobTitleId,
     updatedAt: new Date().toISOString(),
   };
 
   const next = [...users];
   next[index] = updated;
   setMockUsersStore(next);
-  return updated;
+  return enrichUser(updated);
 };

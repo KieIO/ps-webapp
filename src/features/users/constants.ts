@@ -3,15 +3,15 @@ import type { UserStatus } from './schemas/user.schema';
 
 export { ROLE_LABELS };
 
-export const STATUS_LABELS: Record<UserStatus, string> = {
+export const STATUS_LABELS = {
   active: 'Active',
   inactive: 'Inactive',
   invited: 'Invited',
-};
+} as const;
 
 export const DEPARTMENT_LABELS = {
-  project: 'Project Department',
-  creative: 'Creative Department',
+  project: 'Project',
+  creative: 'Creative',
   admin: 'Admin / HR',
 } as const;
 

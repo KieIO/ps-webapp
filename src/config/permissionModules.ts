@@ -135,6 +135,12 @@ export const PERMISSION_MODULES: PermissionModuleDef[] = [
     actions: [{ permission: 'VIEW_AUDIT_LOG', label: 'View audit history' }],
   },
   {
+    key: 'titles',
+    label: 'Title Management',
+    accessType: 'permission',
+    actions: [{ permission: 'MANAGE_TITLES', label: 'Manage job titles, levels & groups' }],
+  },
+  {
     key: 'productivity',
     label: 'Productivity',
     accessType: 'planned',

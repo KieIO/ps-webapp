@@ -5,11 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { buildUserDetailPath, DATE_FORMAT, PAGINATION } from '@/config/constants';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { StatusPill, type StatusPillVariant } from '@/shared/ui/StatusPill/StatusPill';
-import {
-  DEPARTMENT_LABELS,
-  ROLE_LABELS,
-  STATUS_LABELS,
-} from '../../constants';
+import { DEPARTMENT_LABELS, ROLE_LABELS, STATUS_LABELS } from '../../constants';
 import type { User, UserStatus } from '../../schemas/user.schema';
 
 const STATUS_VARIANT: Record<UserStatus, StatusPillVariant> = {
@@ -53,6 +49,11 @@ export function UserTable({ users, loading }: UserTableProps) {
       dataIndex: 'department',
       key: 'department',
       render: (department: User['department']) => DEPARTMENT_LABELS[department],
+    },
+    {
+      title: 'Job title',
+      key: 'jobTitle',
+      render: (_: unknown, record: User) => record.jobTitleCode ?? '—',
     },
     {
       title: 'Status',
