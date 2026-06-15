@@ -2,14 +2,10 @@ import {
   CLASSIFICATION_LEVELS,
   TASK_CONFIRMATION_STATUSES,
   type ClassificationLevel,
-  type TaskConfirmationStatus,
 } from './schemas/task.schema';
 import { PROJECT_NAME_COLUMN_LABEL } from '@/features/projects/constants';
 
-import {
-  CONFIRMATION_LABELS,
-  CONFIRMATION_VARIANT,
-} from '@/shared/constants/taskConfirmation';
+import { CONFIRMATION_LABELS, CONFIRMATION_VARIANT } from '@/shared/constants/taskConfirmation';
 
 export { CONFIRMATION_LABELS, CONFIRMATION_VARIANT };
 

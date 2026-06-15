@@ -16,9 +16,7 @@ export interface ResolvedProjectContext {
   pmNote: string;
 }
 
-const confirmationToProjectStatus = (
-  confirmation: TaskConfirmationStatus,
-): ProjectStatus => {
+const confirmationToProjectStatus = (confirmation: TaskConfirmationStatus): ProjectStatus => {
   switch (confirmation) {
     case 'finished':
       return 'finish';
@@ -40,11 +38,10 @@ export const resolveProjectContextFromTask = (task: MyTask): ResolvedProjectCont
   projectVolume: task.projectVolume ?? task.designThinking,
   projectNature: task.projectNature ?? task.technical,
   projectTime: task.projectTime ?? task.contentProcessing,
-  projectStatus:
-    task.projectStatus ?? confirmationToProjectStatus(task.staffConfirmation),
+  projectStatus: task.projectStatus ?? confirmationToProjectStatus(task.staffConfirmation),
   projectFinishedDate:
     task.projectFinishedDate ??
-    (task.staffConfirmation === 'finished' ? task.updatedAt : undefined),
+    (task.staffConfirmation === 'finished' ? (task.updatedAt ?? undefined) : undefined),
   additionalFactors: task.additionalFactors,
   pmEvaluation: task.pmEvaluation,
   pmNote: task.pmNote,

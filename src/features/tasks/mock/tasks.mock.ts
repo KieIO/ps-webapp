@@ -10,7 +10,7 @@ import type {
   UpdateMyTaskRequest,
   UpdateMyTaskPmEvaluationRequest,
   UpdateMyTaskStatusRequest,
-  type TaskHistoryListResponse,
+  TaskHistoryListResponse,
 } from '../schemas/task.schema';
 import { UNASSIGNED_STAFF_LABEL } from '../constants';
 import { buildFallbackTaskHistory } from '../utils/taskDetail';
@@ -102,7 +102,9 @@ export const mockGetMyTaskList = async (
   viewerRole?: Role,
 ): Promise<MyTaskListResponse> => {
   await mockDelay();
-  const items = filterTasks(filters, assigneeUserId, viewerRole).map(enrichMockTaskWithProjectContext);
+  const items = filterTasks(filters, assigneeUserId, viewerRole).map(
+    enrichMockTaskWithProjectContext,
+  );
   return { items, total: items.length };
 };
 
@@ -220,13 +222,18 @@ export const mockGetStaffOptions = async (): Promise<TaskAssignee[]> => {
   return collectUniqueStaff([...MOCK_ASSIGNABLE_STAFF, ...members]);
 };
 
-export const mockGetProjectStaffOptions = async (
-  _projectName: string,
-): Promise<TaskAssignee[]> => mockGetStaffOptions();
+export const mockGetProjectStaffOptions = async (projectName: string): Promise<TaskAssignee[]> => {
+  void projectName;
+  return mockGetStaffOptions();
+};
 
 const generateTaskCode = (pmCode: string, projectName: string): string => {
   const seq = String(getMockTasksStore().length + 1).padStart(2, '0');
-  const slug = projectName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12).toUpperCase() || 'PROJECT';
+  const slug =
+    projectName
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .slice(0, 12)
+      .toUpperCase() || 'PROJECT';
   return `${pmCode}.${seq} - ${slug}`;
 };
 
@@ -363,7 +370,7 @@ export const mockUpdateHeadMyTask = async (
     projectStatus: payload.projectStatus,
     projectFinishedDate:
       payload.projectStatus === 'finish'
-        ? payload.projectFinishedDate ?? current.projectFinishedDate ?? new Date().toISOString()
+        ? (payload.projectFinishedDate ?? current.projectFinishedDate ?? new Date().toISOString())
         : undefined,
     updatedAt: new Date().toISOString(),
   };
