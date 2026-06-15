@@ -39,12 +39,15 @@ In dev mock, tasks are filtered by `staff.userId` matching the logged-in user's 
 ## Backend API to implement
 
 ```
-GET    /tasks/my                  → filtered list of tasks for current user
-POST   /tasks/my                  → create task (assigned to current user; all authenticated roles)
-PATCH  /tasks/my/:id              → update task (edit modal; all authenticated roles)
-GET    /tasks/my/project-options  → project name dropdown for filters
-GET    /tasks/my/pm-options       → PM code/name options for create form
-GET    /tasks/my/staff-options    → Staff assignee options for create form
+GET    /tasks/my                        → filtered list of tasks for current user
+GET    /tasks/my/:id                    → single task for detail page
+GET    /tasks/my/:id/history            → audit-backed timeline for task detail History panel
+POST   /tasks/my                        → create task (`taskCategory`: project | non_project)
+PATCH  /tasks/my/:id                    → update task (edit modal; all authenticated roles)
+GET    /tasks/my/project-options        → project name dropdown for filters + create form
+GET    /tasks/my/pm-options             → PM code/name options for create form
+GET    /tasks/my/staff-options          → Staff assignee options (non-project create form)
+GET    /tasks/my/project-staff-options  → Staff on a project (project create form only)
 ```
 
 All endpoints require authentication. **Always scope list/update to the authenticated assignee** — never return or modify other users' tasks (admin override is dev-mock only).
@@ -158,7 +161,14 @@ Dates are formatted as **`DD/MM/YYYY`** in the UI via `dayjs`; API should return
 
 ### `POST /tasks/my`
 
-Creates a new task. Used by the **Create task** action on `/tasks`. Assignee is optional — omit or send `null` for `staff` to leave the task unassigned.
+Creates a new task. There is **no separate endpoint** for non-project tasks — both list pages use this same route.
+
+| Frontend route | `taskCategory` in body | Create button |
+|----------------|------------------------|---------------|
+| `/tasks/project` | `project` | **Create task** in page header |
+| `/tasks/non-project` | `non_project` | **Create task** in page header |
+
+Implementation: `TaskManagementView` → `CreateTaskModal` → `useCreateMyTask` → `POST /tasks/my` (`src/features/tasks/api.ts`).
 
 **Access:** all authenticated roles (no separate permission key).
 
@@ -184,7 +194,27 @@ interface CreateMyTaskRequest {
 }
 ```
 
-**`staff` in request:** optional. `null` or omitted = unassigned. When set, must reference a valid staff member (`code`, `name`, optional `userId`).
+**`staff` in request:** always an array. Send `[]` for unassigned. When non-empty, each entry must reference a valid staff member (`code`, `name`, optional `userId`).
+
+#### Create task — project vs non-project
+
+Both categories share the same request shape and endpoint. Differences are enforced by the frontend form and should be mirrored on the server:
+
+| Concern | `taskCategory: 'project'` | `taskCategory: 'non_project'` |
+|---------|---------------------------|-------------------------------|
+| **UI route** | `/tasks/project` | `/tasks/non-project` |
+| **`projectName`** | Name from project registry or existing project tasks | Internal work group label (e.g. `Internal Training`, `Team Meeting`) — **not** a row in `/projects` |
+| **`staff` required?** | Yes — at least one assignee (UI validation) | No — `[]` is valid (unassigned) |
+| **Staff dropdown source** | `GET /tasks/my/project-staff-options?projectName=…` | `GET /tasks/my/staff-options` |
+| **Project name dropdown** | `GET /tasks/my/project-options?taskCategory=project&scope=all` | `GET /tasks/my/project-options?taskCategory=non_project&scope=all` |
+| **PM options** | `GET /tasks/my/pm-options` (same for both) | `GET /tasks/my/pm-options` (same for both) |
+| **`taskCode` generation** | PM code + project context | PM code + non-project context (mock uses `INT.*` prefix) |
+
+**Server validation suggestions:**
+
+- Reject `taskCategory: 'project'` with empty `staff` (match UI).
+- Allow `taskCategory: 'non_project'` with empty `staff`.
+- Persist `taskCategory` on the created record so `GET /tasks/my?taskCategory=non_project` returns it on the correct list page.
 
 **Server-set fields (not in request body):**
 
@@ -282,6 +312,50 @@ Deletes a task. Used by the **Delete** action on `/tasks/project` and `/tasks/no
 
 ---
 
+### `GET /tasks/my/:id`
+
+Returns a single task for `/tasks/detail/:id`. Same access rules as list/update (`VIEW_ALL_TASKS` may read any task).
+
+**Response:** `MyTask` object.
+
+---
+
+### `GET /tasks/my/:id/history`
+
+Returns the **task detail History timeline** (`TaskDetailHistoryPanel`). Events are built from the server audit log (`audit_logs` where `entity_type = task` and `entity_id = :id`), with a record-based fallback for legacy rows that predate auditing.
+
+Parse with `TaskHistoryListResponseSchema` in `src/features/tasks/schemas/task.schema.ts`.
+
+```typescript
+interface TaskHistoryListResponse {
+  items: TaskHistoryEvent[];
+}
+
+interface TaskHistoryEvent {
+  id: string;
+  occurredAt: string;              // ISO 8601
+  description: string;             // e.g. "Task created — Nguyen Duong Tri"
+  completed: boolean;              // solid vs hollow timeline dot
+  kind: 'event' | 'deadline';      // controls date formatting in UI
+}
+```
+
+#### Event sources
+
+| Audit action | Timeline entry |
+|--------------|----------------|
+| `task.created` | Task created — {PM name} |
+| `task.created` / `task.assigned` / `task.updated` | {Staff names} assigned |
+| `task.status_updated` / `task.updated` | Status: {confirmation label} |
+| `task.pm_evaluation_updated` | PM evaluation updated |
+| Task `client_deadline` / `internal_deadline` | Deadline (kind `deadline`) |
+
+**Status updates** set `confirmed_at` (and `completed_at` when finished) for accurate fallback timestamps on older tasks.
+
+**Response:** `TaskHistoryListResponse`.
+
+---
+
 ### `GET /tasks/my/project-options`
 
 Returns project name options for filter dropdowns and the create-task form.
@@ -313,13 +387,33 @@ type PmOptions = { code: string; name: string }[];
 
 ### `GET /tasks/my/staff-options`
 
-Returns staff members available for assignment when creating a task.
+Returns staff members available for assignment when creating a **non-project** task (`/tasks/non-project` create form).
+
+Not scoped to a project — use the org-wide staff list the backend considers assignable.
 
 ```typescript
 type StaffOptions = { code: string; name: string; userId?: string }[];
 ```
 
 Sorted by name is preferred.
+
+---
+
+### `GET /tasks/my/project-staff-options`
+
+Returns staff members on a **specific project** for the **project** create form (`/tasks/project` only). The non-project create form does **not** call this endpoint.
+
+#### Query parameters
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `projectName` | string | Yes | Project name selected in the create form |
+
+```typescript
+type ProjectStaffOptions = { code: string; name: string; userId?: string }[];
+```
+
+Sorted by name is preferred. Return `[]` if the project has no staff roster yet.
 
 ---
 
@@ -336,7 +430,7 @@ Sorted by name is preferred.
 
 ## Frontend migration steps (when API is ready)
 
-1. Implement `GET /tasks/my`, `POST /tasks/my`, `PATCH /tasks/my/:id`, `PATCH /tasks/my/:id/status`, `PATCH /tasks/my/:id/pm-evaluation`, `DELETE /tasks/my/:id`, `GET /tasks/my/project-options`, `GET /tasks/my/pm-options`, and `GET /tasks/my/staff-options`.
+1. Implement `GET /tasks/my`, `POST /tasks/my` (both `taskCategory` values), `PATCH /tasks/my/:id`, `PATCH /tasks/my/:id/status`, `PATCH /tasks/my/:id/pm-evaluation`, `DELETE /tasks/my/:id`, `GET /tasks/my/project-options`, `GET /tasks/my/pm-options`, `GET /tasks/my/staff-options`, and `GET /tasks/my/project-staff-options`.
 2. Set `VITE_USE_TASKS_MOCK=false` in staging/production env.
 3. Verify Zod parsing passes — responses must match schemas exactly.
 4. Confirm backend filters by JWT user id (not a client-supplied user id).

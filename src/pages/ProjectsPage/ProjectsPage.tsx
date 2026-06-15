@@ -11,11 +11,11 @@ export default function ProjectsPage() {
   return (
     <div>
       <PageHeader
-        title="Projects"
-        subtitle="Project list and evaluation overview"
+        title="Dự án"
+        subtitle="Danh sách dự án và đánh giá"
         actions={
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-            Create project
+            Tạo dự án
           </Button>
         }
       />

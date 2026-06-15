@@ -1,4 +1,6 @@
+import { ROLES } from '@/config/permissions';
 import { getMockTasksStore, MOCK_PROJECT_STAFF_ROSTER } from '@/features/tasks/mock/tasks.data';
+import { getMockUsersStore } from '@/features/users/mock/users.data';
 import type { PersonWithCode } from '../schemas/project.schema';
 import type {
   CreateProjectRequest,
@@ -12,10 +14,26 @@ import { enrichProject, enrichProjectsForList } from '../utils/projectTaskCount'
 import { mockDelay } from '@/shared/mock/mockDelay';
 import { getMockProjectsStore, setMockProjectsStore, type StoredProject } from './projects.data';
 
+const codeFromEmail = (email: string): string => {
+  const local = email.split('@')[0] ?? email;
+  return local.toUpperCase();
+};
+
+const mockStaffOptions = (roles: readonly string[]): PersonWithCode[] =>
+  getMockUsersStore()
+    .filter((user) => roles.includes(user.role) && user.status === 'active')
+    .map((user) => ({
+      code: codeFromEmail(user.email),
+      name: user.name,
+      userId: user.id,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
 const mockExtraMembersForProject = (projectName: string): PersonWithCode[] =>
   (MOCK_PROJECT_STAFF_ROSTER[projectName] ?? []).map((staff) => ({
     code: staff.code,
     name: staff.name,
+    userId: staff.userId ?? undefined,
   }));
 
 const filterProjects = (
@@ -59,32 +77,19 @@ export const mockGetProjectClientOptions = async (): Promise<string[]> => {
   return [...clients].sort((a, b) => a.localeCompare(b));
 };
 
-export const mockGetProjectPmOptions = async (): Promise<{ code: string; name: string }[]> => {
+export const mockGetProjectPmOptions = async (): Promise<PersonWithCode[]> => {
   await mockDelay();
-  const seen = new Map<string, string>();
-  for (const project of getMockProjectsStore()) {
-    seen.set(project.pm.code, project.pm.name);
-  }
-  return [...seen.entries()]
-    .map(([code, name]) => ({ code, name }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  return mockStaffOptions([ROLES.PM]);
 };
 
 export const mockGetProjectHeadNameOptions = async (): Promise<string[]> => {
   await mockDelay();
-  const names = new Set(getMockProjectsStore().map((project) => project.departmentHead.name));
-  return [...names].sort((a, b) => a.localeCompare(b));
+  return mockStaffOptions([ROLES.HEAD, ROLES.ADMIN]).map((option) => option.name);
 };
 
-export const mockGetProjectHeadOptions = async (): Promise<{ code: string; name: string }[]> => {
+export const mockGetProjectHeadOptions = async (): Promise<PersonWithCode[]> => {
   await mockDelay();
-  const seen = new Map<string, string>();
-  for (const project of getMockProjectsStore()) {
-    seen.set(project.departmentHead.code, project.departmentHead.name);
-  }
-  return [...seen.entries()]
-    .map(([code, name]) => ({ code, name }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  return mockStaffOptions([ROLES.HEAD, ROLES.ADMIN]);
 };
 
 export const mockGetProjectById = async (id: string): Promise<Project> => {
@@ -180,11 +185,14 @@ export const mockUpdateProject = async (
   const current = projects[index];
   const projectLevel = computeProjectLevel(payload.volume, payload.nature, payload.time);
   const now = new Date().toISOString();
-
   const finishedDate =
-    payload.status === 'finish' ? (current.finishedDate ?? now) : undefined;
+    payload.status === 'finish'
+      ? current.finishedDate ?? now
+      : payload.status === 'cancel'
+        ? undefined
+        : current.finishedDate;
 
-  const updated = {
+  const updated: StoredProject = {
     ...current,
     client: payload.client,
     name: payload.name,

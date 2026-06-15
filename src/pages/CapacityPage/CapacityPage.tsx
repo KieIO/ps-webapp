@@ -1,13 +1,14 @@
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
-import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
+import { CapacityList } from '@/features/capacity/components/CapacityList/CapacityList';
 
 export default function CapacityPage() {
   return (
     <div>
-      <PageHeader title="Capacity" subtitle="Overall capacity by day and week" />
-      <CardWrapper title="Coming soon">
-        <p>This module will be implemented in a future phase.</p>
-      </CardWrapper>
+      <PageHeader
+        title="Capacity"
+        subtitle="Workload by employee — utilization and availability"
+      />
+      <CapacityList />
     </div>
   );
 }

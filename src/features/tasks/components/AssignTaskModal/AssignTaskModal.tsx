@@ -1,10 +1,7 @@
 import { Form, Input, Modal, Select } from 'antd';
 import { useEffect, useMemo } from 'react';
 import { MY_TASK_COLUMN_HEADERS } from '../../constants';
-import {
-  useCreateTaskStaffOptions,
-  useProjectStaffOptions,
-} from '../../hooks/useCreateTaskOptions';
+import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
 import { useAssignMyTask } from '../../hooks/useAssignMyTask';
 import {
   formatTaskStaffNames,
@@ -29,12 +26,8 @@ type AssignTaskFormValues = {
 export function AssignTaskModal({ open, task, onClose }: AssignTaskModalProps) {
   const [form] = Form.useForm<AssignTaskFormValues>();
   const { mutate, isPending } = useAssignMyTask();
+  const { data: staffOptions = [] } = useCreateTaskStaffOptions();
   const isProjectTask = task?.taskCategory === 'project';
-  const { data: projectStaffOptions = [] } = useProjectStaffOptions(
-    isProjectTask ? task?.projectName : undefined,
-  );
-  const { data: globalStaffOptions = [] } = useCreateTaskStaffOptions();
-  const staffOptions = isProjectTask ? projectStaffOptions : globalStaffOptions;
 
   const staffSelectOptions = useMemo(
     () => mergeStaffSelectOptions(staffOptions, task?.staff ?? []),
@@ -121,9 +114,7 @@ export function AssignTaskModal({ open, task, onClose }: AssignTaskModalProps) {
         >
           <Select
             mode="multiple"
-            placeholder={
-              isProjectTask ? 'Select staff on this project' : 'Select staff for this task'
-            }
+            placeholder="Select staff for this task"
             options={staffSelectOptions}
           />
         </Form.Item>

@@ -2,8 +2,9 @@ import { Modal } from 'antd';
 import { ClassificationLevelBadge } from '@/features/tasks/components/ClassificationLevelBadge/ClassificationLevelBadge';
 import { TaskConfirmationBadge } from '@/features/tasks/components/TaskConfirmationBadge/TaskConfirmationBadge';
 import { TaskNameBadge } from '@/features/tasks/components/TaskNameBadge/TaskNameBadge';
+import { TaskStaffNameCell } from '@/features/tasks/components/TaskStaffNameCell/TaskStaffNameCell';
 import { MY_TASK_COLUMN_HEADERS } from '@/features/tasks/constants';
-import { formatTaskStaffNames } from '@/features/tasks/utils/staff';
+import { formatTaskCodeShort } from '@/features/tasks/utils/taskDetail';
 import type { ClassificationLevel, MyTask } from '@/features/tasks/schemas/task.schema';
 import styles from './ProjectTaskViewModal.module.scss';
 
@@ -30,7 +31,7 @@ export function ProjectTaskViewModal({ open, task, onClose }: ProjectTaskViewMod
         <div className={styles.grid}>
           <div className={styles.field}>
             <span className={styles.label}>Task Code</span>
-            {renderText(task.taskCode)}
+            {renderText(formatTaskCodeShort(task.taskCode))}
           </div>
           <div className={styles.field}>
             <span className={styles.label}>{MY_TASK_COLUMN_HEADERS.taskName}</span>
@@ -52,7 +53,9 @@ export function ProjectTaskViewModal({ open, task, onClose }: ProjectTaskViewMod
           </div>
           <div className={styles.field}>
             <span className={styles.label}>Assignee</span>
-            <p className={styles.value}>{formatTaskStaffNames(task.staff)}</p>
+            <p className={styles.value}>
+              <TaskStaffNameCell staff={task.staff} />
+            </p>
           </div>
           <div className={styles.field}>
             <span className={styles.label}>Status</span>

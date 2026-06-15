@@ -22,13 +22,11 @@ const ProjectsPage = lazy(() => import('@/pages/ProjectsPage/ProjectsPage'));
 const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage/ProjectDetailPage'));
 const TaskManagePage = lazy(() => import('@/pages/TaskManagePage/TaskManagePage'));
 const TaskFormPage = lazy(() => import('@/pages/TaskFormPage/TaskFormPage'));
-const WorkloadPage = lazy(() => import('@/pages/WorkloadPage/WorkloadPage'));
-const QualityPage = lazy(() => import('@/pages/QualityPage/QualityPage'));
 const DATrackingPage = lazy(() => import('@/pages/DATrackingPage/DATrackingPage'));
 const CapacityPage = lazy(() => import('@/pages/CapacityPage/CapacityPage'));
+const CapacityMonthlyPage = lazy(() => import('@/pages/CapacityMonthlyPage/CapacityMonthlyPage'));
 const CapacityForecastPage = lazy(() => import('@/pages/CapacityForecastPage/CapacityForecastPage'));
 const ProjectTrackerPage = lazy(() => import('@/pages/ProjectTrackerPage/ProjectTrackerPage'));
-const PerformancePage = lazy(() => import('@/pages/PerformancePage/PerformancePage'));
 const KPISettingsPage = lazy(() => import('@/pages/KPISettingsPage/KPISettingsPage'));
 const OvertimePage = lazy(() => import('@/pages/OvertimePage/OvertimePage'));
 const ReportsPage = lazy(() => import('@/pages/ReportsPage/ReportsPage'));
@@ -41,6 +39,7 @@ const EmployeeCapacityFormulaPage = lazy(
   () => import('@/pages/EmployeeCapacityFormulaPage/EmployeeCapacityFormulaPage'),
 );
 const TaskScorePage = lazy(() => import('@/pages/TaskScorePage/TaskScorePage'));
+const GeneralSettingsPage = lazy(() => import('@/pages/GeneralSettingsPage/GeneralSettingsPage'));
 const ForbiddenPage = lazy(() => import('@/pages/ForbiddenPage/ForbiddenPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage/NotFoundPage'));
 
@@ -63,6 +62,16 @@ function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   return <Outlet />;
 }
 
+function HomePage() {
+  const role = useAppSelector((state) => state.auth.user?.role);
+
+  if (role === ROLES.HEAD || role === ROLES.ADMIN) {
+    return <ProjectTrackerPage />;
+  }
+
+  return <Navigate to={ROUTES.PROJECT_TASKS} replace />;
+}
+
 const router = createBrowserRouter([
   {
     element: <UnauthenticatedLayout />,
@@ -71,7 +80,16 @@ const router = createBrowserRouter([
   {
     element: <AuthenticatedLayout />,
     children: [
-      { index: true, element: <DashboardPage /> },
+      { index: true, element: <HomePage />, handle: { contentLayout: 'flush' } },
+      { path: ROUTES.DASHBOARD_LEGACY.slice(1), element: <DashboardPage /> },
+      {
+        path: ROUTES.PROJECT_TRACKER_LEGACY.slice(1),
+        element: <Navigate to={ROUTES.PROJECT_TRACKER} replace />,
+      },
+      {
+        path: ROUTES.PROJECT_TRACKER_LEGACY_V2.slice(1),
+        element: <Navigate to={ROUTES.PROJECT_TRACKER} replace />,
+      },
       { path: 'tasks', element: <Navigate to={ROUTES.PROJECT_TASKS} replace /> },
       { path: ROUTES.PROJECT_TASKS.slice(1), element: <MyTasksPage /> },
       { path: ROUTES.NON_PROJECT_TASKS.slice(1), element: <NonProjectTasksPage /> },
@@ -95,8 +113,14 @@ const router = createBrowserRouter([
           { path: 'tasks/manage', element: <TaskManagePage /> },
           { path: 'tasks/new', element: <TaskFormPage /> },
           { path: 'tasks/:id/edit', element: <TaskFormPage /> },
-          { path: ROUTES.WORKLOAD.slice(1), element: <WorkloadPage /> },
-          { path: ROUTES.QUALITY.slice(1), element: <QualityPage /> },
+          {
+            path: ROUTES.WORKLOAD.slice(1),
+            element: <Navigate to={ROUTES.NOT_FOUND} replace />,
+          },
+          {
+            path: ROUTES.QUALITY.slice(1),
+            element: <Navigate to={ROUTES.NOT_FOUND} replace />,
+          },
         ],
       },
       {
@@ -109,14 +133,12 @@ const router = createBrowserRouter([
         element: <ProtectedRoute allowedRoles={[ROLES.HEAD, ROLES.ADMIN]} />,
         children: [
           { path: ROUTES.CAPACITY.slice(1), element: <CapacityPage /> },
+          { path: 'capacity/monthly', element: <CapacityMonthlyPage /> },
           { path: 'capacity/forecast', element: <CapacityForecastPage /> },
           {
-            path: ROUTES.PROJECT_TRACKER.slice(1),
-            element: <ProjectTrackerPage />,
-            handle: { contentLayout: 'flush' },
+            path: ROUTES.PERFORMANCE.slice(1),
+            element: <Navigate to={ROUTES.NOT_FOUND} replace />,
           },
-          { path: 'v2/tracker', element: <Navigate to={ROUTES.PROJECT_TRACKER} replace /> },
-          { path: ROUTES.PERFORMANCE.slice(1), element: <PerformancePage /> },
           { path: 'performance/settings', element: <KPISettingsPage /> },
           { path: ROUTES.OVERTIME.slice(1), element: <OvertimePage /> },
           { path: ROUTES.REPORTS.slice(1), element: <ReportsPage /> },
@@ -128,10 +150,24 @@ const router = createBrowserRouter([
         ],
       },
       {
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              ROLES.PM,
+              ROLES.CREATIVE_MANAGER,
+              ROLES.CREATIVE_HEAD,
+              ROLES.HEAD,
+              ROLES.ADMIN,
+            ]}
+          />
+        ),
+        children: [{ path: 'users/:id', element: <UserDetailPage /> }],
+      },
+      {
         element: <ProtectedRoute allowedRoles={[ROLES.ADMIN]} />,
         children: [
           { path: ROUTES.USERS.slice(1), element: <UsersPage /> },
-          { path: 'users/:id', element: <UserDetailPage /> },
+          { path: ROUTES.SETTINGS_GENERAL.slice(1), element: <GeneralSettingsPage /> },
           { path: ROUTES.ROLES.slice(1), element: <RolesPage /> },
           { path: ROUTES.AUDIT_LOG.slice(1), element: <AuditLogPage /> },
           { path: ROUTES.TASK_SCORE.slice(1), element: <TaskScorePage /> },

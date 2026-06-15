@@ -120,7 +120,12 @@ export const PERMISSION_MODULES: PermissionModuleDef[] = [
     key: 'users',
     label: 'Users',
     accessType: 'permission',
-    actions: [{ permission: 'MANAGE_USERS', label: 'Manage users' }],
+    actions: [
+      { permission: 'VIEW_USER', label: 'View user profile' },
+      { permission: 'MANAGE_USERS', label: 'Manage users' },
+      { permission: 'MANAGE_LEAVE', label: 'Schedule employee leave' },
+      { permission: 'REACTIVATE_USER', label: 'Reactivate after leave' },
+    ],
   },
   {
     key: 'rbac',

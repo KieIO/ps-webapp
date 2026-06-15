@@ -1,0 +1,59 @@
+.tooltipOverlay {
+  max-width: 340px;
+}
+
+.tooltipContent {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.tooltipTitle {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.tooltipList {
+  margin: 0;
+  padding-left: 18px;
+
+  li + li {
+    margin-top: 6px;
+  }
+}
+
+.columnHeader {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.infoIcon {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  cursor: help;
+  flex-shrink: 0;
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.statusList {
+  margin: 8px 0 0;
+  padding-left: 0;
+  list-style: none;
+
+  li + li {
+    margin-top: 6px;
+  }
+}
+
+.statusDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: middle;
+}

@@ -18,6 +18,7 @@ export const useUpdateMyTaskPmEvaluation = () => {
       myTaskApi.updatePmEvaluation(id, payload, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'my', 'history'] });
       message.success('Task evaluation saved');
     },
     onError: (error: Error) => {

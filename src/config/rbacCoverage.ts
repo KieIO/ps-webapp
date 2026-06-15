@@ -95,7 +95,10 @@ export const MATRIX_PERMISSION_COVERAGE = [
   'REQUEST_OT',
   'APPROVE_OT',
   'EXPORT_REPORT',
+  'VIEW_USER',
   'MANAGE_USERS',
+  'MANAGE_LEAVE',
+  'REACTIVATE_USER',
   'MANAGE_TITLES',
   'VIEW_AUDIT_LOG',
 ] as const satisfies readonly Permission[];

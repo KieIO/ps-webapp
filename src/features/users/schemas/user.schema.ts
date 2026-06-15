@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { ROLES } from '@/config/permissions';
+import { USER_DEPARTMENTS } from '../constants';
 
-export const USER_STATUSES = ['active', 'inactive', 'invited'] as const;
+export const USER_STATUSES = ['active', 'on_leave', 'inactive', 'invited'] as const;
 
 export type UserStatus = (typeof USER_STATUSES)[number];
 
@@ -18,11 +19,14 @@ export const UserSchema = z.object({
     ROLES.ADMIN,
   ]),
   status: z.enum(USER_STATUSES),
-  department: z.enum(['project', 'creative', 'admin']),
+  department: z.enum(USER_DEPARTMENTS),
   /** FK to `JobTitle.id` — assigned by admin; null until set. */
   jobTitleId: z.string().nullable(),
   jobTitleCode: z.string().optional(),
   jobTitleName: z.string().optional(),
+  jobLevelCode: z.string().optional(),
+  jobLevelLabel: z.string().optional(),
+  positionCode: z.string().optional(),
   joinedAt: z.string(),
   updatedAt: z.string().optional(),
 });
@@ -58,7 +62,9 @@ export const CreateUserRequestSchema = z.object({
     ROLES.HEAD,
     ROLES.ADMIN,
   ]),
-  department: z.enum(['project', 'creative', 'admin']),
+  department: z.enum(USER_DEPARTMENTS),
+  /** Optional — server uses default when omitted or blank. */
+  password: z.string().trim().min(5, 'Password must be at least 5 characters').optional(),
 });
 
 export const UpdateUserRequestSchema = z.object({
@@ -73,7 +79,7 @@ export const UpdateUserRequestSchema = z.object({
     ROLES.ADMIN,
   ]),
   status: z.enum(USER_STATUSES),
-  department: z.enum(['project', 'creative', 'admin']),
+  department: z.enum(USER_DEPARTMENTS),
   jobTitleId: z.string().nullable(),
 });
 

@@ -6,7 +6,7 @@ import type {
   UserListResponse,
 } from '../schemas/user.schema';
 import { mockDelay } from '@/shared/mock/mockDelay';
-import { getMockJobTitlesStore } from '@/features/titles/mock/titles.data';
+import { getMockJobLevelsStore, getMockJobTitlesStore } from '@/features/titles/mock/titles.data';
 import { getMockUsersStore, setMockUsersStore, type UserRecord } from './users.data';
 
 const enrichUser = (user: UserRecord): User => {
@@ -15,10 +15,16 @@ const enrichUser = (user: UserRecord): User => {
   }
 
   const title = getMockJobTitlesStore().find((entry) => entry.id === user.jobTitleId);
+  const level = title
+    ? getMockJobLevelsStore().find((entry) => entry.id === title.jobLevelId)
+    : undefined;
   return {
     ...user,
     jobTitleCode: title?.code,
     jobTitleName: title?.name,
+    jobLevelCode: level?.code,
+    jobLevelLabel: level?.label,
+    positionCode: title?.code,
   };
 };
 

@@ -13,8 +13,10 @@ export function LoginForm() {
     mutate(values);
   };
 
+  const devPassword = env.useAuthMock ? 'dev' : 'ps123';
+
   const fillDevAccount = (email: string) => {
-    form.setFieldsValue({ email, password: 'dev' });
+    form.setFieldsValue({ email, password: devPassword });
   };
 
   const errorMessage =
@@ -29,14 +31,18 @@ export function LoginForm() {
       className={styles.form}
       initialValues={env.useAuthMock ? { password: 'dev' } : undefined}
     >
-      {env.useAuthMock && (
+      {import.meta.env.DEV && (
         <Alert
           type="info"
           showIcon
-          message="Dev auth mock active"
+          message={env.useAuthMock ? 'Dev auth mock active' : 'Local API auth'}
           description={
             <div className={styles.devHint}>
-              <p>Any listed email works with any password. Quick fill:</p>
+              <p>
+                {env.useAuthMock
+                  ? 'Any listed email works with any password. Quick fill:'
+                  : `Seeded dev accounts use password "${devPassword}". Quick fill:`}
+              </p>
               <div className={styles.devAccounts}>
                 {DEV_MOCK_USERS.map((user) => (
                   <Button
@@ -82,7 +88,7 @@ export function LoginForm() {
         name="password"
         rules={[{ required: true, message: 'Please enter your password' }]}
       >
-        <Input.Password placeholder="dev" size="large" autoComplete="current-password" />
+        <Input.Password placeholder={devPassword} size="large" autoComplete="current-password" />
       </Form.Item>
 
       <Form.Item className={styles.submit}>

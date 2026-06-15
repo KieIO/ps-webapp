@@ -68,3 +68,10 @@
   margin: 0;
   line-height: 1.4;
 }
+
+.loading,
+.empty {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+}

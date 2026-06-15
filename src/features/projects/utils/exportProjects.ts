@@ -5,6 +5,8 @@ import {
   DEPARTMENT_LABELS,
   EVALUATION_LEVEL_LABELS,
   PROJECT_EVALUATION_COLUMN_HEADERS,
+  PROJECT_NAME_COLUMN_LABEL,
+  PROJECT_TABLE_COLUMN_HEADERS,
   PROJECT_URGENCY_STYLES,
   STATUS_LABELS,
 } from '../constants';
@@ -12,25 +14,25 @@ import type { Project } from '../schemas/project.schema';
 
 export const exportProjectsToCsv = (projects: Project[]): void => {
   const headers = [
-    'Client',
-    'Project Name',
-    'Phòng ban',
-    'Tasks',
-    'Start Date',
-    'End Date',
+    PROJECT_TABLE_COLUMN_HEADERS.client,
+    PROJECT_NAME_COLUMN_LABEL,
+    PROJECT_TABLE_COLUMN_HEADERS.department,
+    PROJECT_TABLE_COLUMN_HEADERS.tasks,
+    PROJECT_TABLE_COLUMN_HEADERS.startDate,
+    PROJECT_TABLE_COLUMN_HEADERS.endDate,
     'Urgency',
-    'Project Level',
-    'Head Name',
-    'Brief',
+    PROJECT_TABLE_COLUMN_HEADERS.level,
+    PROJECT_TABLE_COLUMN_HEADERS.headName,
+    PROJECT_TABLE_COLUMN_HEADERS.brief,
     PROJECT_EVALUATION_COLUMN_HEADERS.volume,
     PROJECT_EVALUATION_COLUMN_HEADERS.nature,
     PROJECT_EVALUATION_COLUMN_HEADERS.time,
     PROJECT_EVALUATION_COLUMN_HEADERS.additionalFactors,
-    'PM Name',
-    'Đánh Giá',
-    'Note',
-    'Project Status',
-    'Finished Date',
+    PROJECT_TABLE_COLUMN_HEADERS.pmName,
+    PROJECT_TABLE_COLUMN_HEADERS.evaluation,
+    PROJECT_TABLE_COLUMN_HEADERS.note,
+    PROJECT_TABLE_COLUMN_HEADERS.status,
+    PROJECT_TABLE_COLUMN_HEADERS.finishedDate,
   ];
 
   const rows = projects.map((project) => [

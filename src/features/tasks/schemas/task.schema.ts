@@ -24,10 +24,11 @@ export type TaskConfirmationStatus = (typeof TASK_CONFIRMATION_STATUSES)[number]
 export const TaskPersonSchema = z.object({
   code: z.string(),
   name: z.string(),
+  userId: z.string().nullish(),
 });
 
 export const TaskAssigneeSchema = TaskPersonSchema.extend({
-  userId: z.string().optional(),
+  userId: z.string().nullish(),
 });
 
 export const MyTaskSchema = z.object({
@@ -35,7 +36,7 @@ export const MyTaskSchema = z.object({
   taskCategory: z.enum(TASK_CATEGORIES),
   taskCode: z.string(),
   /** Linked project record id — present for project tasks when API provides it. */
-  projectId: z.string().optional(),
+  projectId: z.string().nullish(),
   projectName: z.string(),
   projectManager: TaskPersonSchema,
   taskName: z.string(),
@@ -48,22 +49,22 @@ export const MyTaskSchema = z.object({
   technical: z.number().int().min(1).max(4),
   contentProcessing: z.number().int().min(1).max(4),
   additionalFactors: z.string(),
-  completionPercent: z.number().min(0).max(100).optional(),
+  completionPercent: z.number().min(0).max(100).nullish(),
   pmEvaluation: z.string(),
   pmNote: z.string(),
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
   staffNote: z.string(),
-  updatedAt: z.string().optional(),
+  updatedAt: z.string().nullish(),
   /** Denormalized project fields — populated by API or mock for Department Head columns. */
-  projectStartDate: z.string().optional(),
-  projectEndDate: z.string().optional(),
-  projectLevel: z.number().int().min(1).max(4).optional(),
-  projectBrief: z.string().optional(),
-  projectVolume: z.number().int().min(1).max(4).optional(),
-  projectNature: z.number().int().min(1).max(4).optional(),
-  projectTime: z.number().int().min(1).max(4).optional(),
-  projectStatus: z.enum(PROJECT_STATUSES).optional(),
-  projectFinishedDate: z.string().optional(),
+  projectStartDate: z.string().nullish(),
+  projectEndDate: z.string().nullish(),
+  projectLevel: z.number().int().min(1).max(4).nullish(),
+  projectBrief: z.string().nullish(),
+  projectVolume: z.number().int().min(1).max(4).nullish(),
+  projectNature: z.number().int().min(1).max(4).nullish(),
+  projectTime: z.number().int().min(1).max(4).nullish(),
+  projectStatus: z.enum(PROJECT_STATUSES).nullish(),
+  projectFinishedDate: z.string().nullish(),
 });
 
 export const MyTaskListFiltersSchema = z.object({
@@ -77,6 +78,20 @@ export const MyTaskListFiltersSchema = z.object({
 export const MyTaskListResponseSchema = z.object({
   items: z.array(MyTaskSchema),
   total: z.number(),
+});
+
+export const TASK_HISTORY_KINDS = ['event', 'deadline'] as const;
+
+export const TaskHistoryEventSchema = z.object({
+  id: z.string(),
+  occurredAt: z.string(),
+  description: z.string(),
+  completed: z.boolean(),
+  kind: z.enum(TASK_HISTORY_KINDS),
+});
+
+export const TaskHistoryListResponseSchema = z.object({
+  items: z.array(TaskHistoryEventSchema),
 });
 
 export const CreateMyTaskRequestSchema = z.object({
@@ -147,6 +162,8 @@ export type TaskAssignee = z.infer<typeof TaskAssigneeSchema>;
 export type MyTask = z.infer<typeof MyTaskSchema>;
 export type MyTaskListFilters = z.infer<typeof MyTaskListFiltersSchema>;
 export type MyTaskListResponse = z.infer<typeof MyTaskListResponseSchema>;
+export type TaskHistoryEvent = z.infer<typeof TaskHistoryEventSchema>;
+export type TaskHistoryListResponse = z.infer<typeof TaskHistoryListResponseSchema>;
 export type CreateMyTaskRequest = z.infer<typeof CreateMyTaskRequestSchema>;
 export type UpdateMyTaskStatusRequest = z.infer<typeof UpdateMyTaskStatusRequestSchema>;
 export type UpdateMyTaskPmEvaluationRequest = z.infer<

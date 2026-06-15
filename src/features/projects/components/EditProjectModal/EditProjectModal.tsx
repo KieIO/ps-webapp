@@ -1,6 +1,6 @@
 import { DatePicker, Form, Input, Modal, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
 import {
   DEPARTMENT_OPTIONS,
@@ -11,6 +11,7 @@ import {
 import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProjectList';
 import { useUpdateProject } from '../../hooks/useUpdateProject';
 import { computeProjectLevel } from '../../utils/projectLevel';
+import { mergePersonOptions, resolvePersonRef } from '../../utils/personRef';
 import type { EvaluationLevel, Project, UpdateProjectRequest } from '../../schemas/project.schema';
 import styles from './EditProjectModal.module.scss';
 
@@ -39,6 +40,16 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
     volume != null && nature != null && time != null
       ? computeProjectLevel(volume, nature, time)
       : (project?.projectLevel as EvaluationLevel | undefined);
+
+  const departmentHeadSelectOptions = useMemo(
+    () => mergePersonOptions(headOptions, project?.departmentHead),
+    [headOptions, project?.departmentHead],
+  );
+
+  const pmSelectOptions = useMemo(
+    () => mergePersonOptions(pmOptions, project?.pm),
+    [pmOptions, project?.pm],
+  );
 
   useEffect(() => {
     if (project && open) {
@@ -69,23 +80,27 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
 
   const handleDepartmentHeadSelect = (code: string | undefined) => {
     if (!code) {
-      form.setFieldValue('departmentHead', { code: '', name: '' });
+      form.setFieldValue('departmentHead', { code: '', name: '', userId: undefined });
       return;
     }
-    const head = headOptions.find((entry) => entry.code === code);
+    const head = departmentHeadSelectOptions.find((entry) => entry.code === code);
     if (head) {
-      form.setFieldValue('departmentHead', { code: head.code, name: head.name });
+      form.setFieldValue('departmentHead', {
+        code: head.code,
+        name: head.name,
+        userId: head.userId,
+      });
     }
   };
 
   const handlePmSelect = (code: string | undefined) => {
     if (!code) {
-      form.setFieldValue('pm', { code: '', name: '' });
+      form.setFieldValue('pm', { code: '', name: '', userId: undefined });
       return;
     }
-    const pm = pmOptions.find((entry) => entry.code === code);
+    const pm = pmSelectOptions.find((entry) => entry.code === code);
     if (pm) {
-      form.setFieldValue('pm', { code: pm.code, name: pm.name });
+      form.setFieldValue('pm', { code: pm.code, name: pm.name, userId: pm.userId });
     }
   };
 
@@ -98,13 +113,17 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
       startDate: values.startDate.toISOString(),
       endDate: values.endDate.toISOString(),
       department: values.department,
-      departmentHead: values.departmentHead,
+      departmentHead: resolvePersonRef(
+        values.departmentHead?.code,
+        departmentHeadSelectOptions,
+        values.departmentHead ?? project.departmentHead,
+      ),
       brief: values.brief ?? '',
       volume: values.volume,
       nature: values.nature,
       time: values.time,
       additionalFactors: values.additionalFactors ?? '',
-      pm: values.pm,
+      pm: resolvePersonRef(values.pm?.code, pmSelectOptions, values.pm ?? project.pm),
       evaluation: values.evaluation ?? '',
       note: values.note ?? '',
       status: values.status,
@@ -208,7 +227,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
             optionFilterProp="label"
             placeholder="Select department head"
             onChange={handleDepartmentHeadSelect}
-            options={headOptions.map((head) => ({
+            options={departmentHeadSelectOptions.map((head) => ({
               value: head.code,
               label: head.name,
             }))}
@@ -257,7 +276,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
             optionFilterProp="label"
             placeholder="Select PM"
             onChange={handlePmSelect}
-            options={pmOptions.map((pm) => ({
+            options={pmSelectOptions.map((pm) => ({
               value: pm.code,
               label: pm.name,
             }))}

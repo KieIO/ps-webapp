@@ -1,0 +1,86 @@
+@use '@/styles/variables' as *;
+
+.strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $space-4;
+  margin-bottom: $space-2;
+
+  @media (width <= 960px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (width <= 560px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  padding: $space-4 $space-5;
+  border-radius: $radius-card;
+  border: 1px solid var(--color-border);
+  background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+  margin-bottom: $space-2;
+}
+
+.cardLabel {
+  font-size: $font-size-caption;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $color-text-muted;
+}
+
+.cardIcon {
+  opacity: 0.7;
+}
+
+.cardValue {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: $color-text;
+}
+
+.cardHint {
+  margin-top: $space-1;
+  font-size: $font-size-caption;
+  color: $color-text-muted;
+  line-height: 1.4;
+}
+
+.toneBlue {
+  .cardIcon,
+  .cardValue {
+    color: #2563eb;
+  }
+}
+
+.toneAmber {
+  .cardIcon,
+  .cardValue {
+    color: #d97706;
+  }
+}
+
+.toneTeal {
+  .cardIcon,
+  .cardValue {
+    color: #0f766e;
+  }
+}
+
+.toneSlate {
+  .cardIcon,
+  .cardValue {
+    color: #475569;
+  }
+}

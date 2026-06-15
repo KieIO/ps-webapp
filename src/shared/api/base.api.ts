@@ -20,14 +20,29 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const body = response.data;
+    if (
+      body &&
+      typeof body === 'object' &&
+      'data' in body &&
+      !Array.isArray(body) &&
+      body.data !== undefined
+    ) {
+      response.data = body.data;
+    }
+    return response;
+  },
   (error: unknown) => {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
-      if (status === 401) {
+      const requestUrl = error.config?.url ?? '';
+      const isLoginRequest = requestUrl.includes('/auth/login');
+
+      if (status === 401 && !isLoginRequest) {
         store.dispatch(logout());
         window.location.replace(ROUTES.LOGIN);
-      } else if (status === 403) {
+      } else if (status === 403 && !isLoginRequest) {
         window.location.replace(ROUTES.FORBIDDEN);
       }
     }

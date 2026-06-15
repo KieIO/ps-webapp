@@ -3,6 +3,7 @@
 Start here for backend work on the Pokeslide Internal Platform frontend. Each feature has its own spec; this page is the table of contents only.
 
 **Base URL:** `VITE_API_URL` (default `https://api.pokeslide-internal.com/v1`)  
+**Paths:** Relative to that base — e.g. `/users`, `/job-titles`, `/rbac/permissions`. No extra `/api` segment in resource paths (the host + `/v1` already identify the API).  
 **Auth:** JWT on all endpoints unless noted otherwise  
 **Dates:** ISO 8601 in API responses; UI displays `DD/MM/YYYY`
 
@@ -20,6 +21,7 @@ Start here for backend work on the Pokeslide Internal Platform frontend. Each fe
 | **Titles** | `/settings/titles` | Job titles, levels, groups — list + create | UI live; mock data in dev | [TITLES_BACKEND_TODO.md](./TITLES_BACKEND_TODO.md) |
 | **Employee capacity** | `/settings/employee-capacity-formula` | Per-title capacity/ratio (same `JobTitle` entity) | UI live; mock data in dev | [TITLES_BACKEND_TODO.md](./TITLES_BACKEND_TODO.md) |
 | **Task scores** | `/settings/task-score` | Task type score catalog — list, create, edit | UI live; mock data in dev | [TASK_SCORES_BACKEND_TODO.md](./TASK_SCORES_BACKEND_TODO.md) |
+| **Leave** | `/users/:id`, `/` (Tracker banner) | Schedule leave, reassign tasks, reactivate | Implemented | [LEAVE_BACKEND_TODO.md](./LEAVE_BACKEND_TODO.md) |
 ### Tracker vs Projects (do not merge)
 
 Both surfaces show projects in a table, but the backend APIs serve **different purposes** and return **different shapes**:
@@ -47,10 +49,10 @@ Implement as **separate endpoints**. The tracker may query the same underlying p
 
 | Method | Path | Purpose | Auth / permission |
 |--------|------|---------|-------------------|
-| `GET` | `/api/rbac/permissions` | Load permission config | Admin |
-| `PUT` | `/api/rbac/permissions` | Save permission config | Admin |
-| `POST` | `/api/rbac/permissions/reset` | Reset permissions to defaults | Admin |
-| `GET` | `/api/rbac/audit` | Paginated RBAC audit log | Admin |
+| `GET` | `/rbac/permissions` | Load permission config | Admin |
+| `PUT` | `/rbac/permissions` | Save permission config | Admin |
+| `POST` | `/rbac/permissions/reset` | Reset permissions to defaults | Admin |
+| `GET` | `/rbac/audit` | Paginated RBAC audit log | Admin |
 | `GET` | `/tracker` | Calendar tracker (projects + off-days) | `VIEW_CAPACITY_FULL` |
 | `GET` | `/projects` | List project records (`ProjectRecord` + optional list aggregates) | `MANAGE_PROJECTS` |
 | `GET` | `/projects/:id` | Get one project record | `MANAGE_PROJECTS` |
@@ -62,14 +64,17 @@ Implement as **separate endpoints**. The tracker may query the same underlying p
 | `GET` | `/projects/head-name-options` | Head name filter options for projects list | `MANAGE_PROJECTS` |
 | `GET` | `/projects/head-options` | Head code/name options for create/edit forms | `MANAGE_PROJECTS` |
 | `GET` | `/tasks/my` | List tasks for current assignee | Authenticated user |
-| `POST` | `/tasks/my` | Create task (assigned to current user) | Authenticated user |
+| `GET` | `/tasks/my/:id` | Get one task for detail page | Authenticated user |
+| `GET` | `/tasks/my/:id/history` | Audit-backed timeline for task detail History panel | Authenticated user |
+| `POST` | `/tasks/my` | Create task (`taskCategory`: `project` \| `non_project`; `staff` may be `[]`) | Authenticated user |
 | `PATCH` | `/tasks/my/:id` | Update own assigned task | Authenticated user |
 | `PATCH` | `/tasks/my/:id/status` | Update task staff status | Authenticated user |
 | `PATCH` | `/tasks/my/:id/pm-evaluation` | PM evaluation (completion, evaluation, note) | `EVALUATE_TASK` |
 | `DELETE` | `/tasks/my/:id` | Delete task | Authenticated user |
 | `GET` | `/tasks/my/project-options` | Project filter options for my tasks | Authenticated user |
 | `GET` | `/tasks/my/pm-options` | PM options for create-task form | Authenticated user |
-| `GET` | `/tasks/my/staff-options` | Staff assignee options for create-task form | Authenticated user |
+| `GET` | `/tasks/my/staff-options` | Staff assignee options (non-project create form) | Authenticated user |
+| `GET` | `/tasks/my/project-staff-options` | Staff on a project (project create form) | Authenticated user |
 | `GET` | `/users` | List users (search, role, status filters) | `MANAGE_USERS` |
 | `GET` | `/users/:id` | Get one user record | `MANAGE_USERS` |
 | `POST` | `/users` | Invite / create user (`status` → `invited`) | `MANAGE_USERS` |
@@ -89,7 +94,7 @@ Implement as **separate endpoints**. The tracker may query the same underlying p
 | `POST` | `/task-scores` | Create task score row | `MANAGE_USERS` |
 | `PATCH` | `/task-scores/:id` | Update task score row | `MANAGE_USERS` |
 
-> Path prefixes may differ between features during early development. Each spec doc is the source of truth for that feature.
+> Each spec doc is the source of truth for its feature. All paths are relative to `VITE_API_URL` (no `/api` resource prefix).
 
 ---
 

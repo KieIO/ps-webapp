@@ -1,0 +1,33 @@
+.withAvatar {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 100%;
+  text-align: left;
+}
+
+.name {
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.link {
+  height: auto;
+  padding: 0;
+  line-height: inherit;
+  white-space: normal;
+  text-align: left;
+  max-width: 100%;
+}
+
+.linkWithAvatar {
+  composes: link;
+}
+
+.avatar {
+  flex-shrink: 0;
+  margin-top: 1px;
+  background: var(--color-primary);
+  font-size: 11px;
+}

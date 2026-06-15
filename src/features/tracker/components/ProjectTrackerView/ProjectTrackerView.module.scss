@@ -22,14 +22,15 @@ $row-alt: #f9fafb;
 .root {
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-height: 0;
 }
 
 .board {
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-height: 520px;
-  max-height: calc(100vh - 200px);
   overflow: hidden;
   background: #fff;
 }
@@ -101,27 +102,96 @@ $row-alt: #f9fafb;
   letter-spacing: 0.02em;
 }
 
+.legendGroups {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.legendGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendGroupLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.legendDivider {
+  width: 1px;
+  height: 18px;
+  background: #e5e7eb;
+  flex-shrink: 0;
+}
+
 .legend {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 4px;
 }
 
 .legendItem {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  color: #6b7280;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #374151;
   white-space: nowrap;
 }
 
 .legendDot {
-  width: 7px;
-  height: 7px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.legendDot_red {
+  background: #dc2626;
+}
+
+.legendDot_orange {
+  background: #ea580c;
+}
+
+.legendDot_green {
+  background: #16a34a;
+}
+
+.legendDot_gray {
+  background: #6366f1;
+}
+
+.legendBar {
+  width: 14px;
+  height: 6px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legendBar_active {
+  background: $status-in-progress-text;
+}
+
+.legendBar_pending {
+  background: $status-pending-bg;
+  border: 1px solid $status-pending-text;
+}
+
+.legendBar_completed {
+  background: $status-completed-text;
+}
+
+.legendBar_decline {
+  background: $status-overdue-text;
 }
 
 .exportBtn {
@@ -154,6 +224,7 @@ $row-alt: #f9fafb;
   min-width: 380px;
   flex-shrink: 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 .leftPanelContent {
@@ -181,7 +252,7 @@ $row-alt: #f9fafb;
 
 .leftHeaderName {
   width: 192px;
-  padding-left: 18px;
+  padding-left: 8px;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -232,12 +303,12 @@ $row-alt: #f9fafb;
 
 .projectRow {
   display: flex;
-  align-items: center;
-  height: 48px;
+  align-items: flex-start;
   min-height: 48px;
   border-bottom: 1px solid $row-border;
-  border-left: 4px solid transparent;
+  border-left: 5px solid transparent;
   flex-shrink: 0;
+  overflow: visible;
 
   &:nth-child(odd) {
     background: #fff;
@@ -259,18 +330,36 @@ $row-alt: #f9fafb;
 
 .nameCell {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 5px;
   width: 192px;
-  padding: 0 6px 0 8px;
+  padding: 6px 6px 6px 8px;
   min-width: 0;
+  text-align: left;
 }
 
 .urgencyDot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.urgencyDot_red {
+  background: #dc2626;
+}
+
+.urgencyDot_orange {
+  background: #ea580c;
+}
+
+.urgencyDot_green {
+  background: #16a34a;
+}
+
+.urgencyDot_gray {
+  background: #6366f1;
 }
 
 .rowIndex {
@@ -279,37 +368,46 @@ $row-alt: #f9fafb;
   color: #cbd5e1;
 }
 
+.projectNameLink {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+}
+
 .projectName {
   font-size: 12px;
   font-weight: 600;
   color: #111827;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .teamCell {
   width: 122px;
-  padding: 0 6px 0 10px;
+  padding: 6px 6px 6px 10px;
   min-width: 0;
   line-height: 1.25;
+  text-align: left;
+  overflow: visible;
 }
 
 .pmName {
   font-size: 11.5px;
   font-weight: 600;
   color: #374151;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .teamNames {
   font-size: 10.5px;
   color: #9ca3af;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  margin-top: 2px;
 }
 
 .slidesCell {
@@ -456,6 +554,7 @@ $row-alt: #f9fafb;
 
 .calendarBody {
   position: relative;
+  overflow: hidden;
 }
 
 .todayLine {
@@ -528,18 +627,8 @@ $row-alt: #f9fafb;
   }
 }
 
-.blockBand0 {
-  top: 5px;
-  height: 20px;
-}
-
-.blockBand1 {
-  top: 27px;
-  height: 15px;
-}
-
 .active {
-  background: $teal;
+  background: $status-in-progress-text;
 
   span {
     color: #fff;
@@ -547,19 +636,27 @@ $row-alt: #f9fafb;
 }
 
 .pending {
-  background: $yellow;
-  border: 1px solid $yellow-border;
+  background: $status-pending-bg;
+  border: 1px solid $status-pending-text;
 
   span {
-    color: $yellow-text;
+    color: $status-pending-text;
   }
 }
 
 .completed {
-  background: $done;
+  background: $status-completed-text;
 
   span {
-    color: $done-text;
+    color: #fff;
     text-decoration: line-through;
+  }
+}
+
+.decline {
+  background: $status-overdue-text;
+
+  span {
+    color: #fff;
   }
 }

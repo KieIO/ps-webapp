@@ -18,6 +18,7 @@ export const useAssignMyTask = () => {
       myTaskApi.assign(id, payload, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'my', 'history'] });
       message.success('Task assigned successfully');
     },
     onError: (error: Error) => {

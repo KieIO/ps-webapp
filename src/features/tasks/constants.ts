@@ -4,27 +4,20 @@ import {
   type ClassificationLevel,
   type TaskConfirmationStatus,
 } from './schemas/task.schema';
-import type { StatusPillVariant } from '@/shared/ui/StatusPill/StatusPill';
+import { PROJECT_NAME_COLUMN_LABEL } from '@/features/projects/constants';
+
+import {
+  CONFIRMATION_LABELS,
+  CONFIRMATION_VARIANT,
+} from '@/shared/constants/taskConfirmation';
+
+export { CONFIRMATION_LABELS, CONFIRMATION_VARIANT };
 
 export const CLASSIFICATION_LEVEL_LABELS: Record<ClassificationLevel, string> = {
   1: 'Level 1',
   2: 'Level 2',
   3: 'Level 3',
   4: 'Level 4',
-};
-
-export const CONFIRMATION_LABELS: Record<TaskConfirmationStatus, string> = {
-  not_updated: 'Not Updated',
-  finished: 'Finished',
-  confirmed: 'Confirmed',
-  decline: 'Decline',
-};
-
-export const CONFIRMATION_VARIANT: Record<TaskConfirmationStatus, StatusPillVariant> = {
-  not_updated: 'pending',
-  finished: 'completed',
-  confirmed: 'in-progress',
-  decline: 'overdue',
 };
 
 export const CONFIRMATION_OPTIONS = TASK_CONFIRMATION_STATUSES.map((value) => ({
@@ -90,13 +83,13 @@ export type MyTaskColumnKey =
   | 'finishedDate';
 
 export const MY_TASK_COLUMN_HEADERS: Record<MyTaskColumnKey, string> = {
-  projectName: 'Projects Name',
-  projectManager: 'Project Manager',
-  taskName: 'Task Type',
+  projectName: PROJECT_NAME_COLUMN_LABEL,
+  projectManager: 'PM Name',
+  taskName: 'Task Name',
   level: 'Level',
   quantity: 'Quantity',
   date: 'Date',
-  description: 'Task Name',
+  description: 'Description',
   staffName: 'Staff Name',
   designThinking: 'Tư Duy Thiết Kế',
   technical: 'Kỹ Thuật',
@@ -120,10 +113,10 @@ export const MY_TASK_COLUMN_HEADERS: Record<MyTaskColumnKey, string> = {
 
 /** Department Head — column labels on the task list (and shared labels in EditHeadTaskModal). */
 export const MY_TASK_HEAD_COLUMN_HEADERS: Partial<Record<MyTaskColumnKey, string>> = {
-  projectName: 'Projects Name',
-  projectManager: 'Project Manager',
-  taskName: 'Task Type',
-  description: 'Task Name',
+  projectName: PROJECT_NAME_COLUMN_LABEL,
+  projectManager: 'PM Name',
+  taskName: 'Task Name',
+  description: 'Description',
   nature: 'Độ Khó',
   volume: 'Khối Lượng',
   projectTime: 'Thời Gian',
@@ -145,9 +138,9 @@ export const MY_TASK_HEAD_COLUMN_HEADERS: Partial<Record<MyTaskColumnKey, string
 export const MY_TASK_EMPLOYEE_COLUMN_KEYS: MyTaskColumnKey[] = [
   'projectName',
   'projectManager',
-  'description',
   'taskName',
   'quantity',
+  'description',
   'date',
   'confirmation',
   'staffNote',
@@ -157,10 +150,10 @@ export const MY_TASK_EMPLOYEE_COLUMN_KEYS: MyTaskColumnKey[] = [
 export const MY_TASK_PM_COLUMN_KEYS: MyTaskColumnKey[] = [
   'projectName',
   'projectManager',
-  'description',
   'taskName',
   'level',
   'quantity',
+  'description',
   'date',
   'staffName',
   'designThinking',
@@ -180,10 +173,10 @@ export const MY_TASK_PM_COLUMN_KEYS: MyTaskColumnKey[] = [
 export const MY_TASK_HEAD_COLUMN_KEYS: MyTaskColumnKey[] = [
   'projectName',
   'projectManager',
-  'description',
   'taskName',
   'level',
   'quantity',
+  'description',
   'date',
   'staffName',
   'nature',

@@ -3,7 +3,10 @@ export const ROUTES = {
   LOGIN: '/login',
 
   // All roles
+  /** Home route — currently Project Tracker */
   DASHBOARD: '/',
+  /** Hidden temporarily — dashboard page kept for later use */
+  DASHBOARD_LEGACY: '/dashboard',
   MY_TASKS: '/tasks/project',
   PROJECT_TASKS: '/tasks/project',
   NON_PROJECT_TASKS: '/tasks/non-project',
@@ -28,8 +31,11 @@ export const ROUTES = {
 
   // Head / Admin / HR
   CAPACITY: '/capacity',
+  CAPACITY_MONTHLY: '/capacity/monthly',
   CAPACITY_FORECAST: '/capacity/forecast',
-  PROJECT_TRACKER: '/tracker',
+  PROJECT_TRACKER: '/',
+  /** @deprecated Use `PROJECT_TRACKER` — kept for redirects from old bookmarks */
+  PROJECT_TRACKER_LEGACY: '/tracker',
   /** @deprecated Use `PROJECT_TRACKER` — kept for redirects from old bookmarks */
   PROJECT_TRACKER_LEGACY_V2: '/v2/tracker',
   PERFORMANCE: '/performance',
@@ -45,6 +51,7 @@ export const ROUTES = {
   TITLE_MANAGEMENT: '/settings/titles',
   EMPLOYEE_CAPACITY_FORMULA: '/settings/employee-capacity-formula',
   TASK_SCORE: '/settings/task-score',
+  SETTINGS_GENERAL: '/settings/general',
 
   // System
   FORBIDDEN: '/403',

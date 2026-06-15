@@ -1,0 +1,28 @@
+@use '@/styles/variables' as *;
+
+.modeField,
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.label {
+  font-size: $font-size-caption;
+  font-weight: 600;
+  color: $color-text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.monthPicker {
+  width: 200px;
+}
+
+.rangePicker {
+  width: 280px;
+}
+
+.datePicker {
+  width: 160px;
+}

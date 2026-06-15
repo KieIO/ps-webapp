@@ -1,15 +1,3 @@
-.staffCell {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.avatar {
-  flex-shrink: 0;
-  background: var(--color-primary);
-  font-size: 11px;
-}
-
 .empty {
   color: var(--color-text-muted);
 }

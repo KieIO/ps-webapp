@@ -1,0 +1,73 @@
+@use '@/styles/variables' as *;
+
+.chartWrap {
+  width: 100%;
+  min-height: 320px;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  color: $color-text-muted;
+  font-size: $font-size-base;
+}
+
+.tooltip {
+  min-width: 168px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: $radius-card;
+  background: #fff;
+  box-shadow: 0 4px 16px rgb(15 23 42 / 10%);
+}
+
+.tooltipTitle {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.tooltipList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tooltipItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.tooltipLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: $color-text-muted;
+}
+
+.tooltipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tooltipValue {
+  font-weight: 600;
+  color: $color-text;
+}
+
+.legendNote {
+  margin: $space-2 0 0;
+  font-size: $font-size-caption;
+  color: $color-text-muted;
+}

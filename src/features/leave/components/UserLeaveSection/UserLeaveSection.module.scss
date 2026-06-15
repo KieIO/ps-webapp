@@ -1,0 +1,110 @@
+.section {
+  margin-top: 24px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.currentLeave {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.currentHeader {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.calendarIcon {
+  color: #d48806;
+  font-size: 18px;
+  margin-top: 2px;
+}
+
+.currentTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.reason {
+  margin: 8px 0 0;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.pendingNote {
+  margin: 8px 0 0;
+  color: #d48806;
+  font-size: 13px;
+}
+
+.reactivateBtn {
+  align-self: flex-start;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.noLeave {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  p {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.65);
+  }
+}
+
+.noLeaveText {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.scheduleLink {
+  padding-left: 0;
+  margin-top: 4px;
+}
+
+.history {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ps-border-subtle, #f0f0f0);
+}
+
+.historyTitle {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.historyList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}

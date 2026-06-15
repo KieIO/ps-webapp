@@ -45,14 +45,14 @@ export function ProjectsList() {
   const handleExport = () => {
     const items = data?.items ?? [];
     if (items.length === 0) {
-      message.warning('No projects to export.');
+      message.warning('Không có dự án để xuất.');
       return;
     }
 
     setExporting(true);
     try {
       exportProjectsToCsv(items);
-      message.success('Export downloaded.');
+      message.success('Đã tải file xuất.');
     } finally {
       setExporting(false);
     }

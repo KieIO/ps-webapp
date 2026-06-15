@@ -17,7 +17,6 @@ import { EvaluationLevelBadge } from '@/features/projects/components/EvaluationL
 import { ProjectStatusBadge } from '@/features/projects/components/ProjectStatusBadge/ProjectStatusBadge';
 import type { EvaluationLevel } from '@/features/projects/schemas/project.schema';
 import { TaskConfirmationBadge } from '../TaskConfirmationBadge/TaskConfirmationBadge';
-import { TaskNameBadge } from '../TaskNameBadge/TaskNameBadge';
 import { MY_TASKS_PAGE_SIZE, MY_TASKS_PAGE_SIZE_OPTIONS } from '../../constants';
 import { useMyTaskColumns } from '../../hooks/useMyTaskColumns';
 import type { ClassificationLevel, MyTask } from '../../schemas/task.schema';
@@ -26,14 +25,15 @@ import {
   getMyTaskActionsWidth,
   getMyTaskTableScrollWidth,
 } from '../../utils/myTaskColumns';
-import { formatTaskStaffNames } from '../../utils/staff';
+import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
 import {
   getMyTaskCompletionProgressStatus,
   isMyTaskDateAtRisk,
 } from '../../utils/taskDeadline';
 import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/CompletionProgressCell';
 import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
-import { PersonAvatarCell } from '@/shared/ui/PersonAvatarCell/PersonAvatarCell';
+import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
+import { UserNameLink } from '@/shared/ui/UserNameLink/UserNameLink';
 import styles from './MyTaskTable.module.scss';
 
 interface MyTaskTableProps {
@@ -54,12 +54,32 @@ const renderLevel = (level: ClassificationLevel) => (
   <ClassificationLevelBadge level={level} />
 );
 
+const renderWrapText = (value: string) => {
+  if (!value) return <span className={styles.empty}>—</span>;
+  return <span className={styles.wrapText}>{value}</span>;
+};
+
 const renderText = (value: string) => {
   if (!value) return <span className={styles.empty}>—</span>;
   return (
     <Tooltip title={value}>
       <span className={styles.truncate}>{value}</span>
     </Tooltip>
+  );
+};
+
+const renderTaskDetailLink = (label: string, record: MyTask) => {
+  if (!label) return <span className={styles.empty}>—</span>;
+  return (
+    <Link
+      to={buildMyTaskDetailPath(record.id)}
+      state={{ from: record.taskCategory }}
+      className={styles.taskNameLink}
+    >
+      <Tooltip title={label}>
+        <span className={styles.truncate}>{label}</span>
+      </Tooltip>
+    </Link>
   );
 };
 
@@ -109,31 +129,27 @@ export function MyTaskTable({
       renderLevel,
       renderEvaluationLevel,
       renderText,
-      renderTaskName: (name: string) => <TaskNameBadge name={name} />,
+      renderTaskName: (name, record) => renderTaskDetailLink(name, record),
       renderConfirmation: (status) => <TaskConfirmationBadge status={status} />,
       renderProjectStatus: (status) => <ProjectStatusBadge status={status} />,
-      renderProjectManager: (record) => (
-        <PersonAvatarCell name={record.projectManager.name} />
+      renderProjectName: (record) => (
+        <ProjectNameLink
+          name={record.projectName}
+          projectId={record.projectId}
+          emptyClassName={styles.empty}
+        />
       ),
-      renderStaffName: (record) => formatTaskStaffNames(record.staff),
+      renderProjectManager: (record) => (
+        <UserNameLink
+          name={record.projectManager.name}
+          userId={record.projectManager.userId}
+          showAvatar
+        />
+      ),
+      renderStaffName: (record) => <TaskStaffNameCell staff={record.staff} />,
       renderDate,
       renderCompletion,
-      renderDescription: (record) => {
-        if (!record.description) {
-          return <span className={styles.empty}>—</span>;
-        }
-        return (
-          <Link
-            to={buildMyTaskDetailPath(record.id)}
-            state={{ from: record.taskCategory }}
-            className={styles.taskNameLink}
-          >
-            <Tooltip title={record.description}>
-              <span className={styles.truncate}>{record.description}</span>
-            </Tooltip>
-          </Link>
-        );
-      },
+      renderDescription: (record) => renderWrapText(record.description),
     });
 
     return [
@@ -237,7 +253,7 @@ export function MyTaskTable({
         dataSource={tasks}
         scroll={{ x: scrollX }}
         pagination={{
-          pageSize: MY_TASKS_PAGE_SIZE,
+          defaultPageSize: MY_TASKS_PAGE_SIZE,
           total,
           showSizeChanger: true,
           pageSizeOptions: [...MY_TASKS_PAGE_SIZE_OPTIONS],

@@ -65,6 +65,44 @@
   overflow-y: auto;
 }
 
+.menuLabel {
+  display: inline-block;
+  width: 100%;
+}
+
+.shortcutTooltip {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shortcutKeys {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shortcutThen {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.shortcutKey {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 1px 6px;
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 4px;
+  background: rgb(255 255 255 / 12%);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: inherit;
+}
+
 .toggle {
   display: flex;
   align-items: center;

@@ -6,8 +6,17 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
-.header {
+.topRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
   margin-bottom: 20px;
+}
+
+.header {
+  flex: 1;
+  min-width: 0;
 }
 
 .taskId {
@@ -53,18 +62,6 @@
   margin: 0;
 }
 
-.assignee {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.avatar {
-  flex-shrink: 0;
-  background: var(--color-primary);
-  font-size: 11px;
-}
-
 .deadline {
   color: var(--color-danger, #cf1322);
   font-weight: 600;
@@ -77,6 +74,10 @@
 }
 
 @media (max-width: 640px) {
+  .topRow {
+    flex-direction: column;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }

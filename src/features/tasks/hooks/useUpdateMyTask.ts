@@ -18,6 +18,7 @@ export const useUpdateMyTask = () => {
       myTaskApi.update(id, payload, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'my', 'history'] });
       message.success('Task updated successfully');
     },
     onError: (error: Error) => {

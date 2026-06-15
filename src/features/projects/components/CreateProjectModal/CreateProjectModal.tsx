@@ -11,6 +11,7 @@ import {
 import { useCreateProject } from '../../hooks/useCreateProject';
 import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProjectList';
 import { computeProjectLevel } from '../../utils/projectLevel';
+import { resolvePersonRef } from '../../utils/personRef';
 import type { CreateProjectRequest, EvaluationLevel } from '../../schemas/project.schema';
 import styles from '../EditProjectModal/EditProjectModal.module.scss';
 
@@ -75,7 +76,11 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
     }
     const head = headOptions.find((entry) => entry.code === code);
     if (head) {
-      form.setFieldValue('departmentHead', { code: head.code, name: head.name });
+      form.setFieldValue('departmentHead', {
+        code: head.code,
+        name: head.name,
+        userId: head.userId,
+      });
     }
   };
 
@@ -86,7 +91,7 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
     }
     const pm = pmOptions.find((entry) => entry.code === code);
     if (pm) {
-      form.setFieldValue('pm', { code: pm.code, name: pm.name });
+      form.setFieldValue('pm', { code: pm.code, name: pm.name, userId: pm.userId });
     }
   };
 
@@ -97,13 +102,13 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
       startDate: values.startDate.toISOString(),
       endDate: values.endDate.toISOString(),
       department: values.department,
-      departmentHead: values.departmentHead,
+      departmentHead: resolvePersonRef(values.departmentHead?.code, headOptions, values.departmentHead),
       brief: values.brief ?? '',
       volume: values.volume,
       nature: values.nature,
       time: values.time,
       additionalFactors: values.additionalFactors ?? '',
-      pm: values.pm,
+      pm: resolvePersonRef(values.pm?.code, pmOptions, values.pm),
       evaluation: values.evaluation ?? '',
       note: values.note ?? '',
       status: values.status,

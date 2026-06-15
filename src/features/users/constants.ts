@@ -5,15 +5,28 @@ export { ROLE_LABELS };
 
 export const STATUS_LABELS = {
   active: 'Active',
+  on_leave: 'On leave',
   inactive: 'Inactive',
   invited: 'Invited',
 } as const;
 
-export const DEPARTMENT_LABELS = {
-  project: 'Project',
-  creative: 'Creative',
-  admin: 'Admin / HR',
-} as const;
+/** Short explanations for Status column tooltip on /users. */
+export const STATUS_DESCRIPTIONS = {
+  active: 'Đang làm việc, có thể gán task',
+  on_leave: 'Đang nghỉ phép, không gán task — Admin activate lại sau khi hết nghỉ',
+  inactive: 'Tài khoản ngưng hoạt động',
+  invited: 'Đã mời, chưa kích hoạt',
+} as const satisfies Record<UserStatus, string>;
+
+export const USER_DEPARTMENTS = ['creative_hcm', 'project', 'creative_ag'] as const;
+
+export type UserDepartment = (typeof USER_DEPARTMENTS)[number];
+
+export const DEPARTMENT_LABELS: Record<UserDepartment, string> = {
+  creative_hcm: 'CREATIVE HCM',
+  project: 'PROJECT',
+  creative_ag: 'CREATIVE AG',
+};
 
 export const ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({
   value: value as Role,
@@ -29,3 +42,6 @@ export const DEPARTMENT_OPTIONS = Object.entries(DEPARTMENT_LABELS).map(([value,
   value: value as keyof typeof DEPARTMENT_LABELS,
   label,
 }));
+
+/** Default initial password when admin leaves the invite password field blank. */
+export const DEFAULT_INVITE_PASSWORD = 'ps123';

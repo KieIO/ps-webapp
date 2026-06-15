@@ -4,5 +4,6 @@ import type { QueryClient } from '@tanstack/react-query';
 export const invalidateProjectAndTaskQueries = (queryClient: QueryClient): void => {
   queryClient.invalidateQueries({ queryKey: ['projects'] });
   queryClient.invalidateQueries({ queryKey: ['tasks', 'my'] });
+  queryClient.invalidateQueries({ queryKey: ['tasks', 'my', 'history'] });
   queryClient.invalidateQueries({ queryKey: ['tasks', 'project'] });
 };

@@ -1,8 +1,9 @@
-import { Avatar, Button } from 'antd';
-import { ArrowRightOutlined, EditOutlined } from '@ant-design/icons';
+import { Avatar, Button, Popconfirm } from 'antd';
+import { ArrowRightOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
 import { usePermission } from '@/shared/hooks/usePermission';
+import { UserNameLink } from '@/shared/ui/UserNameLink/UserNameLink';
 import { EvaluationLevelBadge } from '../EvaluationLevelBadge/EvaluationLevelBadge';
 import { ProjectStatusBadge } from '../ProjectStatusBadge/ProjectStatusBadge';
 import { getInitials } from '@/shared/utils/person';
@@ -12,9 +13,16 @@ import styles from './ProjectSummaryCard.module.scss';
 interface ProjectSummaryCardProps {
   project: Project;
   onEdit?: () => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
 }
 
-export function ProjectSummaryCard({ project, onEdit }: ProjectSummaryCardProps) {
+export function ProjectSummaryCard({
+  project,
+  onEdit,
+  onDelete,
+  isDeleting = false,
+}: ProjectSummaryCardProps) {
   const { can } = usePermission();
   const canEdit = can('EDIT_PROJECT');
 
@@ -64,7 +72,12 @@ export function ProjectSummaryCard({ project, onEdit }: ProjectSummaryCardProps)
             </div>
             <div className={styles.metaItem}>
               <dt className={styles.metaLabel}>Dept. Head</dt>
-              <dd className={styles.metaValue}>{project.departmentHead.name}</dd>
+              <dd className={styles.metaValue}>
+                <UserNameLink
+                  name={project.departmentHead.name}
+                  userId={project.departmentHead.userId}
+                />
+              </dd>
             </div>
             <div className={styles.metaItem}>
               <dt className={styles.metaLabel}>Status</dt>
@@ -81,6 +94,20 @@ export function ProjectSummaryCard({ project, onEdit }: ProjectSummaryCardProps)
               Edit
             </Button>
           )}
+          {onDelete ? (
+            <Popconfirm
+              title="Xóa dự án này?"
+              description="Hành động này không thể hoàn tác."
+              okText="Xóa"
+              okButtonProps={{ danger: true }}
+              cancelText="Hủy"
+              onConfirm={onDelete}
+            >
+              <Button danger icon={<DeleteOutlined />} loading={isDeleting}>
+                Delete
+              </Button>
+            </Popconfirm>
+          ) : null}
           <Button icon={<ArrowRightOutlined />} disabled title="Coming soon">
             Handover
           </Button>

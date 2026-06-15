@@ -3,7 +3,7 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
 import { STATUS_LABELS } from '@/features/projects/constants';
-import type { EvaluationLevel, ProjectStatus } from '@/features/projects/schemas/project.schema';
+import { PROJECT_STATUSES, type EvaluationLevel, type ProjectStatus } from '@/features/projects/schemas/project.schema';
 import { ROLES, type Role } from '@/config/permissions';
 import {
   MY_TASK_ADMIN_COLUMN_KEYS,
@@ -17,8 +17,124 @@ import {
   type MyTaskColumnKey,
 } from '../constants';
 import type { ClassificationLevel, MyTask } from '../schemas/task.schema';
+import { TASK_CONFIRMATION_STATUSES } from '../schemas/task.schema';
 import { resolveProjectContextFromTask } from './taskProjectContext';
 import { formatTaskStaffNames } from './staff';
+
+const compareText = (a: string, b: string) => a.localeCompare(b, 'vi');
+
+const compareNumber = (a: number, b: number) => a - b;
+
+const compareOptionalNumber = (a?: number | null, b?: number | null) =>
+  (a ?? -1) - (b ?? -1);
+
+const compareDate = (a: string, b: string) => dayjs(a).unix() - dayjs(b).unix();
+
+const compareOptionalDate = (a?: string | null, b?: string | null) => {
+  if (!a && !b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
+  return compareDate(a, b);
+};
+
+const compareEnumIndex = <T extends string>(values: readonly T[], a: T, b: T) =>
+  values.indexOf(a) - values.indexOf(b);
+
+export const getMyTaskColumnSorter = (
+  key: MyTaskColumnKey,
+): ((a: MyTask, b: MyTask) => number) => {
+  switch (key) {
+    case 'projectName':
+      return (a, b) => compareText(a.projectName, b.projectName);
+    case 'projectManager':
+      return (a, b) => compareText(a.projectManager.name, b.projectManager.name);
+    case 'taskName':
+      return (a, b) => compareText(a.taskName, b.taskName);
+    case 'level':
+    case 'designThinking':
+    case 'technical':
+    case 'contentProcessing':
+      return (a, b) => compareNumber(a[key], b[key]);
+    case 'quantity':
+      return (a, b) => compareNumber(a.quantity, b.quantity);
+    case 'date':
+      return (a, b) => compareDate(a.date, b.date);
+    case 'startDate':
+      return (a, b) =>
+        compareOptionalDate(
+          resolveProjectContextFromTask(a).projectStartDate,
+          resolveProjectContextFromTask(b).projectStartDate,
+        );
+    case 'endDate':
+      return (a, b) =>
+        compareOptionalDate(
+          resolveProjectContextFromTask(a).projectEndDate,
+          resolveProjectContextFromTask(b).projectEndDate,
+        );
+    case 'finishedDate':
+      return (a, b) =>
+        compareOptionalDate(
+          resolveProjectContextFromTask(a).projectFinishedDate,
+          resolveProjectContextFromTask(b).projectFinishedDate,
+        );
+    case 'projectLevel':
+      return (a, b) =>
+        compareOptionalNumber(
+          resolveProjectContextFromTask(a).projectLevel,
+          resolveProjectContextFromTask(b).projectLevel,
+        );
+    case 'volume':
+      return (a, b) =>
+        compareOptionalNumber(
+          resolveProjectContextFromTask(a).projectVolume,
+          resolveProjectContextFromTask(b).projectVolume,
+        );
+    case 'nature':
+      return (a, b) =>
+        compareOptionalNumber(
+          resolveProjectContextFromTask(a).projectNature,
+          resolveProjectContextFromTask(b).projectNature,
+        );
+    case 'projectTime':
+      return (a, b) =>
+        compareOptionalNumber(
+          resolveProjectContextFromTask(a).projectTime,
+          resolveProjectContextFromTask(b).projectTime,
+        );
+    case 'brief':
+      return (a, b) =>
+        compareText(
+          resolveProjectContextFromTask(a).projectBrief,
+          resolveProjectContextFromTask(b).projectBrief,
+        );
+    case 'description':
+      return (a, b) => compareText(a.description, b.description);
+    case 'staffName':
+      return (a, b) => compareText(formatTaskStaffNames(a.staff), formatTaskStaffNames(b.staff));
+    case 'additionalFactors':
+      return (a, b) => compareText(a.additionalFactors, b.additionalFactors);
+    case 'completion':
+      return (a, b) => compareOptionalNumber(a.completionPercent, b.completionPercent);
+    case 'evaluation':
+      return (a, b) => compareText(a.pmEvaluation, b.pmEvaluation);
+    case 'pmNote':
+      return (a, b) => compareText(a.pmNote, b.pmNote);
+    case 'projectStatus':
+      return (a, b) =>
+        compareEnumIndex(
+          PROJECT_STATUSES,
+          resolveProjectContextFromTask(a).projectStatus,
+          resolveProjectContextFromTask(b).projectStatus,
+        );
+    case 'confirmation':
+      return (a, b) =>
+        compareEnumIndex(TASK_CONFIRMATION_STATUSES, a.staffConfirmation, b.staffConfirmation);
+    case 'staffNote':
+      return (a, b) => compareText(a.staffNote, b.staffNote);
+    default:
+      return () => 0;
+  }
+};
 
 export interface MyTaskColumnDef {
   key: MyTaskColumnKey;
@@ -230,9 +346,10 @@ export type MyTaskTableRenderers = {
   renderLevel: (level: ClassificationLevel) => ReactNode;
   renderEvaluationLevel: (level: EvaluationLevel) => ReactNode;
   renderText: (value: string) => ReactNode;
-  renderTaskName: (name: string) => ReactNode;
+  renderTaskName: (name: string, record: MyTask) => ReactNode;
   renderConfirmation: (status: MyTask['staffConfirmation']) => ReactNode;
   renderProjectStatus: (status: ProjectStatus) => ReactNode;
+  renderProjectName: (record: MyTask) => ReactNode;
   renderProjectManager: (record: MyTask) => ReactNode;
   renderStaffName: (record: MyTask) => ReactNode;
   renderDate: (value: string, record: MyTask, columnKey: MyTaskColumnKey) => ReactNode;
@@ -252,6 +369,7 @@ export const buildMyTaskDataColumns = (
       minWidth: def.width,
       fixed: def.fixed,
       align: def.align,
+      sorter: getMyTaskColumnSorter(def.key),
     };
 
     switch (def.key) {
@@ -259,8 +377,7 @@ export const buildMyTaskDataColumns = (
         return {
           ...base,
           dataIndex: 'projectName',
-          ellipsis: true,
-          render: renderers.renderText,
+          render: (_, record) => renderers.renderProjectName(record),
         };
       case 'projectManager':
         return {
@@ -271,7 +388,7 @@ export const buildMyTaskDataColumns = (
         return {
           ...base,
           dataIndex: 'taskName',
-          render: (name: string) => renderers.renderTaskName(name),
+          render: (name: string, record: MyTask) => renderers.renderTaskName(name, record),
         };
       case 'level':
         return {
@@ -341,7 +458,6 @@ export const buildMyTaskDataColumns = (
         return {
           ...base,
           dataIndex: 'description',
-          ellipsis: true,
           render: (_: string, record: MyTask) =>
             renderers.renderDescription
               ? renderers.renderDescription(record)

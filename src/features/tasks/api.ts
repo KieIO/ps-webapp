@@ -3,6 +3,8 @@
  * Backend contract: docs/MY_TASKS_BACKEND_TODO.md (index: docs/BACKEND_API.md)
  */
 import api from '@/shared/api/base.api';
+import { getApiErrorMessage } from '@/shared/api/apiError';
+import type { Role } from '@/config/permissions';
 import { env } from '@/config/env';
 import {
   mockAssignMyTask,
@@ -10,6 +12,7 @@ import {
   mockDeleteMyTask,
   mockGetAllTaskProjectOptions,
   mockGetMyTaskById,
+  mockGetMyTaskHistory,
   mockGetMyTaskList,
   mockGetMyTaskPmOptions,
   mockGetMyTaskProjectOptions,
@@ -27,6 +30,7 @@ import {
   MyTaskListFiltersSchema,
   MyTaskListResponseSchema,
   MyTaskSchema,
+  TaskHistoryListResponseSchema,
   UpdateMyTaskPmEvaluationRequestSchema,
   UpdateMyTaskRequestSchema,
   UpdateHeadMyTaskRequestSchema,
@@ -37,6 +41,7 @@ import {
   type TaskAssignee,
   type MyTaskListFilters,
   type MyTaskListResponse,
+  type TaskHistoryListResponse,
   type UpdateMyTaskPmEvaluationRequest,
   type UpdateMyTaskRequest,
   type UpdateHeadMyTaskRequest,
@@ -50,22 +55,26 @@ export interface MyTaskProjectOptionsParams {
   assigneeUserId?: string;
   taskCategory?: MyTask['taskCategory'];
   scope?: MyTaskProjectOptionsScope;
+  viewerRole?: Role;
 }
 
 export const myTaskApi = {
   getList: async (
     filters: MyTaskListFilters,
     assigneeUserId?: string,
+    viewerRole?: Role,
   ): Promise<MyTaskListResponse> => {
     const params = MyTaskListFiltersSchema.parse(filters);
 
     if (env.useTasksMock) {
       return MyTaskListResponseSchema.parse(
-        await mockGetMyTaskList(params, assigneeUserId),
+        await mockGetMyTaskList(params, assigneeUserId, viewerRole),
       );
     }
 
-    const response = await api.get('/tasks/my', { params });
+    const response = await api.get('/tasks/my', { params }).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Failed to load tasks'));
+    });
     return MyTaskListResponseSchema.parse(response.data);
   },
 
@@ -78,20 +87,34 @@ export const myTaskApi = {
     return MyTaskSchema.parse(response.data);
   },
 
+  getHistory: async (id: string): Promise<TaskHistoryListResponse> => {
+    if (env.useTasksMock) {
+      return TaskHistoryListResponseSchema.parse(await mockGetMyTaskHistory(id));
+    }
+
+    const response = await api.get(`/tasks/my/${id}/history`).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Failed to load task history'));
+    });
+    return TaskHistoryListResponseSchema.parse(response.data);
+  },
+
   getProjectOptions: async ({
     assigneeUserId,
     taskCategory,
     scope = 'assignee',
+    viewerRole,
   }: MyTaskProjectOptionsParams = {}): Promise<string[]> => {
     if (env.useTasksMock) {
       if (scope === 'all') {
         return mockGetAllTaskProjectOptions(taskCategory);
       }
-      return mockGetMyTaskProjectOptions(assigneeUserId, taskCategory);
+      return mockGetMyTaskProjectOptions(assigneeUserId, taskCategory, viewerRole);
     }
 
     const response = await api.get('/tasks/my/project-options', {
       params: { taskCategory, scope },
+    }).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Failed to load project options'));
     });
     return response.data as string[];
   },
@@ -99,13 +122,16 @@ export const myTaskApi = {
   getStaffNameOptions: async (
     assigneeUserId?: string,
     taskCategory?: MyTask['taskCategory'],
+    viewerRole?: Role,
   ): Promise<string[]> => {
     if (env.useTasksMock) {
-      return mockGetMyTaskStaffNameOptions(assigneeUserId, taskCategory);
+      return mockGetMyTaskStaffNameOptions(assigneeUserId, taskCategory, viewerRole);
     }
 
     const response = await api.get('/tasks/my/staff-name-options', {
       params: { taskCategory },
+    }).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Failed to load staff options'));
     });
     return response.data as string[];
   },

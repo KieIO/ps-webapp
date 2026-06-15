@@ -20,6 +20,7 @@ export type ProjectUrgency = (typeof PROJECT_URGENCIES)[number];
 export const PersonWithCodeSchema = z.object({
   code: z.string(),
   name: z.string(),
+  userId: z.string().optional(),
 });
 
 /** Core project record from `GET /projects` — no task-derived aggregates. */

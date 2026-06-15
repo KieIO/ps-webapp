@@ -1,0 +1,162 @@
+@use '@/styles/variables' as *;
+
+$grid-border: #d1d5db;
+$label-bg: #f8fafc;
+$date-bg: #e8f4fc;
+$capacity-active-bg: #b8e0e6;
+$capacity-total-bg: #eef6f8;
+$slides-active-bg: #fde68a;
+$slides-total-bg: #fffbeb;
+$weekend-bg: #f3f4f6;
+
+.wrapper {
+  border: 1px solid $grid-border;
+  border-radius: $radius-card;
+  background: #fff;
+  width: max-content;
+  min-width: 100%;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  min-width: max-content;
+}
+
+.row {
+  display: flex;
+  border-bottom: 1px solid $grid-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.gridCapacity {
+  .rowTotal {
+    .labelCell {
+      background: $capacity-total-bg;
+      font-weight: 800;
+    }
+
+    .dataCellActiveCapacity {
+      background: #9fd4dc;
+      font-weight: 700;
+    }
+  }
+}
+
+.gridSlides {
+  .rowTotal {
+    .labelCell {
+      background: $slides-total-bg;
+      font-weight: 800;
+    }
+
+    .dataCellActiveSlides {
+      background: #fcd34d;
+      font-weight: 700;
+    }
+  }
+}
+
+.labelCell {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 148px;
+  min-width: 148px;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #1f2937;
+  background: $label-bg;
+  border-right: 1px solid $grid-border;
+  box-shadow: 2px 0 4px rgb(0 0 0 / 4%);
+}
+
+.labelCellMuted {
+  min-height: 36px;
+  background: #fff;
+}
+
+.labelCellDate {
+  background: $date-bg;
+  color: #0f4c5c;
+}
+
+.dataTrack {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.statusCell,
+.dateCell,
+.dataCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 52px;
+  min-width: 52px;
+  border-right: 1px solid $grid-border;
+  font-size: 12px;
+  font-weight: 600;
+
+  &:last-child {
+    border-right: none;
+  }
+}
+
+.statusCell {
+  min-height: 36px;
+  background: #fff;
+  font-size: 14px;
+}
+
+.statusCellWeekend {
+  background: $weekend-bg;
+}
+
+.statusActive,
+.statusEmpty {
+  line-height: 1;
+}
+
+.dateCell {
+  min-height: 34px;
+  background: $date-bg;
+  color: #0f4c5c;
+  font-weight: 700;
+}
+
+.dateCellWeekend {
+  background: $weekend-bg;
+  color: #9ca3af;
+}
+
+.dataCell {
+  min-height: 40px;
+  background: #fff;
+  color: #111827;
+}
+
+.dataCellActiveCapacity {
+  background: $capacity-active-bg;
+  color: #0f4c5c;
+}
+
+.dataCellActiveSlides {
+  background: $slides-active-bg;
+  color: #92400e;
+}
+
+.dataCellWeekend {
+  background: $weekend-bg;
+  color: #9ca3af;
+  font-weight: 500;
+}

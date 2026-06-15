@@ -10,8 +10,11 @@ import type {
   UpdateMyTaskRequest,
   UpdateMyTaskPmEvaluationRequest,
   UpdateMyTaskStatusRequest,
+  type TaskHistoryListResponse,
 } from '../schemas/task.schema';
 import { UNASSIGNED_STAFF_LABEL } from '../constants';
+import { buildFallbackTaskHistory } from '../utils/taskDetail';
+import { normalizeTaskDateStart } from '../utils/taskDates';
 import { computeTaskLevel } from '../utils/taskLevel';
 import { enrichMockTaskWithProjectContext } from './mockTaskProjectEnrichment';
 import { computeProjectLevel } from '@/features/projects/utils/projectLevel';
@@ -19,7 +22,6 @@ import {
   getMockTasksStore,
   MOCK_ASSIGNABLE_STAFF,
   MOCK_PROJECT_MANAGERS,
-  MOCK_PROJECT_STAFF_ROSTER,
   setMockTasksStore,
 } from './tasks.data';
 import { mockDelay } from '@/shared/mock/mockDelay';
@@ -34,7 +36,10 @@ const deriveDevRoleFromUserId = (userId: string): Role | undefined => {
   return Object.values(ROLES).includes(role) ? role : undefined;
 };
 
-const canViewAllTasks = (userId?: string): boolean => {
+const canViewAllTasks = (userId?: string, viewerRole?: Role): boolean => {
+  if (viewerRole && roleHasDefaultPermission(viewerRole, 'VIEW_ALL_TASKS')) {
+    return true;
+  }
   const role = userId ? deriveDevRoleFromUserId(userId) : undefined;
   return role != null && roleHasDefaultPermission(role, 'VIEW_ALL_TASKS');
 };
@@ -59,9 +64,10 @@ const canUpdatePmEvaluation = (userId?: string): boolean => {
 const filterTasks = (
   filters: MyTaskListFilters,
   assigneeUserId?: string,
+  viewerRole?: Role,
 ): MyTaskListResponse['items'] => {
   const search = filters.search?.trim().toLowerCase();
-  const viewAllTasks = canViewAllTasks(assigneeUserId);
+  const viewAllTasks = canViewAllTasks(assigneeUserId, viewerRole);
 
   return getMockTasksStore().filter((task) => {
     if (assigneeUserId && !viewAllTasks) {
@@ -93,15 +99,16 @@ const filterTasks = (
 export const mockGetMyTaskList = async (
   filters: MyTaskListFilters,
   assigneeUserId?: string,
+  viewerRole?: Role,
 ): Promise<MyTaskListResponse> => {
   await mockDelay();
-  const items = filterTasks(filters, assigneeUserId).map(enrichMockTaskWithProjectContext);
+  const items = filterTasks(filters, assigneeUserId, viewerRole).map(enrichMockTaskWithProjectContext);
   return { items, total: items.length };
 };
 
-const canViewTask = (task: MyTask, viewerUserId?: string): boolean => {
+const canViewTask = (task: MyTask, viewerUserId?: string, viewerRole?: Role): boolean => {
   if (!viewerUserId) return false;
-  if (canViewAllTasks(viewerUserId)) return true;
+  if (canViewAllTasks(viewerUserId, viewerRole)) return true;
   const assigneeIds = task.staff.map((member) => member.userId).filter(Boolean);
   if (assigneeIds.length === 0) return true;
   return assigneeIds.includes(viewerUserId);
@@ -110,25 +117,37 @@ const canViewTask = (task: MyTask, viewerUserId?: string): boolean => {
 export const mockGetMyTaskById = async (
   id: string,
   viewerUserId?: string,
+  viewerRole?: Role,
 ): Promise<MyTask> => {
   await mockDelay();
   const task = getMockTasksStore().find((entry) => entry.id === id);
   if (!task) {
     throw new Error('Task not found');
   }
-  if (!canViewTask(task, viewerUserId)) {
+  if (!canViewTask(task, viewerUserId, viewerRole)) {
     throw new Error('You do not have permission to view this task');
   }
   return enrichMockTaskWithProjectContext(task);
 };
 
+export const mockGetMyTaskHistory = async (
+  id: string,
+  viewerUserId?: string,
+  viewerRole?: Role,
+): Promise<TaskHistoryListResponse> => {
+  await mockDelay();
+  const task = await mockGetMyTaskById(id, viewerUserId, viewerRole);
+  return { items: buildFallbackTaskHistory(task) };
+};
+
 export const mockGetMyTaskProjectOptions = async (
   assigneeUserId?: string,
   taskCategory?: MyTask['taskCategory'],
+  viewerRole?: Role,
 ): Promise<string[]> => {
   await mockDelay();
   const projects = new Set(
-    filterTasks({ taskCategory }, assigneeUserId).map((task) => task.projectName),
+    filterTasks({ taskCategory }, assigneeUserId, viewerRole).map((task) => task.projectName),
   );
   return [...projects].sort((a, b) => a.localeCompare(b));
 };
@@ -136,12 +155,13 @@ export const mockGetMyTaskProjectOptions = async (
 export const mockGetMyTaskStaffNameOptions = async (
   assigneeUserId?: string,
   taskCategory?: MyTask['taskCategory'],
+  viewerRole?: Role,
 ): Promise<string[]> => {
   await mockDelay();
   const names = new Set<string>();
   let hasUnassigned = false;
 
-  for (const task of filterTasks({ taskCategory }, assigneeUserId)) {
+  for (const task of filterTasks({ taskCategory }, assigneeUserId, viewerRole)) {
     if (task.staff.length === 0) {
       hasUnassigned = true;
       continue;
@@ -201,22 +221,8 @@ export const mockGetStaffOptions = async (): Promise<TaskAssignee[]> => {
 };
 
 export const mockGetProjectStaffOptions = async (
-  projectName: string,
-): Promise<TaskAssignee[]> => {
-  await mockDelay();
-  const members: TaskAssignee[] = [...(MOCK_PROJECT_STAFF_ROSTER[projectName] ?? [])];
-
-  for (const task of getMockTasksStore()) {
-    if (task.projectName !== projectName) continue;
-    members.push(...task.staff);
-  }
-
-  if (members.length === 0) {
-    return collectUniqueStaff(MOCK_ASSIGNABLE_STAFF);
-  }
-
-  return collectUniqueStaff(members);
-};
+  _projectName: string,
+): Promise<TaskAssignee[]> => mockGetStaffOptions();
 
 const generateTaskCode = (pmCode: string, projectName: string): string => {
   const seq = String(getMockTasksStore().length + 1).padStart(2, '0');
@@ -245,7 +251,7 @@ export const mockCreateMyTask = async (
     taskName: payload.taskName,
     level: payload.level,
     quantity: payload.quantity,
-    date: payload.date,
+    date: normalizeTaskDateStart(payload.date),
     description: payload.description,
     staff: payload.staff,
     designThinking: payload.designThinking,
@@ -299,7 +305,7 @@ export const mockUpdateMyTask = async (
     ...current,
     taskName: payload.taskName,
     quantity: payload.quantity,
-    date: payload.date,
+    date: normalizeTaskDateStart(payload.date),
     description: payload.description,
     designThinking: payload.designThinking,
     technical: payload.technical,

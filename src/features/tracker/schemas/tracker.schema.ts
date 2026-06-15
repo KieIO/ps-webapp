@@ -3,8 +3,9 @@
  * Backend contract: docs/TRACKER_BACKEND_TODO.md (index: docs/BACKEND_API.md)
  */
 import { z } from 'zod';
+import { TRACKER_BLOCK_TYPES } from '@/shared/constants/taskConfirmation';
 
-export const TRACKER_BLOCK_TYPES = ['active', 'pending', 'completed'] as const;
+export { TRACKER_BLOCK_TYPES };
 export const TRACKER_URGENCIES = ['red', 'orange', 'green', 'gray'] as const;
 
 export const TrackerBlockSchema = z.object({

@@ -13,7 +13,7 @@ const JUNIOR_CAPACITY_BY_LEVEL = [378, 423, 468, 513, 558, 603, 648, 655, 695, 7
 const EXECUTIVE_CAPACITY_BY_LEVEL = [480, 531, 582, 633, 684, 735, 786, 837, 888, 937] as const;
 const SENIOR_CAPACITY_BY_LEVEL = [706, 757, 808, 859, 909, 960, 1011, 1062, 1113, 1163] as const;
 const PM_CAPACITY_BY_LEVEL = [791, 842, 893, 944, 994, 1045, 1096, 1147, 1198, 1248] as const;
-const DM_CAPACITY_BY_LEVEL = [791, 841, 891, 941, 991, 1041] as const;
+const DM_CAPACITY_BY_LEVEL = [791, 841, 891, 941, 991, 1041, 1096, 1146, 1197, 1248] as const;
 
 const buildCapacity = (
   dailyCapacityPoints: number,

@@ -25,6 +25,7 @@ import {
   ProjectSchema,
   UpdateProjectRequestSchema,
   type CreateProjectRequest,
+  type PersonWithCode,
   type Project,
   type ProjectListFilters,
   type ProjectListResponse,
@@ -75,13 +76,13 @@ export const projectApi = {
     return response.data as string[];
   },
 
-  getPmOptions: async (): Promise<{ code: string; name: string }[]> => {
+  getPmOptions: async (): Promise<PersonWithCode[]> => {
     if (env.useProjectsMock) {
       return mockGetProjectPmOptions();
     }
 
     const response = await api.get('/projects/pm-options');
-    return response.data as { code: string; name: string }[];
+    return response.data as PersonWithCode[];
   },
 
   getHeadNameOptions: async (): Promise<string[]> => {
@@ -93,13 +94,13 @@ export const projectApi = {
     return response.data as string[];
   },
 
-  getHeadOptions: async (): Promise<{ code: string; name: string }[]> => {
+  getHeadOptions: async (): Promise<PersonWithCode[]> => {
     if (env.useProjectsMock) {
       return mockGetProjectHeadOptions();
     }
 
     const response = await api.get('/projects/head-options');
-    return response.data as { code: string; name: string }[];
+    return response.data as PersonWithCode[];
   },
 
   create: async (payload: CreateProjectRequest): Promise<Project> => {

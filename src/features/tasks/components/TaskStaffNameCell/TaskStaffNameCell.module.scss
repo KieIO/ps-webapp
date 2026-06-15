@@ -1,0 +1,14 @@
+.root {
+  display: block;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.separator {
+  color: inherit;
+}
+
+.empty {
+  color: var(--color-text-tertiary);
+}

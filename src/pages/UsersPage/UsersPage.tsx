@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { PendingReactivationBanner } from '@/features/leave/components/PendingReactivationBanner/PendingReactivationBanner';
 import { InviteUserModal } from '@/features/users/components/InviteUserModal/InviteUserModal';
 import { UsersList } from '@/features/users/components/UsersList/UsersList';
 
@@ -20,6 +21,7 @@ export default function UsersPage() {
         }
       />
 
+      <PendingReactivationBanner />
       <UsersList />
 
       <InviteUserModal open={inviteOpen} onClose={() => setInviteOpen(false)} />

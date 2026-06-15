@@ -1,7 +1,15 @@
+import dayjs from 'dayjs';
+import { URGENCY_STYLES } from '@/shared/constants/urgencyStyles';
+import { TRACKER_BLOCK_LEGEND } from '@/shared/constants/taskConfirmation';
 import type { TrackerUrgency } from './types';
+
+export { TRACKER_BLOCK_LEGEND };
 
 export const TRACKER_DAY_WIDTH = 28;
 export const TRACKER_ROW_HEIGHT = 48;
+export const TRACKER_BLOCK_HEIGHT = 18;
+export const TRACKER_BLOCK_GAP = 2;
+export const TRACKER_BLOCK_PADDING = 5;
 export const TRACKER_OFF_ROW_HEIGHT = 36;
 export const TRACKER_CAL_HEADER_HEIGHT = 108; // 28 + 22 + 22 + 36
 
@@ -17,8 +25,16 @@ export const TRACKER_LEFT_WIDTH =
 export const TRACKER_RANGE_START = '2026-05-01';
 export const TRACKER_RANGE_END = '2026-12-31';
 
-/** Wireframe "today" column — May 27, 2026 */
-export const TRACKER_TODAY = '2026-05-27';
+/** Today column on the calendar — uses real date, clamped to tracker range. */
+export const TRACKER_TODAY = (() => {
+  const today = dayjs().startOf('day');
+  const rangeStart = dayjs(TRACKER_RANGE_START).startOf('day');
+  const rangeEnd = dayjs(TRACKER_RANGE_END).startOf('day');
+
+  if (today.isBefore(rangeStart)) return TRACKER_RANGE_START;
+  if (today.isAfter(rangeEnd)) return TRACKER_RANGE_END;
+  return today.format('YYYY-MM-DD');
+})();
 
 /** Sunday-first labels (matches Figma PT_DOW) */
 export const TRACKER_DOW_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
@@ -27,15 +43,18 @@ export const TRACKER_URGENCY_STYLES: Record<
   TrackerUrgency,
   { border: string; dot: string; label: string }
 > = {
-  red: { border: '#DC2626', dot: '#DC2626', label: 'Gấp' },
-  orange: { border: '#EA580C', dot: '#EA580C', label: 'Gấp vừa' },
-  green: { border: '#16A34A', dot: '#16A34A', label: 'Hoàn tất' },
-  gray: { border: '#94A3B8', dot: '#94A3B8', label: 'Bình thường' },
+  red: URGENCY_STYLES.red,
+  orange: URGENCY_STYLES.orange,
+  green: URGENCY_STYLES.green,
+  gray: URGENCY_STYLES.gray,
 };
 
-export const TRACKER_URGENCY_LEGEND = [
-  { color: TRACKER_URGENCY_STYLES.red.dot, label: TRACKER_URGENCY_STYLES.red.label },
-  { color: TRACKER_URGENCY_STYLES.orange.dot, label: TRACKER_URGENCY_STYLES.orange.label },
-  { color: TRACKER_URGENCY_STYLES.green.dot, label: TRACKER_URGENCY_STYLES.green.label },
-  { color: TRACKER_URGENCY_STYLES.gray.dot, label: TRACKER_URGENCY_STYLES.gray.label },
-] as const;
+export const TRACKER_URGENCY_LEGEND: ReadonlyArray<{
+  key: TrackerUrgency;
+  label: string;
+}> = [
+  { key: 'red', label: TRACKER_URGENCY_STYLES.red.label },
+  { key: 'orange', label: TRACKER_URGENCY_STYLES.orange.label },
+  { key: 'green', label: TRACKER_URGENCY_STYLES.green.label },
+  { key: 'gray', label: TRACKER_URGENCY_STYLES.gray.label },
+];

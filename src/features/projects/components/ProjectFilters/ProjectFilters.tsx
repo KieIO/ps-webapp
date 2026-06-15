@@ -6,7 +6,7 @@ import {
   useProjectHeadNameOptions,
   useProjectPmOptions,
 } from '../../hooks/useProjectList';
-import { PROJECT_LEVEL_OPTIONS, STATUS_OPTIONS } from '../../constants';
+import { PROJECT_LEVEL_OPTIONS, PROJECT_FILTER_LABELS, STATUS_OPTIONS } from '../../constants';
 import type { ProjectListFilters } from '../../schemas/project.schema';
 import styles from './ProjectFilters.module.scss';
 
@@ -34,11 +34,11 @@ export function ProjectFilters({
       <FilterSection onReset={onReset} className={styles.filterSection}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="project-search">
-            Search
+            {PROJECT_FILTER_LABELS.search}
           </label>
           <Input.Search
             id="project-search"
-            placeholder="Search project, client, or brief..."
+            placeholder={PROJECT_FILTER_LABELS.searchPlaceholder}
             allowClear
             value={filters.search ?? ''}
             onChange={(event) =>
@@ -50,11 +50,11 @@ export function ProjectFilters({
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="project-client-filter">
-            Client
+            {PROJECT_FILTER_LABELS.client}
           </label>
           <Select
             id="project-client-filter"
-            placeholder="All clients"
+            placeholder={PROJECT_FILTER_LABELS.clientPlaceholder}
             allowClear
             value={filters.client}
             onChange={(value) => onChange({ ...filters, client: value })}
@@ -65,11 +65,11 @@ export function ProjectFilters({
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="project-status-filter">
-            Status
+            {PROJECT_FILTER_LABELS.status}
           </label>
           <Select
             id="project-status-filter"
-            placeholder="All statuses"
+            placeholder={PROJECT_FILTER_LABELS.statusPlaceholder}
             allowClear
             value={filters.status}
             onChange={(value) => onChange({ ...filters, status: value })}
@@ -80,11 +80,11 @@ export function ProjectFilters({
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="project-head-filter">
-            Head Name
+            {PROJECT_FILTER_LABELS.headName}
           </label>
           <Select
             id="project-head-filter"
-            placeholder="All heads"
+            placeholder={PROJECT_FILTER_LABELS.headPlaceholder}
             allowClear
             showSearch
             optionFilterProp="label"
@@ -97,11 +97,11 @@ export function ProjectFilters({
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="project-pm-filter">
-            Project Manager
+            {PROJECT_FILTER_LABELS.pm}
           </label>
           <Select
             id="project-pm-filter"
-            placeholder="All PMs"
+            placeholder={PROJECT_FILTER_LABELS.pmPlaceholder}
             allowClear
             value={filters.pmCode}
             onChange={(value) => onChange({ ...filters, pmCode: value })}
@@ -115,11 +115,11 @@ export function ProjectFilters({
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="project-level-filter">
-            Project Level
+            {PROJECT_FILTER_LABELS.level}
           </label>
           <Select
             id="project-level-filter"
-            placeholder="All levels"
+            placeholder={PROJECT_FILTER_LABELS.levelPlaceholder}
             allowClear
             value={filters.projectLevel}
             onChange={(value) => onChange({ ...filters, projectLevel: value })}
@@ -135,7 +135,7 @@ export function ProjectFilters({
         loading={exporting}
         className={styles.export}
       >
-        Export Excel
+        {PROJECT_FILTER_LABELS.export}
       </Button>
     </div>
   );

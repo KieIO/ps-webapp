@@ -12,7 +12,7 @@ This is **not** the same as:
 |---|------------------|-----------------|--------------|
 | **Purpose** | CRUD on user records (name, email, role, department, status) | Edit which roles have which permissions | Issue JWT, session, password/OAuth |
 | **Audience** | Admin (`MANAGE_USERS`) | Admin (`MANAGE_USERS`) | All users |
-| **v1 writes** | `POST /users`, `PATCH /users/:id` | `PUT /api/rbac/permissions` | Login endpoints (out of scope here) |
+| **v1 writes** | `POST /users`, `PATCH /users/:id` | `PUT /rbac/permissions` | Login endpoints (out of scope here) |
 
 Changing a user's **role** on `/users/:id` updates their identity for permission checks. Effective permissions still come from the RBAC config ([RBAC_BACKEND_TODO.md](./RBAC_BACKEND_TODO.md)) — the backend should resolve `user.role` → permission grants on each request.
 

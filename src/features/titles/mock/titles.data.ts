@@ -68,7 +68,7 @@ const buildInitialJobTitles = (): JobTitle[] => {
     { prefix: 'JGD', nameBase: 'Junior Graphic Designer', count: 10, levelId: 'lvl-junior', groupId: 'grp-staff' },
     { prefix: 'GD', nameBase: 'Graphic Designer', count: 10, levelId: 'lvl-executive', groupId: 'grp-staff' },
     { prefix: 'SGD', nameBase: 'Senior Graphic Designer', count: 10, levelId: 'lvl-senior', groupId: 'grp-staff' },
-    { prefix: 'DM', nameBase: 'Creative Manager', count: 6, levelId: 'lvl-manager', groupId: 'grp-manager' },
+    { prefix: 'DM', nameBase: 'Creative Manager', count: 10, levelId: 'lvl-manager', groupId: 'grp-manager' },
   ] as const;
 
   for (const group of groups) {

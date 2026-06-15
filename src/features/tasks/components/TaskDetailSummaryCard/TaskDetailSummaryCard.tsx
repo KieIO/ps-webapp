@@ -1,17 +1,16 @@
-import { Avatar } from 'antd';
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
 import { ClassificationLevelBadge } from '../ClassificationLevelBadge/ClassificationLevelBadge';
 import { TaskConfirmationBadge } from '../TaskConfirmationBadge/TaskConfirmationBadge';
+import { TaskDetailActions } from '../TaskDetailActions/TaskDetailActions';
 import { TaskNameBadge } from '../TaskNameBadge/TaskNameBadge';
+import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
 import {
   TASK_CATEGORY_DEPARTMENT_LABELS,
   formatTaskDisplayId,
   formatTaskQuantity,
   getTaskDeadline,
 } from '../../utils/taskDetail';
-import { formatTaskStaffNames } from '../../utils/staff';
-import { getInitials } from '@/shared/utils/person';
 import type { ClassificationLevel, MyTask } from '../../schemas/task.schema';
 import styles from './TaskDetailSummaryCard.module.scss';
 
@@ -20,14 +19,15 @@ interface TaskDetailSummaryCardProps {
 }
 
 export function TaskDetailSummaryCard({ task }: TaskDetailSummaryCardProps) {
-  const primaryStaff = task.staff[0];
-  const assigneeName = formatTaskStaffNames(task.staff);
-
   return (
     <section className={styles.card}>
-      <div className={styles.header}>
-        <h2 className={styles.taskId}>{formatTaskDisplayId(task)}</h2>
-        <p className={styles.taskName}>{task.description}</p>
+      <div className={styles.topRow}>
+        <div className={styles.header}>
+          <h2 className={styles.taskId}>{formatTaskDisplayId(task)}</h2>
+          <p className={styles.taskName}>{task.description}</p>
+        </div>
+
+        <TaskDetailActions task={task} />
       </div>
 
       <div className={styles.grid}>
@@ -58,16 +58,7 @@ export function TaskDetailSummaryCard({ task }: TaskDetailSummaryCardProps) {
         <div className={styles.metaItem}>
           <p className={styles.metaLabel}>Assignee</p>
           <p className={styles.metaValue}>
-            {primaryStaff ? (
-              <span className={styles.assignee}>
-                <Avatar size={28} className={styles.avatar}>
-                  {getInitials(primaryStaff.name)}
-                </Avatar>
-                {assigneeName}
-              </span>
-            ) : (
-              assigneeName
-            )}
+            <TaskStaffNameCell staff={task.staff} showAvatarForFirst />
           </p>
         </div>
 

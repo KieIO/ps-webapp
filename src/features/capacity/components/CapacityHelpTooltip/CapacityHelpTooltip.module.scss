@@ -1,0 +1,46 @@
+.tooltipOverlay {
+  max-width: 320px;
+}
+
+.tooltipContent {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.tooltipTitle {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.tooltipFormula {
+  margin: 0 0 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+}
+
+.tooltipList {
+  margin: 0;
+  padding-left: 18px;
+
+  li + li {
+    margin-top: 6px;
+  }
+}
+
+.columnHeader {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.infoIcon {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  cursor: help;
+  flex-shrink: 0;
+
+  &:hover {
+    color: var(--color-text);
+  }
+}

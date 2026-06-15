@@ -3,11 +3,19 @@ import type { MenuProps } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { APP_NAME } from '@/config/constants';
-import { SIDEBAR_ITEMS, resolveTaskManagementSelectedPath } from '@/config/sidebar';
+import {
+  SIDEBAR_ITEMS,
+  collectSidebarShortcutTargets,
+  resolveSidebarChildPath,
+  resolveTaskManagementSelectedPath,
+} from '@/config/sidebar';
 import { roleHasPermission } from '@/features/rbac/utils/permissionDerivation';
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
+import { useSidebarShortcuts } from '@/shared/hooks/useSidebarShortcuts';
+import { formatShortcutLabel } from '@/shared/utils/keyboardShortcut';
 import { toggleSidebar } from '@/store/slices/uiSlice';
+import { SidebarMenuLabel } from './SidebarMenuLabel';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import styles from './Sidebar.module.scss';
 
@@ -46,13 +54,12 @@ export function Sidebar() {
 
   const activeParentKey = useMemo(() => {
     for (const item of visibleItems) {
-      if (
-        item.children?.some(
-          (child) =>
-            location.pathname.startsWith(child.path) ||
-            child.path === taskManagementSelectedPath,
-        )
-      ) {
+      if (!item.children) continue;
+      const matchedChild = resolveSidebarChildPath(location.pathname, item.children);
+      const matchesTaskDetail = item.children.some(
+        (child) => child.path === taskManagementSelectedPath,
+      );
+      if (matchedChild || matchesTaskDetail) {
         return item.key;
       }
     }
@@ -64,15 +71,15 @@ export function Sidebar() {
 
     for (const item of visibleItems) {
       if (item.children) {
-        const child = item.children.find((entry) => location.pathname.startsWith(entry.path));
-        if (child) return child.path;
+        const childPath = resolveSidebarChildPath(location.pathname, item.children);
+        if (childPath) return childPath;
       } else if (item.path) {
         if (item.path === '/' && location.pathname === '/') return item.path;
         if (item.path !== '/' && location.pathname.startsWith(item.path)) return item.path;
       }
     }
     return location.pathname === '/' ? '/' : location.pathname;
-  }, [location.pathname, visibleItems]);
+  }, [location.pathname, taskManagementSelectedPath, visibleItems]);
 
   useEffect(() => {
     if (activeParentKey) {
@@ -82,25 +89,47 @@ export function Sidebar() {
     }
   }, [activeParentKey]);
 
-  const menuItems: MenuProps['items'] = visibleItems.map((item) => {
-    if (item.children) {
-      return {
-        key: item.key,
-        icon: <item.icon />,
-        label: item.label,
-        children: item.children.map((child) => ({
-          key: child.path,
-          label: child.label,
-        })),
-      };
-    }
+  const shortcutTargets = useMemo(
+    () => collectSidebarShortcutTargets(visibleItems),
+    [visibleItems],
+  );
 
-    return {
-      key: item.path!,
-      icon: <item.icon />,
-      label: item.label,
-    };
-  });
+  useSidebarShortcuts(shortcutTargets);
+
+  const menuItems: MenuProps['items'] = useMemo(
+    () =>
+      visibleItems.map((item) => {
+        if (item.children) {
+          return {
+            key: item.key,
+            icon: <item.icon />,
+            label: item.label,
+            title: item.label,
+            children: item.children.map((child) => ({
+              key: child.path,
+              label: <SidebarMenuLabel label={child.label} shortcut={child.shortcut} />,
+              title: collapsed
+                ? child.shortcut
+                  ? `${child.label} (${formatShortcutLabel(child.shortcut)})`
+                  : child.label
+                : undefined,
+            })),
+          };
+        }
+
+        return {
+          key: item.path!,
+          icon: <item.icon />,
+          label: <SidebarMenuLabel label={item.label} shortcut={item.shortcut} />,
+          title: collapsed
+            ? item.shortcut
+              ? `${item.label} (${formatShortcutLabel(item.shortcut)})`
+              : item.label
+            : undefined,
+        };
+      }),
+    [collapsed, visibleItems],
+  );
 
   return (
     <aside className={[styles.sidebar, collapsed ? styles.collapsed : ''].join(' ')}>

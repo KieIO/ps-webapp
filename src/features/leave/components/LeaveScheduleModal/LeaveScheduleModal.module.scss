@@ -1,0 +1,175 @@
+.leaveScheduleModal {
+  /* root hook if needed */
+}
+
+.modal {
+  :global(.ant-modal-body) {
+    padding-top: 8px;
+  }
+}
+
+.steps {
+  margin-bottom: 24px;
+}
+
+.intro {
+  margin-bottom: 16px !important;
+}
+
+.form {
+  margin-top: 8px;
+}
+
+.dateRange {
+  width: 100%;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ps-border-subtle, #f0f0f0);
+}
+
+.tasksStep,
+.confirmStep {
+  margin-top: 8px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.emptyAlert,
+.tasksAlert,
+.warningAlert {
+  margin-bottom: 16px;
+}
+
+.summaryCard {
+  background: var(--ps-surface-muted, #fafafa);
+  border: 1px solid var(--ps-border-subtle, #f0f0f0);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+
+  &:not(:last-child) {
+    border-bottom: 1px dashed var(--ps-border-subtle, #f0f0f0);
+  }
+}
+
+.summaryLabel {
+  color: var(--ps-text-secondary, rgba(0, 0, 0, 0.45));
+  flex-shrink: 0;
+}
+
+.taskCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.taskLink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 6px;
+  margin: -4px -8px;
+  padding: 4px 8px;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: var(--ps-surface-muted, rgba(0, 0, 0, 0.04));
+
+    .taskName {
+      color: #1677ff;
+      text-decoration: underline;
+    }
+  }
+}
+
+.taskCode {
+  font-size: 12px;
+  color: var(--ps-text-secondary, rgba(0, 0, 0, 0.45));
+}
+
+.taskName {
+  font-weight: 500;
+}
+
+.projectName {
+  font-size: 12px;
+  color: var(--ps-text-secondary, rgba(0, 0, 0, 0.45));
+}
+
+.replacementSelect {
+  width: 100%;
+
+  :global(.ant-select-selection-item) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.candidateOption {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 2px 0;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.candidatePrimary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.candidateName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.candidateMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.candidateDept {
+  font-size: 11px;
+  color: var(--ps-text-secondary, rgba(0, 0, 0, 0.45));
+}
+
+.capacityNormal {
+  font-size: 12px;
+  color: var(--ps-text-secondary, rgba(0, 0, 0, 0.65));
+  font-variant-numeric: tabular-nums;
+}
+
+.capacityHigh {
+  font-size: 12px;
+  color: #cf1322;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}

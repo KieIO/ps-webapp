@@ -14,5 +14,6 @@ export const RBAC_AUDIT_LOG_LIMIT = 50;
 export const IMMUTABLE_GRANTS: Partial<Record<Permission, readonly (typeof ROLES)[keyof typeof ROLES][]>> =
   {
     MANAGE_USERS: [ROLES.ADMIN],
+    REACTIVATE_USER: [ROLES.ADMIN],
     VIEW_AUDIT_LOG: [ROLES.ADMIN],
   };

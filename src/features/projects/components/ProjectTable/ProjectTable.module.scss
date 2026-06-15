@@ -1,11 +1,27 @@
 .table {
   :global(.ant-table-thead > tr > th) {
     white-space: nowrap;
+    overflow: visible;
+  }
+
+  :global(.ant-table-column-title) {
+    overflow: visible;
+  }
+
+  :global(.ant-table-tbody > tr > td) {
+    vertical-align: top;
   }
 
   :global(.ant-table-cell-fix-right) {
     overflow: visible;
   }
+}
+
+.wrapText {
+  display: block;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.4;
 }
 
 .truncate,

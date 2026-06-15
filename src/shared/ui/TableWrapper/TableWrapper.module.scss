@@ -1,6 +1,25 @@
 .wrapper {
   width: 100%;
   overflow-x: auto;
+
+  :global(.ant-table-thead > tr > th) {
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  :global(.ant-table-column-sorters) {
+    justify-content: flex-start;
+    gap: 4px;
+  }
+
+  :global(.ant-table-column-title) {
+    flex: none;
+    overflow: visible;
+  }
+
+  :global(.ant-table-column-sorter) {
+    flex-shrink: 0;
+  }
 }
 
 .loading,

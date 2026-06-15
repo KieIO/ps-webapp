@@ -12,10 +12,7 @@ import {
   TASK_STATUS_CHANGE_NOTE_LABEL,
   UNASSIGNED_STAFF_LABEL,
 } from '../../constants';
-import {
-  useCreateTaskStaffOptions,
-  useProjectStaffOptions,
-} from '../../hooks/useCreateTaskOptions';
+import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
 import { useUpdateMyTask } from '../../hooks/useUpdateMyTask';
 import { useUpdateMyTaskPmEvaluation } from '../../hooks/useUpdateMyTaskPmEvaluation';
 import { computeTaskLevel } from '../../utils/taskLevel';
@@ -30,6 +27,7 @@ import {
   resolveStaffFromUserIds,
   staffOptionKey,
 } from '../../utils/staff';
+import { toTaskDateOnly } from '../../utils/taskDates';
 import type { ClassificationLevel, MyTask, UpdateMyTaskRequest } from '../../schemas/task.schema';
 import styles from './EditTaskModal.module.scss';
 
@@ -69,12 +67,8 @@ export function EditTaskModal({
     [effectiveRole, canEvaluate],
   );
 
+  const { data: staffOptions = [] } = useCreateTaskStaffOptions();
   const isProjectTask = task?.taskCategory === 'project';
-  const { data: projectStaffOptions = [] } = useProjectStaffOptions(
-    isProjectTask ? task?.projectName : undefined,
-  );
-  const { data: globalStaffOptions = [] } = useCreateTaskStaffOptions();
-  const staffOptions = isProjectTask ? projectStaffOptions : globalStaffOptions;
 
   const designThinking = Form.useWatch('designThinking', form);
   const technical = Form.useWatch('technical', form);
@@ -135,7 +129,7 @@ export function EditTaskModal({
       taskName: hasField(editableFields, 'taskName') ? values.taskName : task.taskName,
       quantity: hasField(editableFields, 'quantity') ? values.quantity : task.quantity,
       date: hasField(editableFields, 'date')
-        ? values.date.toISOString()
+        ? toTaskDateOnly(values.date)
         : task.date,
       description: hasField(editableFields, 'description')
         ? (values.description ?? '')
@@ -380,11 +374,7 @@ export function EditTaskModal({
               <Select
                 mode="multiple"
                 allowClear={!isProjectTask}
-                placeholder={
-                  isProjectTask
-                    ? 'Select staff on this project'
-                    : UNASSIGNED_STAFF_LABEL
-                }
+                placeholder={isProjectTask ? 'Select staff for this task' : UNASSIGNED_STAFF_LABEL}
                 options={staffSelectOptions}
               />
             </Form.Item>

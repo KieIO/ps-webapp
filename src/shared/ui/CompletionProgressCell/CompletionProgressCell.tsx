@@ -1,15 +1,8 @@
 import { Progress } from 'antd';
 import type { ProgressProps } from 'antd';
 import type { StatusPillVariant } from '@/shared/ui/StatusPill/StatusPill';
+import { STATUS_VARIANT_STROKE_COLOR } from '@/shared/ui/StatusPill/statusVariantColors';
 import styles from './CompletionProgressCell.module.scss';
-
-const VARIANT_STROKE_COLOR: Record<StatusPillVariant, string> = {
-  completed: '#16a34a',
-  'in-progress': '#2563eb',
-  pending: '#a16207',
-  overdue: '#dc2626',
-  'on-leave': '#64748b',
-};
 
 export const getCompletionProgressStatus = (
   status: string,
@@ -30,7 +23,7 @@ export function CompletionProgressCell({
   status = 'active',
   variant,
 }: CompletionProgressCellProps) {
-  const strokeColor = variant ? VARIANT_STROKE_COLOR[variant] : undefined;
+  const strokeColor = variant ? STATUS_VARIANT_STROKE_COLOR[variant] : undefined;
 
   return (
     <div className={styles.root}>

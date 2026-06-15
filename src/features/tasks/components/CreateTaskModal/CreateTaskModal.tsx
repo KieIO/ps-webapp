@@ -12,13 +12,13 @@ import {
   useCreateTaskPmOptions,
   useCreateTaskProjectOptions,
   useCreateTaskStaffOptions,
-  useProjectStaffOptions,
 } from '../../hooks/useCreateTaskOptions';
 import { useCreateMyTask } from '../../hooks/useCreateMyTask';
 import {
   mergeStaffSelectOptions,
   resolveStaffFromUserIds,
 } from '../../utils/staff';
+import { toTaskDateOnly } from '../../utils/taskDates';
 import type { CreateMyTaskRequest, TaskCategory, TaskPerson } from '../../schemas/task.schema';
 import styles from '../EditTaskModal/EditTaskModal.module.scss';
 
@@ -63,20 +63,13 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
   const { mutate, isPending } = useCreateMyTask();
   const { data: projectOptions = [] } = useCreateTaskProjectOptions(taskCategory);
   const { data: pmOptions = [] } = useCreateTaskPmOptions();
-  const { data: globalStaffOptions = [] } = useCreateTaskStaffOptions();
+  const { data: staffOptions = [] } = useCreateTaskStaffOptions();
   const isProjectTask = taskCategory === 'project';
   const projectName = Form.useWatch('projectName', form);
-  const { data: projectStaffOptions = [] } = useProjectStaffOptions(
-    isProjectTask ? projectName : undefined,
-  );
-
-  const staffOptions = isProjectTask ? projectStaffOptions : globalStaffOptions;
   const staffSelectOptions = useMemo(
     () => mergeStaffSelectOptions(staffOptions),
     [staffOptions],
   );
-
-  const pmCode = Form.useWatch(['projectManager', 'code'], form);
 
   useEffect(() => {
     if (open) {
@@ -117,7 +110,7 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
       taskName: values.taskName,
       level: values.level,
       quantity: values.quantity,
-      date: values.date.toISOString(),
+      date: toTaskDateOnly(values.date),
       description: values.description ?? '',
       designThinking: values.designThinking,
       technical: values.technical,
@@ -164,11 +157,14 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
           />
         </Form.Item>
 
-        <Form.Item label={MY_TASK_COLUMN_HEADERS.projectManager}>
+        <Form.Item
+          name={['projectManager', 'code']}
+          label={MY_TASK_COLUMN_HEADERS.projectManager}
+          rules={[{ required: true, message: 'Project manager is required' }]}
+        >
           <Select
             allowClear
             placeholder="Select PM"
-            value={pmCode || undefined}
             onChange={handlePmSelect}
             options={pmOptions.map((pm) => ({
               value: pm.code,
@@ -176,22 +172,9 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
             }))}
           />
         </Form.Item>
-        <div className={styles.row}>
-          <Form.Item
-            name={['projectManager', 'code']}
-            label="PM code"
-            rules={[{ required: true, message: 'PM code is required' }]}
-          >
-            <Input placeholder="e.g. PO.012" />
-          </Form.Item>
-          <Form.Item
-            name={['projectManager', 'name']}
-            label="PM name"
-            rules={[{ required: true, message: 'PM name is required' }]}
-          >
-            <Input />
-          </Form.Item>
-        </div>
+        <Form.Item name={['projectManager', 'name']} hidden>
+          <Input />
+        </Form.Item>
 
         <p className={styles.sectionTitle}>Task details</p>
         <div className={styles.row}>
@@ -200,11 +183,12 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
             label={MY_TASK_COLUMN_HEADERS.taskName}
             rules={[{ required: true, message: 'Task name is required' }]}
           >
-            <AutoComplete
-              options={DEFAULT_TASK_NAME_OPTIONS.map((name) => ({ value: name }))}
-              placeholder="Select or enter task name"
+            <Select
+              showSearch
+              placeholder="Select task name"
+              options={DEFAULT_TASK_NAME_OPTIONS.map((name) => ({ value: name, label: name }))}
               filterOption={(input, option) =>
-                (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
               }
             />
           </Form.Item>
@@ -293,7 +277,7 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
             allowClear={!isProjectTask}
             placeholder={
               isProjectTask
-                ? 'Select staff on this project'
+                ? 'Select staff for this task'
                 : UNASSIGNED_STAFF_LABEL
             }
             options={staffSelectOptions}

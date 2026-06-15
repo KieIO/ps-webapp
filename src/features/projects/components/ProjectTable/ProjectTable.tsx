@@ -4,22 +4,55 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import { buildProjectDetailPath, DATE_FORMAT } from '@/config/constants';
+import { PROJECT_NAME_COLUMN_LABEL } from '../../constants';
+import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
 import { usePermission } from '@/shared/hooks/usePermission';
+import { UserNameLink } from '@/shared/ui/UserNameLink/UserNameLink';
 import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/CompletionProgressCell';
-import { PersonAvatarCell } from '@/shared/ui/PersonAvatarCell/PersonAvatarCell';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { EvaluationLevelBadge } from '../EvaluationLevelBadge/EvaluationLevelBadge';
 import { ProjectStatusBadge } from '../ProjectStatusBadge/ProjectStatusBadge';
 import {
   PROJECT_EVALUATION_COLUMN_HEADERS,
+  PROJECT_TABLE_COLUMN_HEADERS,
   PROJECTS_PAGE_SIZE,
   PROJECTS_PAGE_SIZE_OPTIONS,
   STATUS_VARIANT,
 } from '../../constants';
 import { DepartmentBadge } from '../DepartmentBadge/DepartmentBadge';
 import { ProjectUrgencyBadge } from '../ProjectUrgencyBadge/ProjectUrgencyBadge';
-import type { EvaluationLevel, Project } from '../../schemas/project.schema';
+import { ProjectUrgencyColumnTitle } from '../ProjectUrgencyHelpTooltip/ProjectUrgencyHelpTooltip';
+import { ProjectMembersCell } from '../ProjectMembersCell/ProjectMembersCell';
+import {
+  PROJECT_DEPARTMENTS,
+  PROJECT_STATUSES,
+  PROJECT_URGENCIES,
+  type EvaluationLevel,
+  type Project,
+} from '../../schemas/project.schema';
 import styles from './ProjectTable.module.scss';
+
+const compareText = (a: string, b: string) => a.localeCompare(b, 'vi');
+
+const compareNumber = (a: number, b: number) => a - b;
+
+const compareEnumIndex = <T extends string>(values: readonly T[], a: T, b: T) =>
+  values.indexOf(a) - values.indexOf(b);
+
+const compareDate = (a: string, b: string) => dayjs(a).unix() - dayjs(b).unix();
+
+const compareOptionalDate = (a?: string, b?: string) => {
+  if (!a && !b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
+  return compareDate(a, b);
+};
+
+const compareMembers = (a: Project, b: Project) =>
+  compareText(
+    a.members.map((member) => member.name).join(', '),
+    b.members.map((member) => member.name).join(', '),
+  );
 
 interface ProjectTableProps {
   projects: Project[];
@@ -41,6 +74,11 @@ const renderText = (value: string) => {
   );
 };
 
+const renderWrapText = (value: string) => {
+  if (!value) return <span className={styles.empty}>—</span>;
+  return <span className={styles.wrapText}>{value}</span>;
+};
+
 export function ProjectTable({
   projects,
   loading,
@@ -53,89 +91,100 @@ export function ProjectTable({
   const { can } = usePermission();
   const canEdit = can('EDIT_PROJECT');
   const actionsWidth = canEdit ? 108 : 72;
-  const scrollX = 3080 + actionsWidth;
+  const scrollX = 3150 + actionsWidth;
 
   const columns: ColumnsType<Project> = [
     {
-      title: 'Client',
+      title: PROJECT_TABLE_COLUMN_HEADERS.client,
       dataIndex: 'client',
       key: 'client',
       width: 110,
       fixed: 'left',
+      sorter: (a, b) => compareText(a.client, b.client),
     },
     {
-      title: 'Project Name',
+      title: PROJECT_NAME_COLUMN_LABEL,
       dataIndex: 'name',
       key: 'name',
       width: 180,
+      sorter: (a, b) => compareText(a.name, b.name),
       render: (name: string, record) => (
-        <Button type="link" onClick={() => navigate(buildProjectDetailPath(record.id))}>
-          {name}
-        </Button>
+        <ProjectNameLink name={name} projectId={record.id} emptyClassName={styles.empty} />
       ),
     },
     {
-      title: 'Phòng ban',
+      title: PROJECT_TABLE_COLUMN_HEADERS.department,
       dataIndex: 'department',
       key: 'department',
-      width: 120,
+      width: 130,
+      sorter: (a, b) => compareEnumIndex(PROJECT_DEPARTMENTS, a.department, b.department),
       render: (department: Project['department']) => <DepartmentBadge department={department} />,
     },
     {
-      title: 'Tasks',
+      title: PROJECT_TABLE_COLUMN_HEADERS.tasks,
       dataIndex: 'taskCount',
       key: 'taskCount',
-      width: 80,
+      width: 90,
       align: 'right',
+      sorter: (a, b) => compareNumber(a.taskCount, b.taskCount),
     },
     {
-      title: 'Start Date',
+      title: PROJECT_TABLE_COLUMN_HEADERS.startDate,
       dataIndex: 'startDate',
       key: 'startDate',
-      width: 110,
+      width: 125,
+      sorter: (a, b) => compareDate(a.startDate, b.startDate),
       render: (date: string) => dayjs(date).format(DATE_FORMAT),
     },
     {
-      title: 'End Date',
+      title: PROJECT_TABLE_COLUMN_HEADERS.endDate,
       dataIndex: 'endDate',
       key: 'endDate',
       width: 110,
+      sorter: (a, b) => compareDate(a.endDate, b.endDate),
       render: (date: string) => dayjs(date).format(DATE_FORMAT),
     },
     {
-      title: 'Urgency',
+      title: <ProjectUrgencyColumnTitle />,
       dataIndex: 'urgency',
       key: 'urgency',
-      width: 120,
+      width: 135,
+      sorter: (a, b) => compareEnumIndex(PROJECT_URGENCIES, a.urgency, b.urgency),
+      showSorterTooltip: false,
       render: (urgency: Project['urgency']) => <ProjectUrgencyBadge urgency={urgency} />,
     },
     {
-      title: 'Project Level',
+      title: PROJECT_TABLE_COLUMN_HEADERS.level,
       dataIndex: 'projectLevel',
       key: 'projectLevel',
       width: 110,
       align: 'center',
+      sorter: (a, b) => compareNumber(a.projectLevel, b.projectLevel),
       render: (level: EvaluationLevel) => renderLevel(level),
     },
     {
-      title: 'Head Name',
+      title: PROJECT_TABLE_COLUMN_HEADERS.headName,
       key: 'departmentHeadName',
       width: 150,
-      render: (_, record) => record.departmentHead.name,
+      sorter: (a, b) => compareText(a.departmentHead.name, b.departmentHead.name),
+      render: (_, record) => (
+        <UserNameLink name={record.departmentHead.name} userId={record.departmentHead.userId} />
+      ),
     },
     {
-      title: 'Brief',
+      title: PROJECT_TABLE_COLUMN_HEADERS.brief,
       dataIndex: 'brief',
       key: 'brief',
       width: 220,
-      ellipsis: true,
-      render: renderText,
+      sorter: (a, b) => compareText(a.brief, b.brief),
+      render: renderWrapText,
     },
     {
       title: PROJECT_EVALUATION_COLUMN_HEADERS.volume,
       dataIndex: 'volume',
       key: 'volume',
       width: 110,
+      sorter: (a, b) => compareNumber(a.volume, b.volume),
       render: renderLevel,
     },
     {
@@ -143,6 +192,7 @@ export function ProjectTable({
       dataIndex: 'nature',
       key: 'nature',
       width: 110,
+      sorter: (a, b) => compareNumber(a.nature, b.nature),
       render: renderLevel,
     },
     {
@@ -150,6 +200,7 @@ export function ProjectTable({
       dataIndex: 'time',
       key: 'time',
       width: 110,
+      sorter: (a, b) => compareNumber(a.time, b.time),
       render: renderLevel,
     },
     {
@@ -158,41 +209,41 @@ export function ProjectTable({
       key: 'additionalFactors',
       width: 200,
       ellipsis: true,
+      sorter: (a, b) => compareText(a.additionalFactors, b.additionalFactors),
       render: renderText,
     },
     {
-      title: 'PM Name',
+      title: PROJECT_TABLE_COLUMN_HEADERS.pmName,
       key: 'pmName',
       width: 170,
-      render: (_, record) => <PersonAvatarCell name={record.pm.name} />,
+      sorter: (a, b) => compareText(a.pm.name, b.pm.name),
+      render: (_, record) => (
+        <UserNameLink name={record.pm.name} userId={record.pm.userId} showAvatar />
+      ),
     },
     {
-      title: 'Members',
+      title: PROJECT_TABLE_COLUMN_HEADERS.members,
       key: 'members',
       width: 180,
-      ellipsis: true,
-      render: (_, record) => {
-        const label = record.members.map((member) => member.name).join(', ');
-        if (!label) return <span className={styles.empty}>—</span>;
-        return (
-          <Tooltip title={label}>
-            <span className={styles.members}>{label}</span>
-          </Tooltip>
-        );
-      },
+      sorter: compareMembers,
+      render: (_, record) => (
+        <ProjectMembersCell members={record.members} emptyClassName={styles.empty} />
+      ),
     },
     {
-      title: 'Slides',
+      title: PROJECT_TABLE_COLUMN_HEADERS.slides,
       dataIndex: 'totalSlides',
       key: 'totalSlides',
       width: 80,
       align: 'right',
+      sorter: (a, b) => compareNumber(a.totalSlides, b.totalSlides),
     },
     {
-      title: '% Hoàn Thành',
+      title: PROJECT_TABLE_COLUMN_HEADERS.completion,
       dataIndex: 'completionPercent',
       key: 'completionPercent',
       width: 160,
+      sorter: (a, b) => compareNumber(a.completionPercent, b.completionPercent),
       render: (percent: number, record) => (
         <CompletionProgressCell
           percent={percent}
@@ -201,32 +252,35 @@ export function ProjectTable({
       ),
     },
     {
-      title: 'Đánh Giá',
+      title: PROJECT_TABLE_COLUMN_HEADERS.evaluation,
       dataIndex: 'evaluation',
       key: 'evaluation',
       width: 120,
+      sorter: (a, b) => compareText(a.evaluation, b.evaluation),
       render: renderText,
     },
     {
-      title: 'Note',
+      title: PROJECT_TABLE_COLUMN_HEADERS.note,
       dataIndex: 'note',
       key: 'note',
       width: 180,
-      ellipsis: true,
-      render: renderText,
+      sorter: (a, b) => compareText(a.note, b.note),
+      render: renderWrapText,
     },
     {
-      title: 'Trạng thái',
+      title: PROJECT_TABLE_COLUMN_HEADERS.status,
       dataIndex: 'status',
       key: 'status',
       width: 130,
+      sorter: (a, b) => compareEnumIndex(PROJECT_STATUSES, a.status, b.status),
       render: (status: Project['status']) => <ProjectStatusBadge status={status} />,
     },
     {
-      title: 'Finished Date',
+      title: PROJECT_TABLE_COLUMN_HEADERS.finishedDate,
       dataIndex: 'finishedDate',
       key: 'finishedDate',
-      width: 120,
+      width: 140,
+      sorter: (a, b) => compareOptionalDate(a.finishedDate, b.finishedDate),
       render: (date?: string) =>
         date ? dayjs(date).format(DATE_FORMAT) : <span className={styles.empty}>—</span>,
     },
@@ -237,39 +291,39 @@ export function ProjectTable({
       fixed: 'right',
       render: (_, record) => (
         <div className={styles.actions}>
-          <Tooltip title="View">
+          <Tooltip title="Xem">
             <Button
               type="text"
               icon={<EyeOutlined />}
-              aria-label={`View ${record.name}`}
+              aria-label={`Xem ${record.name}`}
               onClick={() => navigate(buildProjectDetailPath(record.id))}
             />
           </Tooltip>
           {canEdit && onEdit ? (
-            <Tooltip title="Edit">
+            <Tooltip title="Sửa">
               <Button
                 type="text"
                 icon={<EditOutlined />}
-                aria-label={`Edit ${record.name}`}
+                aria-label={`Sửa ${record.name}`}
                 onClick={() => onEdit(record)}
               />
             </Tooltip>
           ) : null}
           {onDelete ? (
             <Popconfirm
-              title="Delete this project?"
-              description="This action cannot be undone."
-              okText="Delete"
+              title="Xóa dự án này?"
+              description="Hành động này không thể hoàn tác."
+              okText="Xóa"
               okButtonProps={{ danger: true }}
-              cancelText="Cancel"
+              cancelText="Hủy"
               onConfirm={() => onDelete(record)}
             >
-              <Tooltip title="Delete">
+              <Tooltip title="Xóa">
                 <Button
                   type="text"
                   danger
                   icon={<DeleteOutlined />}
-                  aria-label={`Delete ${record.name}`}
+                  aria-label={`Xóa ${record.name}`}
                   loading={deletingProjectId === record.id}
                   disabled={deletingProjectId != null && deletingProjectId !== record.id}
                 />
@@ -285,8 +339,8 @@ export function ProjectTable({
     <TableWrapper
       loading={loading}
       isEmpty={!loading && projects.length === 0}
-      emptyTitle="No projects found"
-      emptyDescription="Try adjusting your search or filters."
+      emptyTitle="Không tìm thấy dự án"
+      emptyDescription="Thử điều chỉnh tìm kiếm hoặc bộ lọc."
     >
       <Table
         className={styles.table}
@@ -300,7 +354,7 @@ export function ProjectTable({
           showSizeChanger: true,
           pageSizeOptions: [...PROJECTS_PAGE_SIZE_OPTIONS],
           showTotal: (count, range) =>
-            `Showing ${range[0]}-${range[1]} / ${count} projects`,
+            `Hiển thị ${range[0]}-${range[1]} / ${count} dự án`,
         }}
       />
     </TableWrapper>

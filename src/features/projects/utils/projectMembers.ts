@@ -7,13 +7,21 @@ type ProjectLike = Pick<Project, 'id' | 'code' | 'name'>;
 const toPerson = (staff: MyTask['staff'][number]): PersonWithCode => ({
   code: staff.code,
   name: staff.name,
+  userId: staff.userId ?? undefined,
 });
 
 const collectUniqueMembers = (members: PersonWithCode[]): PersonWithCode[] => {
   const seen = new Map<string, PersonWithCode>();
   for (const member of members) {
     if (!member.code) continue;
-    seen.set(member.code, member);
+    const existing = seen.get(member.code);
+    if (!existing) {
+      seen.set(member.code, member);
+      continue;
+    }
+    if (!existing.userId && member.userId) {
+      seen.set(member.code, { ...existing, userId: member.userId });
+    }
   }
   return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
 };

@@ -1,0 +1,75 @@
+@use '@/styles/variables' as *;
+
+.pageStack {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+  margin-top: $space-6;
+}
+
+.chartSkeleton {
+  width: 100% !important;
+  height: 320px !important;
+  border-radius: $radius-card !important;
+}
+
+.panel {
+  border: 1px solid #d1d5db;
+  border-radius: $radius-card;
+  background: #fff;
+}
+
+.scrollArea {
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  border-radius: $radius-card;
+}
+
+.scrollContent {
+  width: max-content;
+  min-width: 100%;
+}
+
+.metricBlock {
+  padding: $space-4 $space-4 $space-5;
+}
+
+.metricBlock + .metricBlock {
+  border-top: 2px solid #e5e7eb;
+}
+
+.metricHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $space-3;
+  margin-bottom: $space-3;
+}
+
+.metricTitle {
+  margin: 0;
+  font-size: $font-size-subsection;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.metricHint {
+  margin: 0;
+  font-size: $font-size-caption;
+  color: $color-text-muted;
+}
+
+.gridEmbedded {
+  border: none;
+  border-radius: 0;
+}
+
+.loading,
+.empty {
+  padding: $space-8;
+  text-align: center;
+  color: $color-text-muted;
+  font-size: $font-size-base;
+}

@@ -1,18 +1,19 @@
-import { Avatar, Button, Table, Tooltip } from 'antd';
+import { Button, Table, Tooltip } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { ClassificationLevelBadge } from '@/features/tasks/components/ClassificationLevelBadge/ClassificationLevelBadge';
 import { TaskConfirmationBadge } from '@/features/tasks/components/TaskConfirmationBadge/TaskConfirmationBadge';
-import { TaskNameBadge } from '@/features/tasks/components/TaskNameBadge/TaskNameBadge';
+import { TaskStaffNameCell } from '@/features/tasks/components/TaskStaffNameCell/TaskStaffNameCell';
 import { MY_TASK_COLUMN_HEADERS } from '@/features/tasks/constants';
-import { formatTaskStaffNames } from '@/features/tasks/utils/staff';
+import { formatTaskCodeShort } from '@/features/tasks/utils/taskDetail';
+import { isMyTaskDateAtRisk } from '@/features/tasks/utils/taskDeadline';
+import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
 import {
   PROJECT_TASKS_PAGE_SIZE,
   PROJECT_TASKS_PAGE_SIZE_OPTIONS,
 } from '../../constants';
 import type { ClassificationLevel, MyTask } from '@/features/tasks/schemas/task.schema';
-import { getInitials } from '@/shared/utils/person';
 import styles from './ProjectDetailTaskTable.module.scss';
 
 interface ProjectDetailTaskTableProps {
@@ -35,21 +36,36 @@ export function ProjectDetailTaskTable({
       key: 'taskCode',
       width: 200,
       ellipsis: true,
-      render: (value: string) =>
-        value ? (
-          <Tooltip title={value}>
-            <span className={styles.truncate}>{value}</span>
+      render: (value: string) => {
+        if (!value) {
+          return <span className={styles.empty}>—</span>;
+        }
+
+        const displayCode = formatTaskCodeShort(value);
+        return (
+          <Tooltip title={displayCode}>
+            <span className={styles.truncate}>{displayCode}</span>
           </Tooltip>
-        ) : (
-          <span className={styles.empty}>—</span>
-        ),
+        );
+      },
     },
     {
       title: MY_TASK_COLUMN_HEADERS.taskName,
       dataIndex: 'taskName',
       key: 'taskName',
       width: 180,
-      render: (name: string) => <TaskNameBadge name={name} />,
+      ellipsis: true,
+      render: (name: string) => {
+        if (!name) {
+          return <span className={styles.empty}>—</span>;
+        }
+
+        return (
+          <Tooltip title={name}>
+            <span className={styles.truncate}>{name}</span>
+          </Tooltip>
+        );
+      },
     },
     {
       title: 'Level',
@@ -63,21 +79,16 @@ export function ProjectDetailTaskTable({
       title: 'Assignee',
       key: 'assignee',
       width: 200,
-      render: (_, record) => {
-        const name = formatTaskStaffNames(record.staff);
-        if (record.staff.length === 0) {
-          return <span className={styles.empty}>{name}</span>;
-        }
-        const primaryStaff = record.staff[0];
-        return (
-          <span className={styles.staffCell}>
-            <Avatar size={28} className={styles.avatar}>
-              {getInitials(primaryStaff.name)}
-            </Avatar>
-            {name}
-          </span>
-        );
-      },
+      render: (_, record) => <TaskStaffNameCell staff={record.staff} showAvatarForFirst />,
+    },
+    {
+      title: MY_TASK_COLUMN_HEADERS.date,
+      dataIndex: 'date',
+      key: 'date',
+      width: 110,
+      render: (value: string, record) => (
+        <DateWithRiskIndicator date={value} atRisk={isMyTaskDateAtRisk(record, 'date')} />
+      ),
     },
     {
       title: MY_TASK_COLUMN_HEADERS.completion,
@@ -132,7 +143,7 @@ export function ProjectDetailTaskTable({
         rowKey="id"
         columns={columns}
         dataSource={tasks}
-        scroll={{ x: 1050 }}
+        scroll={{ x: 1160 }}
         pagination={{
           pageSize: PROJECT_TASKS_PAGE_SIZE,
           total,

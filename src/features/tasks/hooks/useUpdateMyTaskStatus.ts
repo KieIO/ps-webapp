@@ -19,6 +19,7 @@ export const useUpdateMyTaskStatus = () => {
       myTaskApi.updateStatus(id, { staffConfirmation, staffNote }, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'my', 'history'] });
       message.success('Task status updated');
     },
     onError: (error: Error) => {

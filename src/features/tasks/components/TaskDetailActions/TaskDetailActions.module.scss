@@ -1,0 +1,42 @@
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 148px;
+}
+
+.primaryActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.divider {
+  margin: 4px 0;
+}
+
+.deleteBtn {
+  &:not(:disabled):hover {
+    border-color: var(--color-danger, #ff4d4f) !important;
+    color: var(--color-danger, #ff4d4f) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .primaryActions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .divider {
+    display: none;
+  }
+}

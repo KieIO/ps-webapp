@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { message } from 'antd';
+import { Alert, message } from 'antd';
 import { useDebounce } from 'use-debounce';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { ROLES } from '@/config/permissions';
@@ -41,7 +41,7 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
     [filters, taskCategory, debouncedSearch],
   );
 
-  const { data, isLoading } = useMyTaskList(queryFilters);
+  const { data, isLoading, isError, error } = useMyTaskList(queryFilters);
 
   const confirmationSummary = useMemo(
     () => computeTaskConfirmationSummary(data?.items ?? []),
@@ -87,6 +87,16 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
         onExport={handleExport}
         exporting={exporting}
       />
+
+      {isError ? (
+        <Alert
+          type="error"
+          showIcon
+          message="Failed to load tasks"
+          description={error instanceof Error ? error.message : 'Please try again.'}
+          style={{ marginBottom: 16 }}
+        />
+      ) : null}
 
       <TaskConfirmationSummaryBar summary={confirmationSummary} />
 
