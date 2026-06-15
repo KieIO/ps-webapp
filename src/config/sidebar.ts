@@ -3,8 +3,6 @@ import {
   ProjectOutlined,
   BarChartOutlined,
   TrophyOutlined,
-  FieldTimeOutlined,
-  FileTextOutlined,
   UserOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
@@ -114,14 +112,15 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
       },
     ],
   },
-  {
-    key: 'reports',
-    label: 'Reports',
-    path: ROUTES.REPORTS,
-    icon: FileTextOutlined,
-    permission: 'EXPORT_REPORT',
-    shortcut: navShortcut('r'),
-  },
+  // Hidden temporarily — route kept at ROUTES.REPORTS for later use.
+  // {
+  //   key: 'reports',
+  //   label: 'Reports',
+  //   path: ROUTES.REPORTS,
+  //   icon: FileTextOutlined,
+  //   permission: 'EXPORT_REPORT',
+  //   shortcut: navShortcut('r'),
+  // },
   {
     key: 'users',
     label: 'Users',
@@ -148,12 +147,13 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
         permission: 'MANAGE_USERS',
         shortcut: navShortcut('e'),
       },
-      {
-        label: 'Audit Log',
-        path: ROUTES.AUDIT_LOG,
-        permission: 'VIEW_AUDIT_LOG',
-        shortcut: navShortcut('l'),
-      },
+      // Hidden temporarily — route kept at ROUTES.AUDIT_LOG for later use.
+      // {
+      //   label: 'Audit Log',
+      //   path: ROUTES.AUDIT_LOG,
+      //   permission: 'VIEW_AUDIT_LOG',
+      //   shortcut: navShortcut('l'),
+      // },
       {
         label: 'Title management',
         path: ROUTES.TITLE_MANAGEMENT,
@@ -175,15 +175,15 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
     ],
   },
 
-  // ── Additional items (permission-filtered) ─────────
-  {
-    key: 'overtime',
-    label: 'Overtime',
-    path: ROUTES.OVERTIME,
-    icon: FieldTimeOutlined,
-    permission: 'APPROVE_OT',
-    shortcut: navShortcut('o'),
-  },
+  // Hidden temporarily — route kept at ROUTES.OVERTIME for later use.
+  // {
+  //   key: 'overtime',
+  //   label: 'Overtime',
+  //   path: ROUTES.OVERTIME,
+  //   icon: FieldTimeOutlined,
+  //   permission: 'APPROVE_OT',
+  //   shortcut: navShortcut('o'),
+  // },
 ];
 
 export function collectSidebarShortcutTargets(
