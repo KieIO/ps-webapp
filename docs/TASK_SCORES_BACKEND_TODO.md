@@ -8,22 +8,22 @@ The **Task score** page (`/settings/task-score`) is implemented on the frontend 
 
 This is **not** the same as:
 
-| | Task scores (`/settings/task-score`) | My Tasks (`/tasks/...`) |
-|---|-------------------------------------|-------------------------|
-| **Purpose** | Admin config: score weights per task type | User's assigned work items |
-| **Audience** | Admin (`MANAGE_USERS`) | All authenticated users |
-| **Entity** | `TaskScore` catalog row | `MyTask` work record |
+|              | Task scores (`/settings/task-score`)      | My Tasks (`/tasks/...`)    |
+| ------------ | ----------------------------------------- | -------------------------- |
+| **Purpose**  | Admin config: score weights per task type | User's assigned work items |
+| **Audience** | Manager-level roles (`MANAGE_USERS`)      | All authenticated users    |
+| **Entity**   | `TaskScore` catalog row                   | `MyTask` work record       |
 
 ## Current frontend behavior
 
-| Concern | Temporary solution | Location |
-|---------|-------------------|----------|
-| Data source | In-memory mock (~93 seed rows) | `src/features/task-scores/mock/` |
-| Mock toggle | `VITE_USE_TASK_SCORES_MOCK` (default `true` in dev) | `src/config/env.ts` |
-| API client | Calls real endpoints when mock is disabled | `src/features/task-scores/api.ts` |
-| Validation | Zod schemas at API boundary | `src/features/task-scores/schemas/taskScore.schema.ts` |
-| UI routes | `/settings/task-score` — list, create modal, edit modal | `src/pages/TaskScorePage/` |
-| Access control | `MANAGE_USERS` (Admin only) | `src/config/permissions.ts`, router, sidebar |
+| Concern        | Temporary solution                                      | Location                                               |
+| -------------- | ------------------------------------------------------- | ------------------------------------------------------ |
+| Data source    | In-memory mock (~93 seed rows)                          | `src/features/task-scores/mock/`                       |
+| Mock toggle    | `VITE_USE_TASK_SCORES_MOCK` (default `true` in dev)     | `src/config/env.ts`                                    |
+| API client     | Calls real endpoints when mock is disabled              | `src/features/task-scores/api.ts`                      |
+| Validation     | Zod schemas at API boundary                             | `src/features/task-scores/schemas/taskScore.schema.ts` |
+| UI routes      | `/settings/task-score` — list, create modal, edit modal | `src/pages/TaskScorePage/`                             |
+| Access control | `MANAGE_USERS` (manager-level roles by default)         | `src/config/permissions.ts`, router, sidebar           |
 
 To test against a real API locally:
 
@@ -56,7 +56,7 @@ POST   /task-scores        → create task score row
 PATCH  /task-scores/:id    → update task score row
 ```
 
-All endpoints require **`MANAGE_USERS`** (Admin).
+All endpoints require **`MANAGE_USERS`** (manager-level roles by default).
 
 There is **no v1 delete** in the frontend.
 
@@ -64,8 +64,9 @@ There is **no v1 delete** in the frontend.
 
 ## Response models (align with Zod)
 
-Source of truth:  
-- `src/features/task-scores/schemas/taskScoreGroup.schema.ts`  
+Source of truth:
+
+- `src/features/task-scores/schemas/taskScoreGroup.schema.ts`
 - `src/features/task-scores/schemas/taskScore.schema.ts`
 
 ### `TaskScoreGroupRecord`
@@ -73,9 +74,9 @@ Source of truth:
 ```typescript
 interface TaskScoreGroupRecord {
   id: string;
-  code: string;              // slug, e.g. "quality_control"
-  label: string;             // display name, e.g. "Quality control"
-  colorKey: string;          // UI pill color token
+  code: string; // slug, e.g. "quality_control"
+  label: string; // display name, e.g. "Quality control"
+  colorKey: string; // UI pill color token
   sortOrder: number;
   createdAt: string;
 }
@@ -86,12 +87,12 @@ interface TaskScoreGroupRecord {
 ```typescript
 interface TaskScore {
   id: string;
-  name: string;              // unique (case-insensitive), e.g. "Slides 1"
-  score: number;             // >= 0, integer in UI
-  group: string;             // `TaskScoreGroupRecord.code`
-  sortOrder: number;         // display order
-  createdAt: string;         // ISO 8601
-  updatedAt?: string;        // ISO 8601 — set on update
+  name: string; // unique (case-insensitive), e.g. "Slides 1"
+  score: number; // >= 0, integer in UI
+  group: string; // `TaskScoreGroupRecord.code`
+  sortOrder: number; // display order
+  createdAt: string; // ISO 8601
+  updatedAt?: string; // ISO 8601 — set on update
 }
 ```
 
@@ -128,10 +129,10 @@ Sort: primary by group order (implementation → quality_control → edit_others
 
 **Query parameters:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param    | Type   | Description                                |
+| -------- | ------ | ------------------------------------------ |
 | `search` | string | Case-insensitive substring match on `name` |
-| `group` | string | Filter by group `code` |
+| `group`  | string | Filter by group `code`                     |
 
 **Response:** `TaskScoreListResponse`.
 
@@ -142,8 +143,8 @@ Sort: primary by group order (implementation → quality_control → edit_others
 ```typescript
 interface CreateTaskScoreRequest {
   name: string;
-  score: number;             // >= 0
-  group: string;             // existing group code
+  score: number; // >= 0
+  group: string; // existing group code
 }
 ```
 

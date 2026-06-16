@@ -147,13 +147,12 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
         permission: 'MANAGE_USERS',
         shortcut: navShortcut('e'),
       },
-      // Hidden temporarily — route kept at ROUTES.AUDIT_LOG for later use.
-      // {
-      //   label: 'Audit Log',
-      //   path: ROUTES.AUDIT_LOG,
-      //   permission: 'VIEW_AUDIT_LOG',
-      //   shortcut: navShortcut('l'),
-      // },
+      {
+        label: 'Audit Log',
+        path: ROUTES.AUDIT_LOG,
+        permission: 'VIEW_AUDIT_LOG',
+        shortcut: navShortcut('l'),
+      },
       {
         label: 'Title management',
         path: ROUTES.TITLE_MANAGEMENT,
@@ -218,8 +217,7 @@ export const resolveSidebarChildPath = (
 
   for (const child of children) {
     const matches =
-      pathname === child.path ||
-      (child.path !== '/' && pathname.startsWith(`${child.path}/`));
+      pathname === child.path || (child.path !== '/' && pathname.startsWith(`${child.path}/`));
 
     if (!matches) continue;
     if (!best || child.path.length > best.length) {

@@ -6,23 +6,23 @@ The **Title management** page (`/settings/titles`) and **Employee capacity formu
 
 **Manage job titles, job levels, job groups, and per-title capacity formula fields.**
 
-| Surface | Route | What it does |
-|---------|-------|--------------|
-| Title management | `/settings/titles` | 3 tabs: job titles, job levels, job groups — list + create |
+| Surface                   | Route                                 | What it does                                                                                       |
+| ------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Title management          | `/settings/titles`                    | 3 tabs: job titles, job levels, job groups — list + create                                         |
 | Employee capacity formula | `/settings/employee-capacity-formula` | Same **job titles** list with extra capacity columns — inline edit capacity/ratio only (no create) |
 
 Both surfaces read/write the same **`JobTitle`** entity. Capacity fields live on the title record, not a separate table.
 
 ## Current frontend behavior
 
-| Concern | Temporary solution | Location |
-|---------|-------------------|----------|
-| Data source | In-memory mock stores | `src/features/titles/mock/` |
-| Mock toggle | `VITE_USE_TITLES_MOCK` (default `true` in dev) | `src/config/env.ts` |
-| API client | Calls real endpoints when mock is disabled | `src/features/titles/api.ts` |
-| Validation | Zod schemas at API boundary | `src/features/titles/schemas/title.schema.ts` |
+| Concern          | Temporary solution                                     | Location                                       |
+| ---------------- | ------------------------------------------------------ | ---------------------------------------------- |
+| Data source      | In-memory mock stores                                  | `src/features/titles/mock/`                    |
+| Mock toggle      | `VITE_USE_TITLES_MOCK` (default `true` in dev)         | `src/config/env.ts`                            |
+| API client       | Calls real endpoints when mock is disabled             | `src/features/titles/api.ts`                   |
+| Validation       | Zod schemas at API boundary                            | `src/features/titles/schemas/title.schema.ts`  |
 | Capacity formula | `specialistTaskPoints = round(capacity × ratio / 100)` | `src/features/titles/utils/capacityFormula.ts` |
-| Access control | `MANAGE_TITLES` (Head + Admin) | `src/config/permissions.ts`, router, sidebar |
+| Access control   | `MANAGE_TITLES` (manager-level roles by default)       | `src/config/permissions.ts`, router, sidebar   |
 
 To test against a real API locally:
 
@@ -74,10 +74,10 @@ Source of truth: `src/features/titles/schemas/title.schema.ts`.
 ```typescript
 interface JobLevel {
   id: string;
-  code: string;        // e.g. "JUNIOR" — stored uppercase
-  label: string;       // e.g. "Junior"
-  sortOrder: number;   // display order (Intern → Manager)
-  createdAt: string;   // ISO 8601
+  code: string; // e.g. "JUNIOR" — stored uppercase
+  label: string; // e.g. "Junior"
+  sortOrder: number; // display order (Intern → Manager)
+  createdAt: string; // ISO 8601
 }
 ```
 
@@ -86,8 +86,8 @@ interface JobLevel {
 ```typescript
 interface JobGroup {
   id: string;
-  code: string;        // e.g. "STAFF"
-  label: string;       // e.g. "Staff"
+  code: string; // e.g. "STAFF"
+  label: string; // e.g. "Staff"
   sortOrder: number;
   createdAt: string;
 }
@@ -98,14 +98,14 @@ interface JobGroup {
 ```typescript
 interface JobTitle {
   id: string;
-  code: string;                  // e.g. "JPE-1", "IN.0"
-  name: string;                  // e.g. "Junior Project Executive Level 1"
+  code: string; // e.g. "JPE-1", "IN.0"
+  name: string; // e.g. "Junior Project Executive Level 1"
   jobLevelId: string;
   jobGroupId: string;
   sortOrder: number;
-  dailyCapacityPoints: number;   // >= 0
-  taskConversionRatio: number;   // 0–100 (percent, not decimal)
-  specialistTaskPoints: number;  // server-computed, see below
+  dailyCapacityPoints: number; // >= 0
+  taskConversionRatio: number; // 0–100 (percent, not decimal)
+  specialistTaskPoints: number; // server-computed, see below
   createdAt: string;
 }
 ```
@@ -180,11 +180,11 @@ Same list shape as levels (`JobGroupListResponse`).
 
 **Query parameters:**
 
-| Param | Type | Description |
-|-------|------|-------------|
-| `search` | string | Case-insensitive match on `code` or `name` |
-| `jobLevelId` | string | Filter by level id |
-| `jobGroupId` | string | Filter by group id |
+| Param        | Type   | Description                                |
+| ------------ | ------ | ------------------------------------------ |
+| `search`     | string | Case-insensitive match on `code` or `name` |
+| `jobLevelId` | string | Filter by level id                         |
+| `jobGroupId` | string | Filter by group id                         |
 
 **Response:**
 
@@ -224,8 +224,8 @@ Used by **Employee capacity formula** page only.
 
 ```typescript
 interface UpdateJobTitleCapacityRequest {
-  dailyCapacityPoints: number;   // >= 0
-  taskConversionRatio: number;   // 0–100
+  dailyCapacityPoints: number; // >= 0
+  taskConversionRatio: number; // 0–100
 }
 ```
 

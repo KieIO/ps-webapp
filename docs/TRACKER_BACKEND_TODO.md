@@ -1,6 +1,6 @@
 # Project Tracker — Backend API TODO
 
-The **Project Tracker** page (`/tracker`) is a **calendar timeline view** for Head / Admin to monitor project schedules, urgency, team off-days, and timeline blocks. The frontend uses **in-memory mock data** in development.
+The **Project Tracker** page (`/`, legacy `/tracker`) is a **calendar timeline view** for users with `VIEW_CAPACITY_FULL` to monitor project schedules, urgency, team off-days, and timeline blocks. The frontend uses **in-memory mock data** in development.
 
 > **Note:** The legacy table-based tracker (`features/tracker/`, `GET /tracker` list + summary) was removed. This spec describes the **current** calendar tracker only.
 
@@ -10,24 +10,24 @@ The **Project Tracker** page (`/tracker`) is a **calendar timeline view** for He
 
 This is **not** the same as `GET /projects` (see [PROJECTS_BACKEND_TODO.md](./PROJECTS_BACKEND_TODO.md)). The Projects API is the **master registry** (evaluation levels, brief, department head, etc.). The Tracker API is a **read-only operational view** optimized for the calendar UI.
 
-| | Project Tracker (`GET /tracker`) | Projects (`GET /projects`) |
-|---|----------------------------------|----------------------------|
-| **Purpose** | Calendar monitoring — blocks, urgency, off-days | List / edit project records (registry) |
-| **Audience** | Head, Admin (`VIEW_CAPACITY_FULL`) | PM and above (`MANAGE_PROJECTS`) |
-| **UI** | Timeline calendar at `/tracker` | Table at `/projects` |
-| **Writes** | None in v1 (read-only) | `POST` / `PATCH` / `DELETE` |
+|              | Project Tracker (`GET /tracker`)                                                   | Projects (`GET /projects`)                   |
+| ------------ | ---------------------------------------------------------------------------------- | -------------------------------------------- |
+| **Purpose**  | Calendar monitoring — blocks, urgency, off-days                                    | List / edit project records (registry)       |
+| **Audience** | PM, Creative Manager, Creative Head, Department Head, Admin (`VIEW_CAPACITY_FULL`) | Same manager-level roles (`MANAGE_PROJECTS`) |
+| **UI**       | Timeline calendar at `/tracker`                                                    | Table at `/projects`                         |
+| **Writes**   | None in v1 (read-only)                                                             | `POST` / `PATCH` / `DELETE`                  |
 
 ## Current frontend behavior
 
-| Concern | Temporary solution | Location |
-|---------|-------------------|----------|
-| Data source | In-memory mock | `src/features/tracker/mock/` |
-| Mock toggle | `VITE_USE_TRACKER_MOCK` (default `true` in dev) | `src/config/env.ts` |
-| API client | Calls real endpoint when mock is disabled | `src/features/tracker/api.ts` |
-| Validation | Zod schemas at API boundary | `src/features/tracker/schemas/tracker.schema.ts` |
-| UI route | `/tracker` (flush layout) | `src/pages/ProjectTrackerPage/` |
-| Legacy redirect | `/v2/tracker` → `/tracker` | `src/app/router.tsx` |
-| Access control | `VIEW_CAPACITY_FULL` (default: Head, Admin) | `src/config/permissions.ts` |
+| Concern         | Temporary solution                                                            | Location                                         |
+| --------------- | ----------------------------------------------------------------------------- | ------------------------------------------------ |
+| Data source     | In-memory mock                                                                | `src/features/tracker/mock/`                     |
+| Mock toggle     | `VITE_USE_TRACKER_MOCK` (default `true` in dev)                               | `src/config/env.ts`                              |
+| API client      | Calls real endpoint when mock is disabled                                     | `src/features/tracker/api.ts`                    |
+| Validation      | Zod schemas at API boundary                                                   | `src/features/tracker/schemas/tracker.schema.ts` |
+| UI route        | `/` (legacy `/tracker`, `/v2/tracker` redirect)                               | `src/pages/ProjectTrackerPage/`                  |
+| Legacy redirect | `/v2/tracker` → `/tracker`                                                    | `src/app/router.tsx`                             |
+| Access control  | `VIEW_CAPACITY_FULL` (default: all manager-level roles; see `permissions.ts`) | `src/config/permissions.ts`                      |
 
 To test against a real API locally:
 
@@ -60,38 +60,38 @@ interface TrackerResponse {
 interface TrackerProject {
   id: string;
   name: string;
-  pm: string;                      // display name
-  team: string[];                  // team member display names
+  pm: string; // display name
+  team: string[]; // team member display names
   totalSlides: number;
-  highlightSlides?: boolean;         // highlight count when urgent / large
+  highlightSlides?: boolean; // highlight count when urgent / large
   urgency: 'red' | 'orange' | 'green' | 'gray';
   blocks: TrackerBlock[];
 }
 
 interface TrackerBlock {
-  start: string;                   // YYYY-MM-DD inclusive
-  end: string;                     // YYYY-MM-DD inclusive
+  start: string; // YYYY-MM-DD inclusive
+  end: string; // YYYY-MM-DD inclusive
   label: string;
   type: 'active' | 'pending' | 'completed';
-  band?: 0 | 1;                    // 0 = top band, 1 = bottom band
+  band?: 0 | 1; // 0 = top band, 1 = bottom band
 }
 
 interface TrackerOffDay {
-  date: string;                    // YYYY-MM-DD
-  names: string[];                 // staff on leave
+  date: string; // YYYY-MM-DD
+  names: string[]; // staff on leave
 }
 ```
 
 ### UI mapping
 
-| UI element | Source |
-|------------|--------|
-| Project rows | `projects[]` |
-| PM / team / slides columns | `pm`, `team`, `totalSlides` |
-| Urgency dot color | `urgency` |
-| Timeline bars | `blocks[]` |
-| Off-day row | `offDays[]` |
-| CSV export | Client-side from loaded `projects` |
+| UI element                 | Source                             |
+| -------------------------- | ---------------------------------- |
+| Project rows               | `projects[]`                       |
+| PM / team / slides columns | `pm`, `team`, `totalSlides`        |
+| Urgency dot color          | `urgency`                          |
+| Timeline bars              | `blocks[]`                         |
+| Off-day row                | `offDays[]`                        |
+| CSV export                 | Client-side from loaded `projects` |
 
 ---
 
@@ -116,10 +116,10 @@ interface TrackerOffDay {
 
 ## Related files
 
-| File | Purpose |
-|------|---------|
-| `src/features/tracker/schemas/tracker.schema.ts` | **Source of truth** for response types |
-| `src/features/tracker/api.ts` | Axios calls + mock toggle |
-| `src/features/tracker/mock/` | Reference fixtures |
-| `src/features/tracker/components/ProjectTrackerView/` | Calendar UI |
-| `docs/BACKEND_API.md` | Index of all backend API specs |
+| File                                                  | Purpose                                |
+| ----------------------------------------------------- | -------------------------------------- |
+| `src/features/tracker/schemas/tracker.schema.ts`      | **Source of truth** for response types |
+| `src/features/tracker/api.ts`                         | Axios calls + mock toggle              |
+| `src/features/tracker/mock/`                          | Reference fixtures                     |
+| `src/features/tracker/components/ProjectTrackerView/` | Calendar UI                            |
+| `docs/BACKEND_API.md`                                 | Index of all backend API specs         |

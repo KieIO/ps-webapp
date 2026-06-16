@@ -1,6 +1,6 @@
 # React JS Project Structure Guide
 
-This document describes the React architecture, conventions, and patterns for the **Pokeslide Internal Platform** — a single unified web application serving all roles (Employee, PM, Head, Admin) with permission-based access control.
+This document describes the React architecture, conventions, and patterns for the **Pokeslide Internal Platform** — a single unified web application serving all roles (Employee, PM, Creative Manager, Creative Head, Department Head, Admin) with permission-based access control.
 
 ---
 
@@ -17,29 +17,29 @@ This document describes the React architecture, conventions, and patterns for th
 
 ### Stack
 
-| Concern | Choice | Notes |
-|---------|--------|-------|
-| **Framework** | React 19 | Pinned in `package.json` |
-| **Build tool** | Vite | Fast HMR, optimized production builds |
-| **Language** | TypeScript (strict mode) | No `any`; enforce at CI |
-| **Router** | React Router v6 (Data Router API) | `createBrowserRouter` only |
-| **Server state** | TanStack Query | API data, caching, loading/error states |
-| **Client state** | Redux Toolkit | Auth session, role/permission flags, UI toggles |
-| **Validation** | Zod | Runtime validation for all API responses |
-| **Styling** | CSS Modules + SCSS + CSS variables | Co-located per component |
-| **UI Library** | Ant Design v6 | Customized via `ConfigProvider` with Pokeslide theme tokens |
-| **Icons** | Ant Design Icons (outlined) | Supplement with Lucide when needed |
-| **Animation** | Motion (motion.dev) | Optional; subtle transitions only — see Design Guideline §12 |
-| **Testing** | Vitest + React Testing Library | — |
-| **Prod server** | Express | JWT middleware, API proxy, SPA catch-all |
+| Concern          | Choice                             | Notes                                                        |
+| ---------------- | ---------------------------------- | ------------------------------------------------------------ |
+| **Framework**    | React 19                           | Pinned in `package.json`                                     |
+| **Build tool**   | Vite                               | Fast HMR, optimized production builds                        |
+| **Language**     | TypeScript (strict mode)           | No `any`; enforce at CI                                      |
+| **Router**       | React Router v6 (Data Router API)  | `createBrowserRouter` only                                   |
+| **Server state** | TanStack Query                     | API data, caching, loading/error states                      |
+| **Client state** | Redux Toolkit                      | Auth session, role/permission flags, UI toggles              |
+| **Validation**   | Zod                                | Runtime validation for all API responses                     |
+| **Styling**      | CSS Modules + SCSS + CSS variables | Co-located per component                                     |
+| **UI Library**   | Ant Design v6                      | Customized via `ConfigProvider` with Pokeslide theme tokens  |
+| **Icons**        | Ant Design Icons (outlined)        | Supplement with Lucide when needed                           |
+| **Animation**    | Motion (motion.dev)                | Optional; subtle transitions only — see Design Guideline §12 |
+| **Testing**      | Vitest + React Testing Library     | —                                                            |
+| **Prod server**  | Express                            | JWT middleware, API proxy, SPA catch-all                     |
 
 ### State Management Split
 
-| Concern | Tool | Use for |
-|---------|------|---------|
-| **Server state** | TanStack Query | All API data: tasks, projects, users, KPIs, capacity |
-| **Client state** | Redux Toolkit | Auth session (JWT + decoded user), current role context, sidebar collapse state, global UI flags |
-| **Theme / Language** | React Context | Low-frequency updates only |
+| Concern              | Tool           | Use for                                                                                          |
+| -------------------- | -------------- | ------------------------------------------------------------------------------------------------ |
+| **Server state**     | TanStack Query | All API data: tasks, projects, users, KPIs, capacity                                             |
+| **Client state**     | Redux Toolkit  | Auth session (JWT + decoded user), current role context, sidebar collapse state, global UI flags |
+| **Theme / Language** | React Context  | Low-frequency updates only                                                                       |
 
 **Rule**: DO NOT use Redux for API fetching. TanStack Query owns all server state exclusively.
 
@@ -130,7 +130,7 @@ This document describes the React architecture, conventions, and patterns for th
 │   │   │   └── hooks/
 │   │   │       └── useTimeLog.ts
 │   │   │
-│   │   ├── reports/                # Reports & data export (Head + Admin)
+│   │   ├── reports/                # Reports & data export (EXPORT_REPORT)
 │   │   │   ├── api.ts
 │   │   │   ├── schemas/
 │   │   │   │   └── report.schema.ts
@@ -140,7 +140,7 @@ This document describes the React architecture, conventions, and patterns for th
 │   │   │   └── hooks/
 │   │   │       └── useReport.ts
 │   │   │
-│   │   └── users/                  # User management (Admin)
+│   │   └── users/                  # User management (MANAGE_USERS)
 │   │       ├── api.ts
 │   │       ├── schemas/
 │   │       │   └── user.schema.ts
@@ -264,22 +264,26 @@ This document describes the React architecture, conventions, and patterns for th
 ### 3.1 Components
 
 **Page components** (`src/pages/`):
+
 - One folder per page: `PageName/PageName.tsx` + `PageName.module.scss`
 - Pages are thin wrappers — no business logic, no direct API calls
 - Logic lives in `features/[feature]/components/` or `features/[feature]/hooks/`
 - Use `React.lazy()` + `Suspense` for route-based code splitting
 
 **Shared components** (`src/shared/ui/`):
+
 - Reusable across features: `PageHeader`, `KPICard`, `CardWrapper`, `FormFieldWrapper`, `TableWrapper`, `FilterSection`, `StatusPill`
 - Use CSS Modules for component-scoped styles
 - Must be role-agnostic — conditional rendering by role happens at the page or feature level
 
 **Feature components** (`src/features/[feature]/components/`):
+
 - Self-contained: own components, hooks, API, Zod schemas
 - Cross-feature imports are not allowed — go through `shared/` instead
 - Each feature folder maps directly to a platform module (tasks, projects, capacity, etc.)
 
 **Role-based rendering**:
+
 - Use `usePermission()` hook (see §3.6) to conditionally render UI per role
 - Never hard-code role strings in JSX — use the `ROLES` constant from `config/constants.ts`
 
@@ -353,8 +357,12 @@ const uiSlice = createSlice({
   name: 'ui',
   initialState: { sidebarCollapsed: false },
   reducers: {
-    toggleSidebar: (state) => { state.sidebarCollapsed = !state.sidebarCollapsed; },
-    setSidebarCollapsed: (state, action) => { state.sidebarCollapsed = action.payload; },
+    toggleSidebar: (state) => {
+      state.sidebarCollapsed = !state.sidebarCollapsed;
+    },
+    setSidebarCollapsed: (state, action) => {
+      state.sidebarCollapsed = action.payload;
+    },
   },
 });
 
@@ -388,41 +396,25 @@ export const useSubmitTask = () =>
 
 **Query key conventions for Pokeslide**:
 
-| Resource | Query key pattern |
-|----------|-------------------|
-| Task list | `['tasks', { status, assignee, projectId }]` |
-| Task detail | `['tasks', taskId]` |
-| Project list | `['projects', { status, pmId }]` |
-| Capacity | `['capacity', { month, employeeId }]` |
-| KPI / Review | `['performance', { period, employeeId }]` |
-| Time logs (deferred) | `['time-logs', { date, employeeId }]` |
-| Users | `['users', { role, status }]` |
+| Resource             | Query key pattern                            |
+| -------------------- | -------------------------------------------- |
+| Task list            | `['tasks', { status, assignee, projectId }]` |
+| Task detail          | `['tasks', taskId]`                          |
+| Project list         | `['projects', { status, pmId }]`             |
+| Capacity             | `['capacity', { month, employeeId }]`        |
+| KPI / Review         | `['performance', { period, employeeId }]`    |
+| Time logs (deferred) | `['time-logs', { date, employeeId }]`        |
+| Users                | `['users', { role, status }]`                |
 
 ### 3.6 Role-Based Access Control (RBAC)
 
-Pokeslide has 4 roles: `employee`, `pm`, `head`, `admin`.
+Pokeslide has 6 roles: `employee`, `pm`, `creative_manager`, `creative_head`, `head`, `admin`.
 
 **Permission config** (`config/permissions.ts`):
 
 ```typescript
-// config/permissions.ts
-export const ROLES = {
-  EMPLOYEE: 'employee',
-  PM: 'pm',
-  HEAD: 'head',
-  ADMIN: 'admin',
-} as const;
-
-export type Role = typeof ROLES[keyof typeof ROLES];
-
-export const PERMISSIONS = {
-  VIEW_CAPACITY:    [ROLES.HEAD, ROLES.ADMIN],
-  MANAGE_USERS:     [ROLES.ADMIN],
-  REVIEW_TASK:      [ROLES.PM, ROLES.HEAD],
-  EXPORT_REPORT:    [ROLES.HEAD, ROLES.ADMIN],
-  LOG_TIME:         [ROLES.EMPLOYEE],
-  VIEW_ALL_TASKS:   [ROLES.PM, ROLES.HEAD, ROLES.ADMIN],
-} as const;
+// Source of truth: src/config/permissions.ts
+// Keep docs/examples in sync with this file.
 ```
 
 **Permission hook** (`shared/hooks/usePermission.ts`):
@@ -458,6 +450,7 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles: Role[] }) => {
 ### 3.7 API Layer & Runtime Validation
 
 **Base API** (`shared/api/base.api.ts`):
+
 - Axios instance with `VITE_API_URL` base URL
 - Request interceptor: attach JWT token from Redux store
 - Response interceptor: handle 401 → dispatch `logout()` + redirect to `/login`
@@ -485,7 +478,7 @@ api.interceptors.response.use(
       window.location.replace('/login');
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
@@ -540,20 +533,20 @@ Define all Pokeslide design tokens as CSS variables — must match `POKESLIDE_BR
 
 ```css
 :root {
-  --color-bg:             #F8FAFC;
-  --color-surface:        #FFFFFF;
-  --color-text:           #0F172A;
-  --color-text-body:      #334155;
-  --color-text-muted:     #64748B;
-  --color-text-disabled:  #94A3B8;
-  --color-primary:        #2563EB;
-  --color-primary-light:  #3B82F6;
-  --color-primary-subtle: #EFF6FF;
-  --color-success:        #16A34A;
-  --color-warning:        #D97706;
-  --color-error:          #DC2626;
-  --color-border:         #E2E8F0;
-  --color-divider:        #F1F5F9;
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-text: #0f172a;
+  --color-text-body: #334155;
+  --color-text-muted: #64748b;
+  --color-text-disabled: #94a3b8;
+  --color-primary: #2563eb;
+  --color-primary-light: #3b82f6;
+  --color-primary-subtle: #eff6ff;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-error: #dc2626;
+  --color-border: #e2e8f0;
+  --color-divider: #f1f5f9;
 }
 ```
 
@@ -562,22 +555,23 @@ Define all Pokeslide design tokens as CSS variables — must match `POKESLIDE_BR
 ```typescript
 const pokeslideTheme = {
   token: {
-    colorPrimary:   '#2563EB',
-    colorSuccess:   '#16A34A',
-    colorWarning:   '#D97706',
-    colorError:     '#DC2626',
-    colorInfo:      '#0284C7',
-    colorBgBase:    '#FFFFFF',
-    colorTextBase:  '#0F172A',
-    colorBorder:    '#E2E8F0',
-    borderRadius:   6,
-    fontSize:       14,
-    fontFamily:     "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    colorPrimary: '#2563EB',
+    colorSuccess: '#16A34A',
+    colorWarning: '#D97706',
+    colorError: '#DC2626',
+    colorInfo: '#0284C7',
+    colorBgBase: '#FFFFFF',
+    colorTextBase: '#0F172A',
+    colorBorder: '#E2E8F0',
+    borderRadius: 6,
+    fontSize: 14,
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   },
 };
 ```
 
 **Component styles**:
+
 - CSS Modules only: `ComponentName.module.scss` co-located with component
 - No Tailwind, no styled-components — do not mix styling systems
 - No inline hex values in JSX — always use `var(--color-*)` tokens
@@ -589,17 +583,17 @@ const pokeslideTheme = {
 export const APP_NAME = 'Pokeslide Internal Platform';
 
 export const ROUTES = {
-  LOGIN:          '/login',
-  DASHBOARD:      '/',
-  TASKS:          '/tasks',
+  LOGIN: '/login',
+  DASHBOARD: '/',
+  TASKS: '/tasks',
   // TIME_LOG:    '/time-log',  // deferred — not in sidebar/router
-  PROJECTS:       '/projects',
-  CAPACITY:       '/capacity',
-  PERFORMANCE:    '/performance',
-  REPORTS:        '/reports',
-  USERS:          '/users',
-  FORBIDDEN:      '/403',
-  NOT_FOUND:      '/404',
+  PROJECTS: '/projects',
+  CAPACITY: '/capacity',
+  PERFORMANCE: '/performance',
+  REPORTS: '/reports',
+  USERS: '/users',
+  FORBIDDEN: '/403',
+  NOT_FOUND: '/404',
 } as const;
 
 export const PAGINATION = {
@@ -640,7 +634,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <AppRouter />
       </ConfigProvider>
     </QueryClientProvider>
-  </Provider>
+  </Provider>,
 );
 ```
 
@@ -653,16 +647,16 @@ import { AuthenticatedLayout } from '@/shared/layout/AuthenticatedLayout';
 import { ROUTES } from '@/config/constants';
 import { ROLES } from '@/config/permissions';
 
-const DashboardPage   = lazy(() => import('@/pages/DashboardPage/DashboardPage'));
-const TasksPage       = lazy(() => import('@/pages/TasksPage/TasksPage'));
+const DashboardPage = lazy(() => import('@/pages/DashboardPage/DashboardPage'));
+const TasksPage = lazy(() => import('@/pages/TasksPage/TasksPage'));
 // const TimeLogPage  = lazy(() => import('@/pages/TimeLogPage/TimeLogPage')); // deferred
-const ProjectsPage    = lazy(() => import('@/pages/ProjectsPage/ProjectsPage'));
-const CapacityPage    = lazy(() => import('@/pages/CapacityPage/CapacityPage'));
+const ProjectsPage = lazy(() => import('@/pages/ProjectsPage/ProjectsPage'));
+const CapacityPage = lazy(() => import('@/pages/CapacityPage/CapacityPage'));
 const PerformancePage = lazy(() => import('@/pages/PerformancePage/PerformancePage'));
-const ReportsPage     = lazy(() => import('@/pages/ReportsPage/ReportsPage'));
-const UsersPage       = lazy(() => import('@/pages/UsersPage/UsersPage'));
-const LoginPage       = lazy(() => import('@/pages/LoginPage/LoginPage'));
-const NotFoundPage    = lazy(() => import('@/pages/NotFoundPage/NotFoundPage'));
+const ReportsPage = lazy(() => import('@/pages/ReportsPage/ReportsPage'));
+const UsersPage = lazy(() => import('@/pages/UsersPage/UsersPage'));
+const LoginPage = lazy(() => import('@/pages/LoginPage/LoginPage'));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage/NotFoundPage'));
 
 const router = createBrowserRouter([
   {
@@ -670,28 +664,16 @@ const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
-    element: <AuthenticatedLayout />,   // sidebar + header shell
+    element: <AuthenticatedLayout />, // sidebar + header shell
     children: [
-      { path: ROUTES.DASHBOARD,   element: <DashboardPage /> },
-      { path: ROUTES.TASKS,       element: <TasksPage /> },
+      { path: ROUTES.DASHBOARD, element: <DashboardPage /> },
+      { path: ROUTES.TASKS, element: <TasksPage /> },
       // { path: ROUTES.TIME_LOG, element: <TimeLogPage /> }, // deferred
       {
-        element: <ProtectedRoute allowedRoles={[ROLES.PM, ROLES.HEAD, ROLES.ADMIN]} />,
+        element: <ProtectedRoute allowedRoles={[...MANAGER_ROLES]} />,
         children: [
-          { path: ROUTES.PROJECTS,    element: <ProjectsPage /> },
-          { path: ROUTES.PERFORMANCE, element: <PerformancePage /> },
-        ],
-      },
-      {
-        element: <ProtectedRoute allowedRoles={[ROLES.HEAD, ROLES.ADMIN]} />,
-        children: [
+          { path: ROUTES.PROJECTS, element: <ProjectsPage /> },
           { path: ROUTES.CAPACITY, element: <CapacityPage /> },
-          { path: ROUTES.REPORTS,  element: <ReportsPage /> },
-        ],
-      },
-      {
-        element: <ProtectedRoute allowedRoles={[ROLES.ADMIN]} />,
-        children: [
           { path: ROUTES.USERS, element: <UsersPage /> },
         ],
       },
@@ -730,11 +712,11 @@ All screens must include:
 
 Three layout variants:
 
-| Variant | Used for | Components |
-|---------|----------|------------|
-| `AuthenticatedLayout` | All protected pages | `Sidebar` + `TopHeader` + `<Outlet />` |
-| `UnauthenticatedLayout` | Login page | Centered card, gradient background |
-| `EMPTY` | 403 / 404 / error | No shell |
+| Variant                 | Used for            | Components                             |
+| ----------------------- | ------------------- | -------------------------------------- |
+| `AuthenticatedLayout`   | All protected pages | `Sidebar` + `TopHeader` + `<Outlet />` |
+| `UnauthenticatedLayout` | Login page          | Centered card, gradient background     |
+| `EMPTY`                 | 403 / 404 / error   | No shell                               |
 
 Sidebar state (collapsed / expanded) is controlled by `uiSlice` in Redux.
 The `TopHeader` shows: breadcrumb (left) + notification bell + user avatar (right).
@@ -744,12 +726,14 @@ The `TopHeader` shows: breadcrumb (left) + notification bell + user avatar (righ
 ## 7. Performance Standards
 
 **Mandatory**:
+
 - Route-level code splitting (`React.lazy` + `Suspense`) — already set up in router
 - Bundle analyzer (`rollup-plugin-visualizer`) enabled in `vite.config.ts`
 - Memoization (`useMemo`, `useCallback`) only when measured — avoid premature optimization
 - TanStack Query `staleTime: 30_000` minimum on list queries to reduce redundant fetches
 
 **For Pokeslide specifically**:
+
 - Capacity calendar and KPI charts are the heaviest components — dynamic import separately
 - Table components must support pagination — do not fetch all records at once
 - Use `keepPreviousData: true` in TanStack Query for paginated tables to prevent flicker
@@ -759,6 +743,7 @@ The `TopHeader` shows: breadcrumb (left) + notification bell + user avatar (righ
 ## 8. Code Quality
 
 **Rules**:
+
 - Strict TypeScript in `tsconfig.json` — no `any`, no `@ts-ignore` without justification
 - Absolute imports via `@/` — e.g. `@/features/tasks`, `@/shared/ui/StatusPill`
 - Typed Redux hooks: `useAppSelector` and `useAppDispatch` (typed wrappers in `shared/hooks/`)
@@ -766,14 +751,17 @@ The `TopHeader` shows: breadcrumb (left) + notification bell + user avatar (righ
 - No role strings hard-coded in JSX — use `ROLES` and `PERMISSIONS` constants
 
 **Linting**:
+
 - ESLint: `@eslint/js`, `eslint-plugin-react`, `eslint-plugin-react-hooks`, `@typescript-eslint`
 - Custom rule: disallow `role === 'admin'` patterns in JSX (enforce `can()` hook instead)
 
 **Formatting** (Prettier):
+
 - `.prettierrc`: 2 spaces, single quotes, 100 print width
 - Applies to `*.{ts,tsx,js,jsx,json,css,scss,md}`
 
 **Git hooks** (Husky + lint-staged):
+
 - `pre-commit`: lint + prettier on staged files
 
 ---
@@ -783,15 +771,15 @@ The `TopHeader` shows: breadcrumb (left) + notification bell + user avatar (righ
 ```json
 {
   "scripts": {
-    "dev":        "vite",
-    "build":      "tsc && vite build",
-    "preview":    "vite preview",
-    "server":     "ts-node server/index.ts",
-    "test":       "vitest",
-    "test:ui":    "vitest --ui",
-    "lint":       "eslint src --ext ts,tsx",
-    "lint:fix":   "eslint src --ext ts,tsx --fix",
-    "format":     "prettier --write \"src/**/*.{ts,tsx,js,json,scss}\""
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "server": "ts-node server/index.ts",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "lint": "eslint src --ext ts,tsx",
+    "lint:fix": "eslint src --ext ts,tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,json,scss}\""
   }
 }
 ```
@@ -802,55 +790,56 @@ The `TopHeader` shows: breadcrumb (left) + notification bell + user avatar (righ
 
 ### Core
 
-| Package | Purpose |
-|---------|---------|
-| react, react-dom | React 19 |
-| @reduxjs/toolkit | Client state (auth, UI flags) |
-| react-redux | React–Redux bindings |
-| @tanstack/react-query | Server state — all API data |
-| react-router-dom | React Router v6 Data API |
-| axios | HTTP client |
-| zod | Runtime API response validation |
-| typescript | Type safety (strict mode) |
+| Package               | Purpose                         |
+| --------------------- | ------------------------------- |
+| react, react-dom      | React 19                        |
+| @reduxjs/toolkit      | Client state (auth, UI flags)   |
+| react-redux           | React–Redux bindings            |
+| @tanstack/react-query | Server state — all API data     |
+| react-router-dom      | React Router v6 Data API        |
+| axios                 | HTTP client                     |
+| zod                   | Runtime API response validation |
+| typescript            | Type safety (strict mode)       |
 
 ### UI
 
-| Package | Purpose |
-|---------|---------|
-| antd | Ant Design v6 (Pokeslide theme via ConfigProvider) |
-| @ant-design/icons | Outlined icon set (primary) |
-| lucide-react | Supplementary icons when Ant Design lacks coverage |
-| classnames | Conditional CSS class names |
-| motion | Subtle transitions — enter/exit, layout (motion.dev) |
+| Package           | Purpose                                              |
+| ----------------- | ---------------------------------------------------- |
+| antd              | Ant Design v6 (Pokeslide theme via ConfigProvider)   |
+| @ant-design/icons | Outlined icon set (primary)                          |
+| lucide-react      | Supplementary icons when Ant Design lacks coverage   |
+| classnames        | Conditional CSS class names                          |
+| motion            | Subtle transitions — enter/exit, layout (motion.dev) |
 
 ### Utils
 
-| Package | Purpose |
-|---------|---------|
-| dayjs | Date formatting — `DD/MM/YYYY` standard across all tables |
-| use-debounce | Debounced search inputs in filter sections |
-| javascript-time-ago | Relative time ("2 days ago") in task lists |
+| Package             | Purpose                                                   |
+| ------------------- | --------------------------------------------------------- |
+| dayjs               | Date formatting — `DD/MM/YYYY` standard across all tables |
+| use-debounce        | Debounced search inputs in filter sections                |
+| javascript-time-ago | Relative time ("2 days ago") in task lists                |
 
 ### Styles
 
-| Package | Purpose |
-|---------|---------|
-| sass | SCSS support for CSS Modules |
+| Package | Purpose                      |
+| ------- | ---------------------------- |
+| sass    | SCSS support for CSS Modules |
 
 ### Dev / Testing
 
-| Package | Purpose |
-|---------|---------|
-| vitest | Unit & integration tests |
-| @testing-library/react | Component testing |
+| Package                     | Purpose                     |
+| --------------------------- | --------------------------- |
+| vitest                      | Unit & integration tests    |
+| @testing-library/react      | Component testing           |
 | @testing-library/user-event | User interaction simulation |
-| rollup-plugin-visualizer | Bundle size analysis |
+| rollup-plugin-visualizer    | Bundle size analysis        |
 
 ---
 
 ## 11. Production Server (Express)
 
 Express is required for Pokeslide because:
+
 - JWT token attached to requests needs controlled middleware
 - API proxying to backend (avoid CORS issues in production)
 - SPA catch-all routing
@@ -948,5 +937,5 @@ When adding a new Pokeslide module (e.g. a new report type, a new admin section)
 
 ---
 
-*Pokeslide Internal Platform — React Project Structure Guide v1.0*
-*Prepared by GoWare JSC | June 2026 | Internal use only*
+_Pokeslide Internal Platform — React Project Structure Guide v1.0_
+_Prepared by GoWare JSC | June 2026 | Internal use only_

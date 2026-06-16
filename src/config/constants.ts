@@ -3,7 +3,11 @@ export const ROUTES = {
   LOGIN: '/login',
 
   // All roles
-  /** Home route — currently Project Tracker */
+  /**
+   * Home route (`/`).
+   * `HomePage` renders Project Tracker when the user has `VIEW_CAPACITY_FULL`;
+   * otherwise redirects to project tasks.
+   */
   DASHBOARD: '/',
   /** Hidden temporarily — dashboard page kept for later use */
   DASHBOARD_LEGACY: '/dashboard',
@@ -29,7 +33,7 @@ export const ROUTES = {
   CREATIVE_REVIEW: '/creative/review',
   DA_TRACKING: '/creative/da',
 
-  // Head / Admin / HR
+  // Manager-level / admin settings routes
   CAPACITY: '/capacity',
   CAPACITY_MONTHLY: '/capacity/monthly',
   CAPACITY_FORECAST: '/capacity/forecast',

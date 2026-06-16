@@ -8,24 +8,24 @@ The **Users** pages (`/users`, `/users/:id`) are implemented on the frontend wit
 
 This is **not** the same as:
 
-| | Users (`/users`) | RBAC (`/roles`) | Auth / login |
-|---|------------------|-----------------|--------------|
-| **Purpose** | CRUD on user records (name, email, role, department, status) | Edit which roles have which permissions | Issue JWT, session, password/OAuth |
-| **Audience** | Admin (`MANAGE_USERS`) | Admin (`MANAGE_USERS`) | All users |
-| **v1 writes** | `POST /users`, `PATCH /users/:id` | `PUT /rbac/permissions` | Login endpoints (out of scope here) |
+|               | Users (`/users`)                                             | RBAC (`/roles`)                         | Auth / login                        |
+| ------------- | ------------------------------------------------------------ | --------------------------------------- | ----------------------------------- |
+| **Purpose**   | CRUD on user records (name, email, role, department, status) | Edit which roles have which permissions | Issue JWT, session, password/OAuth  |
+| **Audience**  | Manager-level roles (`MANAGE_USERS`)                         | Admin (`MANAGE_USERS` for matrix write) | All users                           |
+| **v1 writes** | `POST /users`, `PATCH /users/:id`                            | `PUT /rbac/permissions`                 | Login endpoints (out of scope here) |
 
 Changing a user's **role** on `/users/:id` updates their identity for permission checks. Effective permissions still come from the RBAC config ([RBAC_BACKEND_TODO.md](./RBAC_BACKEND_TODO.md)) — the backend should resolve `user.role` → permission grants on each request.
 
 ## Current frontend behavior
 
-| Concern | Temporary solution | Location |
-|---------|-------------------|----------|
-| Data source | In-memory mock (10 sample users) | `src/features/users/mock/` |
-| Mock toggle | `VITE_USE_USERS_MOCK` (default `true` in dev) | `src/config/env.ts` |
-| API client | Calls real endpoints when mock is disabled | `src/features/users/api.ts` |
-| Validation | Zod schemas at API boundary | `src/features/users/schemas/user.schema.ts` |
-| UI routes | `/users` (list + invite), `/users/:id` (detail/edit) | `src/pages/UsersPage/`, `UserDetailPage/` |
-| Access control | `MANAGE_USERS` (default: Admin only) | `src/config/permissions.ts`, `src/config/sidebar.ts` |
+| Concern        | Temporary solution                                   | Location                                             |
+| -------------- | ---------------------------------------------------- | ---------------------------------------------------- |
+| Data source    | In-memory mock (10 sample users)                     | `src/features/users/mock/`                           |
+| Mock toggle    | `VITE_USE_USERS_MOCK` (default `true` in dev)        | `src/config/env.ts`                                  |
+| API client     | Calls real endpoints when mock is disabled           | `src/features/users/api.ts`                          |
+| Validation     | Zod schemas at API boundary                          | `src/features/users/schemas/user.schema.ts`          |
+| UI routes      | `/users` (list + invite), `/users/:id` (detail/edit) | `src/pages/UsersPage/`, `UserDetailPage/`            |
+| Access control | `MANAGE_USERS` (default: all manager-level roles)    | `src/config/permissions.ts`, `src/config/sidebar.ts` |
 
 To test against a real API locally, set in `.env.local`:
 
@@ -46,7 +46,7 @@ POST   /users              → invite / create user
 PATCH  /users/:id          → update user profile, role, status, department
 ```
 
-All endpoints require **`MANAGE_USERS`** (Admin by default). There is **no delete** action in the v1 frontend.
+All endpoints require **`MANAGE_USERS`** (manager-level roles by default). There is **no delete** action in the v1 frontend.
 
 ---
 
@@ -60,42 +60,36 @@ Source of truth: `src/features/users/schemas/user.schema.ts`.
 interface User {
   id: string;
   name: string;
-  email: string;                   // unique
-  role:
-    | 'employee'
-    | 'pm'
-    | 'creative_manager'
-    | 'creative_head'
-    | 'head'
-    | 'admin';
+  email: string; // unique
+  role: 'employee' | 'pm' | 'creative_manager' | 'creative_head' | 'head' | 'admin';
   status: 'active' | 'inactive' | 'invited';
   department: 'project' | 'creative' | 'admin';
-  jobTitleId: string | null;       // FK to JobTitle.id — null until admin assigns
-  jobTitleCode?: string;           // enriched on read when jobTitleId is set
-  jobTitleName?: string;           // enriched on read when jobTitleId is set
-  joinedAt: string;                // ISO 8601 — set on create
-  updatedAt?: string;              // ISO 8601 — set on update
+  jobTitleId: string | null; // FK to JobTitle.id — null until admin assigns
+  jobTitleCode?: string; // enriched on read when jobTitleId is set
+  jobTitleName?: string; // enriched on read when jobTitleId is set
+  joinedAt: string; // ISO 8601 — set on create
+  updatedAt?: string; // ISO 8601 — set on update
 }
 ```
 
 ### Role labels (UI only)
 
-| `role` value | Display label |
-|--------------|---------------|
-| `employee` | Employee |
-| `pm` | Project Manager |
+| `role` value       | Display label    |
+| ------------------ | ---------------- |
+| `employee`         | Employee         |
+| `pm`               | Project Manager  |
 | `creative_manager` | Creative Manager |
-| `creative_head` | Creative Head |
-| `head` | Department Head |
-| `admin` | Admin |
+| `creative_head`    | Creative Head    |
+| `head`             | Department Head  |
+| `admin`            | Admin            |
 
 ### Status semantics
 
-| `status` | Meaning | UI variant |
-|----------|---------|------------|
-| `active` | User can sign in and use the platform | Green pill |
-| `inactive` | Account disabled; retain record | Grey pill |
-| `invited` | Invite sent; not yet activated | Amber pill |
+| `status`   | Meaning                               | UI variant |
+| ---------- | ------------------------------------- | ---------- |
+| `active`   | User can sign in and use the platform | Green pill |
+| `inactive` | Account disabled; retain record       | Grey pill  |
+| `invited`  | Invite sent; not yet activated        | Amber pill |
 
 **Create flow:** the invite modal sends `CreateUserRequest` (no `status`). The server should set `status: 'invited'` and trigger the invite email/workflow. Mock behavior: `mockCreateUser` in `src/features/users/mock/users.mock.ts`.
 
@@ -103,11 +97,11 @@ interface User {
 
 ### Department labels (UI only)
 
-| `department` | Display label |
-|--------------|---------------|
-| `project` | Project Department |
-| `creative` | Creative Department |
-| `admin` | Admin / HR |
+| `department` | Display label       |
+| ------------ | ------------------- |
+| `project`    | Project Department  |
+| `creative`   | Creative Department |
+| `admin`      | Admin / HR          |
 
 ---
 
@@ -117,11 +111,11 @@ Returns users for the **All users** table on `/users`.
 
 #### Query parameters
 
-| Param | Type | Required | Description |
-|-------|------|----------|-------------|
-| `search` | string | No | Case-insensitive match against `name` or `email` |
-| `role` | enum | No | One of the six `role` values above |
-| `status` | enum | No | One of: `active`, `inactive`, `invited` |
+| Param    | Type   | Required | Description                                      |
+| -------- | ------ | -------- | ------------------------------------------------ |
+| `search` | string | No       | Case-insensitive match against `name` or `email` |
+| `role`   | enum   | No       | One of the six `role` values above               |
+| `status` | enum   | No       | One of: `active`, `inactive`, `invited`          |
 
 Filters are combined with AND logic (same as `filterUsers` in `users.mock.ts`).
 
@@ -142,16 +136,16 @@ The v1 frontend does **not** send `page` / `pageSize` query params. It loads the
 
 #### Table columns rendered in UI
 
-| Column | Source field |
-|--------|--------------|
-| Name (link) | `name` → `/users/:id` |
-| Email | `email` |
-| Role | `role` (via `ROLE_LABELS`) |
-| Department | `department` (via `DEPARTMENT_LABELS`) |
-| Job title | `jobTitleCode` or `—` if `jobTitleId` is null |
-| Status | `status` (via `STATUS_LABELS`) |
-| Joined | `joinedAt` (formatted `DD/MM/YYYY`) |
-| View | navigates to `/users/:id` |
+| Column      | Source field                                  |
+| ----------- | --------------------------------------------- |
+| Name (link) | `name` → `/users/:id`                         |
+| Email       | `email`                                       |
+| Role        | `role` (via `ROLE_LABELS`)                    |
+| Department  | `department` (via `DEPARTMENT_LABELS`)        |
+| Job title   | `jobTitleCode` or `—` if `jobTitleId` is null |
+| Status      | `status` (via `STATUS_LABELS`)                |
+| Joined      | `joinedAt` (formatted `DD/MM/YYYY`)           |
+| View        | navigates to `/users/:id`                     |
 
 ---
 
@@ -175,8 +169,8 @@ Creates a user and sends an invite. Used by the **Invite user** modal on `/users
 
 ```typescript
 interface CreateUserRequest {
-  name: string;                    // min 1 char
-  email: string;                   // valid email
+  name: string; // min 1 char
+  email: string; // valid email
   role: User['role'];
   department: User['department'];
 }
@@ -184,13 +178,13 @@ interface CreateUserRequest {
 
 **Server-side rules:**
 
-| Field | Rule |
-|-------|------|
-| `email` | Unique (case-insensitive). Return `409 Conflict` with a clear message if duplicate. |
-| `status` | **Not in request** — server sets `invited` |
-| `jobTitleId` | **Not in request** — server sets `null` (admin assigns on detail page) |
-| `joinedAt` | Set to current timestamp |
-| `id` | Server-generated |
+| Field        | Rule                                                                                |
+| ------------ | ----------------------------------------------------------------------------------- |
+| `email`      | Unique (case-insensitive). Return `409 Conflict` with a clear message if duplicate. |
+| `status`     | **Not in request** — server sets `invited`                                          |
+| `jobTitleId` | **Not in request** — server sets `null` (admin assigns on detail page)              |
+| `joinedAt`   | Set to current timestamp                                                            |
+| `id`         | Server-generated                                                                    |
 
 **Invite workflow (recommended):**
 
@@ -217,18 +211,18 @@ interface UpdateUserRequest {
   role: User['role'];
   status: User['status'];
   department: User['department'];
-  jobTitleId: string | null;       // FK to JobTitle.id; null clears assignment
+  jobTitleId: string | null; // FK to JobTitle.id; null clears assignment
 }
 ```
 
 **Server-side rules:**
 
-| Field | Rule |
-|-------|------|
-| `email` | Unique among other users (case-insensitive). Return `409` on duplicate. |
-| `jobTitleId` | When non-null, must reference an existing `JobTitle` (`404` if missing). Enrich `jobTitleCode` / `jobTitleName` on response. |
-| `id`, `joinedAt` | Immutable — not in request body |
-| `updatedAt` | Set to current timestamp on success |
+| Field            | Rule                                                                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `email`          | Unique among other users (case-insensitive). Return `409` on duplicate.                                                      |
+| `jobTitleId`     | When non-null, must reference an existing `JobTitle` (`404` if missing). Enrich `jobTitleCode` / `jobTitleName` on response. |
+| `id`, `joinedAt` | Immutable — not in request body                                                                                              |
+| `updatedAt`      | Set to current timestamp on success                                                                                          |
 
 **Role change side effects (recommended):**
 
@@ -271,15 +265,15 @@ Not implemented in v1 frontend:
 
 ### Suggested data model
 
-| Field | Notes |
-|-------|-------|
-| `id` | UUID or prefixed string (`usr-…`) |
-| `email` | Unique index, normalized lowercase |
-| `role` | FK or enum aligned with RBAC roles |
+| Field        | Notes                                       |
+| ------------ | ------------------------------------------- |
+| `id`         | UUID or prefixed string (`usr-…`)           |
+| `email`      | Unique index, normalized lowercase          |
+| `role`       | FK or enum aligned with RBAC roles          |
 | `department` | Org unit for reporting; independent of role |
-| `status` | Lifecycle state; drives login eligibility |
-| `joinedAt` | Account creation / invite timestamp |
-| `updatedAt` | Last admin edit |
+| `status`     | Lifecycle state; drives login eligibility   |
+| `joinedAt`   | Account creation / invite timestamp         |
+| `updatedAt`  | Last admin edit                             |
 
 Optional future columns (not in v1 schema): `employeeCode`, `lastLoginAt`, `invitedBy`, `authProviderId`.
 
@@ -298,14 +292,14 @@ Optional future columns (not in v1 schema): `employeeCode`, `lastLoginAt`, `invi
 
 ## Related files
 
-| File | Purpose |
-|------|---------|
-| `src/features/users/schemas/user.schema.ts` | **Source of truth** for request/response types |
-| `src/features/users/api.ts` | Axios calls + mock toggle |
-| `src/features/users/mock/users.mock.ts` | Reference filter and validation logic for backend parity |
-| `src/features/users/constants.ts` | Role/status/department labels for UI |
-| `src/features/users/components/` | List, filters, table, invite modal, detail form |
+| File                                              | Purpose                                                      |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| `src/features/users/schemas/user.schema.ts`       | **Source of truth** for request/response types               |
+| `src/features/users/api.ts`                       | Axios calls + mock toggle                                    |
+| `src/features/users/mock/users.mock.ts`           | Reference filter and validation logic for backend parity     |
+| `src/features/users/constants.ts`                 | Role/status/department labels for UI                         |
+| `src/features/users/components/`                  | List, filters, table, invite modal, detail form              |
 | `src/features/rbac/components/RoleAccessPreview/` | Live preview of permissions for selected role on detail page |
-| `src/config/permissions.ts` | `ROLES`, `MANAGE_USERS` default grant |
-| `docs/RBAC_BACKEND_TODO.md` | Permission config persistence (separate from user records) |
-| `docs/BACKEND_API.md` | Index of all backend API specs |
+| `src/config/permissions.ts`                       | `ROLES`, `MANAGE_USERS` default grant                        |
+| `docs/RBAC_BACKEND_TODO.md`                       | Permission config persistence (separate from user records)   |
+| `docs/BACKEND_API.md`                             | Index of all backend API specs                               |

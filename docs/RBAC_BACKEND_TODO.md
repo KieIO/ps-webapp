@@ -6,37 +6,37 @@ The **Roles & Permissions** page (`/roles`) and **Audit Log** page (`/audit`) ar
 
 **Persist and audit the permission matrix** — which organizational roles are granted each permission key. The matrix drives runtime UI access (`roleHasPermission`) after login; it does not replace JWT role assignment on user records.
 
-| Surface | Route | What it does |
-|---------|-------|--------------|
-| Roles & Permissions | `/roles` | Editable permission matrix — save / reset to defaults |
-| Audit Log | `/audit` | Paginated history of permission changes (UI placeholder; API spec below) |
+| Surface             | Route    | What it does                                                             |
+| ------------------- | -------- | ------------------------------------------------------------------------ |
+| Roles & Permissions | `/roles` | Editable permission matrix — save / reset to defaults                    |
+| Audit Log           | `/audit` | Paginated history of permission changes (UI placeholder; API spec below) |
 
-This is **not** user role assignment (`PATCH /users/:id` sets a user's single role). RBAC config defines what each role *can do* platform-wide.
+This is **not** user role assignment (`PATCH /users/:id` sets a user's single role). RBAC config defines what each role _can do_ platform-wide.
 
 ## URL conventions (no `/api` path prefix)
 
 All frontend HTTP calls use Axios `baseURL` = `VITE_API_URL` (default `https://api.pokeslide-internal.com/v1`). Paths in this doc are **relative to that base** — the same pattern as titles, users, and tasks:
 
-| Feature | Example full URL |
-|---------|------------------|
-| Auth | `{VITE_API_URL}/auth/login` |
-| Users | `{VITE_API_URL}/users` |
-| Titles | `{VITE_API_URL}/job-titles` |
-| RBAC | `{VITE_API_URL}/rbac/permissions` |
+| Feature | Example full URL                  |
+| ------- | --------------------------------- |
+| Auth    | `{VITE_API_URL}/auth/login`       |
+| Users   | `{VITE_API_URL}/users`            |
+| Titles  | `{VITE_API_URL}/job-titles`       |
+| RBAC    | `{VITE_API_URL}/rbac/permissions` |
 
 There is **no extra `/api` segment** in resource paths. The host name already identifies the API; `/v1` is the API version prefix in `VITE_API_URL`. An older draft of this spec used `/api/rbac/...` — **use `/rbac/...` instead** so all features share one convention.
 
 ## Current frontend behavior
 
-| Concern | Temporary solution | Location |
-|---------|-------------------|----------|
-| Permission storage | `localStorage` key `pokeslide:rbac-config` | `src/features/rbac/storage/permissionConfig.storage.ts` |
-| Defaults | `PERMISSIONS` in code | `src/config/permissions.ts` |
-| Runtime checks | Redux `permissionConfig` + `permission` slices | `src/store/slices/permissionConfigSlice.ts` |
-| Audit trail | Last 50 changes in `localStorage` | `StoredRbacData.auditLog` |
-| Admin UI | `/roles` — editable matrix | `src/pages/RolesPage/` |
-| Audit UI | `/audit` — placeholder | `src/pages/AuditLogPage/` |
-| API client | **Not implemented yet** — no `src/features/rbac/api.ts` | Migration steps below |
+| Concern            | Temporary solution                                      | Location                                                |
+| ------------------ | ------------------------------------------------------- | ------------------------------------------------------- |
+| Permission storage | `localStorage` key `pokeslide:rbac-config`              | `src/features/rbac/storage/permissionConfig.storage.ts` |
+| Defaults           | `PERMISSIONS` in code                                   | `src/config/permissions.ts`                             |
+| Runtime checks     | Redux `permissionConfig` + `permission` slices          | `src/store/slices/permissionConfigSlice.ts`             |
+| Audit trail        | Last 50 changes in `localStorage`                       | `StoredRbacData.auditLog`                               |
+| Admin UI           | `/roles` — editable matrix                              | `src/pages/RolesPage/`                                  |
+| Audit UI           | `/audit` — placeholder                                  | `src/pages/AuditLogPage/`                               |
+| API client         | **Not implemented yet** — no `src/features/rbac/api.ts` | Migration steps below                                   |
 
 ---
 
@@ -59,39 +59,42 @@ Source of truth: `src/config/permissions.ts`.
 
 ### Roles
 
-| Key | Value | Label |
-|-----|-------|-------|
-| `EMPLOYEE` | `employee` | Employee |
-| `PM` | `pm` | Project Manager |
+| Key                | Value              | Label            |
+| ------------------ | ------------------ | ---------------- |
+| `EMPLOYEE`         | `employee`         | Employee         |
+| `PM`               | `pm`               | Project Manager  |
 | `CREATIVE_MANAGER` | `creative_manager` | Creative Manager |
-| `CREATIVE_HEAD` | `creative_head` | Creative Head |
-| `HEAD` | `head` | Department Head |
-| `ADMIN` | `admin` | Admin |
+| `CREATIVE_HEAD`    | `creative_head`    | Creative Head    |
+| `HEAD`             | `head`             | Department Head  |
+| `ADMIN`            | `admin`            | Admin            |
 
 Matrix column order (least → most privileged): `employee`, `pm`, `creative_manager`, `creative_head`, `head`, `admin`.
 
 ### Permission keys
 
-| Key | Default granted roles |
-|-----|----------------------|
-| `MANAGE_PROJECTS` | `pm`, `creative_head`, `head`, `admin` |
-| `EDIT_PROJECT` | `pm`, `head`, `admin` |
-| `ASSIGN_TASK` | `pm`, `creative_manager`, `creative_head`, `head` |
-| `REVIEW_CREATIVE_TASK` | `creative_head` |
-| `VIEW_ALL_TASKS` | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `EVALUATE_TASK` | `pm`, `head`, `admin` |
-| `VIEW_CAPACITY` | `head`, `admin`, `pm` |
-| `VIEW_CAPACITY_FULL` | `head`, `admin` |
-| `VIEW_WORKLOAD` | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `VIEW_PERFORMANCE` | `head`, `admin` |
-| `EDIT_KPI_SETTINGS` | `head`, `admin` |
-| `VIEW_QUALITY` | `pm`, `creative_head`, `head`, `admin` |
-| `REQUEST_OT` | `pm`, `creative_manager` |
-| `APPROVE_OT` | `head`, `admin` |
-| `EXPORT_REPORT` | `pm`, `head`, `admin` |
-| `MANAGE_USERS` | `admin` |
-| `MANAGE_TITLES` | `head`, `admin` |
-| `VIEW_AUDIT_LOG` | `admin` |
+| Key                    | Default granted roles                                      |
+| ---------------------- | ---------------------------------------------------------- |
+| `MANAGE_PROJECTS`      | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `EDIT_PROJECT`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `ASSIGN_TASK`          | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `REVIEW_CREATIVE_TASK` | `creative_head`                                            |
+| `VIEW_ALL_TASKS`       | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `EVALUATE_TASK`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `VIEW_CAPACITY`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `VIEW_CAPACITY_FULL`   | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `VIEW_WORKLOAD`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `VIEW_PERFORMANCE`     | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `EDIT_KPI_SETTINGS`    | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `VIEW_QUALITY`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `REQUEST_OT`           | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `APPROVE_OT`           | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `EXPORT_REPORT`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `VIEW_USER`            | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `MANAGE_USERS`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `MANAGE_LEAVE`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `REACTIVATE_USER`      | `admin`                                                    |
+| `MANAGE_TITLES`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `VIEW_AUDIT_LOG`       | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
 
 Backend must reject unknown permission or role keys on write.
 
@@ -99,10 +102,10 @@ Backend must reject unknown permission or role keys on write.
 
 Cannot be removed on save (prevents admin lockout). Enforced in UI (`src/features/rbac/constants.ts`) and **must** be enforced server-side:
 
-| Permission | Role that must always be granted |
-|------------|-------------------------------|
-| `MANAGE_USERS` | `admin` |
-| `VIEW_AUDIT_LOG` | `admin` |
+| Permission       | Role that must always be granted |
+| ---------------- | -------------------------------- |
+| `MANAGE_USERS`   | `admin`                          |
+| `VIEW_AUDIT_LOG` | `admin`                          |
 
 ---
 
@@ -111,13 +114,7 @@ Cannot be removed on save (prevents admin lockout). Enforced in UI (`src/feature
 Source of truth: `src/features/rbac/types.ts`.
 
 ```typescript
-type Role =
-  | 'employee'
-  | 'pm'
-  | 'creative_manager'
-  | 'creative_head'
-  | 'head'
-  | 'admin';
+type Role = 'employee' | 'pm' | 'creative_manager' | 'creative_head' | 'head' | 'admin';
 
 type Permission =
   | 'MANAGE_PROJECTS'
@@ -150,7 +147,7 @@ interface PermissionChange {
 
 interface PermissionAuditEntry {
   id: string;
-  timestamp: string;       // ISO 8601
+  timestamp: string; // ISO 8601
   actorId: string;
   actorName: string;
   summary: string;
@@ -159,7 +156,7 @@ interface PermissionAuditEntry {
 
 interface RbacConfigResponse {
   config: PermissionConfigMap;
-  updatedAt: string;       // ISO 8601
+  updatedAt: string; // ISO 8601
   source: 'default' | 'database';
 }
 ```
@@ -238,13 +235,13 @@ Paginated audit log for `/audit`. Replaces reading `StoredRbacData.auditLog` fro
 
 #### Query parameters
 
-| Param | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `page` | number | No | `1` | 1-based page index |
-| `pageSize` | number | No | `20` | Page size (max `100`) |
-| `actorId` | string | No | — | Filter by admin user id |
-| `from` | string | No | — | ISO 8601 — entries on or after this time |
-| `to` | string | No | — | ISO 8601 — entries on or before this time |
+| Param      | Type   | Required | Default | Description                               |
+| ---------- | ------ | -------- | ------- | ----------------------------------------- |
+| `page`     | number | No       | `1`     | 1-based page index                        |
+| `pageSize` | number | No       | `20`    | Page size (max `100`)                     |
+| `actorId`  | string | No       | —       | Filter by admin user id                   |
+| `from`     | string | No       | —       | ISO 8601 — entries on or after this time  |
+| `to`       | string | No       | —       | ISO 8601 — entries on or before this time |
 
 Sort: **`timestamp` descending** (newest first).
 
@@ -305,12 +302,12 @@ Shape:   StoredRbacData (see src/features/rbac/types.ts)
 
 ## Related files
 
-| File | Purpose |
-|------|---------|
-| `docs/BACKEND_API.md` | Index of all backend API specs |
-| `src/config/permissions.ts` | Default permission map + role enum |
-| `src/config/permissionModules.ts` | UI module grouping for matrix rows |
-| `src/features/rbac/types.ts` | Request/response TypeScript types |
-| `src/features/rbac/constants.ts` | `IMMUTABLE_GRANTS`, storage keys |
-| `src/features/rbac/storage/permissionConfig.storage.ts` | Current local persistence |
-| `src/app/PermissionConfigBootstrap.tsx` | App init hydration |
+| File                                                    | Purpose                            |
+| ------------------------------------------------------- | ---------------------------------- |
+| `docs/BACKEND_API.md`                                   | Index of all backend API specs     |
+| `src/config/permissions.ts`                             | Default permission map + role enum |
+| `src/config/permissionModules.ts`                       | UI module grouping for matrix rows |
+| `src/features/rbac/types.ts`                            | Request/response TypeScript types  |
+| `src/features/rbac/constants.ts`                        | `IMMUTABLE_GRANTS`, storage keys   |
+| `src/features/rbac/storage/permissionConfig.storage.ts` | Current local persistence          |
+| `src/app/PermissionConfigBootstrap.tsx`                 | App init hydration                 |

@@ -5,6 +5,7 @@ import { DepartmentBadge } from '@/features/users/components/DepartmentBadge/Dep
 import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/CompletionProgressCell';
 import { StatusPill } from '@/shared/ui/StatusPill/StatusPill';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
+import { UserNameLink } from '@/shared/ui/UserNameLink/UserNameLink';
 import { WORK_STATUS_LABELS } from '../../constants';
 import type { EmployeeCapacity } from '../../schemas/capacity.schema';
 import { getCapacityProgressVariant } from '../../utils/capacityProgress';
@@ -47,6 +48,7 @@ export function CapacityTable({
       key: 'name',
       sorter: compareEmployeeName,
       sortDirections: ['ascend', 'descend'],
+      render: (name: string, record) => <UserNameLink name={name} userId={record.id} />,
     },
     {
       title: 'Department',

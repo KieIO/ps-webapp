@@ -22,14 +22,14 @@ All roles share one codebase. Access and visibility are controlled by **role-bas
 
 ### Who uses this platform?
 
-| Role | Vietnamese label | Primary usage |
-|------|-----------------|---------------|
-| **Employee / Staff** | Nhân viên | Confirm tasks, log time, view personal dashboard |
-| **PM / Manager** | Project Manager | Create & assign tasks, manage projects, track workload |
-| **Creative Manager** | Creative Manager (CM) | Assign Creative tasks to Staff, review output |
-| **Creative Head** | Creative Head | Evaluate task complexity, assign to CM, approve Creative output |
-| **Department Head** | Head | Oversee capacity, approve OT, review KPIs, manage overall performance |
-| **Admin / HR** | Admin | Manage users, roles, permissions, audit logs |
+| Role                 | Vietnamese label      | Primary usage                                                               |
+| -------------------- | --------------------- | --------------------------------------------------------------------------- |
+| **Employee / Staff** | Nhân viên             | Confirm tasks, log time, view personal dashboard                            |
+| **PM / Manager**     | Project Manager       | Create & assign tasks, manage projects, track workload                      |
+| **Creative Manager** | Creative Manager (CM) | Assign Creative tasks to Staff, review output                               |
+| **Creative Head**    | Creative Head         | Evaluate task complexity, assign to CM, approve Creative output             |
+| **Department Head**  | Head                  | Same manager-level access as PM/Creative roles; distinct task table columns |
+| **Admin / HR**       | Admin                 | Same manager-level access; plus `REACTIVATE_USER` and RBAC matrix write     |
 
 ### Who is this document for?
 
@@ -139,18 +139,18 @@ All pages are served from a single app. Route access is controlled by `Protected
 
 ### 4.1 Unauthenticated
 
-| # | Page | Route | Purpose |
-|---|------|-------|---------|
-| 1 | **Login** | `/login` | Authentication for all roles |
+| #   | Page      | Route    | Purpose                      |
+| --- | --------- | -------- | ---------------------------- |
+| 1   | **Login** | `/login` | Authentication for all roles |
 
 ### 4.2 All authenticated roles
 
-| # | Page | Route | Purpose |
-|---|------|-------|---------|
-| 2 | **Dashboard** | `/` | Role-aware summary: KPIs, quick actions, capacity snapshot |
-| 3 | **Project Tasks** | `/tasks/project` | Project task list — status, assign, confirm & complete |
-| 4 | **Non-project tasks** | `/tasks/non-project` | Non-project task list — same actions as project tasks |
-| 5 | **Task detail** | `/tasks/detail/:id` | Task summary, description, history, status update |
+| #   | Page                  | Route                | Purpose                                                                                 |
+| --- | --------------------- | -------------------- | --------------------------------------------------------------------------------------- |
+| 2   | **Home**              | `/`                  | Project Tracker when user has `VIEW_CAPACITY_FULL`; otherwise redirect to Project Tasks |
+| 3   | **Project Tasks**     | `/tasks/project`     | Project task list — status, assign, confirm & complete                                  |
+| 4   | **Non-project tasks** | `/tasks/non-project` | Non-project task list — same actions as project tasks                                   |
+| 5   | **Task detail**       | `/tasks/detail/:id`  | Task summary, description, history, status update                                       |
 
 > **Deferred:** **Time Log** (`/time-log`) — scaffold only; removed from sidebar and router until needed.
 > **Deferred:** **Notifications** (`/notifications`) — scaffold only; removed from sidebar until needed.
@@ -159,62 +159,64 @@ All pages are served from a single app. Route access is controlled by `Protected
 
 `/tasks/project` and `/tasks/non-project` share the same `MyTask` API shape; the UI shows a **role-specific column subset** (see `src/features/tasks/constants.ts`, `getMyTaskColumnKeysForRole`).
 
-| Role | Table columns |
-|------|----------------|
-| Employee | PROJECTS NAME, PROJECT MANAGER, TASK NAME, TASK TYPE, QUANTITY, DATE, Trạng thái, NOTE (staff) |
-| Project Manager | Full operational set + PM classification labels (TƯ DUY THIẾT KẾ / KỸ THUẬT / XỬ LÝ NỘI DUNG) |
-| **Creative Head** | **Same as Project Manager** |
-| **Creative Manager** | **Same as Project Manager** |
-| Department Head | PROJECT NAME, START DATE, END DATE, PROJECT LEVEL, BRIEF, KHỐI LƯỢNG, TÍNH CHẤT, THỜI GIAN, YẾU TỐ BỔ SUNG, PM NAME, ĐÁNH GIÁ, NOTE, PROJECT STATUS, FINISHED DATE |
-| Admin | Full PM operational set + PM classification labels |
+| Role                 | Table columns                                                                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Employee             | PROJECTS NAME, PROJECT MANAGER, TASK NAME, TASK TYPE, QUANTITY, DATE, Trạng thái, NOTE (staff)                                                                     |
+| Project Manager      | Full operational set + PM classification labels (TƯ DUY THIẾT KẾ / KỸ THUẬT / XỬ LÝ NỘI DUNG)                                                                      |
+| **Creative Head**    | **Same as Project Manager**                                                                                                                                        |
+| **Creative Manager** | **Same as Project Manager**                                                                                                                                        |
+| Department Head      | PROJECT NAME, START DATE, END DATE, PROJECT LEVEL, BRIEF, KHỐI LƯỢNG, TÍNH CHẤT, THỜI GIAN, YẾU TỐ BỔ SUNG, PM NAME, ĐÁNH GIÁ, NOTE, PROJECT STATUS, FINISHED DATE |
+| Admin                | Full PM operational set + PM classification labels                                                                                                                 |
 
 Backend returns the full task record; export CSV uses the same visible columns. Spec: [MY_TASKS_BACKEND_TODO.md](./MY_TASKS_BACKEND_TODO.md).
 
-### 4.3 PM / Creative Manager / Creative Head
+### 4.3 Manager-level roles (permission-gated)
 
-| # | Page | Route | Purpose |
-|---|------|-------|---------|
-| 6 | **Projects** | `/projects` | Project list, status, priority, deadline |
-| 7 | **Project Detail** | `/projects/:id` | Timeline, tasks, current PMs, client notes |
-| 8 | **Task Management** | `/tasks/manage` | Full task board — assign, track, review all tasks |
-| 9 | **Task Form** | `/tasks/new`, `/tasks/:id/edit` | Create / edit task (Project or Creative type) |
-| 10 | **Workload** | `/workload` | Per-employee capacity heatmap (free / normal / overloaded) |
-| 11 | **Quality Control** | `/quality` | Revision count, QA alerts, quality scores per employee |
+Routes below require the listed permission (default grants: `pm`, `creative_manager`, `creative_head`, `head`, `admin`). See `src/config/permissions.ts`.
+
+| #   | Page                       | Route                           | Permission                   | Purpose                                             |
+| --- | -------------------------- | ------------------------------- | ---------------------------- | --------------------------------------------------- |
+| 6   | **Projects**               | `/projects`                     | `MANAGE_PROJECTS`            | Project list, status, priority, deadline            |
+| 7   | **Project Detail**         | `/projects/:id`                 | `MANAGE_PROJECTS`            | Timeline, tasks, current PMs, client notes          |
+| 8   | **Task Management**        | `/tasks/manage`                 | `VIEW_ALL_TASKS`             | Full task board — assign, track, review all tasks   |
+| 9   | **Task Form**              | `/tasks/new`, `/tasks/:id/edit` | `ASSIGN_TASK`                | Create / edit task (Project or Creative type)       |
+| 10  | **Workload**               | `/workload`                     | `VIEW_WORKLOAD`              | Per-employee capacity heatmap                       |
+| 11  | **Quality Control**        | `/quality`                      | `VIEW_QUALITY`               | Revision count, QA alerts, quality scores           |
+| 14  | **Capacity Dashboard**     | `/capacity`                     | `VIEW_CAPACITY_FULL`         | Overall capacity by day/week                        |
+| 15  | **Capacity Forecast**      | `/capacity/forecast`            | `VIEW_CAPACITY_FULL`         | Workload forecast by day/week                       |
+| 16  | **Home / Project Tracker** | `/`                             | `VIEW_CAPACITY_FULL`         | Calendar tracker (legacy `/tracker` redirects here) |
+| 17  | **Performance**            | `/performance`                  | `VIEW_PERFORMANCE`           | KPI dashboard                                       |
+| 18  | **KPI Settings**           | `/performance/settings`         | `EDIT_KPI_SETTINGS`          | Customize KPI formula and weighting                 |
+| 19  | **OT Management**          | `/overtime`                     | `APPROVE_OT` / `REQUEST_OT`  | OT requests — approve / reject                      |
+| 20  | **Reports**                | `/reports`                      | `EXPORT_REPORT`              | Productivity reports, export                        |
+| 21  | **Users**                  | `/users`                        | `MANAGE_USERS`               | User list, search, filter by role/status            |
+| 22  | **User Detail**            | `/users/:id`                    | `VIEW_USER` / `MANAGE_USERS` | View / edit user profile, change role               |
+| 23  | **Audit Log**              | `/audit`                        | `VIEW_AUDIT_LOG`             | System action history                               |
+| 24  | **Roles & Permissions**    | `/roles`                        | `MANAGE_USERS`               | Permission matrix (write: Admin only)               |
+| 25  | **Title management**       | `/settings/titles`              | `MANAGE_TITLES`              | Job titles, levels, groups                          |
+| 26  | **Task types & scores**    | `/settings/task-score`          | `MANAGE_USERS`               | Task score catalog                                  |
 
 ### 4.4 Creative Head only
 
-| # | Page | Route | Purpose |
-|---|------|-------|---------|
-| 12 | **DA Tracking** | `/creative/da` | Tỷ lệ DA được chọn per employee and period |
+| #   | Page            | Route          | Purpose                                    |
+| --- | --------------- | -------------- | ------------------------------------------ |
+| 12  | **DA Tracking** | `/creative/da` | Tỷ lệ DA được chọn per employee and period |
 
 > **Deferred:** **Creative Review** (`/creative/review`) — scaffold only; removed from sidebar and router until needed.
 
-### 4.5 Department Head / Admin / HR
+### 4.5 Admin-only operations
 
-| # | Page | Route | Purpose |
-|---|------|-------|---------|
-| 14 | **Capacity Dashboard** | `/capacity` | Overall capacity by day/week — Project + Creative + whole company |
-| 15 | **Capacity Forecast** | `/capacity/forecast` | Workload forecast by day/week |
-| 16 | **Project Tracker** | `/tracker` | Master tracker: all active projects, status, PMs, progress |
-| 17 | **Performance** | `/performance` | KPI dashboard — Target vs Actual, output, quality score per employee |
-| 18 | **KPI Settings** | `/performance/settings` | Customize KPI formula and weighting (Head / HR) |
-| 19 | **OT Management** | `/overtime` | OT requests list — approve / reject, OT dashboard |
-| 20 | **Reports** | `/reports` | Productivity reports, team vs individual comparison, export |
+| Operation                   | Permission / route | Notes                                                   |
+| --------------------------- | ------------------ | ------------------------------------------------------- |
+| Reactivate user after leave | `REACTIVATE_USER`  | `POST /users/:id/reactivate`                            |
+| Save / reset RBAC matrix    | Admin route guard  | `PUT /rbac/permissions`, `POST /rbac/permissions/reset` |
 
-### 4.6 Admin / HR only
+### 4.6 Error / System
 
-| # | Page | Route | Purpose |
-|---|------|-------|---------|
-| 21 | **Users** | `/users` | User list, search, filter by role/status |
-| 22 | **User Detail** | `/users/:id` | View / edit user profile, change role |
-| 23 | **Audit Log** | `/audit` | System action history (who did what, when) |
-
-### 4.7 Error / System
-
-| # | Page | Route | Purpose |
-|---|------|-------|---------|
-| 24 | **Forbidden** | `/403` | Access denied |
-| 25 | **Not Found** | `/404` | Page not found |
+| #   | Page          | Route  | Purpose        |
+| --- | ------------- | ------ | -------------- |
+| 24  | **Forbidden** | `/403` | Access denied  |
+| 25  | **Not Found** | `/404` | Page not found |
 
 ---
 
@@ -227,48 +229,49 @@ export const ROUTES = {
   // Auth
   LOGIN: '/login',
 
-  // All roles
-  DASHBOARD:      '/',
-  MY_TASKS:       '/tasks',
+  // All roles — home uses VIEW_CAPACITY_FULL inside HomePage
+  DASHBOARD: '/',
+  PROJECT_TASKS: '/tasks/project',
+  NON_PROJECT_TASKS: '/tasks/non-project',
   // TIME_LOG:    '/time-log',  // deferred — not in sidebar/router
-  NOTIFICATIONS:  '/notifications',
+  NOTIFICATIONS: '/notifications',
 
-  // PM / Manager
-  PROJECTS:           '/projects',
-  PROJECT_DETAIL:     '/projects/:id',
-  TASK_MANAGE:        '/tasks/manage',
-  TASK_NEW:           '/tasks/new',
-  TASK_EDIT:          '/tasks/:id/edit',
-  WORKLOAD:           '/workload',
-  QUALITY:            '/quality',
+  // Manager-level (permission-gated in sidebar/router)
+  PROJECTS: '/projects',
+  PROJECT_DETAIL: '/projects/:id',
+  TASK_MANAGE: '/tasks/manage',
+  TASK_NEW: '/tasks/new',
+  TASK_EDIT: '/tasks/:id/edit',
+  WORKLOAD: '/workload',
+  QUALITY: '/quality',
 
-  // Creative Head
+  // Creative Head only (route guard)
   // CREATIVE_REVIEW: '/creative/review',  // deferred — not in sidebar/router
-  DA_TRACKING:        '/creative/da',
+  DA_TRACKING: '/creative/da',
 
-  // Head / Admin / HR
-  CAPACITY:           '/capacity',
-  CAPACITY_FORECAST:  '/capacity/forecast',
-  PROJECT_TRACKER:    '/tracker',
-  PERFORMANCE:        '/performance',
-  KPI_SETTINGS:       '/performance/settings',
-  OVERTIME:           '/overtime',
-  REPORTS:            '/reports',
+  // Manager-level settings & analytics (permission-gated)
+  CAPACITY: '/capacity',
+  CAPACITY_FORECAST: '/capacity/forecast',
+  PROJECT_TRACKER: '/',
+  PERFORMANCE: '/performance',
+  KPI_SETTINGS: '/performance/settings',
+  OVERTIME: '/overtime',
+  REPORTS: '/reports',
 
-  // Admin / HR
-  USERS:              '/users',
-  USER_DETAIL:        '/users/:id',
-  AUDIT_LOG:          '/audit',
+  // Users & admin surfaces (permission-gated; RBAC write = Admin only)
+  USERS: '/users',
+  USER_DETAIL: '/users/:id',
+  AUDIT_LOG: '/audit',
 
   // System
-  FORBIDDEN:          '/403',
-  NOT_FOUND:          '/404',
+  FORBIDDEN: '/403',
+  NOT_FOUND: '/404',
 } as const;
 
 // Dynamic route helpers
-export const buildProjectDetailPath  = (id: string) => `/projects/${id}`;
-export const buildTaskEditPath       = (id: string) => `/tasks/${id}/edit`;
-export const buildUserDetailPath     = (id: string) => `/users/${id}`;
+export const buildProjectDetailPath = (id: string) => `/projects/${id}`;
+export const buildTaskEditPath = (id: string) => `/tasks/${id}/edit`;
+export const buildUserDetailPath = (id: string) => `/users/${id}`;
 ```
 
 ---
@@ -279,49 +282,27 @@ Pokeslide has **6 roles**. Define them in `src/config/permissions.ts`:
 
 ```typescript
 export const ROLES = {
-  EMPLOYEE:         'employee',
-  PM:               'pm',
+  EMPLOYEE: 'employee',
+  PM: 'pm',
   CREATIVE_MANAGER: 'creative_manager',
-  CREATIVE_HEAD:    'creative_head',
-  HEAD:             'head',
-  ADMIN:            'admin',
+  CREATIVE_HEAD: 'creative_head',
+  HEAD: 'head',
+  ADMIN: 'admin',
 } as const;
 
-export type Role = typeof ROLES[keyof typeof ROLES];
+export type Role = (typeof ROLES)[keyof typeof ROLES];
 
 export const PERMISSIONS = {
-  // Task & Project
-  MANAGE_PROJECTS:      [ROLES.PM, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
-  ASSIGN_TASK:          [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD, ROLES.HEAD],
-  REVIEW_CREATIVE_TASK: [ROLES.CREATIVE_HEAD],
-  VIEW_ALL_TASKS:       [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
-
-  // Capacity & Workload
-  VIEW_CAPACITY:        [ROLES.HEAD, ROLES.ADMIN, ROLES.PM],
-  VIEW_CAPACITY_FULL:   [ROLES.HEAD, ROLES.ADMIN],
-  VIEW_WORKLOAD:        [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
-
-  // Performance & KPI
-  VIEW_PERFORMANCE:     [ROLES.HEAD, ROLES.ADMIN],
-  EDIT_KPI_SETTINGS:    [ROLES.HEAD, ROLES.ADMIN],
-
-  // Quality
-  VIEW_QUALITY:         [ROLES.PM, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
-
-  // OT
-  REQUEST_OT:           [ROLES.PM, ROLES.CREATIVE_MANAGER],
-  APPROVE_OT:           [ROLES.HEAD, ROLES.ADMIN],
-
-  // Reports
-  EXPORT_REPORT:        [ROLES.PM, ROLES.HEAD, ROLES.ADMIN],
-
-  // Users & Admin
-  MANAGE_USERS:         [ROLES.ADMIN],
-  VIEW_AUDIT_LOG:       [ROLES.ADMIN],
+  // Source of truth: src/config/permissions.ts (keep this doc in sync when defaults change).
+  // Manager-level roles (pm, creative_manager, creative_head, head, admin) share most permissions.
+  // Employee has core task access only.
+  // Exceptions: REVIEW_CREATIVE_TASK → creative_head only; REACTIVATE_USER → admin only.
 } as const;
 ```
 
-> Use `usePermission()` hook from `shared/hooks/usePermission.ts` — never hard-code role checks in JSX.
+> Use `usePermission()` from `shared/hooks/usePermission.ts` for runtime checks.  
+> `HomePage` uses `VIEW_CAPACITY_FULL` (not hardcoded roles) to decide tracker vs project tasks.  
+> Sidebar visibility is permission-driven via `permissionConfig` + `roleHasPermission`.
 
 ---
 
@@ -329,17 +310,20 @@ export const PERMISSIONS = {
 
 ### Layout variants
 
-| Layout | Use for | Components |
-|--------|---------|------------|
-| `UnauthenticatedLayout` | `/login` | Centered card, gradient background (`#1E3A5F → #2563EB`) |
-| `AuthenticatedLayout` | All protected pages | Sidebar (240px / 64px collapsed) + TopHeader (64px) + `<Outlet />` |
-| `EMPTY` | `/403`, `/404` | No shell |
+| Layout                  | Use for             | Components                                                         |
+| ----------------------- | ------------------- | ------------------------------------------------------------------ |
+| `UnauthenticatedLayout` | `/login`            | Centered card, gradient background (`#1E3A5F → #2563EB`)           |
+| `AuthenticatedLayout`   | All protected pages | Sidebar (240px / 64px collapsed) + TopHeader (64px) + `<Outlet />` |
+| `EMPTY`                 | `/403`, `/404`      | No shell                                                           |
 
 ### Auth guard
 
 Wrap protected routes with `ProtectedRoute` in `app/router.tsx`:
+
 - If not authenticated → redirect to `/login`
 - If authenticated but role not allowed → redirect to `/403`
+
+**Home landing (`/`):** permission-based via `VIEW_CAPACITY_FULL` in `HomePage` — not a hardcoded head/admin check.
 
 ### Router structure (conceptual)
 
@@ -349,55 +333,27 @@ const router = createBrowserRouter([
   {
     element: <AuthenticatedLayout />,
     children: [
-      // All roles
-      { index: true,                   element: <DashboardPage /> },
-      { path: ROUTES.MY_TASKS,         element: <MyTasksPage /> },
-      { path: ROUTES.NOTIFICATIONS,    element: <NotificationsPage /> },
+      // All roles — home uses permission check inside HomePage
+      { index: true, element: <HomePage /> },
+      { path: ROUTES.PROJECT_TASKS, element: <MyTasksPage /> },
+      { path: ROUTES.NON_PROJECT_TASKS, element: <NonProjectTasksPage /> },
 
-      // PM + Creative roles + Head + Admin
+      // Manager-level roles (pm, creative_manager, creative_head, head, admin)
       {
-        element: <ProtectedRoute allowedRoles={[ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN]} />,
+        element: <ProtectedRoute allowedRoles={[...MANAGER_ROLES]} />,
         children: [
-          { path: ROUTES.PROJECTS,      element: <ProjectsPage /> },
-          { path: ROUTES.PROJECT_DETAIL,element: <ProjectDetailPage /> },
-          { path: ROUTES.TASK_MANAGE,   element: <TaskManagePage /> },
-          { path: ROUTES.TASK_NEW,      element: <TaskFormPage /> },
-          { path: ROUTES.TASK_EDIT,     element: <TaskFormPage /> },
-          { path: ROUTES.WORKLOAD,      element: <WorkloadPage /> },
-          { path: ROUTES.QUALITY,       element: <QualityPage /> },
+          { path: ROUTES.PROJECTS, element: <ProjectsPage /> },
+          { path: ROUTES.CAPACITY, element: <CapacityPage /> },
+          { path: ROUTES.USERS, element: <UsersPage /> },
+          { path: ROUTES.ROLES, element: <RolesPage /> },
+          // ...
         ],
       },
 
       // Creative Head only
       {
         element: <ProtectedRoute allowedRoles={[ROLES.CREATIVE_HEAD]} />,
-        children: [
-          { path: ROUTES.DA_TRACKING,     element: <DATrackingPage /> },
-        ],
-      },
-
-      // Head + Admin + HR
-      {
-        element: <ProtectedRoute allowedRoles={[ROLES.HEAD, ROLES.ADMIN]} />,
-        children: [
-          { path: ROUTES.CAPACITY,          element: <CapacityPage /> },
-          { path: ROUTES.CAPACITY_FORECAST, element: <CapacityForecastPage /> },
-          { path: ROUTES.PROJECT_TRACKER,   element: <ProjectTrackerPage /> },
-          { path: ROUTES.PERFORMANCE,       element: <PerformancePage /> },
-          { path: ROUTES.KPI_SETTINGS,      element: <KPISettingsPage /> },
-          { path: ROUTES.OVERTIME,          element: <OvertimePage /> },
-          { path: ROUTES.REPORTS,           element: <ReportsPage /> },
-        ],
-      },
-
-      // Admin only
-      {
-        element: <ProtectedRoute allowedRoles={[ROLES.ADMIN]} />,
-        children: [
-          { path: ROUTES.USERS,       element: <UsersPage /> },
-          { path: ROUTES.USER_DETAIL, element: <UserDetailPage /> },
-          { path: ROUTES.AUDIT_LOG,   element: <AuditLogPage /> },
-        ],
+        children: [{ path: ROUTES.DA_TRACKING, element: <DATrackingPage /> }],
       },
     ],
   },
@@ -417,23 +373,23 @@ Parent menus with `children` show only when at least one child is visible; each 
 
 ### Sidebar menu order
 
-| # | Label | Route | Permission gate |
-|---|-------|-------|-----------------|
-| 1 | Dashboard | `/` | — (all authenticated) |
-| 2 | Project Tracker | `/tracker` | `VIEW_CAPACITY_FULL` |
-| 3 | Projects | `/projects` | `MANAGE_PROJECTS` |
-| 4 | My Tasks | `/tasks` | — (all authenticated) |
-| 5 | Performance | — | Parent menu (see children below) |
-| 5a | ↳ KPI Dashboard | `/performance` | `VIEW_PERFORMANCE` |
-| 5b | ↳ Workload | `/workload` | `VIEW_WORKLOAD` |
-| 5c | ↳ Quality Control | `/quality` | `VIEW_QUALITY` |
-| 5d | ↳ Capacity | `/capacity` | `VIEW_CAPACITY_FULL` |
-| 6 | Reports | `/reports` | `EXPORT_REPORT` |
-| 7 | Users | `/users` | `MANAGE_USERS` |
-| 8 | Settings | — | Parent menu (see children below) |
-| 8a | ↳ Roles & Permissions | `/roles` | `MANAGE_USERS` |
-| 8b | ↳ Audit Log | `/audit` | `VIEW_AUDIT_LOG` |
-| 9+ | Overtime | — | See `sidebar.ts` |
+| #   | Label                 | Route          | Permission gate                  |
+| --- | --------------------- | -------------- | -------------------------------- |
+| 1   | Dashboard             | `/`            | — (all authenticated)            |
+| 2   | Project Tracker       | `/tracker`     | `VIEW_CAPACITY_FULL`             |
+| 3   | Projects              | `/projects`    | `MANAGE_PROJECTS`                |
+| 4   | My Tasks              | `/tasks`       | — (all authenticated)            |
+| 5   | Performance           | —              | Parent menu (see children below) |
+| 5a  | ↳ KPI Dashboard       | `/performance` | `VIEW_PERFORMANCE`               |
+| 5b  | ↳ Workload            | `/workload`    | `VIEW_WORKLOAD`                  |
+| 5c  | ↳ Quality Control     | `/quality`     | `VIEW_QUALITY`                   |
+| 5d  | ↳ Capacity            | `/capacity`    | `VIEW_CAPACITY_FULL`             |
+| 6   | Reports               | `/reports`     | `EXPORT_REPORT`                  |
+| 7   | Users                 | `/users`       | `MANAGE_USERS`                   |
+| 8   | Settings              | —              | Parent menu (see children below) |
+| 8a  | ↳ Roles & Permissions | `/roles`       | `MANAGE_USERS`                   |
+| 8b  | ↳ Audit Log           | `/audit`       | `VIEW_AUDIT_LOG`                 |
+| 9+  | Overtime              | —              | See `sidebar.ts`                 |
 
 > **Deferred:** Time Log (`/time-log`) — not in sidebar until the feature is implemented.
 > **Deferred:** Creative Review (`/creative/review`) — not in sidebar until the feature is implemented.
@@ -441,10 +397,16 @@ Parent menus with `children` show only when at least one child is visible; each 
 
 ```typescript
 import {
-  DashboardOutlined, CheckSquareOutlined,
-  ProjectOutlined, BarChartOutlined,
-  TrophyOutlined, FieldTimeOutlined,
-  FileTextOutlined, UserOutlined, SettingOutlined, AuditOutlined,
+  DashboardOutlined,
+  CheckSquareOutlined,
+  ProjectOutlined,
+  BarChartOutlined,
+  TrophyOutlined,
+  FieldTimeOutlined,
+  FileTextOutlined,
+  UserOutlined,
+  SettingOutlined,
+  AuditOutlined,
 } from '@ant-design/icons';
 import { ROUTES } from './constants';
 
@@ -453,7 +415,7 @@ export const SIDEBAR_ITEMS = [
     label: 'Dashboard',
     path: ROUTES.DASHBOARD,
     icon: DashboardOutlined,
-    permission: null,                     // visible to all authenticated users
+    permission: null, // visible to all authenticated users
   },
   {
     label: 'Project Tracker',
@@ -522,26 +484,26 @@ export const SIDEBAR_ITEMS = [
 
 Each feature module lives in `src/features/[feature]/` and owns: `api.ts`, `schemas/`, `components/`, `hooks/`.
 
-| Feature | Location | Domain | Priority |
-|---------|----------|--------|----------|
-| **auth** | `features/auth/` | Login, JWT, logout | P0 |
-| **tasks** | `features/tasks/` | Task lists (**UI shipped** for `/tasks/project`, `/tasks/non-project`, `/tasks/detail/:id`) — mock data in dev; Creative Head & Creative Manager use PM table columns; see [MY_TASKS_BACKEND_TODO.md](./MY_TASKS_BACKEND_TODO.md) | P0 |
-| **projects** | `features/projects/` | Project list & evaluation overview — **UI shipped with mock data**; see [BACKEND_API.md](./BACKEND_API.md) | P0 |
-| **workload** | `features/workload/` | Capacity heatmap per employee / PM | P0 |
-| **capacity** | `features/capacity/` | Overall + forecast dashboard (Head view) | P0 |
-| **tracker** | `features/tracker/` | Calendar project tracker at `/tracker` — **UI shipped with mock data**; see [BACKEND_API.md](./BACKEND_API.md) | P0 |
-| **quality** | `features/quality/` | Revision count, QA alerts, quality score | P0 |
-| **rbac** | `features/rbac/` | Role management, permission matrix, onboarding | P0 |
-| **notifications** | `features/notifications/` | System alerts — deadline, overload, OT, new task | P0 |
-| **creative** | `features/creative/` | Creative review flow, DA tracking, CM assignment — **review deferred**; DA tracking scaffold only | P0 |
-| **productivity** | `features/productivity/` | On-time rate, revision rate, output summary, level | P1 |
-| **kpi** | `features/kpi/` | KPI formula, target vs actual, personal dashboard | P1 |
-| **reports** | `features/reports/` | Productivity reports, performance review, export | P1 |
-| **overtime** | `features/overtime/` | OT request → approval → task → report → dashboard | P2 |
-| **time-log** | `features/time-log/` | Log hours against tasks (Employee) — **deferred**; page scaffold only | P2 |
-| **non-project** | `features/non-project/` | Log & categorize non-project work, include in KPI | P2 |
-| **users** | `features/users/` | User list, detail, onboard, role assignment | P0 |
-| **audit** | `features/audit/` | Audit log viewer | P0 |
+| Feature           | Location                  | Domain                                                                                                                                                                                                                            | Priority |
+| ----------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| **auth**          | `features/auth/`          | Login, JWT, logout                                                                                                                                                                                                                | P0       |
+| **tasks**         | `features/tasks/`         | Task lists (**UI shipped** for `/tasks/project`, `/tasks/non-project`, `/tasks/detail/:id`) — mock data in dev; Creative Head & Creative Manager use PM table columns; see [MY_TASKS_BACKEND_TODO.md](./MY_TASKS_BACKEND_TODO.md) | P0       |
+| **projects**      | `features/projects/`      | Project list & evaluation overview — **UI shipped with mock data**; see [BACKEND_API.md](./BACKEND_API.md)                                                                                                                        | P0       |
+| **workload**      | `features/workload/`      | Capacity heatmap per employee / PM                                                                                                                                                                                                | P0       |
+| **capacity**      | `features/capacity/`      | Overall + forecast dashboard (Head view)                                                                                                                                                                                          | P0       |
+| **tracker**       | `features/tracker/`       | Calendar project tracker at `/tracker` — **UI shipped with mock data**; see [BACKEND_API.md](./BACKEND_API.md)                                                                                                                    | P0       |
+| **quality**       | `features/quality/`       | Revision count, QA alerts, quality score                                                                                                                                                                                          | P0       |
+| **rbac**          | `features/rbac/`          | Role management, permission matrix, onboarding                                                                                                                                                                                    | P0       |
+| **notifications** | `features/notifications/` | System alerts — deadline, overload, OT, new task                                                                                                                                                                                  | P0       |
+| **creative**      | `features/creative/`      | Creative review flow, DA tracking, CM assignment — **review deferred**; DA tracking scaffold only                                                                                                                                 | P0       |
+| **productivity**  | `features/productivity/`  | On-time rate, revision rate, output summary, level                                                                                                                                                                                | P1       |
+| **kpi**           | `features/kpi/`           | KPI formula, target vs actual, personal dashboard                                                                                                                                                                                 | P1       |
+| **reports**       | `features/reports/`       | Productivity reports, performance review, export                                                                                                                                                                                  | P1       |
+| **overtime**      | `features/overtime/`      | OT request → approval → task → report → dashboard                                                                                                                                                                                 | P2       |
+| **time-log**      | `features/time-log/`      | Log hours against tasks (Employee) — **deferred**; page scaffold only                                                                                                                                                             | P2       |
+| **non-project**   | `features/non-project/`   | Log & categorize non-project work, include in KPI                                                                                                                                                                                 | P2       |
+| **users**         | `features/users/`         | User list, detail, onboard, role assignment                                                                                                                                                                                       | P0       |
+| **audit**         | `features/audit/`         | Audit log viewer                                                                                                                                                                                                                  | P0       |
 
 ---
 
@@ -657,12 +619,14 @@ src/pages/
 For the GoWare dev team, suggested order:
 
 ### Phase 0 — Foundation (all P0 prerequisites)
+
 1. **Scaffold** — Vite + TS, folder structure, base API, Redux store, router shell
 2. **Design tokens** — `theme.css`, Ant Design `ConfigProvider`, shared components (`PageHeader`, `CardWrapper`, `StatusPill`, `TableWrapper`, `FilterSection`)
 3. **Layout** — `AuthenticatedLayout`, `UnauthenticatedLayout`, Sidebar, TopHeader
 4. **Auth** — Login page, JWT handling, `ProtectedRoute`, role guard, auto-logout on 401
 
 ### Phase 1 — Core workflow (P0)
+
 5. **Projects** — Project list, evaluation levels, status, deadlines (**frontend list done** — backend: [BACKEND_API.md](./BACKEND_API.md))
 6. **Tasks (Project Department)** — Create task, assign, confirm, complete, manage
 7. **Tasks (Creative Department)** — Creative task flow: PM → Creative Head → CM → Staff
@@ -674,12 +638,14 @@ For the GoWare dev team, suggested order:
 13. **Notifications** — System alert feed (deadline, overload, new task, OT pending)
 
 ### Phase 2 — Analytics & measurement (P1)
+
 15. **Productivity Engine** — On-time rate, revision rate, DA rate, output summary, employee level
 16. **KPI Engine** — Formula config, target vs actual, personal dashboard, salary data
 17. **Reports** — Productivity reports, team comparison, performance review, export CSV/Excel
 18. **Slack integration** — Task/project notifications via Slack
 
 ### Phase 3 — Extended tracking (P2)
+
 19. **Non-Project Work Logging** — Log, categorize non-project tasks, include in KPI
 20. **Overtime Tracking** — OT request → Head approval → task assignment → post-OT report → OT dashboard
 
@@ -687,25 +653,25 @@ For the GoWare dev team, suggested order:
 
 ## 12. Quick Reference: Files to Create First
 
-| File | Purpose |
-|------|---------|
-| `src/config/constants.ts` | `ROUTES`, `DATE_FORMAT`, `PAGINATION`, `APP_NAME` |
-| `src/config/permissions.ts` | `ROLES`, `PERMISSIONS` map |
-| `src/config/sidebar.ts` | `SIDEBAR_ITEMS` with permission keys |
-| `src/styles/theme.css` | CSS design tokens (Pokeslide brand colors) |
-| `src/app/providers.tsx` | Ant Design `ConfigProvider` with Pokeslide theme |
-| `src/app/router.tsx` | All routes + `ProtectedRoute` guards |
-| `src/shared/api/base.api.ts` | Axios instance + JWT interceptor + 401 handler |
-| `src/store/slices/authSlice.ts` | JWT token, decoded user, isAuthenticated |
-| `src/store/slices/uiSlice.ts` | Sidebar collapsed state |
-| `src/shared/hooks/usePermission.ts` | `can(permission)` hook for role-based UI |
-| `src/shared/layout/AuthenticatedLayout.tsx` | Sidebar + Header shell |
-| `src/shared/layout/UnauthenticatedLayout.tsx` | Login shell (gradient background) |
-| `src/shared/ui/StatusPill/StatusPill.tsx` | Task/project status pill (see Design Guideline §9) |
-| `src/features/auth/api.ts` | Login API |
-| `src/features/auth/schemas/auth.schema.ts` | Zod schema for auth response |
-| `src/pages/LoginPage/LoginPage.tsx` | Login page |
-| `src/pages/DashboardPage/DashboardPage.tsx` | Dashboard (role-aware) |
+| File                                          | Purpose                                            |
+| --------------------------------------------- | -------------------------------------------------- |
+| `src/config/constants.ts`                     | `ROUTES`, `DATE_FORMAT`, `PAGINATION`, `APP_NAME`  |
+| `src/config/permissions.ts`                   | `ROLES`, `PERMISSIONS` map                         |
+| `src/config/sidebar.ts`                       | `SIDEBAR_ITEMS` with permission keys               |
+| `src/styles/theme.css`                        | CSS design tokens (Pokeslide brand colors)         |
+| `src/app/providers.tsx`                       | Ant Design `ConfigProvider` with Pokeslide theme   |
+| `src/app/router.tsx`                          | All routes + `ProtectedRoute` guards               |
+| `src/shared/api/base.api.ts`                  | Axios instance + JWT interceptor + 401 handler     |
+| `src/store/slices/authSlice.ts`               | JWT token, decoded user, isAuthenticated           |
+| `src/store/slices/uiSlice.ts`                 | Sidebar collapsed state                            |
+| `src/shared/hooks/usePermission.ts`           | `can(permission)` hook for role-based UI           |
+| `src/shared/layout/AuthenticatedLayout.tsx`   | Sidebar + Header shell                             |
+| `src/shared/layout/UnauthenticatedLayout.tsx` | Login shell (gradient background)                  |
+| `src/shared/ui/StatusPill/StatusPill.tsx`     | Task/project status pill (see Design Guideline §9) |
+| `src/features/auth/api.ts`                    | Login API                                          |
+| `src/features/auth/schemas/auth.schema.ts`    | Zod schema for auth response                       |
+| `src/pages/LoginPage/LoginPage.tsx`           | Login page                                         |
+| `src/pages/DashboardPage/DashboardPage.tsx`   | Dashboard (role-aware)                             |
 
 ---
 
@@ -713,19 +679,19 @@ For the GoWare dev team, suggested order:
 
 These rules affect component logic and must not be guessed:
 
-| Rule | Details |
-|------|---------|
-| **Task cannot be assigned on a day off** | If employee is on leave, PM cannot assign task for that day. Future dates are allowed. |
-| **Clock-in gate** | If employee has not clocked in = absent. System warns PM; tasks for that day cannot be assigned. |
-| **2 task types** | Project task (Project Department) and Creative task (Creative Department). Task type determines the workflow and who handles it. |
-| **Creative task flow** | PM → Creative Head (evaluate + assign CM) → Creative Manager (assign Staff) → Staff (confirm + complete) |
-| **Task level calculation** | System auto-calculates level from 3 criteria: Design Thinking + Technical + Content Processing (average). |
-| **Project level calculation** | System auto-calculates from 3 criteria: Volume + Nature + Time (average). |
-| **Internal vs Client deadline** | Always separate. Internal deadline is earlier; client deadline is what's shown externally. |
-| **Handover** | PM on leave must handover to another PM. Receiving PM gets full project context. |
-| **OT flow** | PM creates OT request → Head approves/rejects → PM assigns OT tasks → Staff reports → PM/CM summarizes → Head reviews |
-| **Date format** | Always `DD/MM/YYYY` — across all tables, forms, and exports. Use `dayjs` with this format. |
-| **Non-project work** | Counts toward overall KPI contribution — not just project output. |
+| Rule                                     | Details                                                                                                                          |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Task cannot be assigned on a day off** | If employee is on leave, PM cannot assign task for that day. Future dates are allowed.                                           |
+| **Clock-in gate**                        | If employee has not clocked in = absent. System warns PM; tasks for that day cannot be assigned.                                 |
+| **2 task types**                         | Project task (Project Department) and Creative task (Creative Department). Task type determines the workflow and who handles it. |
+| **Creative task flow**                   | PM → Creative Head (evaluate + assign CM) → Creative Manager (assign Staff) → Staff (confirm + complete)                         |
+| **Task level calculation**               | System auto-calculates level from 3 criteria: Design Thinking + Technical + Content Processing (average).                        |
+| **Project level calculation**            | System auto-calculates from 3 criteria: Volume + Nature + Time (average).                                                        |
+| **Internal vs Client deadline**          | Always separate. Internal deadline is earlier; client deadline is what's shown externally.                                       |
+| **Handover**                             | PM on leave must handover to another PM. Receiving PM gets full project context.                                                 |
+| **OT flow**                              | PM creates OT request → Head approves/rejects → PM assigns OT tasks → Staff reports → PM/CM summarizes → Head reviews            |
+| **Date format**                          | Always `DD/MM/YYYY` — across all tables, forms, and exports. Use `dayjs` with this format.                                       |
+| **Non-project work**                     | Counts toward overall KPI contribution — not just project output.                                                                |
 
 ---
 
@@ -755,17 +721,17 @@ These rules affect component logic and must not be guessed:
 
 ## 15. Questions?
 
-| Topic | Where to look |
-|-------|--------------|
-| Architecture & patterns | `POKESLIDE_REACT_PROJECT_STRUCTURE_GUIDE.md` |
-| UI rules, spacing, component density | `POKESLIDE_DESIGN_GUIDELINE.md` |
-| Colors, tokens, Ant Design config | `POKESLIDE_BRAND_AND_STYLE_GUIDELINE.md` |
+| Topic                                 | Where to look                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------ |
+| Architecture & patterns               | `POKESLIDE_REACT_PROJECT_STRUCTURE_GUIDE.md`                             |
+| UI rules, spacing, component density  | `POKESLIDE_DESIGN_GUIDELINE.md`                                          |
+| Colors, tokens, Ant Design config     | `POKESLIDE_BRAND_AND_STYLE_GUIDELINE.md`                                 |
 | Feature requirements & business rules | `POKESLIDE_PROJECT_MANAGEMENT_SOFTWARE.xlsx` — Sheet: MÔ TẢ TÍNH NĂNG V1 |
-| **Backend API specs (start here)** | **`docs/BACKEND_API.md`** |
-| Domain logic & edge cases | Ask PM or Pokeslide product team |
-| Layout & wireframes | Figma / design specs (link TBD) |
+| **Backend API specs (start here)**    | **`docs/BACKEND_API.md`**                                                |
+| Domain logic & edge cases             | Ask PM or Pokeslide product team                                         |
+| Layout & wireframes                   | Figma / design specs (link TBD)                                          |
 
 ---
 
-*Pokeslide Internal Platform — Project Setup Guide v1.0*
-*Prepared by GoWare JSC | June 2026 | Internal use only*
+_Pokeslide Internal Platform — Project Setup Guide v1.0_
+_Prepared by GoWare JSC | June 2026 | Internal use only_

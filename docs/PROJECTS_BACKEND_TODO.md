@@ -8,24 +8,24 @@ The **Projects** page (`/projects`) is implemented on the frontend with **in-mem
 
 This is **not** the same as `GET /tracker` (see [TRACKER_BACKEND_TODO.md](./TRACKER_BACKEND_TODO.md)). The Projects API is the **master registry** — stored evaluation metadata, ownership, and lifecycle fields. The Tracker API is a separate **operational monitoring** view (dual deadlines, priority, org-wide summary, different status model).
 
-| | Projects (`/projects`) | Project Tracker (`/tracker`) |
-|---|------------------------|------------------------------|
-| **Purpose** | List / edit project records (registry) | Monitor progress and risk across all projects |
-| **Audience** | PM and above (`MANAGE_PROJECTS`) | Head, Admin (`VIEW_CAPACITY_FULL`) |
-| **Required fields** | Code, dates, `department`, evaluation levels (`volume`/`nature`/`time`), PM, brief, quality rating | Calendar rows: blocks, urgency, team, off-days — see [TRACKER_BACKEND_TODO.md](./TRACKER_BACKEND_TODO.md) |
-| **Optional list aggregates** | `taskCount`, `members`, `totalSlides`, `completionPercent` — see [Response model](#response-model-align-with-zod-schemas) | N/A (different UI) |
-| **Writes** | `POST`, `PATCH`, `DELETE` on `/projects` | None in v1 (read-only) |
+|                              | Projects (`/projects`)                                                                                                    | Project Tracker (`/tracker`)                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Purpose**                  | List / edit project records (registry)                                                                                    | Monitor progress and risk across all projects                                                             |
+| **Audience**                 | Manager-level roles (`MANAGE_PROJECTS`)                                                                                   | Same manager-level roles (`VIEW_CAPACITY_FULL`)                                                           |
+| **Required fields**          | Code, dates, `department`, evaluation levels (`volume`/`nature`/`time`), PM, brief, quality rating                        | Calendar rows: blocks, urgency, team, off-days — see [TRACKER_BACKEND_TODO.md](./TRACKER_BACKEND_TODO.md) |
+| **Optional list aggregates** | `taskCount`, `members`, `totalSlides`, `completionPercent` — see [Response model](#response-model-align-with-zod-schemas) | N/A (different UI)                                                                                        |
+| **Writes**                   | `POST`, `PATCH`, `DELETE` on `/projects`                                                                                  | None in v1 (read-only)                                                                                    |
 
 ## Current frontend behavior
 
-| Concern | Temporary solution | Location |
-|---------|-------------------|----------|
-| Data source | In-memory mock (12 sample projects from spreadsheet reference) | `src/features/projects/mock/` |
-| Mock toggle | `VITE_USE_PROJECTS_MOCK` (default `true` in dev) | `src/config/env.ts` |
-| API client | Calls real endpoints when mock is disabled | `src/features/projects/api.ts` |
-| Validation | Zod schemas at API boundary | `src/features/projects/schemas/project.schema.ts` |
-| UI route | `/projects` | `src/pages/ProjectsPage/` |
-| Access control | View: `MANAGE_PROJECTS` · Edit: `EDIT_PROJECT` (default: PM, Head, Admin) | `src/config/permissions.ts` |
+| Concern        | Temporary solution                                                                | Location                                          |
+| -------------- | --------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Data source    | In-memory mock (12 sample projects from spreadsheet reference)                    | `src/features/projects/mock/`                     |
+| Mock toggle    | `VITE_USE_PROJECTS_MOCK` (default `true` in dev)                                  | `src/config/env.ts`                               |
+| API client     | Calls real endpoints when mock is disabled                                        | `src/features/projects/api.ts`                    |
+| Validation     | Zod schemas at API boundary                                                       | `src/features/projects/schemas/project.schema.ts` |
+| UI route       | `/projects`                                                                       | `src/pages/ProjectsPage/`                         |
+| Access control | View: `MANAGE_PROJECTS` · Edit: `EDIT_PROJECT` (default: all manager-level roles) | `src/config/permissions.ts`                       |
 
 To test against a real API locally, set in `.env.local`:
 
@@ -51,7 +51,7 @@ GET    /projects/head-name-options   → department head name options for Projec
 GET    /projects/head-options        → department head code/name options (create/edit forms)
 ```
 
-Read endpoints require **`MANAGE_PROJECTS`**. Create/update require **`EDIT_PROJECT`** (PM, Head, Admin by default). Delete is authenticated in v1 frontend (RBAC TBD).
+Read endpoints require **`MANAGE_PROJECTS`**. Create/update require **`EDIT_PROJECT`** (manager-level roles by default). Delete is authenticated in v1 frontend (RBAC TBD).
 
 ---
 
@@ -59,11 +59,11 @@ Read endpoints require **`MANAGE_PROJECTS`**. Create/update require **`EDIT_PROJ
 
 The frontend splits the API contract in `src/features/projects/schemas/project.schema.ts`:
 
-| Schema | Purpose |
-|--------|---------|
-| **`ProjectRecordSchema`** | **Required** fields the backend must persist and return — the project registry |
-| **`ProjectListDerivedSchema`** | **Optional** task-derived aggregates for the Projects list table |
-| **`ProjectSchema`** | Full list-row shape after the client applies defaults |
+| Schema                         | Purpose                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------ |
+| **`ProjectRecordSchema`**      | **Required** fields the backend must persist and return — the project registry |
+| **`ProjectListDerivedSchema`** | **Optional** task-derived aggregates for the Projects list table               |
+| **`ProjectSchema`**            | Full list-row shape after the client applies defaults                          |
 
 When the real API is wired (`VITE_USE_PROJECTS_MOCK=false`), `projectApi` parses responses with `ProjectListRecordResponseSchema`, then maps each item through `withProjectListDefaults()` in `src/features/projects/utils/projectDefaults.ts`.
 
@@ -72,24 +72,24 @@ When the real API is wired (`VITE_USE_PROJECTS_MOCK=false`), `projectApi` parses
 ```typescript
 interface ProjectRecord {
   id: string;
-  code: string;                    // e.g. "POKE001.29.04.SAN"
+  code: string; // e.g. "POKE001.29.04.SAN"
   client: string;
   name: string;
-  startDate: string;               // ISO 8601
-  endDate: string;                 // ISO 8601
-  projectLevel: number;            // 1–4, server-calculated from volume + nature + time
+  startDate: string; // ISO 8601
+  endDate: string; // ISO 8601
+  projectLevel: number; // 1–4, server-calculated from volume + nature + time
   department: 'project' | 'creative' | 'admin';
   departmentHead: { code: string; name: string };
   brief: string;
-  volume: number;                  // 1–4 evaluation level
-  nature: number;                  // 1–4 evaluation level
-  time: number;                    // 1–4 evaluation level
+  volume: number; // 1–4 evaluation level
+  nature: number; // 1–4 evaluation level
+  time: number; // 1–4 evaluation level
   additionalFactors: string;
   pm: { code: string; name: string };
-  evaluation: string;              // quality evaluation / rating
+  evaluation: string; // quality evaluation / rating
   note: string;
   status: 'not_updated' | 'in_progress' | 'finish' | 'cancel';
-  finishedDate?: string;           // ISO 8601 — set when status is `finish`
+  finishedDate?: string; // ISO 8601 — set when status is `finish`
   updatedAt?: string;
 }
 ```
@@ -100,19 +100,19 @@ These fields power extra columns on `/projects`. **Backend may omit them** on `G
 
 ```typescript
 interface ProjectListDerived {
-  taskCount?: number;              // count of linked project tasks
+  taskCount?: number; // count of linked project tasks
   members?: { code: string; name: string }[];
   totalSlides?: number;
-  completionPercent?: number;      // 0–100
+  completionPercent?: number; // 0–100
 }
 ```
 
-| If omitted | Frontend default (`withProjectListDefaults`) | UI effect |
-|------------|-----------------------------------------------|-----------|
-| `taskCount` | `0` | Tasks column shows `0` |
-| `members` | `[]` | Members column shows `—` |
-| `totalSlides` | `0` | Slides column shows `0` |
-| `completionPercent` | `0` | Progress bar at 0% |
+| If omitted          | Frontend default (`withProjectListDefaults`) | UI effect                |
+| ------------------- | -------------------------------------------- | ------------------------ |
+| `taskCount`         | `0`                                          | Tasks column shows `0`   |
+| `members`           | `[]`                                         | Members column shows `—` |
+| `totalSlides`       | `0`                                          | Slides column shows `0`  |
+| `completionPercent` | `0`                                          | Progress bar at 0%       |
 
 **Recommendation:** Include aggregates on `GET /projects` when cheap to compute (same DB as tasks). They are **not required** for v1 — the UI degrades gracefully. Do **not** substitute `GET /tracker` for `GET /projects`; tracker uses a different shape and permission model.
 
@@ -128,14 +128,14 @@ Use this endpoint when the client needs to **list or look up projects**. For org
 
 #### Query parameters
 
-| Param | Type | Required | Description |
-|-------|------|----------|-------------|
-| `search` | string | No | Case-insensitive match against project code, name, client, or brief |
-| `client` | string | No | Exact client name filter |
-| `status` | enum | No | One of: `not_updated`, `in_progress`, `finish`, `cancel` |
-| `pmCode` | string | No | Filter by project manager employee code (e.g. `PO.031`) |
-| `headName` | string | No | Filter by department head display name |
-| `projectLevel` | number | No | Filter by calculated project level (`1`–`4`) |
+| Param          | Type   | Required | Description                                                         |
+| -------------- | ------ | -------- | ------------------------------------------------------------------- |
+| `search`       | string | No       | Case-insensitive match against project code, name, client, or brief |
+| `client`       | string | No       | Exact client name filter                                            |
+| `status`       | enum   | No       | One of: `not_updated`, `in_progress`, `finish`, `cancel`            |
+| `pmCode`       | string | No       | Filter by project manager employee code (e.g. `PO.031`)             |
+| `headName`     | string | No       | Filter by department head display name                              |
+| `projectLevel` | number | No       | Filter by calculated project level (`1`–`4`)                        |
 
 #### Response shape
 
@@ -152,29 +152,29 @@ Each item is at minimum a `ProjectRecord`. Optional `ProjectListDerived` fields 
 
 #### Table columns rendered in UI
 
-| Column (English) | Source field | Required on API |
-|------------------|--------------|-----------------|
-| Client | `client` | Yes |
-| Project Name | `name` (links to `/projects/:id`) | Yes |
-| Phòng ban | `department` | Yes |
-| Tasks | `taskCount` | Optional (default `0`) |
-| Start Date | `startDate` | Yes |
-| End Date | `endDate` | Yes |
-| Project Level | `projectLevel` | Yes |
-| Head Name | `departmentHead.name` | Yes |
-| Brief | `brief` | Yes |
-| Volume | `volume` | Yes |
-| Nature | `nature` | Yes |
-| Time | `time` | Yes |
-| Additional Factors | `additionalFactors` | Yes |
-| PM Name | `pm.name` | Yes |
-| Members | `members[].name` | Optional (default `—`) |
-| Slides | `totalSlides` | Optional (default `0`) |
-| % Hoàn Thành | `completionPercent` | Optional (default `0`) |
-| Đánh Giá | `evaluation` | Yes |
-| Note | `note` | Yes |
-| Trạng thái | `status` | Yes |
-| Finished Date | `finishedDate` | When `status === 'finish'` |
+| Column (English)   | Source field                      | Required on API            |
+| ------------------ | --------------------------------- | -------------------------- |
+| Client             | `client`                          | Yes                        |
+| Project Name       | `name` (links to `/projects/:id`) | Yes                        |
+| Phòng ban          | `department`                      | Yes                        |
+| Tasks              | `taskCount`                       | Optional (default `0`)     |
+| Start Date         | `startDate`                       | Yes                        |
+| End Date           | `endDate`                         | Yes                        |
+| Project Level      | `projectLevel`                    | Yes                        |
+| Head Name          | `departmentHead.name`             | Yes                        |
+| Brief              | `brief`                           | Yes                        |
+| Volume             | `volume`                          | Yes                        |
+| Nature             | `nature`                          | Yes                        |
+| Time               | `time`                            | Yes                        |
+| Additional Factors | `additionalFactors`               | Yes                        |
+| PM Name            | `pm.name`                         | Yes                        |
+| Members            | `members[].name`                  | Optional (default `—`)     |
+| Slides             | `totalSlides`                     | Optional (default `0`)     |
+| % Hoàn Thành       | `completionPercent`               | Optional (default `0`)     |
+| Đánh Giá           | `evaluation`                      | Yes                        |
+| Note               | `note`                            | Yes                        |
+| Trạng thái         | `status`                          | Yes                        |
+| Finished Date      | `finishedDate`                    | When `status === 'finish'` |
 
 Dates are formatted as **`DD/MM/YYYY`** in the UI via `dayjs`; API should return ISO 8601 strings.
 
@@ -182,12 +182,12 @@ Dates are formatted as **`DD/MM/YYYY`** in the UI via `dayjs`; API should return
 
 Volume, Nature, and Time are stored as integers `1`–`4`. UI displays **Level 1** through **Level 4** with color coding:
 
-| Level | Color |
-|-------|-------|
-| 1 | Green |
-| 2 | Blue |
-| 3 | Orange |
-| 4 | Red |
+| Level | Color  |
+| ----- | ------ |
+| 1     | Green  |
+| 2     | Blue   |
+| 3     | Orange |
+| 4     | Red    |
 
 **Project level** is a separate calculated field (1–4) derived from Volume + Nature + Time per business rules in `POKESLIDE_PROJECT_SETUP.md` §13.
 
@@ -217,7 +217,7 @@ Creates a new project record. Used by the **Create project** modal on `/projects
 
 Updates an existing project record. Used by the **Edit project** modal on `/projects`.
 
-**Permission:** `EDIT_PROJECT` (default roles: PM, Head, Admin).
+**Permission:** `EDIT_PROJECT` (default: all manager-level roles).
 
 **Request body:** align with `UpdateProjectRequestSchema` in `src/features/projects/schemas/project.schema.ts`:
 
@@ -225,14 +225,14 @@ Updates an existing project record. Used by the **Edit project** modal on `/proj
 interface UpdateProjectRequest {
   client: string;
   name: string;
-  startDate: string;               // ISO 8601
-  endDate: string;                 // ISO 8601
+  startDate: string; // ISO 8601
+  endDate: string; // ISO 8601
   department: 'project' | 'creative' | 'admin';
   departmentHead: { code: string; name: string };
   brief: string;
-  volume: number;                  // 1–4
-  nature: number;                  // 1–4
-  time: number;                    // 1–4
+  volume: number; // 1–4
+  nature: number; // 1–4
+  time: number; // 1–4
   additionalFactors: string;
   pm: { code: string; name: string };
   evaluation: string;
@@ -243,11 +243,11 @@ interface UpdateProjectRequest {
 
 **Read-only on update (server-calculated or immutable):**
 
-| Field | Rule |
-|-------|------|
-| `code` | Immutable — not in request body |
+| Field          | Rule                                                   |
+| -------------- | ------------------------------------------------------ |
+| `code`         | Immutable — not in request body                        |
 | `projectLevel` | Recalculate from average of `volume`, `nature`, `time` |
-| `finishedDate` | Set when `status` becomes `finish`; clear otherwise |
+| `finishedDate` | Set when `status` becomes `finish`; clear otherwise    |
 
 **Response:** updated `Project` object (same shape as list item).
 
@@ -285,7 +285,7 @@ Returns distinct project managers for the filter dropdown.
 type PmOption = { code: string; name: string }[];
 
 // Example:
-[{ "code": "PO.012", "name": "Phan Thi Cam Tu" }]
+[{ code: 'PO.012', name: 'Phan Thi Cam Tu' }];
 ```
 
 Sorted alphabetically by `name` is preferred.
@@ -328,17 +328,17 @@ type HeadOptions = { code: string; name: string }[];
 
 ### Suggested data sources
 
-| Field | Likely source |
-|-------|---------------|
-| `code` | System-generated project code |
-| `department` | Project department assignment |
-| `departmentHead` | Department head assignment on project |
-| `volume`, `nature`, `time` | Project evaluation inputs |
-| `projectLevel` | Calculated from evaluation criteria |
-| `evaluation`, `note` | Quality evaluation fields |
-| `status`, `finishedDate` | Project lifecycle state |
-| `taskCount`, `totalSlides`, `completionPercent` | Aggregated from linked tasks (optional on read) |
-| `members` | Distinct staff on linked tasks + roster (optional on read) |
+| Field                                           | Likely source                                              |
+| ----------------------------------------------- | ---------------------------------------------------------- |
+| `code`                                          | System-generated project code                              |
+| `department`                                    | Project department assignment                              |
+| `departmentHead`                                | Department head assignment on project                      |
+| `volume`, `nature`, `time`                      | Project evaluation inputs                                  |
+| `projectLevel`                                  | Calculated from evaluation criteria                        |
+| `evaluation`, `note`                            | Quality evaluation fields                                  |
+| `status`, `finishedDate`                        | Project lifecycle state                                    |
+| `taskCount`, `totalSlides`, `completionPercent` | Aggregated from linked tasks (optional on read)            |
+| `members`                                       | Distinct staff on linked tasks + roster (optional on read) |
 
 ---
 
@@ -354,14 +354,14 @@ type HeadOptions = { code: string; name: string }[];
 
 ## Related files
 
-| File | Purpose |
-|------|---------|
+| File                                              | Purpose                                                                 |
+| ------------------------------------------------- | ----------------------------------------------------------------------- |
 | `src/features/projects/schemas/project.schema.ts` | **Source of truth** — `ProjectRecordSchema`, `ProjectListDerivedSchema` |
-| `src/features/projects/utils/projectDefaults.ts` | `withProjectListDefaults()` when API omits derived fields |
-| `src/features/projects/api.ts` | Axios calls + mock toggle |
-| `src/features/projects/mock/projects.mock.ts` | Reference filter logic for backend parity |
-| `src/features/projects/components/` | Table, filters, level/status badges |
-| `docs/BACKEND_API.md` | Index of all backend API specs |
+| `src/features/projects/utils/projectDefaults.ts`  | `withProjectListDefaults()` when API omits derived fields               |
+| `src/features/projects/api.ts`                    | Axios calls + mock toggle                                               |
+| `src/features/projects/mock/projects.mock.ts`     | Reference filter logic for backend parity                               |
+| `src/features/projects/components/`               | Table, filters, level/status badges                                     |
+| `docs/BACKEND_API.md`                             | Index of all backend API specs                                          |
 
 ---
 

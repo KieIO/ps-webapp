@@ -1,12 +1,8 @@
 import { lazy, Suspense } from 'react';
-import {
-  createBrowserRouter,
-  Navigate,
-  Outlet,
-  RouterProvider,
-} from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
 import { ROUTES } from '@/config/constants';
 import { ROLES, type Role } from '@/config/permissions';
+import { roleHasPermission } from '@/features/rbac/utils/permissionDerivation';
 import { AuthenticatedLayout } from '@/shared/layout/AuthenticatedLayout';
 import { UnauthenticatedLayout } from '@/shared/layout/UnauthenticatedLayout';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
@@ -25,7 +21,9 @@ const TaskFormPage = lazy(() => import('@/pages/TaskFormPage/TaskFormPage'));
 const DATrackingPage = lazy(() => import('@/pages/DATrackingPage/DATrackingPage'));
 const CapacityPage = lazy(() => import('@/pages/CapacityPage/CapacityPage'));
 const CapacityMonthlyPage = lazy(() => import('@/pages/CapacityMonthlyPage/CapacityMonthlyPage'));
-const CapacityForecastPage = lazy(() => import('@/pages/CapacityForecastPage/CapacityForecastPage'));
+const CapacityForecastPage = lazy(
+  () => import('@/pages/CapacityForecastPage/CapacityForecastPage'),
+);
 const ProjectTrackerPage = lazy(() => import('@/pages/ProjectTrackerPage/ProjectTrackerPage'));
 const KPISettingsPage = lazy(() => import('@/pages/KPISettingsPage/KPISettingsPage'));
 const OvertimePage = lazy(() => import('@/pages/OvertimePage/OvertimePage'));
@@ -62,10 +60,12 @@ function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   return <Outlet />;
 }
 
+/** Landing page — permission-based, not role-based (see `VIEW_CAPACITY_FULL`). */
 function HomePage() {
   const role = useAppSelector((state) => state.auth.user?.role);
+  const permissionConfig = useAppSelector((state) => state.permissionConfig.config);
 
-  if (role === ROLES.HEAD || role === ROLES.ADMIN) {
+  if (role && roleHasPermission(role, 'VIEW_CAPACITY_FULL', permissionConfig)) {
     return <ProjectTrackerPage />;
   }
 
@@ -125,12 +125,20 @@ const router = createBrowserRouter([
       },
       {
         element: <ProtectedRoute allowedRoles={[ROLES.CREATIVE_HEAD]} />,
-        children: [
-          { path: 'creative/da', element: <DATrackingPage /> },
-        ],
+        children: [{ path: 'creative/da', element: <DATrackingPage /> }],
       },
       {
-        element: <ProtectedRoute allowedRoles={[ROLES.HEAD, ROLES.ADMIN]} />,
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              ROLES.PM,
+              ROLES.CREATIVE_MANAGER,
+              ROLES.CREATIVE_HEAD,
+              ROLES.HEAD,
+              ROLES.ADMIN,
+            ]}
+          />
+        ),
         children: [
           { path: ROUTES.CAPACITY.slice(1), element: <CapacityPage /> },
           { path: 'capacity/monthly', element: <CapacityMonthlyPage /> },
@@ -164,12 +172,37 @@ const router = createBrowserRouter([
         children: [{ path: 'users/:id', element: <UserDetailPage /> }],
       },
       {
-        element: <ProtectedRoute allowedRoles={[ROLES.ADMIN]} />,
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              ROLES.PM,
+              ROLES.CREATIVE_MANAGER,
+              ROLES.CREATIVE_HEAD,
+              ROLES.HEAD,
+              ROLES.ADMIN,
+            ]}
+          />
+        ),
         children: [
           { path: ROUTES.USERS.slice(1), element: <UsersPage /> },
+          { path: ROUTES.AUDIT_LOG.slice(1), element: <AuditLogPage /> },
+        ],
+      },
+      {
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              ROLES.PM,
+              ROLES.CREATIVE_MANAGER,
+              ROLES.CREATIVE_HEAD,
+              ROLES.HEAD,
+              ROLES.ADMIN,
+            ]}
+          />
+        ),
+        children: [
           { path: ROUTES.SETTINGS_GENERAL.slice(1), element: <GeneralSettingsPage /> },
           { path: ROUTES.ROLES.slice(1), element: <RolesPage /> },
-          { path: ROUTES.AUDIT_LOG.slice(1), element: <AuditLogPage /> },
           { path: ROUTES.TASK_SCORE.slice(1), element: <TaskScorePage /> },
         ],
       },
