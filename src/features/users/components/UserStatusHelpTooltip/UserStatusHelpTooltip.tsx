@@ -10,7 +10,7 @@ function UserStatusTooltipContent() {
       <ul className={styles.list}>
         {USER_STATUSES.map((status) => (
           <li key={status}>
-            <strong>{STATUS_LABELS[status]}</strong> — {STATUS_DESCRIPTIONS[status]}
+            <strong>{STATUS_LABELS[status]}</strong> - {STATUS_DESCRIPTIONS[status]}
           </li>
         ))}
       </ul>

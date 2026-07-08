@@ -25,7 +25,8 @@ const compareDate = (a: string, b: string) => dayjs(a).unix() - dayjs(b).unix();
 const compareEnumIndex = <T extends string>(values: readonly T[], a: T, b: T) =>
   values.indexOf(a) - values.indexOf(b);
 
-const compareUserJobLevel = (a: User, b: User) => compareJobLevelCodes(a.jobLevelCode, b.jobLevelCode);
+const compareUserJobLevel = (a: User, b: User) =>
+  compareJobLevelCodes(a.jobLevelCode, b.jobLevelCode);
 
 const STATUS_VARIANT: Record<UserStatus, StatusPillVariant> = {
   active: 'completed',
@@ -83,20 +84,20 @@ export function UserTable({ users, loading }: UserTableProps) {
       sorter: compareUserJobLevel,
       render: (_: unknown, record: User) => {
         const level = mapJobLevelCode(record.jobLevelCode);
-        return level ? <JobLevelBadge level={level} /> : '—';
+        return level ? <JobLevelBadge level={level} /> : '-';
       },
     },
     {
       title: 'Position code',
       key: 'positionCode',
       sorter: (a, b) => compareText(a.positionCode ?? '', b.positionCode ?? ''),
-      render: (_: unknown, record: User) => record.positionCode ?? '—',
+      render: (_: unknown, record: User) => record.positionCode ?? '-',
     },
     {
       title: 'Job title',
       key: 'jobTitle',
       sorter: (a, b) => compareText(a.jobTitleName ?? '', b.jobTitleName ?? ''),
-      render: (_: unknown, record: User) => record.jobTitleName ?? '—',
+      render: (_: unknown, record: User) => record.jobTitleName ?? '-',
     },
     {
       title: <UserStatusColumnTitle />,
@@ -121,11 +122,7 @@ export function UserTable({ users, loading }: UserTableProps) {
       render: (_, record) => (
         <div style={{ display: 'flex', gap: 4 }}>
           {canManageLeave && record.status !== 'on_leave' ? (
-            <Button
-              type="link"
-              icon={<CalendarOutlined />}
-              onClick={() => setLeaveTarget(record)}
-            >
+            <Button type="link" icon={<CalendarOutlined />} onClick={() => setLeaveTarget(record)}>
               Leave
             </Button>
           ) : null}
@@ -139,33 +136,33 @@ export function UserTable({ users, loading }: UserTableProps) {
 
   return (
     <>
-    <TableWrapper
-      loading={loading}
-      isEmpty={!loading && users.length === 0}
-      emptyTitle="No users found"
-      emptyDescription="Try adjusting your search or filters."
-    >
-      <Table
-        rowKey="id"
-        columns={columns}
-        dataSource={users}
-        pagination={{
-          pageSize: PAGINATION.DEFAULT_PAGE_SIZE,
-          showSizeChanger: true,
-          pageSizeOptions: [...PAGINATION.PAGE_SIZE_OPTIONS],
-          showTotal: (total) => `${total} users`,
-        }}
-      />
-    </TableWrapper>
+      <TableWrapper
+        loading={loading}
+        isEmpty={!loading && users.length === 0}
+        emptyTitle="No users found"
+        emptyDescription="Try adjusting your search or filters."
+      >
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={users}
+          pagination={{
+            pageSize: PAGINATION.DEFAULT_PAGE_SIZE,
+            showSizeChanger: true,
+            pageSizeOptions: [...PAGINATION.PAGE_SIZE_OPTIONS],
+            showTotal: (total) => `${total} users`,
+          }}
+        />
+      </TableWrapper>
 
-    {leaveTarget ? (
-      <LeaveScheduleModal
-        open
-        userId={leaveTarget.id}
-        userName={leaveTarget.name}
-        onClose={() => setLeaveTarget(null)}
-      />
-    ) : null}
-  </>
+      {leaveTarget ? (
+        <LeaveScheduleModal
+          open
+          userId={leaveTarget.id}
+          userName={leaveTarget.name}
+          onClose={() => setLeaveTarget(null)}
+        />
+      ) : null}
+    </>
   );
 }

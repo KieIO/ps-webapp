@@ -3,7 +3,9 @@
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.06),
+    0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .layout {
@@ -44,18 +46,6 @@
 .metaValue {
   color: var(--color-text);
   font-weight: 500;
-}
-
-.pmCell {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.avatar {
-  flex-shrink: 0;
-  background: var(--color-primary);
-  font-size: 11px;
 }
 
 .actions {

@@ -9,10 +9,8 @@ import { MY_TASK_COLUMN_HEADERS } from '@/features/tasks/constants';
 import { formatTaskCodeShort } from '@/features/tasks/utils/taskDetail';
 import { isMyTaskDateAtRisk } from '@/features/tasks/utils/taskDeadline';
 import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
-import {
-  PROJECT_TASKS_PAGE_SIZE,
-  PROJECT_TASKS_PAGE_SIZE_OPTIONS,
-} from '../../constants';
+import { PROJECT_TASKS_PAGE_SIZE, PROJECT_TASKS_PAGE_SIZE_OPTIONS } from '../../constants';
+import { getMyTaskColumnSorter } from '@/features/tasks/utils/myTaskColumns';
 import type { ClassificationLevel, MyTask } from '@/features/tasks/schemas/task.schema';
 import styles from './ProjectDetailTaskTable.module.scss';
 
@@ -36,6 +34,7 @@ export function ProjectDetailTaskTable({
       key: 'taskCode',
       width: 200,
       ellipsis: true,
+      sorter: (a, b) => a.taskCode.localeCompare(b.taskCode, 'vi'),
       render: (value: string) => {
         if (!value) {
           return <span className={styles.empty}>—</span>;
@@ -55,6 +54,7 @@ export function ProjectDetailTaskTable({
       key: 'taskName',
       width: 180,
       ellipsis: true,
+      sorter: getMyTaskColumnSorter('taskName'),
       render: (name: string) => {
         if (!name) {
           return <span className={styles.empty}>—</span>;
@@ -73,12 +73,14 @@ export function ProjectDetailTaskTable({
       key: 'level',
       width: 90,
       align: 'center',
+      sorter: getMyTaskColumnSorter('level'),
       render: (level: ClassificationLevel) => <ClassificationLevelBadge level={level} />,
     },
     {
       title: 'Assignee',
       key: 'assignee',
       width: 200,
+      sorter: getMyTaskColumnSorter('staffName'),
       render: (_, record) => <TaskStaffNameCell staff={record.staff} showAvatarForFirst />,
     },
     {
@@ -86,6 +88,7 @@ export function ProjectDetailTaskTable({
       dataIndex: 'date',
       key: 'date',
       width: 110,
+      sorter: getMyTaskColumnSorter('date'),
       render: (value: string, record) => (
         <DateWithRiskIndicator date={value} atRisk={isMyTaskDateAtRisk(record, 'date')} />
       ),
@@ -96,6 +99,7 @@ export function ProjectDetailTaskTable({
       key: 'completionPercent',
       width: 100,
       align: 'right',
+      sorter: getMyTaskColumnSorter('completion'),
       render: (value?: number) =>
         value != null ? `${value}%` : <span className={styles.empty}>—</span>,
     },
@@ -105,15 +109,15 @@ export function ProjectDetailTaskTable({
       key: 'quantity',
       width: 70,
       align: 'right',
+      sorter: getMyTaskColumnSorter('quantity'),
     },
     {
       title: 'Status',
       dataIndex: 'staffConfirmation',
       key: 'staffConfirmation',
       width: 130,
-      render: (status: MyTask['staffConfirmation']) => (
-        <TaskConfirmationBadge status={status} />
-      ),
+      sorter: getMyTaskColumnSorter('confirmation'),
+      render: (status: MyTask['staffConfirmation']) => <TaskConfirmationBadge status={status} />,
     },
     {
       title: 'Action',
@@ -149,8 +153,7 @@ export function ProjectDetailTaskTable({
           total,
           showSizeChanger: true,
           pageSizeOptions: [...PROJECT_TASKS_PAGE_SIZE_OPTIONS],
-          showTotal: (count, range) =>
-            `Showing ${range[0]}-${range[1]} / ${count} tasks`,
+          showTotal: (count, range) => `Showing ${range[0]}-${range[1]} / ${count} tasks`,
         }}
       />
     </TableWrapper>

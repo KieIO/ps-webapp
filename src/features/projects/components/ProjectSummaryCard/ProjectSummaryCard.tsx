@@ -1,4 +1,4 @@
-import { Avatar, Button, Popconfirm } from 'antd';
+import { Button, Popconfirm } from 'antd';
 import { ArrowRightOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
@@ -6,7 +6,6 @@ import { usePermission } from '@/shared/hooks/usePermission';
 import { UserNameLink } from '@/shared/ui/UserNameLink/UserNameLink';
 import { EvaluationLevelBadge } from '../EvaluationLevelBadge/EvaluationLevelBadge';
 import { ProjectStatusBadge } from '../ProjectStatusBadge/ProjectStatusBadge';
-import { getInitials } from '@/shared/utils/person';
 import type { EvaluationLevel, Project } from '../../schemas/project.schema';
 import styles from './ProjectSummaryCard.module.scss';
 
@@ -54,12 +53,7 @@ export function ProjectSummaryCard({
             <div className={styles.metaItem}>
               <dt className={styles.metaLabel}>PM in Charge</dt>
               <dd className={styles.metaValue}>
-                <span className={styles.pmCell}>
-                  <Avatar size={28} className={styles.avatar}>
-                    {getInitials(project.pm.name)}
-                  </Avatar>
-                  {project.pm.name}
-                </span>
+                <UserNameLink name={project.pm.name} userId={project.pm.userId} showAvatar />
               </dd>
             </div>
             <div className={styles.metaItem}>

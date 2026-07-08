@@ -1,6 +1,6 @@
 .withAvatar {
   display: inline-flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   max-width: 100%;
   text-align: left;
@@ -19,15 +19,17 @@
   white-space: normal;
   text-align: left;
   max-width: 100%;
+  vertical-align: middle;
 }
 
 .linkWithAvatar {
   composes: link;
+  display: inline-flex;
+  align-items: center;
 }
 
 .avatar {
   flex-shrink: 0;
-  margin-top: 1px;
   background: var(--color-primary);
   font-size: 11px;
 }

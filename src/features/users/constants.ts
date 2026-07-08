@@ -13,7 +13,7 @@ export const STATUS_LABELS = {
 /** Short explanations for Status column tooltip on /users. */
 export const STATUS_DESCRIPTIONS = {
   active: 'Đang làm việc, có thể gán task',
-  on_leave: 'Đang nghỉ phép, không gán task — Admin activate lại sau khi hết nghỉ',
+  on_leave: 'Đang nghỉ phép, không gán task - Admin activate lại sau khi hết nghỉ',
   inactive: 'Tài khoản ngưng hoạt động',
   invited: 'Đã mời, chưa kích hoạt',
 } as const satisfies Record<UserStatus, string>;
