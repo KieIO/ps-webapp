@@ -4,11 +4,14 @@ import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
 import type { Role } from '@/config/permissions';
 import { ROLES } from '@/config/permissions';
+import { DEPARTMENT_LABELS } from '@/features/projects/constants';
+import type { ProjectDepartment } from '@/features/projects/schemas/project.schema';
 import {
   CLASSIFICATION_LEVEL_LABELS,
   CLASSIFICATION_LEVEL_OPTIONS,
   TASK_STATUS_OPTIONS,
   MY_TASK_COLUMN_HEADERS,
+  PROJECT_EVALUATION_SCORE_OPTIONS,
   TASK_STATUS_CHANGE_NOTE_LABEL,
   UNASSIGNED_STAFF_LABEL,
 } from '../../constants';
@@ -49,13 +52,7 @@ type EditTaskFormValues = Omit<UpdateMyTaskRequest, 'date' | 'staff'> & {
 
 const hasField = (fields: Set<EditTaskField>, key: EditTaskField) => fields.has(key);
 
-export function EditTaskModal({
-  open,
-  task,
-  role,
-  canEvaluate,
-  onClose,
-}: EditTaskModalProps) {
+export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTaskModalProps) {
   const [form] = Form.useForm<EditTaskFormValues>();
   const { mutate: updateTask, isPending: isTaskPending } = useUpdateMyTask();
   const { mutate: updateEvaluation, isPending: isEvaluationPending } =
@@ -128,18 +125,14 @@ export function EditTaskModal({
     const payload: UpdateMyTaskRequest = {
       taskName: hasField(editableFields, 'taskName') ? values.taskName : task.taskName,
       quantity: hasField(editableFields, 'quantity') ? values.quantity : task.quantity,
-      date: hasField(editableFields, 'date')
-        ? toTaskDateOnly(values.date)
-        : task.date,
+      date: hasField(editableFields, 'date') ? toTaskDateOnly(values.date) : task.date,
       description: hasField(editableFields, 'description')
         ? (values.description ?? '')
         : task.description,
       designThinking: hasField(editableFields, 'designThinking')
         ? values.designThinking
         : task.designThinking,
-      technical: hasField(editableFields, 'technical')
-        ? values.technical
-        : task.technical,
+      technical: hasField(editableFields, 'technical') ? values.technical : task.technical,
       contentProcessing: hasField(editableFields, 'contentProcessing')
         ? values.contentProcessing
         : task.contentProcessing,
@@ -152,9 +145,7 @@ export function EditTaskModal({
       staffConfirmation: hasField(editableFields, 'confirmation')
         ? values.staffConfirmation
         : task.staffConfirmation,
-      staffNote: hasField(editableFields, 'staffNote')
-        ? (values.staffNote ?? '')
-        : task.staffNote,
+      staffNote: hasField(editableFields, 'staffNote') ? (values.staffNote ?? '') : task.staffNote,
     };
 
     const saveEvaluation = showEvaluationEditable
@@ -169,9 +160,7 @@ export function EditTaskModal({
                 pmEvaluation: hasField(editableFields, 'evaluation')
                   ? (values.pmEvaluation ?? '')
                   : task.pmEvaluation,
-                pmNote: hasField(editableFields, 'pmNote')
-                  ? (values.pmNote ?? '')
-                  : task.pmNote,
+                pmNote: hasField(editableFields, 'pmNote') ? (values.pmNote ?? '') : task.pmNote,
               },
             },
             {
@@ -213,37 +202,56 @@ export function EditTaskModal({
     >
       {task && (
         <>
-          <div className={styles.readOnly}>
-            <span>
-              <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.projectName}:</span>{' '}
-              {task.projectName}
-            </span>
-            <span>
-              <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.projectManager}:</span>{' '}
-              {task.projectManager.code} — {task.projectManager.name}
-            </span>
-            {showLevelPreview ? (
-              <span>
-                <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.level}:</span>{' '}
-                {previewLevel ? CLASSIFICATION_LEVEL_LABELS[previewLevel] : '—'}
+          <div className={styles.contextCard}>
+            <div className={styles.contextItem}>
+              <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.projectName}</span>
+              <span className={styles.contextValue} title={task.projectName}>
+                {task.projectName}
               </span>
+            </div>
+            <div className={styles.contextItem}>
+              <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.projectManager}</span>
+              <span
+                className={styles.contextValue}
+                title={`${task.projectManager.code} — ${task.projectManager.name}`}
+              >
+                {task.projectManager.code} — {task.projectManager.name}
+              </span>
+            </div>
+            {task.department ? (
+              <div className={styles.contextItem}>
+                <span className={styles.readOnlyLabel}>Phòng ban</span>
+                <span className={styles.contextValue}>
+                  {task.department in DEPARTMENT_LABELS
+                    ? DEPARTMENT_LABELS[task.department as ProjectDepartment]
+                    : task.department}
+                </span>
+              </div>
+            ) : null}
+            {showLevelPreview ? (
+              <div className={styles.contextItem}>
+                <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.level}</span>
+                <span className={styles.contextValue}>
+                  {previewLevel ? CLASSIFICATION_LEVEL_LABELS[previewLevel] : '—'}
+                </span>
+              </div>
             ) : null}
           </div>
 
           {showEvaluationReadOnly ? (
             <div className={styles.pmFields}>
               <div className={styles.pmField}>
-                <div>{MY_TASK_COLUMN_HEADERS.completion}</div>
+                {MY_TASK_COLUMN_HEADERS.completion}
                 <div className={styles.pmValue}>
                   {task.completionPercent != null ? `${task.completionPercent}%` : '—'}
                 </div>
               </div>
               <div className={styles.pmField}>
-                <div>{MY_TASK_COLUMN_HEADERS.evaluation}</div>
+                {MY_TASK_COLUMN_HEADERS.evaluation}
                 <div className={styles.pmValue}>{task.pmEvaluation || '—'}</div>
               </div>
               <div className={styles.pmField}>
-                <div>{MY_TASK_COLUMN_HEADERS.pmNote}</div>
+                {MY_TASK_COLUMN_HEADERS.pmNote}
                 <div className={styles.pmValue}>{task.pmNote || '—'}</div>
               </div>
             </div>
@@ -262,19 +270,26 @@ export function EditTaskModal({
         hasField(editableFields, 'taskName') ||
         hasField(editableFields, 'quantity') ||
         hasField(editableFields, 'date') ? (
-          <>
-            <p className={styles.sectionTitle}>Task details</p>
-            {hasField(editableFields, 'taskName') || hasField(editableFields, 'quantity') ? (
-              <div className={styles.row}>
-                {hasField(editableFields, 'taskName') ? (
-                  <Form.Item
-                    name="taskName"
-                    label={MY_TASK_COLUMN_HEADERS.taskName}
-                    rules={[{ required: true, message: 'Task type is required' }]}
-                  >
-                    <Input />
-                  </Form.Item>
-                ) : null}
+          <section className={styles.section}>
+            <p className={styles.sectionTitle}>Task</p>
+            {hasField(editableFields, 'taskName') ? (
+              <Form.Item
+                name="taskName"
+                label={MY_TASK_COLUMN_HEADERS.taskName}
+                rules={[{ required: true, message: 'Task type is required' }]}
+              >
+                <Input />
+              </Form.Item>
+            ) : null}
+
+            {hasField(editableFields, 'quantity') || hasField(editableFields, 'date') ? (
+              <div
+                className={
+                  hasField(editableFields, 'quantity') && hasField(editableFields, 'date')
+                    ? styles.row
+                    : undefined
+                }
+              >
                 {hasField(editableFields, 'quantity') ? (
                   <Form.Item
                     name="quantity"
@@ -284,33 +299,30 @@ export function EditTaskModal({
                     <InputNumber min={0} style={{ width: '100%' }} />
                   </Form.Item>
                 ) : null}
-              </div>
-            ) : null}
-
-            {hasField(editableFields, 'date') ? (
-              <div className={styles.row}>
-                <Form.Item
-                  name="date"
-                  label={MY_TASK_COLUMN_HEADERS.date}
-                  rules={[{ required: true, message: 'Date is required' }]}
-                >
-                  <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
-                </Form.Item>
+                {hasField(editableFields, 'date') ? (
+                  <Form.Item
+                    name="date"
+                    label={MY_TASK_COLUMN_HEADERS.date}
+                    rules={[{ required: true, message: 'Date is required' }]}
+                  >
+                    <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+                  </Form.Item>
+                ) : null}
               </div>
             ) : null}
 
             {hasField(editableFields, 'description') ? (
               <Form.Item name="description" label={MY_TASK_COLUMN_HEADERS.description}>
-                <Input.TextArea rows={3} />
+                <Input.TextArea rows={3} placeholder="Add context or requirements" />
               </Form.Item>
             ) : null}
-          </>
+          </section>
         ) : null}
 
         {showClassification ? (
-          <>
-            <p className={styles.sectionTitle}>Task classification</p>
-            <div className={styles.row}>
+          <section className={styles.section}>
+            <p className={styles.sectionTitle}>Classification</p>
+            <div className={styles.rowThree}>
               {hasField(editableFields, 'designThinking') ? (
                 <Form.Item
                   name="designThinking"
@@ -329,8 +341,6 @@ export function EditTaskModal({
                   <Select options={[...CLASSIFICATION_LEVEL_OPTIONS]} />
                 </Form.Item>
               ) : null}
-            </div>
-            <div className={styles.row}>
               {hasField(editableFields, 'contentProcessing') ? (
                 <Form.Item
                   name="contentProcessing"
@@ -340,21 +350,18 @@ export function EditTaskModal({
                   <Select options={[...CLASSIFICATION_LEVEL_OPTIONS]} />
                 </Form.Item>
               ) : null}
-              {hasField(editableFields, 'additionalFactors') ? (
-                <Form.Item
-                  name="additionalFactors"
-                  label={MY_TASK_COLUMN_HEADERS.additionalFactors}
-                >
-                  <Input />
-                </Form.Item>
-              ) : null}
             </div>
-          </>
+            {hasField(editableFields, 'additionalFactors') ? (
+              <Form.Item name="additionalFactors" label={MY_TASK_COLUMN_HEADERS.additionalFactors}>
+                <Input placeholder="Optional factors" />
+              </Form.Item>
+            ) : null}
+          </section>
         ) : null}
 
         {hasField(editableFields, 'staff') ? (
-          <>
-            <p className={styles.sectionTitle}>Staff</p>
+          <section className={styles.section}>
+            <p className={styles.sectionTitle}>Assignment</p>
             <Form.Item
               name="staffUserIds"
               label={MY_TASK_COLUMN_HEADERS.staffName}
@@ -378,57 +385,71 @@ export function EditTaskModal({
                 options={staffSelectOptions}
               />
             </Form.Item>
-          </>
+          </section>
         ) : null}
 
         {showEvaluationEditable ? (
-          <>
+          <section className={styles.section}>
             <p className={styles.sectionTitle}>Evaluation</p>
-            {hasField(editableFields, 'completion') ? (
-              <Form.Item
-                name="completionPercent"
-                label={MY_TASK_COLUMN_HEADERS.completion}
-                rules={[{ required: true, message: 'Completion is required' }]}
+            {hasField(editableFields, 'completion') || hasField(editableFields, 'evaluation') ? (
+              <div
+                className={
+                  hasField(editableFields, 'completion') && hasField(editableFields, 'evaluation')
+                    ? styles.row
+                    : undefined
+                }
               >
-                <InputNumber
-                  min={0}
-                  max={100}
-                  precision={0}
-                  addonAfter="%"
-                  style={{ width: '100%' }}
-                />
-              </Form.Item>
-            ) : null}
-            {hasField(editableFields, 'evaluation') ? (
-              <Form.Item name="pmEvaluation" label={MY_TASK_COLUMN_HEADERS.evaluation}>
-                <Input placeholder="Enter evaluation" />
-              </Form.Item>
+                {hasField(editableFields, 'completion') ? (
+                  <Form.Item
+                    name="completionPercent"
+                    label={MY_TASK_COLUMN_HEADERS.completion}
+                    rules={[{ required: true, message: 'Completion is required' }]}
+                  >
+                    <InputNumber
+                      min={0}
+                      max={100}
+                      precision={0}
+                      addonAfter="%"
+                      style={{ width: '100%' }}
+                    />
+                  </Form.Item>
+                ) : null}
+                {hasField(editableFields, 'evaluation') ? (
+                  <Form.Item name="pmEvaluation" label={MY_TASK_COLUMN_HEADERS.evaluation}>
+                    <Select
+                      allowClear
+                      placeholder="—"
+                      options={[...PROJECT_EVALUATION_SCORE_OPTIONS]}
+                    />
+                  </Form.Item>
+                ) : null}
+              </div>
             ) : null}
             {hasField(editableFields, 'pmNote') ? (
               <Form.Item name="pmNote" label={MY_TASK_COLUMN_HEADERS.pmNote}>
                 <Input.TextArea rows={3} placeholder="Add a note" />
               </Form.Item>
             ) : null}
-          </>
+          </section>
         ) : null}
 
         {hasField(editableFields, 'confirmation') || hasField(editableFields, 'staffNote') ? (
-          <>
+          <section className={styles.section}>
             <p className={styles.sectionTitle}>{MY_TASK_COLUMN_HEADERS.confirmation}</p>
             {hasField(editableFields, 'confirmation') ? (
               <Form.Item
                 name="staffConfirmation"
                 rules={[{ required: true, message: 'Confirmation is required' }]}
               >
-                <Select options={[...TASK_STATUS_OPTIONS]} />
+                <Select options={[...TASK_STATUS_OPTIONS]} placeholder="Select status" />
               </Form.Item>
             ) : null}
             {hasField(editableFields, 'staffNote') ? (
               <Form.Item name="staffNote" label={TASK_STATUS_CHANGE_NOTE_LABEL}>
-                <Input.TextArea rows={2} />
+                <Input.TextArea rows={2} placeholder="Note for status change" />
               </Form.Item>
             ) : null}
-          </>
+          </section>
         ) : null}
       </Form>
     </Modal>

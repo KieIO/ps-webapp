@@ -11,10 +11,7 @@ import { useProject } from '@/features/projects/hooks/useProjectList';
 import { useUpdateProject } from '@/features/projects/hooks/useUpdateProject';
 import { computeProjectLevel } from '@/features/projects/utils/projectLevel';
 import type { EvaluationLevel, ProjectStatus } from '@/features/projects/schemas/project.schema';
-import {
-  MY_TASK_HEAD_COLUMN_HEADERS,
-  PROJECT_EVALUATION_SCORE_OPTIONS,
-} from '../../constants';
+import { MY_TASK_HEAD_COLUMN_HEADERS, PROJECT_EVALUATION_SCORE_OPTIONS } from '../../constants';
 import { useUpdateHeadMyTask } from '../../hooks/useUpdateHeadMyTask';
 import type { MyTask, UpdateHeadMyTaskRequest } from '../../schemas/task.schema';
 import { resolveProjectContextFromTask } from '../../utils/taskProjectContext';
@@ -98,7 +95,7 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
         {
           id: linkedProject.id,
           payload: {
-            client: linkedProject.client,
+            clientId: linkedProject.clientId,
             name: linkedProject.name,
             startDate: values.startDate.toISOString(),
             endDate: values.endDate.toISOString(),
@@ -155,19 +152,25 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
       styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
     >
       {task && (
-        <div className={styles.readOnly}>
-          <span>
-            <span className={styles.readOnlyLabel}>{headers.projectName}:</span>{' '}
-            {task.projectName}
-          </span>
-          <span>
-            <span className={styles.readOnlyLabel}>{headers.projectManager}:</span>{' '}
-            {task.projectManager.name}
-          </span>
-          <span>
-            <span className={styles.readOnlyLabel}>{headers.projectLevel}:</span>{' '}
-            {previewLevel ? EVALUATION_LEVEL_LABELS[previewLevel] : '—'}
-          </span>
+        <div className={styles.contextCard}>
+          <div className={styles.contextItem}>
+            <span className={styles.readOnlyLabel}>{headers.projectName}</span>
+            <span className={styles.contextValue} title={task.projectName}>
+              {task.projectName}
+            </span>
+          </div>
+          <div className={styles.contextItem}>
+            <span className={styles.readOnlyLabel}>{headers.projectManager}</span>
+            <span className={styles.contextValue} title={task.projectManager.name}>
+              {task.projectManager.name}
+            </span>
+          </div>
+          <div className={styles.contextItem}>
+            <span className={styles.readOnlyLabel}>{headers.projectLevel}</span>
+            <span className={styles.contextValue}>
+              {previewLevel ? EVALUATION_LEVEL_LABELS[previewLevel] : '—'}
+            </span>
+          </div>
         </div>
       )}
 
@@ -178,84 +181,89 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
         requiredMark={false}
         disabled={!task}
       >
-        <div className={styles.row}>
-          <Form.Item
-            name="startDate"
-            label={headers.startDate}
-            rules={[{ required: true, message: 'Start date is required' }]}
-          >
-            <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item
-            name="endDate"
-            label={headers.endDate}
-            rules={[{ required: true, message: 'End date is required' }]}
-          >
-            <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
-          </Form.Item>
-        </div>
+        <section className={styles.section}>
+          <p className={styles.sectionTitle}>Schedule</p>
+          <div className={styles.row}>
+            <Form.Item
+              name="startDate"
+              label={headers.startDate}
+              rules={[{ required: true, message: 'Start date is required' }]}
+            >
+              <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item
+              name="endDate"
+              label={headers.endDate}
+              rules={[{ required: true, message: 'End date is required' }]}
+            >
+              <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+            </Form.Item>
+          </div>
 
-        <Form.Item name="brief" label={headers.brief}>
-          <Input.TextArea rows={2} />
-        </Form.Item>
+          <Form.Item name="brief" label={headers.brief}>
+            <Input.TextArea rows={2} placeholder="Project brief" />
+          </Form.Item>
+        </section>
 
-        <p className={styles.sectionTitle}>Project classification</p>
-        <div className={styles.row}>
-          <Form.Item
-            name="volume"
-            label={headers.volume}
-            rules={[{ required: true, message: 'Required' }]}
-          >
-            <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
-          </Form.Item>
-          <Form.Item
-            name="nature"
-            label={headers.nature}
-            rules={[{ required: true, message: 'Required' }]}
-          >
-            <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
-          </Form.Item>
-        </div>
-        <div className={styles.row}>
-          <Form.Item
-            name="projectTime"
-            label={headers.projectTime}
-            rules={[{ required: true, message: 'Required' }]}
-          >
-            <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
-          </Form.Item>
+        <section className={styles.section}>
+          <p className={styles.sectionTitle}>Classification</p>
+          <div className={styles.rowThree}>
+            <Form.Item
+              name="volume"
+              label={headers.volume}
+              rules={[{ required: true, message: 'Required' }]}
+            >
+              <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
+            </Form.Item>
+            <Form.Item
+              name="nature"
+              label={headers.nature}
+              rules={[{ required: true, message: 'Required' }]}
+            >
+              <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
+            </Form.Item>
+            <Form.Item
+              name="projectTime"
+              label={headers.projectTime}
+              rules={[{ required: true, message: 'Required' }]}
+            >
+              <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
+            </Form.Item>
+          </div>
           <Form.Item name="additionalFactors" label={headers.additionalFactors}>
-            <Input />
+            <Input placeholder="Optional factors" />
           </Form.Item>
-        </div>
+        </section>
 
-        <p className={styles.sectionTitle}>Quality & status</p>
-        <div className={styles.row}>
-          <Form.Item name="pmEvaluation" label={headers.evaluation}>
-            <Select
-              allowClear
-              placeholder="Select score"
-              options={[...PROJECT_EVALUATION_SCORE_OPTIONS]}
-            />
-          </Form.Item>
-          <Form.Item
-            name="projectStatus"
-            label={headers.projectStatus}
-            rules={[{ required: true, message: 'Status is required' }]}
-          >
-            <Select options={[...STATUS_OPTIONS]} />
-          </Form.Item>
-        </div>
+        <section className={styles.section}>
+          <p className={styles.sectionTitle}>Quality & status</p>
+          <div className={styles.row}>
+            <Form.Item name="pmEvaluation" label={headers.evaluation}>
+              <Select
+                allowClear
+                placeholder="Select score"
+                options={[...PROJECT_EVALUATION_SCORE_OPTIONS]}
+              />
+            </Form.Item>
+            <Form.Item
+              name="projectStatus"
+              label={headers.projectStatus}
+              rules={[{ required: true, message: 'Status is required' }]}
+            >
+              <Select options={[...STATUS_OPTIONS]} />
+            </Form.Item>
+          </div>
 
-        {projectStatus === 'finish' ? (
-          <Form.Item name="projectFinishedDate" label={headers.finishedDate}>
-            <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
-          </Form.Item>
-        ) : null}
+          {projectStatus === 'finish' ? (
+            <Form.Item name="projectFinishedDate" label={headers.finishedDate}>
+              <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+            </Form.Item>
+          ) : null}
 
-        <Form.Item name="pmNote" label={headers.pmNote}>
-          <Input.TextArea rows={3} />
-        </Form.Item>
+          <Form.Item name="pmNote" label={headers.pmNote}>
+            <Input.TextArea rows={3} placeholder="Add a note" />
+          </Form.Item>
+        </section>
       </Form>
     </Modal>
   );

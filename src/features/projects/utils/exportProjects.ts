@@ -36,7 +36,7 @@ export const exportProjectsToCsv = (projects: Project[]): void => {
   ];
 
   const rows = projects.map((project) => [
-    project.client,
+    project.client.name,
     project.name,
     DEPARTMENT_LABELS[project.department],
     project.taskCount,

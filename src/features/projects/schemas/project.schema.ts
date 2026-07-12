@@ -23,11 +23,17 @@ export const PersonWithCodeSchema = z.object({
   userId: z.string().optional(),
 });
 
+export const ClientRefSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
 /** Core project record from `GET /projects` — no task-derived aggregates. */
 export const ProjectRecordSchema = z.object({
   id: z.string(),
   code: z.string(),
-  client: z.string(),
+  clientId: z.string(),
+  client: ClientRefSchema,
   name: z.string(),
   startDate: z.string(),
   endDate: z.string(),
@@ -66,7 +72,7 @@ export const ProjectSchema = ProjectRecordSchema.merge(ProjectListDerivedSchema)
 
 export const ProjectListFiltersSchema = z.object({
   search: z.string().optional(),
-  client: z.string().optional(),
+  clientId: z.string().optional(),
   status: z.enum(PROJECT_STATUSES).optional(),
   pmCode: z.string().optional(),
   headName: z.string().optional(),
@@ -84,7 +90,7 @@ export const ProjectListRecordResponseSchema = z.object({
 });
 
 export const UpdateProjectRequestSchema = z.object({
-  client: z.string().min(1, 'Client is required'),
+  clientId: z.string().min(1, 'Client is required'),
   name: z.string().min(1, 'Project name is required'),
   startDate: z.string(),
   endDate: z.string(),
@@ -104,6 +110,7 @@ export const UpdateProjectRequestSchema = z.object({
 export const CreateProjectRequestSchema = UpdateProjectRequestSchema;
 
 export type PersonWithCode = z.infer<typeof PersonWithCodeSchema>;
+export type ClientRef = z.infer<typeof ClientRefSchema>;
 export type ProjectRecord = z.infer<typeof ProjectRecordSchema>;
 export type Project = z.infer<typeof ProjectSchema>;
 export type ProjectListFilters = z.infer<typeof ProjectListFiltersSchema>;

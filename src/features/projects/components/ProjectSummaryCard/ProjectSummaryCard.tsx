@@ -33,7 +33,7 @@ export function ProjectSummaryCard({
           <dl className={styles.metaList}>
             <div className={styles.metaItem}>
               <dt className={styles.metaLabel}>Client</dt>
-              <dd className={styles.metaValue}>{project.client}</dd>
+              <dd className={styles.metaValue}>{project.client.name}</dd>
             </div>
             <div className={styles.metaItem}>
               <dt className={styles.metaLabel}>Project Code</dt>

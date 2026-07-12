@@ -7,6 +7,7 @@ import {
   mockCreateTaskScoreGroup,
   mockDeleteTaskScoreGroup,
   mockGetTaskScoreGroupList,
+  mockUpdateTaskScoreGroup,
 } from './mock/taskScoreGroups.mock';
 import {
   mockCreateTaskScore,
@@ -29,9 +30,11 @@ import {
   CreateTaskScoreGroupRequestSchema,
   TaskScoreGroupListResponseSchema,
   TaskScoreGroupRecordSchema,
+  UpdateTaskScoreGroupRequestSchema,
   type CreateTaskScoreGroupRequest,
   type TaskScoreGroupListResponse,
   type TaskScoreGroupRecord,
+  type UpdateTaskScoreGroupRequest,
 } from './schemas/taskScoreGroup.schema';
 
 export const taskScoreApi = {
@@ -52,6 +55,20 @@ export const taskScoreApi = {
     }
 
     const response = await api.post('/task-score-groups', data);
+    return TaskScoreGroupRecordSchema.parse(response.data);
+  },
+
+  updateGroup: async (
+    id: string,
+    payload: UpdateTaskScoreGroupRequest,
+  ): Promise<TaskScoreGroupRecord> => {
+    const data = UpdateTaskScoreGroupRequestSchema.parse(payload);
+
+    if (env.useTaskScoresMock) {
+      return TaskScoreGroupRecordSchema.parse(await mockUpdateTaskScoreGroup(id, data));
+    }
+
+    const response = await api.patch(`/task-score-groups/${id}`, data);
     return TaskScoreGroupRecordSchema.parse(response.data);
   },
 

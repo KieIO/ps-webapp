@@ -1,5 +1,7 @@
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
+import { DEPARTMENT_LABELS } from '@/features/projects/constants';
+import type { ProjectDepartment } from '@/features/projects/schemas/project.schema';
 import { ClassificationLevelBadge } from '../ClassificationLevelBadge/ClassificationLevelBadge';
 import { TaskConfirmationBadge } from '../TaskConfirmationBadge/TaskConfirmationBadge';
 import { TaskDetailActions } from '../TaskDetailActions/TaskDetailActions';
@@ -16,6 +18,13 @@ import styles from './TaskDetailSummaryCard.module.scss';
 
 interface TaskDetailSummaryCardProps {
   task: MyTask;
+}
+
+function formatTaskDepartment(task: MyTask): string {
+  if (task.department && task.department in DEPARTMENT_LABELS) {
+    return DEPARTMENT_LABELS[task.department as ProjectDepartment];
+  }
+  return TASK_CATEGORY_DEPARTMENT_LABELS[task.taskCategory];
 }
 
 export function TaskDetailSummaryCard({ task }: TaskDetailSummaryCardProps) {
@@ -45,7 +54,7 @@ export function TaskDetailSummaryCard({ task }: TaskDetailSummaryCardProps) {
 
         <div className={styles.metaItem}>
           <p className={styles.metaLabel}>Department</p>
-          <p className={styles.metaValue}>{TASK_CATEGORY_DEPARTMENT_LABELS[task.taskCategory]}</p>
+          <p className={styles.metaValue}>{formatTaskDepartment(task)}</p>
         </div>
 
         <div className={styles.metaItem}>

@@ -1,6 +1,6 @@
-import { Form, Input, InputNumber, Modal } from 'antd';
+import { Form, Input, InputNumber, Modal, Select } from 'antd';
 import { useEffect } from 'react';
-import { MY_TASK_COLUMN_HEADERS } from '../../constants';
+import { MY_TASK_COLUMN_HEADERS, PROJECT_EVALUATION_SCORE_OPTIONS } from '../../constants';
 import { useUpdateMyTaskPmEvaluation } from '../../hooks/useUpdateMyTaskPmEvaluation';
 import type { MyTask, UpdateMyTaskPmEvaluationRequest } from '../../schemas/task.schema';
 import { formatTaskStaffNames } from '../../utils/staff';
@@ -89,7 +89,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
           <InputNumber min={0} max={100} precision={0} addonAfter="%" style={{ width: '100%' }} />
         </Form.Item>
         <Form.Item name="pmEvaluation" label={MY_TASK_COLUMN_HEADERS.evaluation}>
-          <Input placeholder="Enter evaluation" />
+          <Select allowClear placeholder="—" options={[...PROJECT_EVALUATION_SCORE_OPTIONS]} />
         </Form.Item>
         <Form.Item name="pmNote" label={MY_TASK_COLUMN_HEADERS.pmNote}>
           <Input.TextArea rows={3} placeholder="Add a note" />

@@ -17,13 +17,6 @@ export const useProject = (id: string) =>
     staleTime: 30_000,
   });
 
-export const useProjectClientOptions = () =>
-  useQuery({
-    queryKey: ['projects', 'client-options'],
-    queryFn: () => projectApi.getClientOptions(),
-    staleTime: 60_000,
-  });
-
 export const useProjectPmOptions = () =>
   useQuery({
     queryKey: ['projects', 'pm-options'],

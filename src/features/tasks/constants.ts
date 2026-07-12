@@ -34,15 +34,6 @@ export const CLASSIFICATION_LEVEL_OPTIONS = CLASSIFICATION_LEVELS.map((value) =>
   label: CLASSIFICATION_LEVEL_LABELS[value],
 }));
 
-/** Default task names for create form — user may also enter a custom value. */
-export const DEFAULT_TASK_NAME_OPTIONS = [
-  'Animation',
-  'Slides',
-  'Edit feedback DE',
-  'Redo slide',
-  'DA',
-] as const;
-
 export const MY_TASKS_PAGE_SIZE = 10;
 
 export const MY_TASKS_PAGE_SIZE_OPTIONS = [10, 20, 50] as const;

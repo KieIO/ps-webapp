@@ -1,15 +1,15 @@
-import { message } from 'antd';
-import { DownloadOutlined } from '@ant-design/icons';
+import { DatePicker, message, Popover } from 'antd';
+import { DownloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
-import dayjs from 'dayjs';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import dayjs, { type Dayjs } from 'dayjs';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PROJECT_NAME_COLUMN_LABEL } from '@/features/projects/constants';
 import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
 import {
   TRACKER_BLOCK_HEIGHT,
   TRACKER_CAL_HEADER_HEIGHT,
-  TRACKER_DAY_WIDTH,
   TRACKER_DOW_LABELS,
+  TRACKER_INITIAL_LOOKBACK_DAYS,
   TRACKER_RANGE_END,
   TRACKER_RANGE_START,
   TRACKER_ROW_HEIGHT,
@@ -29,6 +29,8 @@ import {
   getBlockPosition,
   getCalendarWidth,
   getDayIndex,
+  getFittedDayWidth,
+  getInitialScrollLeft,
   getMonthScrollLeft,
 } from '../../utils/calendar';
 import { exportTrackerToCsv } from '../../utils/exportTracker';
@@ -39,17 +41,65 @@ interface ProjectTrackerViewProps {
   offDays: TrackerOffDay[];
 }
 
+function TrackerLegendContent() {
+  return (
+    <div className={styles.legendPopover}>
+      <div className={styles.legendPopoverGroup}>
+        <p className={styles.legendPopoverTitle}>Dự án</p>
+        <ul className={styles.legendPopoverList}>
+          {TRACKER_URGENCY_LEGEND.map((item) => (
+            <li key={item.label} className={styles.legendPopoverItem}>
+              <span className={classNames(styles.legendDot, styles[`legendDot_${item.key}`])} />
+              {item.label}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className={styles.legendPopoverGroup}>
+        <p className={styles.legendPopoverTitle}>Task</p>
+        <ul className={styles.legendPopoverList}>
+          {TRACKER_BLOCK_LEGEND.map((item) => (
+            <li key={item.label} className={styles.legendPopoverItem}>
+              <span className={classNames(styles.legendBar, styles[`legendBar_${item.key}`])} />
+              {item.label}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProps) {
   const calendarScrollRef = useRef<HTMLDivElement>(null);
   const mainBodyRef = useRef<HTMLDivElement>(null);
+  const prevMonthKeyRef = useRef('');
+  const prevDayWidthRef = useRef(0);
+  const [selectedMonth, setSelectedMonth] = useState(() => dayjs(TRACKER_TODAY).startOf('month'));
+  const [panelWidth, setPanelWidth] = useState(0);
   const [rowLayout, setRowLayout] = useState(() => ({
     visibleRowCount: projects.length,
     canvasHeight: projects.length * TRACKER_ROW_HEIGHT,
   }));
 
-  const days = useMemo(() => buildCalendarDays(), []);
+  const days = useMemo(
+    () =>
+      buildCalendarDays(
+        selectedMonth.startOf('month').format('YYYY-MM-DD'),
+        selectedMonth.endOf('month').format('YYYY-MM-DD'),
+      ),
+    [selectedMonth],
+  );
   const months = useMemo(() => buildCalendarMonths(days), [days]);
-  const calendarWidth = useMemo(() => getCalendarWidth(days.length), [days.length]);
+  const dayWidth = useMemo(
+    () => getFittedDayWidth(days.length, panelWidth),
+    [days.length, panelWidth],
+  );
+  const calendarWidth = useMemo(
+    () => getCalendarWidth(days.length, dayWidth),
+    [days.length, dayWidth],
+  );
   const projectLayouts = useMemo(
     () =>
       projects.map((project) =>
@@ -75,14 +125,68 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   const weekendDays = useMemo(() => days.filter((day) => day.isWeekend), [days]);
   const offDayMarkers = useMemo(
     () =>
-      offDays.map((entry) => ({
-        ...entry,
-        index: getDayIndex(days, entry.date),
-      })).filter((entry) => entry.index >= 0),
+      offDays
+        .map((entry) => ({
+          ...entry,
+          index: getDayIndex(days, entry.date),
+        }))
+        .filter((entry) => entry.index >= 0),
     [days, offDays],
   );
+  const selectedMonthStart = selectedMonth.startOf('month');
+  const selectedMonthEnd = selectedMonth.endOf('month');
+  const trackerRangeStart = dayjs(TRACKER_RANGE_START).startOf('day');
+  const trackerRangeEnd = dayjs(TRACKER_RANGE_END).startOf('day');
+  const isOutOfDataRange =
+    selectedMonthEnd.isBefore(trackerRangeStart, 'day') ||
+    selectedMonthStart.isAfter(trackerRangeEnd, 'day');
 
-  const [activeMonthIndex, setActiveMonthIndex] = useState(0);
+  useEffect(() => {
+    const calendarNode = calendarScrollRef.current;
+    if (!calendarNode) return;
+
+    const measurePanelWidth = () => {
+      setPanelWidth(calendarNode.clientWidth);
+    };
+
+    measurePanelWidth();
+    const observer = new ResizeObserver(measurePanelWidth);
+    observer.observe(calendarNode);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const calendarNode = calendarScrollRef.current;
+    if (!calendarNode || dayWidth <= 0) return;
+
+    const monthKey = selectedMonth.format('YYYY-MM');
+    const monthChanged = prevMonthKeyRef.current !== monthKey;
+    const prevDayWidth = prevDayWidthRef.current;
+
+    prevMonthKeyRef.current = monthKey;
+    prevDayWidthRef.current = dayWidth;
+
+    if (monthChanged) {
+      if (selectedMonth.isSame(dayjs(TRACKER_TODAY), 'month')) {
+        calendarNode.scrollLeft = getInitialScrollLeft(
+          days,
+          TRACKER_TODAY,
+          TRACKER_INITIAL_LOOKBACK_DAYS,
+          dayWidth,
+        );
+      } else {
+        calendarNode.scrollLeft = 0;
+      }
+      return;
+    }
+
+    // Keep the same day anchored when fitted day width changes (resize), instead of
+    // resetting to the initial lookback offset.
+    if (prevDayWidth > 0 && prevDayWidth !== dayWidth) {
+      calendarNode.scrollLeft = (calendarNode.scrollLeft / prevDayWidth) * dayWidth;
+    }
+  }, [days, dayWidth, selectedMonth]);
 
   useEffect(() => {
     const node = mainBodyRef.current;
@@ -109,30 +213,19 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     return () => observer.disconnect();
   }, [projects.length, totalProjectsHeight]);
 
-  const activeMonth = months[activeMonthIndex];
   const todayIndex = getDayIndex(days, TRACKER_TODAY);
 
-  const scrollToMonth = useCallback(
-    (monthIndex: number) => {
-      const month = months[monthIndex];
-      if (!month || !calendarScrollRef.current) return;
-
-      setActiveMonthIndex(monthIndex);
-      calendarScrollRef.current.scrollLeft = getMonthScrollLeft(days, month.key);
-    },
-    [days, months],
-  );
-
   const handlePrevMonth = () => {
-    if (activeMonthIndex > 0) {
-      scrollToMonth(activeMonthIndex - 1);
-    }
+    setSelectedMonth((current) => current.subtract(1, 'month').startOf('month'));
   };
 
   const handleNextMonth = () => {
-    if (activeMonthIndex < months.length - 1) {
-      scrollToMonth(activeMonthIndex + 1);
-    }
+    setSelectedMonth((current) => current.add(1, 'month').startOf('month'));
+  };
+
+  const handleMonthChange = (nextMonth: Dayjs | null) => {
+    if (!nextMonth) return;
+    setSelectedMonth(nextMonth.startOf('month'));
   };
 
   const handleExport = () => {
@@ -140,72 +233,67 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     message.success('Export downloaded.');
   };
 
-  const monthNavLabel = activeMonth
-    ? `${activeMonth.label} ${activeMonth.year}`
-    : dayjs(TRACKER_RANGE_START).format('MMM YYYY').toUpperCase();
-
   return (
     <div className={styles.root}>
       <div className={styles.board}>
         <div className={styles.controlsBar}>
           <p className={styles.controlsMeta}>
-            {projects.length} projects · {formatRangeSubtitle(TRACKER_RANGE_START, TRACKER_RANGE_END)}
+            {projects.length} projects ·{' '}
+            {formatRangeSubtitle(TRACKER_RANGE_START, TRACKER_RANGE_END)}
           </p>
 
           <div className={styles.controlsActions}>
-            <div className={styles.monthNav}>
-              <button
-                type="button"
-                className={styles.navBtn}
-                onClick={handlePrevMonth}
-                disabled={activeMonthIndex === 0}
-                aria-label="Previous month"
+            <div className={styles.monthNavWrap}>
+              <div
+                className={classNames(styles.monthNav, {
+                  [styles.monthNavOutOfRange]: isOutOfDataRange,
+                })}
               >
-                ←
-              </button>
-              <span className={styles.monthNavLabel}>{monthNavLabel}</span>
-              <button
-                type="button"
-                className={styles.navBtn}
-                onClick={handleNextMonth}
-                disabled={activeMonthIndex >= months.length - 1}
-                aria-label="Next month"
-              >
-                →
-              </button>
+                <button
+                  type="button"
+                  className={styles.navBtn}
+                  onClick={handlePrevMonth}
+                  aria-label="Previous month"
+                >
+                  ←
+                </button>
+                <DatePicker
+                  picker="month"
+                  allowClear={false}
+                  inputReadOnly
+                  value={selectedMonth}
+                  onChange={handleMonthChange}
+                  format={(value) => value.format('MMM YYYY').toUpperCase()}
+                  className={styles.monthNavPicker}
+                  aria-label="Pick month and year"
+                  suffixIcon={null}
+                />
+                <button
+                  type="button"
+                  className={styles.navBtn}
+                  onClick={handleNextMonth}
+                  aria-label="Next month"
+                >
+                  →
+                </button>
+              </div>
+              {isOutOfDataRange ? (
+                <span className={styles.monthNavHint}>
+                  Khong co du lieu tracker cho thang/nam da chon
+                </span>
+              ) : null}
             </div>
 
-            <div className={styles.legendGroups} aria-label="Chú thích màu">
-              <div className={styles.legendGroup}>
-                <span className={styles.legendGroupLabel}>Dự án</span>
-                <div className={styles.legend}>
-                  {TRACKER_URGENCY_LEGEND.map((item) => (
-                    <span key={item.label} className={styles.legendItem}>
-                      <span
-                        className={classNames(styles.legendDot, styles[`legendDot_${item.key}`])}
-                      />
-                      {item.label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <span className={styles.legendDivider} aria-hidden />
-
-              <div className={styles.legendGroup}>
-                <span className={styles.legendGroupLabel}>Task</span>
-                <div className={styles.legend}>
-                  {TRACKER_BLOCK_LEGEND.map((item) => (
-                    <span key={item.label} className={styles.legendItem}>
-                      <span
-                        className={classNames(styles.legendBar, styles[`legendBar_${item.key}`])}
-                      />
-                      {item.label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <Popover
+              trigger="click"
+              placement="bottomRight"
+              arrow={false}
+              content={<TrackerLegendContent />}
+            >
+              <button type="button" className={styles.legendBtn} aria-label="Chú thích màu">
+                <InfoCircleOutlined /> Chú thích
+              </button>
+            </Popover>
 
             <button type="button" className={styles.exportBtn} onClick={handleExport}>
               <DownloadOutlined /> Xuất Excel
@@ -219,60 +307,66 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
               className={styles.leftPanelContent}
               style={{ height: TRACKER_CAL_HEADER_HEIGHT + canvasHeight }}
             >
-            <div className={styles.leftHeader}>
-              <div className={styles.leftHeaderTop}>
-                <div className={styles.leftHeaderName}>{PROJECT_NAME_COLUMN_LABEL}</div>
-                <div className={styles.leftHeaderTeam}>PM &amp; Team</div>
-                <div className={styles.leftHeaderSlides}>Slides</div>
-              </div>
-              <div className={styles.offRowLabel}>Nghỉ hôm nay</div>
-            </div>
-
-            <div className={styles.leftRows}>
-              {projects.map((project, rowIndex) => {
-                const urgencyStyle = TRACKER_URGENCY_STYLES[project.urgency];
-                const rowHeight = projectLayouts[rowIndex]?.rowHeight ?? TRACKER_ROW_HEIGHT;
-
-                return (
-                <div
-                  key={project.id}
-                  className={styles.projectRow}
-                  style={{ borderLeftColor: urgencyStyle.border, height: rowHeight, minHeight: rowHeight }}
-                >
-                  <div className={styles.nameCell}>
-                    <span
-                      className={classNames(
-                        styles.urgencyDot,
-                        styles[`urgencyDot_${project.urgency}`],
-                      )}
-                    />
-                    <span className={styles.rowIndex}>{String(rowIndex + 1).padStart(2, '0')}.</span>
-                    <ProjectNameLink
-                      name={project.name}
-                      projectId={project.id}
-                      className={styles.projectNameLink}
-                    />
-                  </div>
-                  <div className={styles.teamCell}>
-                    <div className={styles.pmName}>{project.pm}</div>
-                    {project.team.length > 0 && (
-                      <div className={styles.teamNames}>{project.team.join(', ')}</div>
-                    )}
-                  </div>
-                  <div
-                    className={classNames(styles.slidesCell, {
-                      [styles.slidesUrgent]: project.highlightSlides,
-                    })}
-                  >
-                    {project.totalSlides.toLocaleString()}
-                  </div>
+              <div className={styles.leftHeader}>
+                <div className={styles.leftHeaderTop}>
+                  <div className={styles.leftHeaderName}>{PROJECT_NAME_COLUMN_LABEL}</div>
+                  <div className={styles.leftHeaderTeam}>PM &amp; Team</div>
+                  <div className={styles.leftHeaderSlides}>Slides</div>
                 </div>
-                );
-              })}
-              {Array.from({ length: emptyRowCount }, (_, index) => (
-                <EmptyProjectRow key={`empty-row-${index}`} rowIndex={projects.length + index} />
-              ))}
-            </div>
+                <div className={styles.offRowLabel}>Nghỉ hôm nay</div>
+              </div>
+
+              <div className={styles.leftRows}>
+                {projects.map((project, rowIndex) => {
+                  const urgencyStyle = TRACKER_URGENCY_STYLES[project.urgency];
+                  const rowHeight = projectLayouts[rowIndex]?.rowHeight ?? TRACKER_ROW_HEIGHT;
+
+                  return (
+                    <div
+                      key={project.id}
+                      className={styles.projectRow}
+                      style={{
+                        borderLeftColor: urgencyStyle.border,
+                        height: rowHeight,
+                        minHeight: rowHeight,
+                      }}
+                    >
+                      <div className={styles.nameCell}>
+                        <span
+                          className={classNames(
+                            styles.urgencyDot,
+                            styles[`urgencyDot_${project.urgency}`],
+                          )}
+                        />
+                        <span className={styles.rowIndex}>
+                          {String(rowIndex + 1).padStart(2, '0')}.
+                        </span>
+                        <ProjectNameLink
+                          name={project.name}
+                          projectId={project.id}
+                          className={styles.projectNameLink}
+                        />
+                      </div>
+                      <div className={styles.teamCell}>
+                        <div className={styles.pmName}>{project.pm}</div>
+                        {project.team.length > 0 && (
+                          <div className={styles.teamNames}>{project.team.join(', ')}</div>
+                        )}
+                      </div>
+                      <div
+                        className={classNames(styles.slidesCell, {
+                          [styles.slidesUrgent]: project.highlightSlides,
+                        })}
+                      >
+                        {project.totalSlides.toLocaleString()}
+                      </div>
+                    </div>
+                  );
+                })}
+                {Array.from({ length: emptyRowCount }, (_, index) => (
+                  <EmptyProjectRow key={`empty-row-${index}`} rowIndex={projects.length + index} />
+                ))}
+              </div>
             </div>
           </div>
 
@@ -284,7 +378,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                     <div
                       key={month.key}
                       className={styles.monthLabel}
-                      style={{ width: month.dayCount * TRACKER_DAY_WIDTH }}
+                      style={{ width: month.dayCount * dayWidth }}
                     >
                       {month.label} {month.year}
                     </div>
@@ -299,6 +393,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                         [styles.dowWeekend]: day.isWeekend,
                         [styles.dowToday]: day.isToday,
                       })}
+                      style={{ width: dayWidth }}
                     >
                       {TRACKER_DOW_LABELS[day.dayOfWeek]}
                     </div>
@@ -313,6 +408,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                         [styles.dateWeekend]: day.isWeekend,
                         [styles.dateToday]: day.isToday,
                       })}
+                      style={{ width: dayWidth }}
                     >
                       {day.dayOfMonth}
                     </div>
@@ -324,7 +420,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                     <div
                       key={offDay.date}
                       className={styles.offDayCell}
-                      style={{ left: offDay.index * TRACKER_DAY_WIDTH }}
+                      style={{ left: offDay.index * dayWidth, width: dayWidth }}
                     >
                       {offDay.names.map((name) => (
                         <span key={name} className={styles.offName}>
@@ -337,54 +433,62 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
               </div>
 
               <div className={styles.calendarBody} style={{ height: canvasHeight }}>
-                {todayIndex >= 0 && (
-                  <div
-                    className={styles.todayLine}
-                    style={{
-                      left: todayIndex * TRACKER_DAY_WIDTH + TRACKER_DAY_WIDTH / 2,
-                      height: canvasHeight,
-                    }}
-                  />
+                {isOutOfDataRange ? (
+                  <div className={styles.emptyTimelineNotice}>Khong co du lieu</div>
+                ) : (
+                  <>
+                    {todayIndex >= 0 && (
+                      <div
+                        className={styles.todayLine}
+                        style={{
+                          left: todayIndex * dayWidth + dayWidth / 2,
+                          height: canvasHeight,
+                        }}
+                      />
+                    )}
+
+                    {months.slice(1).map((month) => {
+                      const left = getMonthScrollLeft(days, month.key, dayWidth);
+                      return (
+                        <div
+                          key={`divider-${month.key}`}
+                          className={styles.monthDivider}
+                          style={{ left, height: canvasHeight }}
+                        />
+                      );
+                    })}
+
+                    {projects.map((project, rowIndex) => (
+                      <TimelineRow
+                        key={project.id}
+                        project={project}
+                        blocks={projectLayouts[rowIndex]?.blocks ?? []}
+                        days={days}
+                        weekendDays={weekendDays}
+                        todayIndex={todayIndex}
+                        dayWidth={dayWidth}
+                        rowIndex={rowIndex}
+                        top={rowOffsets[rowIndex] ?? 0}
+                        rowHeight={projectLayouts[rowIndex]?.rowHeight ?? TRACKER_ROW_HEIGHT}
+                      />
+                    ))}
+
+                    {Array.from({ length: emptyRowCount }, (_, index) => {
+                      const rowIndex = projects.length + index;
+                      return (
+                        <EmptyTimelineRow
+                          key={`empty-timeline-${index}`}
+                          days={days}
+                          weekendDays={weekendDays}
+                          todayIndex={todayIndex}
+                          dayWidth={dayWidth}
+                          rowIndex={rowIndex}
+                          top={totalProjectsHeight + index * TRACKER_ROW_HEIGHT}
+                        />
+                      );
+                    })}
+                  </>
                 )}
-
-                {months.slice(1).map((month) => {
-                  const left = getMonthScrollLeft(days, month.key);
-                  return (
-                    <div
-                      key={`divider-${month.key}`}
-                      className={styles.monthDivider}
-                      style={{ left, height: canvasHeight }}
-                    />
-                  );
-                })}
-
-                {projects.map((project, rowIndex) => (
-                  <TimelineRow
-                    key={project.id}
-                    project={project}
-                    blocks={projectLayouts[rowIndex]?.blocks ?? []}
-                    days={days}
-                    weekendDays={weekendDays}
-                    todayIndex={todayIndex}
-                    rowIndex={rowIndex}
-                    top={rowOffsets[rowIndex] ?? 0}
-                    rowHeight={projectLayouts[rowIndex]?.rowHeight ?? TRACKER_ROW_HEIGHT}
-                  />
-                ))}
-
-                {Array.from({ length: emptyRowCount }, (_, index) => {
-                  const rowIndex = projects.length + index;
-                  return (
-                    <EmptyTimelineRow
-                      key={`empty-timeline-${index}`}
-                      days={days}
-                      weekendDays={weekendDays}
-                      todayIndex={todayIndex}
-                      rowIndex={rowIndex}
-                      top={totalProjectsHeight + index * TRACKER_ROW_HEIGHT}
-                    />
-                  );
-                })}
               </div>
             </div>
           </div>
@@ -417,6 +521,7 @@ interface EmptyTimelineRowProps {
   days: CalendarDay[];
   weekendDays: CalendarDay[];
   todayIndex: number;
+  dayWidth: number;
   rowIndex: number;
   top: number;
 }
@@ -425,6 +530,7 @@ function EmptyTimelineRow({
   days,
   weekendDays,
   todayIndex,
+  dayWidth,
   rowIndex,
   top,
 }: EmptyTimelineRowProps) {
@@ -434,7 +540,7 @@ function EmptyTimelineRow({
         styles.timelineRow,
         rowIndex % 2 === 0 ? styles.timelineRowOdd : styles.timelineRowEven,
       )}
-      style={{ top, width: days.length * TRACKER_DAY_WIDTH, height: TRACKER_ROW_HEIGHT }}
+      style={{ top, width: days.length * dayWidth, height: TRACKER_ROW_HEIGHT }}
       aria-hidden
     >
       {weekendDays.map((day) => {
@@ -443,7 +549,7 @@ function EmptyTimelineRow({
           <div
             key={`we-empty-${rowIndex}-${day.key}`}
             className={styles.weekendShade}
-            style={{ left: index * TRACKER_DAY_WIDTH }}
+            style={{ left: index * dayWidth, width: dayWidth }}
           />
         );
       })}
@@ -451,7 +557,7 @@ function EmptyTimelineRow({
       {todayIndex >= 0 && (
         <div
           className={styles.todayShade}
-          style={{ left: todayIndex * TRACKER_DAY_WIDTH }}
+          style={{ left: todayIndex * dayWidth, width: dayWidth }}
         />
       )}
     </div>
@@ -464,6 +570,7 @@ interface TimelineRowProps {
   days: CalendarDay[];
   weekendDays: CalendarDay[];
   todayIndex: number;
+  dayWidth: number;
   rowIndex: number;
   top: number;
   rowHeight: number;
@@ -475,6 +582,7 @@ function TimelineRow({
   days,
   weekendDays,
   todayIndex,
+  dayWidth,
   rowIndex,
   top,
   rowHeight,
@@ -485,7 +593,7 @@ function TimelineRow({
         styles.timelineRow,
         rowIndex % 2 === 0 ? styles.timelineRowOdd : styles.timelineRowEven,
       )}
-      style={{ top, width: days.length * TRACKER_DAY_WIDTH, height: rowHeight }}
+      style={{ top, width: days.length * dayWidth, height: rowHeight }}
     >
       {weekendDays.map((day) => {
         const index = getDayIndex(days, day.date);
@@ -493,7 +601,7 @@ function TimelineRow({
           <div
             key={`we-${project.id}-${day.key}`}
             className={styles.weekendShade}
-            style={{ left: index * TRACKER_DAY_WIDTH }}
+            style={{ left: index * dayWidth, width: dayWidth }}
           />
         );
       })}
@@ -501,12 +609,17 @@ function TimelineRow({
       {todayIndex >= 0 && (
         <div
           className={styles.todayShade}
-          style={{ left: todayIndex * TRACKER_DAY_WIDTH }}
+          style={{ left: todayIndex * dayWidth, width: dayWidth }}
         />
       )}
 
       {blocks.map((block, index) => (
-        <TimelineBlock key={`${project.id}-${index}`} block={block} days={days} />
+        <TimelineBlock
+          key={`${project.id}-${index}`}
+          block={block}
+          days={days}
+          dayWidth={dayWidth}
+        />
       ))}
     </div>
   );
@@ -515,10 +628,11 @@ function TimelineRow({
 interface TimelineBlockProps {
   block: LaidOutBlock;
   days: CalendarDay[];
+  dayWidth: number;
 }
 
-function TimelineBlock({ block, days }: TimelineBlockProps) {
-  const position = getBlockPosition(days, block.start, block.end);
+function TimelineBlock({ block, days, dayWidth }: TimelineBlockProps) {
+  const position = getBlockPosition(days, block.start, block.end, dayWidth);
   if (!position) return null;
 
   return (

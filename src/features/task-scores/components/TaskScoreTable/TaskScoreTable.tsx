@@ -1,6 +1,7 @@
 import { Button, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PAGINATION } from '@/config/constants';
+import { DEPARTMENT_LABELS } from '@/features/projects/constants';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import type { TaskScoreGroupRecord } from '../../schemas/taskScoreGroup.schema';
 import type { TaskScore } from '../../schemas/taskScore.schema';
@@ -25,7 +26,7 @@ export function TaskScoreTable({ items, groupByCode, loading, onEdit }: TaskScor
       title: 'Score',
       dataIndex: 'score',
       key: 'score',
-      width: 120,
+      width: 100,
       align: 'right',
       render: (score: number) => score.toLocaleString('vi-VN'),
     },
@@ -33,14 +34,19 @@ export function TaskScoreTable({ items, groupByCode, loading, onEdit }: TaskScor
       title: 'Group',
       dataIndex: 'group',
       key: 'group',
-      width: 180,
+      width: 160,
       render: (code: string) => {
         const group = groupByCode[code];
-        return group ? (
-          <TaskScoreGroupPill label={group.label} colorKey={group.colorKey} />
-        ) : (
-          code
-        );
+        return group ? <TaskScoreGroupPill label={group.label} colorKey={group.colorKey} /> : code;
+      },
+    },
+    {
+      title: 'Department',
+      key: 'department',
+      width: 130,
+      render: (_, record) => {
+        const department = groupByCode[record.group]?.department;
+        return department ? DEPARTMENT_LABELS[department] : '—';
       },
     },
     {

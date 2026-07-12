@@ -1,5 +1,6 @@
-import { Button, Form, Input, Modal, Popconfirm } from 'antd';
+import { Button, Form, Input, Modal, Popconfirm, Select } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
+import { DEPARTMENT_LABELS, DEPARTMENT_OPTIONS } from '@/features/projects/constants';
 import { useCreateTaskScoreGroup } from '../../hooks/useCreateTaskScoreGroup';
 import { useDeleteTaskScoreGroup } from '../../hooks/useDeleteTaskScoreGroup';
 import { useTaskScoreGroupList } from '../../hooks/useTaskScoreGroupList';
@@ -19,8 +20,11 @@ export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGro
   const [form] = Form.useForm<CreateTaskScoreGroupRequest>();
   const { data, isLoading } = useTaskScoreGroupList();
   const { mutate: createGroup, isPending: isCreating } = useCreateTaskScoreGroup();
-  const { mutate: deleteGroup, isPending: isDeleting, variables: deletingId } =
-    useDeleteTaskScoreGroup();
+  const {
+    mutate: deleteGroup,
+    isPending: isDeleting,
+    variables: deletingId,
+  } = useDeleteTaskScoreGroup();
 
   const handleClose = () => {
     form.resetFields();
@@ -28,11 +32,17 @@ export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGro
   };
 
   const handleFinish = (values: CreateTaskScoreGroupRequest) => {
-    createGroup(values, {
-      onSuccess: () => {
-        form.resetFields();
+    createGroup(
+      {
+        label: values.label,
+        department: values.department ?? null,
       },
-    });
+      {
+        onSuccess: () => {
+          form.resetFields();
+        },
+      },
+    );
   };
 
   const handleDelete = (group: TaskScoreGroupRecord) => {
@@ -45,11 +55,12 @@ export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGro
       open={open}
       onCancel={handleClose}
       footer={null}
-      width={480}
+      width={520}
       destroyOnHidden
     >
       <p className={styles.intro}>
-        Groups classify task scores. Remove unused groups with the × button.
+        Groups classify task scores and may optionally belong to a department. Remove unused groups
+        with the × button.
       </p>
 
       <div className={styles.groupPanel}>
@@ -58,7 +69,12 @@ export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGro
         ) : data?.items.length ? (
           data.items.map((group) => (
             <div key={group.id} className={styles.groupItem}>
-              <TaskScoreGroupPill label={group.label} colorKey={group.colorKey} />
+              <div className={styles.groupMeta}>
+                <TaskScoreGroupPill label={group.label} colorKey={group.colorKey} />
+                <span className={styles.department}>
+                  {group.department ? DEPARTMENT_LABELS[group.department] : 'No department'}
+                </span>
+              </div>
               <Popconfirm
                 title={`Delete "${group.label}"?`}
                 description="Only groups with no tasks can be removed."
@@ -85,17 +101,25 @@ export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGro
 
       <Form
         form={form}
-        layout="inline"
+        layout="vertical"
         className={styles.form}
         onFinish={handleFinish}
         requiredMark={false}
       >
         <Form.Item
           name="label"
-          className={styles.input}
+          label="Group name"
           rules={[{ required: true, message: 'Enter a group name' }]}
         >
           <Input placeholder="e.g. Research" disabled={isCreating || isDeleting} />
+        </Form.Item>
+        <Form.Item name="department" label="Department">
+          <Select
+            allowClear
+            placeholder="No department"
+            options={[...DEPARTMENT_OPTIONS]}
+            disabled={isCreating || isDeleting}
+          />
         </Form.Item>
         <Button type="primary" htmlType="submit" loading={isCreating} disabled={isDeleting}>
           Add group

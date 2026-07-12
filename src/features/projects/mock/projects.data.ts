@@ -13,7 +13,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-sanofi-001',
     code: 'POKE001.29.04.SAN',
-    client: 'SANOFI',
+    clientId: 'cli-sanofi',
+    client: { id: 'cli-sanofi', name: 'SANOFI' },
     name: 'Sanofi Meninga',
     startDate: toIso(29, 4, 2025),
     endDate: toIso(15, 5, 2025),
@@ -35,7 +36,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-allianz-002',
     code: 'POKE002.17.04.ALI',
-    client: 'ALLIANZ',
+    clientId: 'cli-allianz',
+    client: { id: 'cli-allianz', name: 'ALLIANZ' },
     name: 'SPIE Network',
     startDate: toIso(17, 4, 2025),
     endDate: toIso(8, 5, 2025),
@@ -57,7 +59,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-everest-004',
     code: 'POKE004.25.04.EVE',
-    client: 'EVEREST',
+    clientId: 'cli-everest',
+    client: { id: 'cli-everest', name: 'EVEREST' },
     name: 'AIA Jul',
     startDate: toIso(25, 4, 2025),
     endDate: toIso(16, 5, 2025),
@@ -79,7 +82,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-allianz-005',
     code: 'POKE005.08.04.ALI',
-    client: 'ALLIANZ',
+    clientId: 'cli-allianz',
+    client: { id: 'cli-allianz', name: 'ALLIANZ' },
     name: 'AIA Jul',
     startDate: toIso(8, 4, 2025),
     endDate: toIso(18, 4, 2025),
@@ -101,7 +105,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-allianz-006',
     code: 'POKE006.14.04.ALI',
-    client: 'ALLIANZ',
+    clientId: 'cli-allianz',
+    client: { id: 'cli-allianz', name: 'ALLIANZ' },
     name: 'SPIE Network',
     startDate: toIso(14, 4, 2025),
     endDate: toIso(15, 5, 2025),
@@ -123,7 +128,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-eg-007',
     code: 'POKE007.15.04.EG',
-    client: 'EG',
+    clientId: 'cli-eg',
+    client: { id: 'cli-eg', name: 'EG' },
     name: 'EG Q1 Meeting',
     startDate: toIso(15, 4, 2025),
     endDate: toIso(6, 5, 2025),
@@ -145,7 +151,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-eg-008',
     code: 'POKE008.23.04.EG',
-    client: 'EG',
+    clientId: 'cli-eg',
+    client: { id: 'cli-eg', name: 'EG' },
     name: 'EG Q1 Meeting',
     startDate: toIso(23, 4, 2025),
     endDate: toIso(6, 5, 2025),
@@ -167,7 +174,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-eg-009',
     code: 'POKE009.21.04.EG',
-    client: 'EG',
+    clientId: 'cli-eg',
+    client: { id: 'cli-eg', name: 'EG' },
     name: 'EG Q1 Meeting',
     startDate: toIso(21, 4, 2025),
     endDate: toIso(6, 5, 2025),
@@ -189,7 +197,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-everest-010',
     code: 'POKE010.17.04.EVR',
-    client: 'EVEREST',
+    clientId: 'cli-everest',
+    client: { id: 'cli-everest', name: 'EVEREST' },
     name: 'Everest Q1 Meeting',
     startDate: toIso(17, 4, 2025),
     endDate: toIso(6, 5, 2025),
@@ -211,7 +220,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-sanofi-011',
     code: 'POKE011.02.03.SAN',
-    client: 'SANOFI',
+    clientId: 'cli-sanofi',
+    client: { id: 'cli-sanofi', name: 'SANOFI' },
     name: 'Sanofi Annual Review',
     startDate: toIso(2, 3, 2025),
     endDate: toIso(20, 3, 2025),
@@ -234,7 +244,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-internal-012',
     code: 'POKE012.10.01.INT',
-    client: 'Internal',
+    clientId: 'cli-internal',
+    client: { id: 'cli-internal', name: 'Internal' },
     name: 'Brand Template Refresh',
     startDate: toIso(10, 1, 2025),
     endDate: toIso(28, 2, 2025),
@@ -257,7 +268,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-allianz-013',
     code: 'POKE013.05.02.ALI',
-    client: 'ALLIANZ',
+    clientId: 'cli-allianz',
+    client: { id: 'cli-allianz', name: 'ALLIANZ' },
     name: 'Legacy Portal Deck',
     startDate: toIso(5, 2, 2025),
     endDate: toIso(15, 3, 2025),
@@ -279,7 +291,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-covsignec-014',
     code: 'POKE014.26.04.CAC',
-    client: 'COVSIGNEC',
+    clientId: 'cli-covsignec',
+    client: { id: 'cli-covsignec', name: 'COVSIGNEC' },
     name: 'Covsignec AMI classification',
     startDate: toIso(26, 4, 2025),
     endDate: toIso(10, 5, 2025),
@@ -301,7 +314,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-ait-015',
     code: 'POKE015.18.04.AIT',
-    client: 'AIT',
+    clientId: 'cli-ait',
+    client: { id: 'cli-ait', name: 'AIT' },
     name: 'AIT Enzymes',
     startDate: toIso(18, 4, 2025),
     endDate: toIso(12, 5, 2025),
@@ -323,7 +337,8 @@ export const INITIAL_MOCK_PROJECTS: StoredProject[] = [
   {
     id: 'prj-altevia-016',
     code: 'POKE016.12.04.ALT',
-    client: 'ALTEVIA',
+    clientId: 'cli-altevia',
+    client: { id: 'cli-altevia', name: 'ALTEVIA' },
     name: 'Altevia Renault Transform in PPT',
     startDate: toIso(12, 4, 2025),
     endDate: toIso(8, 6, 2025),

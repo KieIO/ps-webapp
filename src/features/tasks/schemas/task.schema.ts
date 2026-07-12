@@ -3,13 +3,17 @@
  * Backend contract: docs/MY_TASKS_BACKEND_TODO.md (index: docs/BACKEND_API.md)
  */
 import { z } from 'zod';
-import { PROJECT_STATUSES } from '@/features/projects/schemas/project.schema';
+import { PROJECT_DEPARTMENTS, PROJECT_STATUSES } from '@/features/projects/schemas/project.schema';
 
 export const CLASSIFICATION_LEVELS = [1, 2, 3, 4] as const;
 
 export const TASK_CATEGORIES = ['project', 'non_project'] as const;
 
 export type TaskCategory = (typeof TASK_CATEGORIES)[number];
+
+export const TASK_DEPARTMENTS = PROJECT_DEPARTMENTS;
+
+export type TaskDepartment = (typeof TASK_DEPARTMENTS)[number];
 
 export const TASK_CONFIRMATION_STATUSES = [
   'not_updated',
@@ -45,6 +49,8 @@ export const MyTaskSchema = z.object({
   date: z.string(),
   description: z.string(),
   staff: z.array(TaskAssigneeSchema),
+  /** Phòng ban of the task — required for new project tasks. */
+  department: z.enum(TASK_DEPARTMENTS).nullish(),
   designThinking: z.number().int().min(1).max(4),
   technical: z.number().int().min(1).max(4),
   contentProcessing: z.number().int().min(1).max(4),
@@ -103,6 +109,7 @@ export const CreateMyTaskRequestSchema = z.object({
   quantity: z.number().int().min(0),
   date: z.string(),
   description: z.string(),
+  department: z.enum(TASK_DEPARTMENTS).optional(),
   designThinking: z.number().int().min(1).max(4),
   technical: z.number().int().min(1).max(4),
   contentProcessing: z.number().int().min(1).max(4),
@@ -166,9 +173,7 @@ export type TaskHistoryEvent = z.infer<typeof TaskHistoryEventSchema>;
 export type TaskHistoryListResponse = z.infer<typeof TaskHistoryListResponseSchema>;
 export type CreateMyTaskRequest = z.infer<typeof CreateMyTaskRequestSchema>;
 export type UpdateMyTaskStatusRequest = z.infer<typeof UpdateMyTaskStatusRequestSchema>;
-export type UpdateMyTaskPmEvaluationRequest = z.infer<
-  typeof UpdateMyTaskPmEvaluationRequestSchema
->;
+export type UpdateMyTaskPmEvaluationRequest = z.infer<typeof UpdateMyTaskPmEvaluationRequestSchema>;
 export type AssignMyTaskRequest = z.infer<typeof AssignMyTaskRequestSchema>;
 export type UpdateMyTaskRequest = z.infer<typeof UpdateMyTaskRequestSchema>;
 export type UpdateHeadMyTaskRequest = z.infer<typeof UpdateHeadMyTaskRequestSchema>;

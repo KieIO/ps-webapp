@@ -72,33 +72,80 @@ export const buildCalendarMonths = (days: CalendarDay[]): CalendarMonth[] => {
   return months;
 };
 
-export const getCalendarWidth = (dayCount: number): number => dayCount * TRACKER_DAY_WIDTH;
+export const getFittedDayWidth = (
+  dayCount: number,
+  availableWidth: number,
+  minDayWidth = TRACKER_DAY_WIDTH,
+): number => {
+  if (dayCount <= 0) return minDayWidth;
+  return Math.max(minDayWidth, availableWidth / dayCount);
+};
+
+export const getCalendarWidth = (dayCount: number, dayWidth = TRACKER_DAY_WIDTH): number =>
+  dayCount * dayWidth;
 
 export const getDayIndex = (days: CalendarDay[], date: string): number =>
   days.findIndex((day) => day.date === date);
 
-export const getMonthScrollLeft = (days: CalendarDay[], monthKey: string): number => {
+export const getMonthScrollLeft = (
+  days: CalendarDay[],
+  monthKey: string,
+  dayWidth = TRACKER_DAY_WIDTH,
+): number => {
   const index = days.findIndex((day) => day.monthKey === monthKey);
-  return index >= 0 ? index * TRACKER_DAY_WIDTH : 0;
+  return index >= 0 ? index * dayWidth : 0;
 };
+
+export const getInitialScrollDayIndex = (
+  days: CalendarDay[],
+  today: string,
+  lookbackDays: number,
+): number => {
+  const todayIndex = getDayIndex(days, today);
+  if (todayIndex < 0) return 0;
+  return Math.max(0, todayIndex - lookbackDays);
+};
+
+export const getInitialScrollLeft = (
+  days: CalendarDay[],
+  today: string,
+  lookbackDays: number,
+  dayWidth = TRACKER_DAY_WIDTH,
+): number => getInitialScrollDayIndex(days, today, lookbackDays) * dayWidth;
 
 export const getBlockPosition = (
   days: CalendarDay[],
   start: string,
   end: string,
+  dayWidth = TRACKER_DAY_WIDTH,
 ): { left: number; width: number } | null => {
-  const startIndex = getDayIndex(days, start);
-  const endIndex = getDayIndex(days, end);
+  if (days.length === 0) {
+    return null;
+  }
 
-  if (startIndex < 0 || endIndex < 0) {
+  const startDate = dayjs(start).startOf('day');
+  const endDate = dayjs(end).startOf('day');
+  const visibleStart = dayjs(days[0].date).startOf('day');
+  const visibleEnd = dayjs(days[days.length - 1].date).startOf('day');
+
+  if (endDate.isBefore(visibleStart, 'day') || startDate.isAfter(visibleEnd, 'day')) {
+    return null;
+  }
+
+  const clampedStart = startDate.isBefore(visibleStart, 'day') ? visibleStart : startDate;
+  const clampedEnd = endDate.isAfter(visibleEnd, 'day') ? visibleEnd : endDate;
+  const startIndex = getDayIndex(days, clampedStart.format('YYYY-MM-DD'));
+  const endIndex = getDayIndex(days, clampedEnd.format('YYYY-MM-DD'));
+
+  if (startIndex < 0 || endIndex < 0 || endIndex < startIndex) {
     return null;
   }
 
   const span = endIndex - startIndex + 1;
 
   return {
-    left: startIndex * TRACKER_DAY_WIDTH + 1,
-    width: span * TRACKER_DAY_WIDTH - 2,
+    left: startIndex * dayWidth + 1,
+    width: span * dayWidth - 2,
   };
 };
 

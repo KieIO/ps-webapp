@@ -100,7 +100,8 @@ export function ProjectTable({
       key: 'client',
       width: 110,
       fixed: 'left',
-      sorter: (a, b) => compareText(a.client, b.client),
+      render: (client: Project['client']) => renderText(client?.name ?? ''),
+      sorter: (a, b) => compareText(a.client.name, b.client.name),
     },
     {
       title: PROJECT_NAME_COLUMN_LABEL,
@@ -245,10 +246,7 @@ export function ProjectTable({
       width: 160,
       sorter: (a, b) => compareNumber(a.completionPercent, b.completionPercent),
       render: (percent: number, record) => (
-        <CompletionProgressCell
-          percent={percent}
-          variant={STATUS_VARIANT[record.status]}
-        />
+        <CompletionProgressCell percent={percent} variant={STATUS_VARIANT[record.status]} />
       ),
     },
     {
@@ -353,8 +351,7 @@ export function ProjectTable({
           total,
           showSizeChanger: true,
           pageSizeOptions: [...PROJECTS_PAGE_SIZE_OPTIONS],
-          showTotal: (count, range) =>
-            `Hiển thị ${range[0]}-${range[1]} / ${count} dự án`,
+          showTotal: (count, range) => `Hiển thị ${range[0]}-${range[1]} / ${count} dự án`,
         }}
       />
     </TableWrapper>

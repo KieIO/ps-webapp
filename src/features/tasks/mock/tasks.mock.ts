@@ -249,6 +249,11 @@ export const mockCreateMyTask = async (
   }
 
   const now = new Date().toISOString();
+  const level = computeTaskLevel(
+    payload.designThinking,
+    payload.technical,
+    payload.contentProcessing,
+  );
   const newTask: MyTask = {
     id: `task-${Date.now()}`,
     taskCategory: payload.taskCategory,
@@ -256,10 +261,11 @@ export const mockCreateMyTask = async (
     projectName: payload.projectName,
     projectManager: payload.projectManager,
     taskName: payload.taskName,
-    level: payload.level,
+    level,
     quantity: payload.quantity,
     date: normalizeTaskDateStart(payload.date),
     description: payload.description,
+    department: payload.department,
     staff: payload.staff,
     designThinking: payload.designThinking,
     technical: payload.technical,

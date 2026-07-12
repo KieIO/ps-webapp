@@ -2,17 +2,18 @@ import { DatePicker, Form, Input, Modal, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
-import {
-  DEPARTMENT_OPTIONS,
-  EVALUATION_LEVEL_OPTIONS,
-  EVALUATION_LEVEL_LABELS,
-  STATUS_OPTIONS,
-} from '../../constants';
+import { EVALUATION_LEVEL_OPTIONS, EVALUATION_LEVEL_LABELS, STATUS_OPTIONS } from '../../constants';
 import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProjectList';
 import { useUpdateProject } from '../../hooks/useUpdateProject';
 import { computeProjectLevel } from '../../utils/projectLevel';
 import { mergePersonOptions, resolvePersonRef } from '../../utils/personRef';
-import type { EvaluationLevel, Project, UpdateProjectRequest } from '../../schemas/project.schema';
+import {
+  EVALUATION_LEVELS,
+  type EvaluationLevel,
+  type Project,
+  type UpdateProjectRequest,
+} from '../../schemas/project.schema';
+import { ClientSelectField } from '../ClientSelectField/ClientSelectField';
 import styles from './EditProjectModal.module.scss';
 
 interface EditProjectModalProps {
@@ -21,7 +22,13 @@ interface EditProjectModalProps {
   onClose: () => void;
 }
 
-type EditProjectFormValues = Omit<UpdateProjectRequest, 'startDate' | 'endDate'> & {
+/** Project "Đánh giá" is a 1–4 score stored as string for API compatibility. */
+const PROJECT_EVALUATION_OPTIONS = EVALUATION_LEVELS.map((value) => ({
+  value: String(value),
+  label: String(value),
+}));
+
+type EditProjectFormValues = Omit<UpdateProjectRequest, 'startDate' | 'endDate' | 'department'> & {
   startDate: Dayjs;
   endDate: Dayjs;
 };
@@ -54,11 +61,10 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
   useEffect(() => {
     if (project && open) {
       form.setFieldsValue({
-        client: project.client,
+        clientId: project.clientId,
         name: project.name,
         startDate: dayjs(project.startDate),
         endDate: dayjs(project.endDate),
-        department: project.department,
         departmentHead: { ...project.departmentHead },
         brief: project.brief,
         volume: project.volume,
@@ -108,11 +114,12 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
     if (!project) return;
 
     const payload: UpdateProjectRequest = {
-      client: values.client,
+      clientId: values.clientId,
       name: values.name,
       startDate: values.startDate.toISOString(),
       endDate: values.endDate.toISOString(),
-      department: values.department,
+      // Department is owned by tasks (task score group); keep existing project value.
+      department: project.department,
       departmentHead: resolvePersonRef(
         values.departmentHead?.code,
         departmentHeadSelectOptions,
@@ -152,14 +159,20 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
       width={720}
       styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
     >
-      {project && (
-        <p className={styles.readOnly}>
-          <span className={styles.readOnlyLabel}>Project code:</span>
-          {project.code}
-          <span className={styles.readOnlyLabel}>Calculated level:</span>
-          {previewLevel ? EVALUATION_LEVEL_LABELS[previewLevel] : '—'}
-        </p>
-      )}
+      {project ? (
+        <div className={styles.contextCard}>
+          <div className={styles.contextItem}>
+            <span className={styles.readOnlyLabel}>Project code</span>
+            <span className={styles.contextValue}>{project.code}</span>
+          </div>
+          <div className={styles.contextItem}>
+            <span className={styles.readOnlyLabel}>Calculated level</span>
+            <span className={styles.contextValue}>
+              {previewLevel ? EVALUATION_LEVEL_LABELS[previewLevel] : '—'}
+            </span>
+          </div>
+        </div>
+      ) : null}
 
       <Form
         form={form}
@@ -168,138 +181,135 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
         requiredMark={false}
         disabled={!project}
       >
-        <p className={styles.sectionTitle}>Project details</p>
-        <div className={styles.row}>
-          <Form.Item
-            name="name"
-            label="Project name"
-            rules={[{ required: true, message: 'Project name is required' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="client"
-            label="Client"
-            rules={[{ required: true, message: 'Client is required' }]}
-          >
-            <Input />
-          </Form.Item>
-        </div>
+        <section className={styles.section}>
+          <p className={styles.sectionTitle}>Project</p>
+          <div className={styles.row}>
+            <Form.Item
+              name="name"
+              label="Project name"
+              rules={[{ required: true, message: 'Project name is required' }]}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item
+              name="clientId"
+              label="Client"
+              rules={[{ required: true, message: 'Client is required' }]}
+            >
+              <ClientSelectField />
+            </Form.Item>
+          </div>
 
-        <Form.Item
-          name="department"
-          label="Phòng ban"
-          rules={[{ required: true, message: 'Phòng ban is required' }]}
-        >
-          <Select options={[...DEPARTMENT_OPTIONS]} />
-        </Form.Item>
+          <div className={styles.row}>
+            <Form.Item
+              name="startDate"
+              label="Start date"
+              rules={[{ required: true, message: 'Start date is required' }]}
+            >
+              <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item
+              name="endDate"
+              label="End date"
+              rules={[{ required: true, message: 'End date is required' }]}
+            >
+              <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+            </Form.Item>
+          </div>
 
-        <div className={styles.row}>
-          <Form.Item
-            name="startDate"
-            label="Start date"
-            rules={[{ required: true, message: 'Start date is required' }]}
-          >
-            <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+          <Form.Item name="brief" label="Brief">
+            <Input.TextArea rows={2} />
           </Form.Item>
-          <Form.Item
-            name="endDate"
-            label="End date"
-            rules={[{ required: true, message: 'End date is required' }]}
-          >
-            <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
-          </Form.Item>
-        </div>
+        </section>
 
-        <Form.Item name="brief" label="Brief">
-          <Input.TextArea rows={2} />
-        </Form.Item>
+        <section className={styles.section}>
+          <p className={styles.sectionTitle}>People</p>
+          <div className={styles.row}>
+            <Form.Item
+              name={['departmentHead', 'code']}
+              label="Dept. head"
+              rules={[{ required: true, message: 'Department head is required' }]}
+            >
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="Select department head"
+                onChange={handleDepartmentHeadSelect}
+                options={departmentHeadSelectOptions.map((head) => ({
+                  value: head.code,
+                  label: head.name,
+                }))}
+              />
+            </Form.Item>
+            <Form.Item
+              name={['pm', 'code']}
+              label="PM"
+              rules={[{ required: true, message: 'PM is required' }]}
+            >
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="Select PM"
+                onChange={handlePmSelect}
+                options={pmSelectOptions.map((pm) => ({
+                  value: pm.code,
+                  label: pm.name,
+                }))}
+              />
+            </Form.Item>
+          </div>
+        </section>
 
-        <p className={styles.sectionTitle}>Department head</p>
-        <Form.Item
-          name={['departmentHead', 'code']}
-          label="Dept. head name"
-          rules={[{ required: true, message: 'Department head is required' }]}
-        >
-          <Select
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="Select department head"
-            onChange={handleDepartmentHeadSelect}
-            options={departmentHeadSelectOptions.map((head) => ({
-              value: head.code,
-              label: head.name,
-            }))}
-          />
-        </Form.Item>
-
-        <p className={styles.sectionTitle}>Project evaluation</p>
-        <div className={styles.row}>
-          <Form.Item
-            name="volume"
-            label="Volume"
-            rules={[{ required: true, message: 'Volume is required' }]}
-          >
-            <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
-          </Form.Item>
-          <Form.Item
-            name="nature"
-            label="Nature"
-            rules={[{ required: true, message: 'Nature is required' }]}
-          >
-            <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
-          </Form.Item>
-        </div>
-        <div className={styles.row}>
-          <Form.Item
-            name="time"
-            label="Time"
-            rules={[{ required: true, message: 'Time is required' }]}
-          >
-            <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
-          </Form.Item>
+        <section className={styles.section}>
+          <p className={styles.sectionTitle}>Evaluation</p>
+          <div className={styles.rowThree}>
+            <Form.Item
+              name="volume"
+              label="Volume"
+              rules={[{ required: true, message: 'Volume is required' }]}
+            >
+              <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
+            </Form.Item>
+            <Form.Item
+              name="nature"
+              label="Nature"
+              rules={[{ required: true, message: 'Nature is required' }]}
+            >
+              <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
+            </Form.Item>
+            <Form.Item
+              name="time"
+              label="Time"
+              rules={[{ required: true, message: 'Time is required' }]}
+            >
+              <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
+            </Form.Item>
+          </div>
           <Form.Item name="additionalFactors" label="Additional factors">
             <Input />
           </Form.Item>
-        </div>
+        </section>
 
-        <p className={styles.sectionTitle}>Project manager</p>
-        <Form.Item
-          name={['pm', 'code']}
-          label="PM name"
-          rules={[{ required: true, message: 'PM is required' }]}
-        >
-          <Select
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="Select PM"
-            onChange={handlePmSelect}
-            options={pmSelectOptions.map((pm) => ({
-              value: pm.code,
-              label: pm.name,
-            }))}
-          />
-        </Form.Item>
-
-        <p className={styles.sectionTitle}>Quality & status</p>
-        <div className={styles.row}>
-          <Form.Item name="evaluation" label="Evaluation">
-            <Input />
+        <section className={styles.section}>
+          <p className={styles.sectionTitle}>Status</p>
+          <div className={styles.row}>
+            <Form.Item name="evaluation" label="Đánh giá">
+              <Select allowClear placeholder="—" options={PROJECT_EVALUATION_OPTIONS} />
+            </Form.Item>
+            <Form.Item
+              name="status"
+              label="Project status"
+              rules={[{ required: true, message: 'Status is required' }]}
+            >
+              <Select options={[...STATUS_OPTIONS]} />
+            </Form.Item>
+          </div>
+          <Form.Item name="note" label="Note">
+            <Input.TextArea rows={2} />
           </Form.Item>
-          <Form.Item
-            name="status"
-            label="Project status"
-            rules={[{ required: true, message: 'Status is required' }]}
-          >
-            <Select options={[...STATUS_OPTIONS]} />
-          </Form.Item>
-        </div>
-
-        <Form.Item name="note" label="Note">
-          <Input.TextArea rows={2} />
-        </Form.Item>
+        </section>
       </Form>
     </Modal>
   );

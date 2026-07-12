@@ -10,6 +10,7 @@ export const INITIAL_TASK_SCORE_GROUPS: TaskScoreGroupRecord[] = [
     label: 'Implementation',
     colorKey: 'implementation',
     sortOrder: 0,
+    department: 'project',
     createdAt: SEED_DATE,
   },
   {
@@ -18,6 +19,7 @@ export const INITIAL_TASK_SCORE_GROUPS: TaskScoreGroupRecord[] = [
     label: 'Quality control',
     colorKey: 'quality_control',
     sortOrder: 1,
+    department: 'creative',
     createdAt: SEED_DATE,
   },
   {
@@ -26,6 +28,7 @@ export const INITIAL_TASK_SCORE_GROUPS: TaskScoreGroupRecord[] = [
     label: 'Edit & others',
     colorKey: 'edit_others',
     sortOrder: 2,
+    department: null,
     createdAt: SEED_DATE,
   },
 ];

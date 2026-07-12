@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { PROJECT_DEPARTMENTS } from '@/features/projects/schemas/project.schema';
+
+export const TaskScoreGroupDepartmentSchema = z.enum(PROJECT_DEPARTMENTS).nullable();
 
 export const TaskScoreGroupRecordSchema = z.object({
   id: z.string(),
@@ -6,6 +9,7 @@ export const TaskScoreGroupRecordSchema = z.object({
   label: z.string().min(1),
   colorKey: z.string().min(1),
   sortOrder: z.number().int().nonnegative(),
+  department: TaskScoreGroupDepartmentSchema.optional().default(null),
   createdAt: z.string(),
 });
 
@@ -16,8 +20,14 @@ export const TaskScoreGroupListResponseSchema = z.object({
 
 export const CreateTaskScoreGroupRequestSchema = z.object({
   label: z.string().trim().min(1, 'Group name is required'),
+  department: TaskScoreGroupDepartmentSchema.optional(),
+});
+
+export const UpdateTaskScoreGroupRequestSchema = z.object({
+  department: TaskScoreGroupDepartmentSchema,
 });
 
 export type TaskScoreGroupRecord = z.infer<typeof TaskScoreGroupRecordSchema>;
 export type TaskScoreGroupListResponse = z.infer<typeof TaskScoreGroupListResponseSchema>;
 export type CreateTaskScoreGroupRequest = z.infer<typeof CreateTaskScoreGroupRequestSchema>;
+export type UpdateTaskScoreGroupRequest = z.infer<typeof UpdateTaskScoreGroupRequestSchema>;

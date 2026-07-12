@@ -1,4 +1,5 @@
 import { ROLES } from '@/config/permissions';
+import { getMockClientsStore } from '@/features/clients/mock/clients.data';
 import { getMockTasksStore, MOCK_PROJECT_STAFF_ROSTER } from '@/features/tasks/mock/tasks.data';
 import { getMockUsersStore } from '@/features/users/mock/users.data';
 import type { PersonWithCode } from '../schemas/project.schema';
@@ -36,6 +37,14 @@ const mockExtraMembersForProject = (projectName: string): PersonWithCode[] =>
     userId: staff.userId ?? undefined,
   }));
 
+const resolveClientRef = (clientId: string) => {
+  const client = getMockClientsStore().find((entry) => entry.id === clientId);
+  if (!client) {
+    throw new Error('Client not found');
+  }
+  return { id: client.id, name: client.name };
+};
+
 const filterProjects = (
   projects: StoredProject[],
   filters: ProjectListFilters,
@@ -43,14 +52,14 @@ const filterProjects = (
   const search = filters.search?.trim().toLowerCase();
 
   return projects.filter((project) => {
-    if (filters.client && project.client !== filters.client) return false;
+    if (filters.clientId && project.clientId !== filters.clientId) return false;
     if (filters.status && project.status !== filters.status) return false;
     if (filters.pmCode && project.pm.code !== filters.pmCode) return false;
     if (filters.headName && project.departmentHead.name !== filters.headName) return false;
     if (filters.projectLevel && project.projectLevel !== filters.projectLevel) return false;
     if (search) {
       const haystack =
-        `${project.code} ${project.name} ${project.client} ${project.brief}`.toLowerCase();
+        `${project.code} ${project.name} ${project.client.name} ${project.brief}`.toLowerCase();
       if (!haystack.includes(search)) return false;
     }
     return true;
@@ -63,18 +72,10 @@ export const mockGetProjectList = async (
   await mockDelay();
   const allProjects = getMockProjectsStore();
   const tasks = getMockTasksStore();
-  const items = enrichProjectsForList(
-    filterProjects(allProjects, filters),
-    tasks,
-    (project) => mockExtraMembersForProject(project.name),
+  const items = enrichProjectsForList(filterProjects(allProjects, filters), tasks, (project) =>
+    mockExtraMembersForProject(project.name),
   );
   return { items, total: items.length };
-};
-
-export const mockGetProjectClientOptions = async (): Promise<string[]> => {
-  await mockDelay();
-  const clients = new Set(getMockProjectsStore().map((project) => project.client));
-  return [...clients].sort((a, b) => a.localeCompare(b));
 };
 
 export const mockGetProjectPmOptions = async (): Promise<PersonWithCode[]> => {
@@ -105,14 +106,14 @@ export const mockGetProjectById = async (id: string): Promise<Project> => {
 };
 
 const generateProjectCode = (
-  client: string,
+  clientName: string,
   startDate: string,
   projects: StoredProject[],
 ): string => {
   const date = new Date(startDate);
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
-  const clientAbbr = client.replace(/\s+/g, '').slice(0, 3).toUpperCase();
+  const clientAbbr = clientName.replace(/\s+/g, '').slice(0, 3).toUpperCase();
 
   const pokeNumbers = projects
     .map((project) => Number.parseInt(project.code.match(/^POKE(\d+)/)?.[1] ?? '0', 10))
@@ -130,11 +131,13 @@ export const mockCreateProject = async (payload: CreateProjectRequest): Promise<
   const now = new Date().toISOString();
   const projectLevel = computeProjectLevel(payload.volume, payload.nature, payload.time);
   const id = `prj-${crypto.randomUUID().slice(0, 8)}`;
+  const client = resolveClientRef(payload.clientId);
 
-  const created: Project = {
+  const stored: StoredProject = {
     id,
-    code: generateProjectCode(payload.client, payload.startDate, projects),
-    client: payload.client,
+    code: generateProjectCode(client.name, payload.startDate, projects),
+    clientId: client.id,
+    client,
     name: payload.name,
     startDate: payload.startDate,
     endDate: payload.endDate,
@@ -152,22 +155,13 @@ export const mockCreateProject = async (payload: CreateProjectRequest): Promise<
     status: payload.status,
     urgency: payload.status === 'finish' ? 'green' : 'gray',
     finishedDate: payload.status === 'finish' ? now : undefined,
-    taskCount: 0,
-    members: [],
-    totalSlides: 0,
-    completionPercent: 0,
     updatedAt: now,
   };
 
-  const {
-    taskCount: _taskCount,
-    members: _members,
-    totalSlides: _totalSlides,
-    completionPercent: _completionPercent,
-    ...stored
-  } = created;
   setMockProjectsStore([stored, ...projects]);
-  return created;
+  return enrichProject(stored, getMockTasksStore(), [stored, ...projects], {
+    extraMembers: mockExtraMembersForProject(stored.name),
+  });
 };
 
 export const mockUpdateProject = async (
@@ -187,14 +181,16 @@ export const mockUpdateProject = async (
   const now = new Date().toISOString();
   const finishedDate =
     payload.status === 'finish'
-      ? current.finishedDate ?? now
+      ? (current.finishedDate ?? now)
       : payload.status === 'cancel'
         ? undefined
         : current.finishedDate;
+  const client = resolveClientRef(payload.clientId);
 
   const updated: StoredProject = {
     ...current,
-    client: payload.client,
+    clientId: client.id,
+    client,
     name: payload.name,
     startDate: payload.startDate,
     endDate: payload.endDate,

@@ -25,6 +25,9 @@ export const TRACKER_LEFT_WIDTH =
 export const TRACKER_RANGE_START = '2026-05-01';
 export const TRACKER_RANGE_END = '2026-12-31';
 
+/** Days before today shown at the left edge when the tracker first opens. */
+export const TRACKER_INITIAL_LOOKBACK_DAYS = 2;
+
 /** Today column on the calendar — uses real date, clamped to tracker range. */
 export const TRACKER_TODAY = (() => {
   const today = dayjs().startOf('day');

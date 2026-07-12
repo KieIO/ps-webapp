@@ -1,11 +1,8 @@
 import { Button, Input, Select } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import { FilterSection } from '@/shared/ui/FilterSection/FilterSection';
-import {
-  useProjectClientOptions,
-  useProjectHeadNameOptions,
-  useProjectPmOptions,
-} from '../../hooks/useProjectList';
+import { useClientList } from '@/features/clients/hooks/useClients';
+import { useProjectHeadNameOptions, useProjectPmOptions } from '../../hooks/useProjectList';
 import { PROJECT_LEVEL_OPTIONS, PROJECT_FILTER_LABELS, STATUS_OPTIONS } from '../../constants';
 import type { ProjectListFilters } from '../../schemas/project.schema';
 import styles from './ProjectFilters.module.scss';
@@ -25,7 +22,8 @@ export function ProjectFilters({
   onExport,
   exporting,
 }: ProjectFiltersProps) {
-  const { data: clientOptions = [] } = useProjectClientOptions();
+  const { data: clientList } = useClientList();
+  const clientOptions = clientList?.items ?? [];
   const { data: pmOptions = [] } = useProjectPmOptions();
   const { data: headNameOptions = [] } = useProjectHeadNameOptions();
 
@@ -41,9 +39,7 @@ export function ProjectFilters({
             placeholder={PROJECT_FILTER_LABELS.searchPlaceholder}
             allowClear
             value={filters.search ?? ''}
-            onChange={(event) =>
-              onChange({ ...filters, search: event.target.value || undefined })
-            }
+            onChange={(event) => onChange({ ...filters, search: event.target.value || undefined })}
             className={styles.search}
           />
         </div>
@@ -56,9 +52,14 @@ export function ProjectFilters({
             id="project-client-filter"
             placeholder={PROJECT_FILTER_LABELS.clientPlaceholder}
             allowClear
-            value={filters.client}
-            onChange={(value) => onChange({ ...filters, client: value })}
-            options={clientOptions.map((client) => ({ value: client, label: client }))}
+            showSearch
+            optionFilterProp="label"
+            value={filters.clientId}
+            onChange={(value) => onChange({ ...filters, clientId: value })}
+            options={clientOptions.map((client) => ({
+              value: client.id,
+              label: client.name,
+            }))}
             className={styles.select}
           />
         </div>

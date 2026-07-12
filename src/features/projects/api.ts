@@ -7,7 +7,6 @@ import { env } from '@/config/env';
 import {
   mockCreateProject,
   mockGetProjectById,
-  mockGetProjectClientOptions,
   mockDeleteProject,
   mockGetProjectHeadNameOptions,
   mockGetProjectHeadOptions,
@@ -42,9 +41,7 @@ const parseProjectListResponse = (data: unknown): ProjectListResponse => {
 };
 
 const parseProjectResponse = (data: unknown): Project =>
-  withProjectListDefaults(
-    ProjectRecordSchema.merge(ProjectListDerivedSchema).parse(data),
-  );
+  withProjectListDefaults(ProjectRecordSchema.merge(ProjectListDerivedSchema).parse(data));
 
 export const projectApi = {
   getList: async (filters: ProjectListFilters): Promise<ProjectListResponse> => {
@@ -65,15 +62,6 @@ export const projectApi = {
 
     const response = await api.get(`/projects/${id}`);
     return parseProjectResponse(response.data);
-  },
-
-  getClientOptions: async (): Promise<string[]> => {
-    if (env.useProjectsMock) {
-      return mockGetProjectClientOptions();
-    }
-
-    const response = await api.get('/projects/client-options');
-    return response.data as string[];
   },
 
   getPmOptions: async (): Promise<PersonWithCode[]> => {
