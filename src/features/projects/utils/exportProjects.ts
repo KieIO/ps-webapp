@@ -11,6 +11,7 @@ import {
   STATUS_LABELS,
 } from '../constants';
 import type { Project } from '../schemas/project.schema';
+import { resolveProjectUrgencyDisplay } from './resolveProjectUrgencyDisplay';
 
 export const exportProjectsToCsv = (projects: Project[]): void => {
   const headers = [
@@ -42,7 +43,7 @@ export const exportProjectsToCsv = (projects: Project[]): void => {
     project.taskCount,
     dayjs(project.startDate).format(DATE_FORMAT),
     dayjs(project.endDate).format(DATE_FORMAT),
-    PROJECT_URGENCY_STYLES[project.urgency].label,
+    PROJECT_URGENCY_STYLES[resolveProjectUrgencyDisplay(project)].label,
     project.projectLevel,
     project.departmentHead.name,
     project.brief,

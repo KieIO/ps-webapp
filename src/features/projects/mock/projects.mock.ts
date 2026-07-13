@@ -85,12 +85,24 @@ export const mockGetProjectPmOptions = async (): Promise<PersonWithCode[]> => {
 
 export const mockGetProjectHeadNameOptions = async (): Promise<string[]> => {
   await mockDelay();
-  return mockStaffOptions([ROLES.HEAD, ROLES.ADMIN]).map((option) => option.name);
+  return mockStaffOptions([
+    ROLES.PM,
+    ROLES.CREATIVE_MANAGER,
+    ROLES.CREATIVE_HEAD,
+    ROLES.HEAD,
+    ROLES.ADMIN,
+  ]).map((option) => option.name);
 };
 
 export const mockGetProjectHeadOptions = async (): Promise<PersonWithCode[]> => {
   await mockDelay();
-  return mockStaffOptions([ROLES.HEAD, ROLES.ADMIN]);
+  return mockStaffOptions([
+    ROLES.PM,
+    ROLES.CREATIVE_MANAGER,
+    ROLES.CREATIVE_HEAD,
+    ROLES.HEAD,
+    ROLES.ADMIN,
+  ]);
 };
 
 export const mockGetProjectById = async (id: string): Promise<Project> => {
@@ -153,7 +165,7 @@ export const mockCreateProject = async (payload: CreateProjectRequest): Promise<
     evaluation: payload.evaluation,
     note: payload.note,
     status: payload.status,
-    urgency: payload.status === 'finish' ? 'green' : 'gray',
+    urgency: payload.status === 'finish' || payload.status === 'cancel' ? 'gray' : payload.urgency,
     finishedDate: payload.status === 'finish' ? now : undefined,
     updatedAt: now,
   };
@@ -206,6 +218,7 @@ export const mockUpdateProject = async (
     evaluation: payload.evaluation,
     note: payload.note,
     status: payload.status,
+    urgency: payload.status === 'finish' || payload.status === 'cancel' ? 'gray' : payload.urgency,
     finishedDate,
     updatedAt: now,
   };

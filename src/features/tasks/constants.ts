@@ -3,7 +3,11 @@ import {
   TASK_CONFIRMATION_STATUSES,
   type ClassificationLevel,
 } from './schemas/task.schema';
-import { PROJECT_NAME_COLUMN_LABEL } from '@/features/projects/constants';
+import {
+  PROJECT_NAME_COLUMN_LABEL,
+  PROJECT_URGENCY_SETTING_STYLES,
+} from '@/features/projects/constants';
+import { PROJECT_URGENCIES, type ProjectUrgency } from '@/features/projects/schemas/project.schema';
 
 import { CONFIRMATION_LABELS, CONFIRMATION_VARIANT } from '@/shared/constants/taskConfirmation';
 
@@ -48,6 +52,7 @@ export type MyTaskColumnKey =
   | 'level'
   | 'quantity'
   | 'date'
+  | 'urgency'
   | 'description'
   | 'staffName'
   | 'designThinking'
@@ -76,6 +81,7 @@ export const MY_TASK_COLUMN_HEADERS: Record<MyTaskColumnKey, string> = {
   level: 'Level',
   quantity: 'Quantity',
   date: 'Date',
+  urgency: 'Urgency',
   description: 'Description',
   staffName: 'Staff Name',
   designThinking: 'Tư Duy Thiết Kế',
@@ -129,6 +135,7 @@ export const MY_TASK_EMPLOYEE_COLUMN_KEYS: MyTaskColumnKey[] = [
   'quantity',
   'description',
   'date',
+  'urgency',
   'confirmation',
   'staffNote',
 ];
@@ -142,6 +149,7 @@ export const MY_TASK_PM_COLUMN_KEYS: MyTaskColumnKey[] = [
   'quantity',
   'description',
   'date',
+  'urgency',
   'staffName',
   'designThinking',
   'technical',
@@ -165,6 +173,7 @@ export const MY_TASK_HEAD_COLUMN_KEYS: MyTaskColumnKey[] = [
   'quantity',
   'description',
   'date',
+  'urgency',
   'staffName',
   'nature',
   'volume',
@@ -190,4 +199,11 @@ export const TASK_STATUS_CHANGE_NOTE_LABEL = 'Note khi đổi trạng thái (n�
 export const PROJECT_EVALUATION_SCORE_OPTIONS = ['1', '2', '3', '4'].map((value) => ({
   value,
   label: value,
+}));
+
+/** Urgency select options — Auto first, then locked color levels. */
+export const TASK_URGENCY_OPTIONS = PROJECT_URGENCIES.map((value: ProjectUrgency) => ({
+  value,
+  label: PROJECT_URGENCY_SETTING_STYLES[value].label,
+  color: PROJECT_URGENCY_SETTING_STYLES[value].dot,
 }));

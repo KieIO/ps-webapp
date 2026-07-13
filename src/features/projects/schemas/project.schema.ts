@@ -10,11 +10,15 @@ export const PROJECT_STATUSES = ['not_updated', 'in_progress', 'finish', 'cancel
 
 export const PROJECT_DEPARTMENTS = ['project', 'creative', 'admin'] as const;
 
-export const PROJECT_URGENCIES = ['red', 'orange', 'green', 'gray'] as const;
+export const PROJECT_URGENCY_COLORS = ['red', 'orange', 'green', 'gray'] as const;
+
+/** Stored urgency setting — includes `auto` (system calculates display color). */
+export const PROJECT_URGENCIES = ['auto', ...PROJECT_URGENCY_COLORS] as const;
 
 export type EvaluationLevel = (typeof EVALUATION_LEVELS)[number];
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 export type ProjectDepartment = (typeof PROJECT_DEPARTMENTS)[number];
+export type ProjectUrgencyColor = (typeof PROJECT_URGENCY_COLORS)[number];
 export type ProjectUrgency = (typeof PROJECT_URGENCIES)[number];
 
 export const PersonWithCodeSchema = z.object({
@@ -49,7 +53,7 @@ export const ProjectRecordSchema = z.object({
   evaluation: z.string(),
   note: z.string(),
   status: z.enum(PROJECT_STATUSES),
-  urgency: z.enum(PROJECT_URGENCIES).optional(),
+  urgency: z.enum(PROJECT_URGENCIES).optional().default('auto'),
   finishedDate: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -105,6 +109,7 @@ export const UpdateProjectRequestSchema = z.object({
   evaluation: z.string(),
   note: z.string(),
   status: z.enum(PROJECT_STATUSES),
+  urgency: z.enum(PROJECT_URGENCIES),
 });
 
 export const CreateProjectRequestSchema = UpdateProjectRequestSchema;

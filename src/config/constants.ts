@@ -76,3 +76,5 @@ export const PAGINATION = {
 } as const;
 
 export const DATE_FORMAT = 'DD/MM/YYYY';
+/** Task start/deadline timestamps stored as UTC day boundaries. */
+export const DATETIME_FORMAT = 'DD/MM/YYYY HH:mm:ss';

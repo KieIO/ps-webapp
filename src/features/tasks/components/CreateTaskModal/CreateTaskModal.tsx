@@ -2,9 +2,11 @@ import { AutoComplete, DatePicker, Form, Input, InputNumber, Modal, Select } fro
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
+import { ROLES, type Role } from '@/config/permissions';
 import { DEPARTMENT_OPTIONS } from '@/features/projects/constants';
 import { useTaskScoreGroupOptions } from '@/features/task-scores/hooks/useTaskScoreGroupOptions';
 import { useTaskScoreList } from '@/features/task-scores/hooks/useTaskScoreList';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import {
   CLASSIFICATION_LEVEL_OPTIONS,
   MY_TASK_COLUMN_HEADERS,
@@ -25,7 +27,17 @@ import type {
   TaskDepartment,
   TaskPerson,
 } from '../../schemas/task.schema';
+import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import styles from '../EditTaskModal/EditTaskModal.module.scss';
+
+/** Roles that pre-fill PM Name with the signed-in user when the modal opens. */
+const PM_NAME_AUTO_SELECT_ROLES: readonly Role[] = [
+  ROLES.ADMIN,
+  ROLES.HEAD,
+  ROLES.PM,
+  ROLES.CREATIVE_HEAD,
+  ROLES.CREATIVE_MANAGER,
+];
 
 interface CreateTaskPreset {
   projectName?: string;
@@ -56,21 +68,28 @@ const DEFAULT_VALUES: CreateTaskFormValues = {
   department: undefined,
   taskGroup: '',
   taskScoreName: '',
-  level: 2,
+  level: 1,
   quantity: 1,
   date: dayjs(),
+  urgency: 'auto',
   description: '',
-  designThinking: 2,
-  technical: 2,
-  contentProcessing: 2,
+  designThinking: 1,
+  technical: 1,
+  contentProcessing: 1,
   additionalFactors: '',
   staffUserIds: [],
   staffNote: '',
 };
 
+const codeFromDisplayName = (name: string): string => {
+  const slug = name.trim().toUpperCase().replace(/\s+/g, '.');
+  return slug || 'PM';
+};
+
 export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateTaskModalProps) {
   const [form] = Form.useForm<CreateTaskFormValues>();
   const { mutate, isPending } = useCreateMyTask();
+  const currentUser = useAppSelector((state) => state.auth.user);
   const { data: projectOptions = [] } = useCreateTaskProjectOptions(taskCategory);
   const { data: pmOptions = [] } = useCreateTaskPmOptions();
   const { data: staffOptions = [] } = useCreateTaskStaffOptions();
@@ -98,6 +117,47 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
     [scoreList?.items],
   );
 
+  const defaultProjectManager = useMemo((): TaskPerson | undefined => {
+    if (!currentUser?.id || !currentUser.role) return undefined;
+    if (!PM_NAME_AUTO_SELECT_ROLES.includes(currentUser.role as Role)) return undefined;
+
+    const match = pmOptions.find(
+      (entry) =>
+        entry.userId === currentUser.id ||
+        entry.name.trim().toLowerCase() === currentUser.name.trim().toLowerCase(),
+    );
+    if (match) {
+      return {
+        code: match.code,
+        name: match.name,
+        userId: match.userId ?? currentUser.id,
+      };
+    }
+
+    return {
+      code: codeFromDisplayName(currentUser.name),
+      name: currentUser.name,
+      userId: currentUser.id,
+    };
+  }, [currentUser, pmOptions]);
+
+  const pmSelectOptions = useMemo(() => {
+    const options = pmOptions.map((pm) => ({
+      value: pm.code,
+      label: `${pm.code} — ${pm.name}`,
+    }));
+    if (
+      defaultProjectManager?.code &&
+      !options.some((option) => option.value === defaultProjectManager.code)
+    ) {
+      options.unshift({
+        value: defaultProjectManager.code,
+        label: `${defaultProjectManager.code} — ${defaultProjectManager.name}`,
+      });
+    }
+    return options;
+  }, [pmOptions, defaultProjectManager]);
+
   const derivedDepartment = useMemo(() => {
     if (!taskGroup) return undefined;
     return (groupByCode[taskGroup]?.department ?? undefined) as TaskDepartment | undefined;
@@ -108,10 +168,11 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
       form.setFieldsValue({
         ...DEFAULT_VALUES,
         projectName: preset?.projectName ?? DEFAULT_VALUES.projectName,
-        projectManager: preset?.projectManager ?? DEFAULT_VALUES.projectManager,
+        projectManager:
+          preset?.projectManager ?? defaultProjectManager ?? DEFAULT_VALUES.projectManager,
       });
     }
-  }, [open, form, preset?.projectName, preset?.projectManager]);
+  }, [open, form, preset?.projectName, preset?.projectManager, defaultProjectManager]);
 
   useEffect(() => {
     if (!open || !isProjectTask) return;
@@ -136,9 +197,15 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
       form.setFieldValue('projectManager', { code: '', name: '' });
       return;
     }
-    const pm = pmOptions.find((entry) => entry.code === pmCode);
+    const pm =
+      pmOptions.find((entry) => entry.code === pmCode) ??
+      (defaultProjectManager?.code === pmCode ? defaultProjectManager : undefined);
     if (pm) {
-      form.setFieldValue('projectManager', { code: pm.code, name: pm.name });
+      form.setFieldValue('projectManager', {
+        code: pm.code,
+        name: pm.name,
+        userId: pm.userId,
+      });
     }
   };
 
@@ -174,6 +241,7 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
       staff: resolveStaffFromUserIds(values.staffUserIds, staffOptions),
       staffConfirmation: 'not_updated',
       staffNote: values.staffNote ?? '',
+      urgency: values.urgency,
     };
 
     if (isProjectTask && department) {
@@ -226,10 +294,7 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
               allowClear
               placeholder="Select PM"
               onChange={handlePmSelect}
-              options={pmOptions.map((pm) => ({
-                value: pm.code,
-                label: `${pm.code} — ${pm.name}`,
-              }))}
+              options={pmSelectOptions}
             />
           </Form.Item>
           <Form.Item name={['projectManager', 'name']} hidden>
@@ -289,7 +354,7 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
             ) : null}
           </div>
 
-          <div className={styles.rowThree}>
+          <div className={styles.row}>
             <Form.Item
               name="level"
               label={MY_TASK_COLUMN_HEADERS.level}
@@ -304,12 +369,22 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
             >
               <InputNumber min={0} style={{ width: '100%' }} />
             </Form.Item>
+          </div>
+
+          <div className={styles.row}>
             <Form.Item
               name="date"
               label={MY_TASK_COLUMN_HEADERS.date}
               rules={[{ required: true, message: 'Date is required' }]}
             >
               <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item
+              name="urgency"
+              label={MY_TASK_COLUMN_HEADERS.urgency}
+              rules={[{ required: true, message: 'Urgency is required' }]}
+            >
+              <TaskUrgencySelect />
             </Form.Item>
           </div>
 

@@ -61,7 +61,7 @@ const toIso = (day: number, month: number, year: number): string =>
   new Date(year, month - 1, day).toISOString();
 
 const buildTask = (
-  partial: Omit<MyTask, 'level' | 'taskCategory'> & {
+  partial: Omit<MyTask, 'level' | 'taskCategory' | 'urgency'> & {
     level?: number;
     taskCategory?: TaskCategory;
   },

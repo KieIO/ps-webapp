@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
-import { DATE_FORMAT, ROUTES } from '@/config/constants';
+import { ROUTES } from '@/config/constants';
 import { CONFIRMATION_LABELS } from '../constants';
-import { normalizeTaskDateEnd } from './taskDates';
+import { formatTaskDateTime, normalizeTaskDateEnd, normalizeTaskDateStart } from './taskDates';
 import type { MyTask, TaskCategory, TaskHistoryEvent } from '../schemas/task.schema';
 
 export const TASK_CATEGORY_DEPARTMENT_LABELS: Record<TaskCategory, string> = {
@@ -42,18 +42,25 @@ export const formatTaskQuantity = (task: MyTask): string => {
   return `${task.quantity} ${unit}`;
 };
 
-/** Same calendar day as the task date — not the linked project's end date. */
-export const getTaskDeadline = (task: MyTask): string => task.date;
+/** UTC start of the task calendar day (00:00:00). */
+export const getTaskStartDate = (task: MyTask): string => normalizeTaskDateStart(task.date);
+
+/**
+ * UTC end of the task calendar day (23:59:59).
+ * Prefers API `deadline` when present; otherwise derives from `date`.
+ * Not the linked project's end date.
+ */
+export const getTaskDeadline = (task: Pick<MyTask, 'date' | 'deadline'>): string =>
+  normalizeTaskDateEnd(task.deadline ?? task.date);
 
 export const formatTaskHistoryDateLabel = (
   occurredAt: string,
   kind: TaskHistoryEvent['kind'],
 ): string => {
-  const value = dayjs(occurredAt);
   if (kind === 'deadline') {
-    return value.format(DATE_FORMAT);
+    return formatTaskDateTime(occurredAt);
   }
-  return value.format('DD/MM HH:mm');
+  return dayjs(occurredAt).format('DD/MM HH:mm');
 };
 
 /** Fallback timeline for mock mode when audit history is unavailable. */
@@ -61,7 +68,7 @@ export const buildFallbackTaskHistory = (task: MyTask): TaskHistoryEvent[] => {
   const events: TaskHistoryEvent[] = [
     {
       id: `${task.id}-created`,
-      occurredAt: task.date,
+      occurredAt: getTaskStartDate(task),
       description: `Task created — ${task.projectManager.name}`,
       completed: true,
       kind: 'event',
@@ -91,7 +98,7 @@ export const buildFallbackTaskHistory = (task: MyTask): TaskHistoryEvent[] => {
 
   events.push({
     id: `${task.id}-deadline`,
-    occurredAt: normalizeTaskDateEnd(getTaskDeadline(task)),
+    occurredAt: getTaskDeadline(task),
     description: 'Deadline',
     completed: task.staffConfirmation === 'finished',
     kind: 'deadline',

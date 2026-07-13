@@ -23,6 +23,7 @@ export type EditTaskField =
   | 'taskName'
   | 'quantity'
   | 'date'
+  | 'urgency'
   | 'staff'
   | 'designThinking'
   | 'technical'
@@ -39,6 +40,7 @@ const COLUMN_TO_EDIT_FIELD: Partial<Record<MyTaskColumnKey, EditTaskField>> = {
   taskName: 'taskName',
   quantity: 'quantity',
   date: 'date',
+  urgency: 'urgency',
   staffName: 'staff',
   designThinking: 'designThinking',
   technical: 'technical',
@@ -52,16 +54,9 @@ const COLUMN_TO_EDIT_FIELD: Partial<Record<MyTaskColumnKey, EditTaskField>> = {
 };
 
 /** PM / Admin edit evaluation via the Evaluate action — not inline in this modal. */
-const EVALUATION_VIA_EVALUATE_ACTION: Role[] = [
-  ROLES.PM,
-  ROLES.ADMIN,
-  ROLES.HEAD,
-];
+const EVALUATION_VIA_EVALUATE_ACTION: Role[] = [ROLES.PM, ROLES.ADMIN, ROLES.HEAD];
 
-export const getEditTaskFieldsForRole = (
-  role: Role,
-  canEvaluate: boolean,
-): Set<EditTaskField> => {
+export const getEditTaskFieldsForRole = (role: Role, canEvaluate: boolean): Set<EditTaskField> => {
   const fields = new Set<EditTaskField>();
 
   for (const column of getMyTaskColumnKeysForRole(role)) {
@@ -91,8 +86,6 @@ export const showsEvaluationReadOnly = (role: Role, canEvaluate: boolean): boole
   if (!canEvaluate || !EVALUATION_VIA_EVALUATE_ACTION.includes(role)) return false;
   const columns = getMyTaskColumnKeysForRole(role);
   return (
-    columns.includes('completion') ||
-    columns.includes('evaluation') ||
-    columns.includes('pmNote')
+    columns.includes('completion') || columns.includes('evaluation') || columns.includes('pmNote')
   );
 };

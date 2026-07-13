@@ -32,6 +32,7 @@ import {
 } from '../../utils/staff';
 import { toTaskDateOnly } from '../../utils/taskDates';
 import type { ClassificationLevel, MyTask, UpdateMyTaskRequest } from '../../schemas/task.schema';
+import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import styles from './EditTaskModal.module.scss';
 
 interface EditTaskModalProps {
@@ -107,6 +108,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
         staffUserIds: task.staff.map((member) => staffOptionKey(member)),
         staffConfirmation: task.staffConfirmation,
         staffNote: task.staffNote,
+        urgency: task.urgency,
         completionPercent: task.completionPercent ?? 0,
         pmEvaluation: task.pmEvaluation,
         pmNote: task.pmNote,
@@ -146,6 +148,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
         ? values.staffConfirmation
         : task.staffConfirmation,
       staffNote: hasField(editableFields, 'staffNote') ? (values.staffNote ?? '') : task.staffNote,
+      urgency: hasField(editableFields, 'urgency') ? values.urgency : task.urgency,
     };
 
     const saveEvaluation = showEvaluationEditable
@@ -269,7 +272,8 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
         {hasField(editableFields, 'description') ||
         hasField(editableFields, 'taskName') ||
         hasField(editableFields, 'quantity') ||
-        hasField(editableFields, 'date') ? (
+        hasField(editableFields, 'date') ||
+        hasField(editableFields, 'urgency') ? (
           <section className={styles.section}>
             <p className={styles.sectionTitle}>Task</p>
             {hasField(editableFields, 'taskName') ? (
@@ -282,14 +286,10 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
               </Form.Item>
             ) : null}
 
-            {hasField(editableFields, 'quantity') || hasField(editableFields, 'date') ? (
-              <div
-                className={
-                  hasField(editableFields, 'quantity') && hasField(editableFields, 'date')
-                    ? styles.row
-                    : undefined
-                }
-              >
+            {hasField(editableFields, 'quantity') ||
+            hasField(editableFields, 'date') ||
+            hasField(editableFields, 'urgency') ? (
+              <>
                 {hasField(editableFields, 'quantity') ? (
                   <Form.Item
                     name="quantity"
@@ -299,16 +299,35 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
                     <InputNumber min={0} style={{ width: '100%' }} />
                   </Form.Item>
                 ) : null}
-                {hasField(editableFields, 'date') ? (
-                  <Form.Item
-                    name="date"
-                    label={MY_TASK_COLUMN_HEADERS.date}
-                    rules={[{ required: true, message: 'Date is required' }]}
+                {hasField(editableFields, 'date') || hasField(editableFields, 'urgency') ? (
+                  <div
+                    className={
+                      hasField(editableFields, 'date') && hasField(editableFields, 'urgency')
+                        ? styles.row
+                        : undefined
+                    }
                   >
-                    <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
-                  </Form.Item>
+                    {hasField(editableFields, 'date') ? (
+                      <Form.Item
+                        name="date"
+                        label={MY_TASK_COLUMN_HEADERS.date}
+                        rules={[{ required: true, message: 'Date is required' }]}
+                      >
+                        <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+                      </Form.Item>
+                    ) : null}
+                    {hasField(editableFields, 'urgency') ? (
+                      <Form.Item
+                        name="urgency"
+                        label={MY_TASK_COLUMN_HEADERS.urgency}
+                        rules={[{ required: true, message: 'Urgency is required' }]}
+                      >
+                        <TaskUrgencySelect />
+                      </Form.Item>
+                    ) : null}
+                  </div>
                 ) : null}
-              </div>
+              </>
             ) : null}
 
             {hasField(editableFields, 'description') ? (

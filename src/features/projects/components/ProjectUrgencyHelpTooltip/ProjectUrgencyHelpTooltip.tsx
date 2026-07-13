@@ -8,12 +8,13 @@ function ProjectUrgencyTooltipContent() {
     <div className={styles.tooltipContent}>
       <p className={styles.tooltipTitle}>Cách tính Urgency</p>
       <p>
-        Urgency phản ánh mức độ gấp của dự án dựa trên trạng thái và số ngày còn lại đến deadline.
+        Urgency phản ánh mức độ gấp của dự án. Chọn <strong>Auto</strong> để tính theo deadline,
+        hoặc khóa một mức thủ công.
       </p>
       <ul className={styles.tooltipList}>
         <li>
-          <strong>Deadline</strong> — lấy theo thứ tự ưu tiên: End Date → Client Deadline →
-          Internal Deadline
+          <strong>Deadline</strong> — lấy theo thứ tự ưu tiên: End Date → Client Deadline → Internal
+          Deadline
         </li>
         <li>
           <strong>Số ngày còn lại</strong> = deadline − hôm nay

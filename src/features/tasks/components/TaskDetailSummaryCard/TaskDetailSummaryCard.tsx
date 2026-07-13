@@ -1,5 +1,3 @@
-import dayjs from 'dayjs';
-import { DATE_FORMAT } from '@/config/constants';
 import { DEPARTMENT_LABELS } from '@/features/projects/constants';
 import type { ProjectDepartment } from '@/features/projects/schemas/project.schema';
 import { ClassificationLevelBadge } from '../ClassificationLevelBadge/ClassificationLevelBadge';
@@ -7,11 +5,13 @@ import { TaskConfirmationBadge } from '../TaskConfirmationBadge/TaskConfirmation
 import { TaskDetailActions } from '../TaskDetailActions/TaskDetailActions';
 import { TaskNameBadge } from '../TaskNameBadge/TaskNameBadge';
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
+import { formatTaskDateTime } from '../../utils/taskDates';
 import {
   TASK_CATEGORY_DEPARTMENT_LABELS,
   formatTaskDisplayId,
   formatTaskQuantity,
   getTaskDeadline,
+  getTaskStartDate,
 } from '../../utils/taskDetail';
 import type { ClassificationLevel, MyTask } from '../../schemas/task.schema';
 import styles from './TaskDetailSummaryCard.module.scss';
@@ -73,7 +73,7 @@ export function TaskDetailSummaryCard({ task }: TaskDetailSummaryCardProps) {
 
         <div className={styles.metaItem}>
           <p className={styles.metaLabel}>Start date</p>
-          <p className={styles.metaValue}>{dayjs(task.date).format(DATE_FORMAT)}</p>
+          <p className={styles.metaValue}>{formatTaskDateTime(getTaskStartDate(task))}</p>
         </div>
 
         <div className={styles.metaItem}>
@@ -91,7 +91,7 @@ export function TaskDetailSummaryCard({ task }: TaskDetailSummaryCardProps) {
         <div className={styles.metaItem}>
           <p className={styles.metaLabel}>Deadline</p>
           <p className={`${styles.metaValue} ${styles.deadline}`}>
-            {dayjs(getTaskDeadline(task)).format(DATE_FORMAT)}
+            {formatTaskDateTime(getTaskDeadline(task))}
           </p>
         </div>
       </div>

@@ -9,12 +9,19 @@ import {
 } from '@/features/projects/constants';
 import { useProject } from '@/features/projects/hooks/useProjectList';
 import { useUpdateProject } from '@/features/projects/hooks/useUpdateProject';
+import { buildUpdateProjectPayload } from '@/features/projects/utils/buildUpdateProjectPayload';
 import { computeProjectLevel } from '@/features/projects/utils/projectLevel';
-import type { EvaluationLevel, ProjectStatus } from '@/features/projects/schemas/project.schema';
+import type {
+  EvaluationLevel,
+  ProjectStatus,
+  ProjectUrgency,
+} from '@/features/projects/schemas/project.schema';
 import { MY_TASK_HEAD_COLUMN_HEADERS, PROJECT_EVALUATION_SCORE_OPTIONS } from '../../constants';
 import { useUpdateHeadMyTask } from '../../hooks/useUpdateHeadMyTask';
+import { useUpdateMyTask } from '../../hooks/useUpdateMyTask';
 import type { MyTask, UpdateHeadMyTaskRequest } from '../../schemas/task.schema';
 import { resolveProjectContextFromTask } from '../../utils/taskProjectContext';
+import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import styles from '../EditTaskModal/EditTaskModal.module.scss';
 
 interface EditHeadTaskModalProps {
@@ -35,12 +42,17 @@ type HeadTaskFormValues = {
   pmNote: string;
   projectStatus: ProjectStatus;
   projectFinishedDate?: Dayjs;
+  /** Linked project urgency — independent from taskUrgency. */
+  projectUrgency: ProjectUrgency;
+  /** Task urgency — independent from projectUrgency. */
+  taskUrgency: ProjectUrgency;
 };
 
 export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProps) {
   const [form] = Form.useForm<HeadTaskFormValues>();
-  const { mutate: updateProject, isPending: isProjectPending } = useUpdateProject();
-  const { mutate: updateHeadTask, isPending: isTaskPending } = useUpdateHeadMyTask();
+  const { mutateAsync: updateProjectAsync, isPending: isProjectPending } = useUpdateProject();
+  const { mutateAsync: updateHeadTaskAsync, isPending: isTaskPending } = useUpdateHeadMyTask();
+  const { mutateAsync: updateTaskAsync, isPending: isTaskUrgencyPending } = useUpdateMyTask();
   const { data: linkedProject } = useProject(task?.projectId ?? '');
 
   const saveViaProject =
@@ -74,67 +86,101 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
       pmNote: ctx.pmNote ?? '',
       projectStatus: (ctx.projectStatus ?? 'not_updated') as ProjectStatus,
       projectFinishedDate: ctx.projectFinishedDate ? dayjs(ctx.projectFinishedDate) : undefined,
+      projectUrgency: linkedProject?.urgency ?? 'auto',
+      taskUrgency: task.urgency,
     });
-  }, [task, open, form]);
+  }, [task, open, form, linkedProject?.urgency]);
 
   const handleClose = () => {
     form.resetFields();
     onClose();
   };
 
-  const handleFinish = (values: HeadTaskFormValues) => {
+  const handleFinish = async (values: HeadTaskFormValues) => {
     if (!task) return;
 
-    const onSaved = () => {
+    const closeModal = () => {
       form.resetFields();
       onClose();
     };
 
-    if (saveViaProject && linkedProject) {
-      updateProject(
-        {
-          id: linkedProject.id,
-          payload: {
-            clientId: linkedProject.clientId,
-            name: linkedProject.name,
-            startDate: values.startDate.toISOString(),
-            endDate: values.endDate.toISOString(),
-            department: linkedProject.department,
-            departmentHead: linkedProject.departmentHead,
-            brief: values.brief ?? '',
-            volume: values.volume,
-            nature: values.nature,
-            time: values.projectTime,
-            additionalFactors: values.additionalFactors ?? '',
-            pm: linkedProject.pm,
-            evaluation: values.pmEvaluation ?? '',
-            note: values.pmNote ?? '',
-            status: values.projectStatus,
-          },
-        },
-        { onSuccess: onSaved },
-      );
-      return;
+    try {
+      if (saveViaProject && linkedProject) {
+        const jobs: Promise<unknown>[] = [
+          updateProjectAsync({
+            id: linkedProject.id,
+            payload: buildUpdateProjectPayload(linkedProject, {
+              startDate: values.startDate.toISOString(),
+              endDate: values.endDate.toISOString(),
+              brief: values.brief ?? '',
+              volume: values.volume,
+              nature: values.nature,
+              time: values.projectTime,
+              additionalFactors: values.additionalFactors ?? '',
+              evaluation: values.pmEvaluation ?? '',
+              note: values.pmNote ?? '',
+              status: values.projectStatus,
+              urgency:
+                values.projectStatus === 'finish' || values.projectStatus === 'cancel'
+                  ? 'gray'
+                  : values.projectUrgency,
+            }),
+          }),
+        ];
+
+        // Task urgency is a separate resource from project urgency.
+        if (values.taskUrgency !== task.urgency) {
+          jobs.push(
+            updateTaskAsync({
+              id: task.id,
+              payload: {
+                taskName: task.taskName,
+                quantity: task.quantity,
+                date: task.date,
+                description: task.description,
+                designThinking: task.designThinking,
+                technical: task.technical,
+                contentProcessing: task.contentProcessing,
+                additionalFactors: task.additionalFactors,
+                staff: task.staff,
+                staffConfirmation: task.staffConfirmation,
+                staffNote: task.staffNote,
+                urgency: values.taskUrgency,
+              },
+              successMessage: null,
+            }),
+          );
+        }
+
+        await Promise.all(jobs);
+        closeModal();
+        return;
+      }
+
+      // Non-linked: one head-context request includes task urgency.
+      const payload: UpdateHeadMyTaskRequest = {
+        projectStartDate: values.startDate.toISOString(),
+        projectEndDate: values.endDate.toISOString(),
+        projectBrief: values.brief ?? '',
+        projectVolume: values.volume,
+        projectNature: values.nature,
+        projectTime: values.projectTime,
+        additionalFactors: values.additionalFactors ?? '',
+        pmEvaluation: values.pmEvaluation ?? '',
+        pmNote: values.pmNote ?? '',
+        projectStatus: values.projectStatus,
+        projectFinishedDate:
+          values.projectStatus === 'finish'
+            ? (values.projectFinishedDate ?? dayjs()).toISOString()
+            : undefined,
+        urgency: values.taskUrgency,
+      };
+
+      await updateHeadTaskAsync({ id: task.id, payload });
+      closeModal();
+    } catch {
+      // Mutation hooks already surface errors via toast.
     }
-
-    const payload: UpdateHeadMyTaskRequest = {
-      projectStartDate: values.startDate.toISOString(),
-      projectEndDate: values.endDate.toISOString(),
-      projectBrief: values.brief ?? '',
-      projectVolume: values.volume,
-      projectNature: values.nature,
-      projectTime: values.projectTime,
-      additionalFactors: values.additionalFactors ?? '',
-      pmEvaluation: values.pmEvaluation ?? '',
-      pmNote: values.pmNote ?? '',
-      projectStatus: values.projectStatus,
-      projectFinishedDate:
-        values.projectStatus === 'finish'
-          ? (values.projectFinishedDate ?? dayjs()).toISOString()
-          : undefined,
-    };
-
-    updateHeadTask({ id: task.id, payload }, { onSuccess: onSaved });
   };
 
   const headers = MY_TASK_HEAD_COLUMN_HEADERS;
@@ -146,7 +192,7 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
       onCancel={handleClose}
       onOk={() => form.submit()}
       okText="Save changes"
-      confirmLoading={isProjectPending || isTaskPending}
+      confirmLoading={isProjectPending || isTaskPending || isTaskUrgencyPending}
       destroyOnHidden
       width={720}
       styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
@@ -198,6 +244,25 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
             >
               <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
             </Form.Item>
+          </div>
+
+          <div className={saveViaProject ? styles.row : undefined}>
+            <Form.Item
+              name="taskUrgency"
+              label="Task urgency"
+              rules={[{ required: true, message: 'Task urgency is required' }]}
+            >
+              <TaskUrgencySelect />
+            </Form.Item>
+            {saveViaProject ? (
+              <Form.Item
+                name="projectUrgency"
+                label="Project urgency"
+                rules={[{ required: true, message: 'Project urgency is required' }]}
+              >
+                <TaskUrgencySelect />
+              </Form.Item>
+            ) : null}
           </div>
 
           <Form.Item name="brief" label={headers.brief}>

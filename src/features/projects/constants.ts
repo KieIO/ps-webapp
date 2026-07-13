@@ -2,12 +2,13 @@ import {
   EVALUATION_LEVELS,
   PROJECT_DEPARTMENTS,
   PROJECT_STATUSES,
+  PROJECT_URGENCY_COLORS,
   type EvaluationLevel,
   type ProjectDepartment,
   type ProjectStatus,
-  type ProjectUrgency,
+  type ProjectUrgencyColor,
 } from './schemas/project.schema';
-import { URGENCY_STYLES } from '@/shared/constants/urgencyStyles';
+import { URGENCY_AUTO_STYLE, URGENCY_STYLES } from '@/shared/constants/urgencyStyles';
 import type { StatusPillVariant } from '@/shared/ui/StatusPill/StatusPill';
 
 export const PROJECT_NAME_COLUMN_LABEL = 'Tên dự án';
@@ -60,15 +61,19 @@ export const EVALUATION_LEVEL_LABELS: Record<EvaluationLevel, string> = {
   4: 'Level 4',
 };
 
-export const PROJECT_URGENCY_STYLES: Record<
-  ProjectUrgency,
-  { dot: string; label: string }
-> = {
+export const PROJECT_URGENCY_STYLES: Record<ProjectUrgencyColor, { dot: string; label: string }> = {
   red: { dot: URGENCY_STYLES.red.dot, label: URGENCY_STYLES.red.label },
   orange: { dot: URGENCY_STYLES.orange.dot, label: URGENCY_STYLES.orange.label },
   green: { dot: URGENCY_STYLES.green.dot, label: URGENCY_STYLES.green.label },
   gray: { dot: URGENCY_STYLES.gray.dot, label: URGENCY_STYLES.gray.label },
 };
+
+export const PROJECT_URGENCY_SETTING_STYLES = {
+  auto: { dot: URGENCY_AUTO_STYLE.dot, label: URGENCY_AUTO_STYLE.label },
+  ...PROJECT_URGENCY_STYLES,
+} as const;
+
+export const PROJECT_URGENCY_COLOR_ORDER = PROJECT_URGENCY_COLORS;
 
 export const PROJECT_EVALUATION_COLUMN_HEADERS = {
   volume: 'Khối Lượng',

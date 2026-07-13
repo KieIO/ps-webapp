@@ -1,9 +1,14 @@
-import { DeleteOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  StarOutlined,
+  SyncOutlined,
+  UserAddOutlined,
+} from '@ant-design/icons';
 import { Button, Popconfirm, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useNavigate } from 'react-router-dom';
-import { buildProjectDetailPath, DATE_FORMAT } from '@/config/constants';
+import { DATE_FORMAT } from '@/config/constants';
 import { PROJECT_NAME_COLUMN_LABEL } from '../../constants';
 import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
 import { usePermission } from '@/shared/hooks/usePermission';
@@ -26,10 +31,12 @@ import { ProjectMembersCell } from '../ProjectMembersCell/ProjectMembersCell';
 import {
   PROJECT_DEPARTMENTS,
   PROJECT_STATUSES,
-  PROJECT_URGENCIES,
+  PROJECT_URGENCY_COLORS,
   type EvaluationLevel,
   type Project,
 } from '../../schemas/project.schema';
+import { getProjectActionsWidth } from '../../utils/projectActionsWidth';
+import { resolveProjectUrgencyDisplay } from '../../utils/resolveProjectUrgencyDisplay';
 import styles from './ProjectTable.module.scss';
 
 const compareText = (a: string, b: string) => a.localeCompare(b, 'vi');
@@ -58,7 +65,10 @@ interface ProjectTableProps {
   projects: Project[];
   loading: boolean;
   total: number;
+  onUpdateStatus?: (project: Project) => void;
+  onAssign?: (project: Project) => void;
   onEdit?: (project: Project) => void;
+  onEvaluate?: (project: Project) => void;
   onDelete?: (project: Project) => void;
   deletingProjectId?: string | null;
 }
@@ -83,14 +93,22 @@ export function ProjectTable({
   projects,
   loading,
   total,
+  onUpdateStatus,
+  onAssign,
   onEdit,
+  onEvaluate,
   onDelete,
   deletingProjectId = null,
 }: ProjectTableProps) {
-  const navigate = useNavigate();
   const { can } = usePermission();
   const canEdit = can('EDIT_PROJECT');
-  const actionsWidth = canEdit ? 108 : 72;
+  const actionsWidth = getProjectActionsWidth({
+    hasUpdateStatus: canEdit && Boolean(onUpdateStatus),
+    canAssign: canEdit && Boolean(onAssign),
+    hasEdit: canEdit && Boolean(onEdit),
+    canEvaluate: canEdit && Boolean(onEvaluate),
+    hasDelete: Boolean(onDelete),
+  });
   const scrollX = 3150 + actionsWidth;
 
   const columns: ColumnsType<Project> = [
@@ -150,9 +168,16 @@ export function ProjectTable({
       dataIndex: 'urgency',
       key: 'urgency',
       width: 135,
-      sorter: (a, b) => compareEnumIndex(PROJECT_URGENCIES, a.urgency, b.urgency),
+      sorter: (a, b) =>
+        compareEnumIndex(
+          PROJECT_URGENCY_COLORS,
+          resolveProjectUrgencyDisplay(a),
+          resolveProjectUrgencyDisplay(b),
+        ),
       showSorterTooltip: false,
-      render: (urgency: Project['urgency']) => <ProjectUrgencyBadge urgency={urgency} />,
+      render: (_: Project['urgency'], record: Project) => (
+        <ProjectUrgencyBadge urgency={resolveProjectUrgencyDisplay(record)} />
+      ),
     },
     {
       title: PROJECT_TABLE_COLUMN_HEADERS.level,
@@ -289,39 +314,61 @@ export function ProjectTable({
       fixed: 'right',
       render: (_, record) => (
         <div className={styles.actions}>
-          <Tooltip title="Xem">
-            <Button
-              type="text"
-              icon={<EyeOutlined />}
-              aria-label={`Xem ${record.name}`}
-              onClick={() => navigate(buildProjectDetailPath(record.id))}
-            />
-          </Tooltip>
+          {canEdit && onUpdateStatus ? (
+            <Tooltip title="Update status">
+              <Button
+                type="text"
+                icon={<SyncOutlined />}
+                aria-label={`Update status for ${record.name}`}
+                onClick={() => onUpdateStatus(record)}
+              />
+            </Tooltip>
+          ) : null}
+          {canEdit && onAssign ? (
+            <Tooltip title="Assign staff">
+              <Button
+                type="text"
+                icon={<UserAddOutlined />}
+                aria-label={`Assign staff for ${record.name}`}
+                onClick={() => onAssign(record)}
+              />
+            </Tooltip>
+          ) : null}
           {canEdit && onEdit ? (
-            <Tooltip title="Sửa">
+            <Tooltip title="Edit">
               <Button
                 type="text"
                 icon={<EditOutlined />}
-                aria-label={`Sửa ${record.name}`}
+                aria-label={`Edit ${record.name}`}
                 onClick={() => onEdit(record)}
+              />
+            </Tooltip>
+          ) : null}
+          {canEdit && onEvaluate ? (
+            <Tooltip title="Evaluate">
+              <Button
+                type="text"
+                icon={<StarOutlined />}
+                aria-label={`Evaluate ${record.name}`}
+                onClick={() => onEvaluate(record)}
               />
             </Tooltip>
           ) : null}
           {onDelete ? (
             <Popconfirm
-              title="Xóa dự án này?"
-              description="Hành động này không thể hoàn tác."
-              okText="Xóa"
+              title="Delete this project?"
+              description="This action cannot be undone."
+              okText="Delete"
               okButtonProps={{ danger: true }}
-              cancelText="Hủy"
+              cancelText="Cancel"
               onConfirm={() => onDelete(record)}
             >
-              <Tooltip title="Xóa">
+              <Tooltip title="Delete">
                 <Button
                   type="text"
                   danger
                   icon={<DeleteOutlined />}
-                  aria-label={`Xóa ${record.name}`}
+                  aria-label={`Delete ${record.name}`}
                   loading={deletingProjectId === record.id}
                   disabled={deletingProjectId != null && deletingProjectId !== record.id}
                 />

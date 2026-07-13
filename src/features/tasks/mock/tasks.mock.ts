@@ -1,4 +1,6 @@
 import { PERMISSIONS, ROLES, type Role } from '@/config/permissions';
+import { DEV_MOCK_USERS } from '@/features/auth/mock/devUsers';
+import { getMockUsersStore } from '@/features/users/mock/users.data';
 import type {
   AssignMyTaskRequest,
   CreateMyTaskRequest,
@@ -14,7 +16,7 @@ import type {
 } from '../schemas/task.schema';
 import { UNASSIGNED_STAFF_LABEL } from '../constants';
 import { buildFallbackTaskHistory } from '../utils/taskDetail';
-import { normalizeTaskDateStart } from '../utils/taskDates';
+import { normalizeTaskDateEnd, normalizeTaskDateStart } from '../utils/taskDates';
 import { computeTaskLevel } from '../utils/taskLevel';
 import { enrichMockTaskWithProjectContext } from './mockTaskProjectEnrichment';
 import { computeProjectLevel } from '@/features/projects/utils/projectLevel';
@@ -190,18 +192,42 @@ export const mockGetAllTaskProjectOptions = async (
   return [...projects].sort((a, b) => a.localeCompare(b));
 };
 
-export const mockGetMyTaskPmOptions = async (): Promise<{ code: string; name: string }[]> => {
+export const mockGetMyTaskPmOptions = async (): Promise<
+  { code: string; name: string; userId?: string }[]
+> => {
   await mockDelay();
-  const seen = new Map<string, string>();
+  const seen = new Map<string, { code: string; name: string; userId?: string }>();
+
+  const upsert = (entry: { code: string; name: string; userId?: string | null }) => {
+    if (!entry.code) return;
+    const existing = seen.get(entry.code);
+    seen.set(entry.code, {
+      code: entry.code,
+      name: entry.name,
+      userId: entry.userId ?? existing?.userId,
+    });
+  };
+
+  for (const user of getMockUsersStore()) {
+    if (user.role === ROLES.EMPLOYEE || user.status !== 'active') continue;
+    const local = user.email.split('@')[0] ?? user.email;
+    upsert({ code: local.toUpperCase(), name: user.name, userId: user.id });
+  }
+
+  for (const user of DEV_MOCK_USERS) {
+    if (user.role === ROLES.EMPLOYEE) continue;
+    const local = user.email.split('@')[0] ?? user.email;
+    upsert({ code: local.toUpperCase(), name: user.name, userId: `dev-${user.role}` });
+  }
+
   for (const pm of MOCK_PROJECT_MANAGERS) {
-    seen.set(pm.code, pm.name);
+    upsert(pm);
   }
   for (const task of getMockTasksStore()) {
-    seen.set(task.projectManager.code, task.projectManager.name);
+    upsert(task.projectManager);
   }
-  return [...seen.entries()]
-    .map(([code, name]) => ({ code, name }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
 };
 
 const collectUniqueStaff = (members: TaskAssignee[]): TaskAssignee[] => {
@@ -254,7 +280,7 @@ export const mockCreateMyTask = async (
     payload.technical,
     payload.contentProcessing,
   );
-  const newTask: MyTask = {
+  const newTask = enrichMockTaskWithProjectContext({
     id: `task-${Date.now()}`,
     taskCategory: payload.taskCategory,
     taskCode: generateTaskCode(payload.projectManager.code, payload.projectName),
@@ -264,6 +290,7 @@ export const mockCreateMyTask = async (
     level,
     quantity: payload.quantity,
     date: normalizeTaskDateStart(payload.date),
+    deadline: normalizeTaskDateEnd(payload.date),
     description: payload.description,
     department: payload.department,
     staff: payload.staff,
@@ -275,8 +302,9 @@ export const mockCreateMyTask = async (
     pmNote: '',
     staffConfirmation: payload.staffConfirmation,
     staffNote: payload.staffNote,
+    urgency: payload.urgency,
     updatedAt: now,
-  };
+  });
 
   setMockTasksStore([newTask, ...getMockTasksStore()]);
   return newTask;
@@ -319,6 +347,7 @@ export const mockUpdateMyTask = async (
     taskName: payload.taskName,
     quantity: payload.quantity,
     date: normalizeTaskDateStart(payload.date),
+    deadline: normalizeTaskDateEnd(payload.date),
     description: payload.description,
     designThinking: payload.designThinking,
     technical: payload.technical,
@@ -328,6 +357,7 @@ export const mockUpdateMyTask = async (
     staff: payload.staff,
     staffConfirmation: payload.staffConfirmation,
     staffNote: payload.staffNote,
+    urgency: payload.staffConfirmation === 'finished' ? 'gray' : payload.urgency,
     updatedAt: new Date().toISOString(),
   };
 
@@ -378,6 +408,7 @@ export const mockUpdateHeadMyTask = async (
       payload.projectStatus === 'finish'
         ? (payload.projectFinishedDate ?? current.projectFinishedDate ?? new Date().toISOString())
         : undefined,
+    urgency: payload.urgency,
     updatedAt: new Date().toISOString(),
   };
 
@@ -436,10 +467,11 @@ export const mockUpdateMyTaskStatus = async (
     throw new Error('You do not have permission to update this task status');
   }
 
-  const updated: MyTask = {
+  const updated = {
     ...current,
     staffConfirmation: payload.staffConfirmation,
     staffNote: payload.staffNote,
+    urgency: payload.staffConfirmation === 'finished' ? ('gray' as const) : current.urgency,
     updatedAt: new Date().toISOString(),
   };
 

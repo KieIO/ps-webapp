@@ -4,17 +4,37 @@ import {
   formatTaskCodeShort,
   formatTaskHistoryDateLabel,
   getTaskDeadline,
+  getTaskStartDate,
 } from './taskDetail';
 import type { MyTask } from '../schemas/task.schema';
 
+describe('getTaskStartDate', () => {
+  it('normalizes to UTC start of the task calendar day', () => {
+    const task = {
+      date: '2026-06-13T14:30:00.000Z',
+    } as MyTask;
+
+    expect(getTaskStartDate(task)).toBe('2026-06-13T00:00:00.000Z');
+  });
+});
+
 describe('getTaskDeadline', () => {
-  it('uses the task date, not the linked project end date', () => {
+  it('uses end of the task date day, not the linked project end date', () => {
     const task = {
       date: '2026-06-13T00:00:00.000Z',
       projectEndDate: '2026-06-25T00:00:00.000Z',
     } as MyTask;
 
-    expect(getTaskDeadline(task)).toBe('2026-06-13T00:00:00.000Z');
+    expect(getTaskDeadline(task)).toBe('2026-06-13T23:59:59.000Z');
+  });
+
+  it('prefers API deadline when present', () => {
+    const task = {
+      date: '2026-06-13T00:00:00.000Z',
+      deadline: '2026-06-13T23:59:59.000Z',
+    } as MyTask;
+
+    expect(getTaskDeadline(task)).toBe('2026-06-13T23:59:59.000Z');
   });
 });
 
@@ -25,8 +45,10 @@ describe('formatTaskHistoryDateLabel', () => {
     );
   });
 
-  it('formats deadline timestamps as dates', () => {
-    expect(formatTaskHistoryDateLabel('2026-06-14T00:00:00.000Z', 'deadline')).toBe('14/06/2026');
+  it('formats deadline timestamps with UTC date and time', () => {
+    expect(formatTaskHistoryDateLabel('2026-06-14T23:59:59.000Z', 'deadline')).toBe(
+      '14/06/2026 23:59:59',
+    );
   });
 });
 
@@ -49,6 +71,7 @@ describe('buildFallbackTaskHistory', () => {
       'Deadline',
     ]);
     expect(events[2]?.occurredAt).toBe('2026-06-12T18:39:00.000Z');
+    expect(events[3]?.occurredAt).toBe('2026-06-10T23:59:59.000Z');
   });
 });
 

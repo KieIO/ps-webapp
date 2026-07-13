@@ -3,7 +3,11 @@
  * Backend contract: docs/MY_TASKS_BACKEND_TODO.md (index: docs/BACKEND_API.md)
  */
 import { z } from 'zod';
-import { PROJECT_DEPARTMENTS, PROJECT_STATUSES } from '@/features/projects/schemas/project.schema';
+import {
+  PROJECT_DEPARTMENTS,
+  PROJECT_STATUSES,
+  PROJECT_URGENCIES,
+} from '@/features/projects/schemas/project.schema';
 
 export const CLASSIFICATION_LEVELS = [1, 2, 3, 4] as const;
 
@@ -46,7 +50,10 @@ export const MyTaskSchema = z.object({
   taskName: z.string(),
   level: z.number().int().min(1).max(4),
   quantity: z.number().int().min(0),
+  /** UTC start of the task calendar day (00:00:00). */
   date: z.string(),
+  /** UTC end of the task calendar day (23:59:59), when provided by API. */
+  deadline: z.string().nullish(),
   description: z.string(),
   staff: z.array(TaskAssigneeSchema),
   /** Phòng ban of the task — required for new project tasks. */
@@ -60,6 +67,8 @@ export const MyTaskSchema = z.object({
   pmNote: z.string(),
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
   staffNote: z.string(),
+  /** Stored setting — `auto` lets the API/UI derive display color from deadline. */
+  urgency: z.enum(PROJECT_URGENCIES).optional().default('auto'),
   updatedAt: z.string().nullish(),
   /** Denormalized project fields — populated by API or mock for Department Head columns. */
   projectStartDate: z.string().nullish(),
@@ -117,6 +126,8 @@ export const CreateMyTaskRequestSchema = z.object({
   staff: z.array(TaskAssigneeSchema),
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
   staffNote: z.string(),
+  /** Persisted urgency — defaults from deadline when omitted on create. */
+  urgency: z.enum(PROJECT_URGENCIES),
 });
 
 export const UpdateMyTaskStatusRequestSchema = z.object({
@@ -147,6 +158,7 @@ export const UpdateMyTaskRequestSchema = z.object({
   staff: z.array(TaskAssigneeSchema),
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
   staffNote: z.string(),
+  urgency: z.enum(PROJECT_URGENCIES),
 });
 
 /** Department Head — project-context fields on task rows (non-project or when no linked project). */
@@ -162,6 +174,8 @@ export const UpdateHeadMyTaskRequestSchema = z.object({
   pmNote: z.string(),
   projectStatus: z.enum(PROJECT_STATUSES),
   projectFinishedDate: z.string().optional(),
+  /** Task urgency (independent from project.urgency). */
+  urgency: z.enum(PROJECT_URGENCIES),
 });
 
 export type TaskPerson = z.infer<typeof TaskPersonSchema>;

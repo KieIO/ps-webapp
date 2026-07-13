@@ -39,6 +39,7 @@ import {
   type CreateMyTaskRequest,
   type MyTask,
   type TaskAssignee,
+  type TaskPerson,
   type MyTaskListFilters,
   type MyTaskListResponse,
   type TaskHistoryListResponse,
@@ -111,11 +112,13 @@ export const myTaskApi = {
       return mockGetMyTaskProjectOptions(assigneeUserId, taskCategory, viewerRole);
     }
 
-    const response = await api.get('/tasks/my/project-options', {
-      params: { taskCategory, scope },
-    }).catch((error: unknown) => {
-      throw new Error(getApiErrorMessage(error, 'Failed to load project options'));
-    });
+    const response = await api
+      .get('/tasks/my/project-options', {
+        params: { taskCategory, scope },
+      })
+      .catch((error: unknown) => {
+        throw new Error(getApiErrorMessage(error, 'Failed to load project options'));
+      });
     return response.data as string[];
   },
 
@@ -128,11 +131,13 @@ export const myTaskApi = {
       return mockGetMyTaskStaffNameOptions(assigneeUserId, taskCategory, viewerRole);
     }
 
-    const response = await api.get('/tasks/my/staff-name-options', {
-      params: { taskCategory },
-    }).catch((error: unknown) => {
-      throw new Error(getApiErrorMessage(error, 'Failed to load staff options'));
-    });
+    const response = await api
+      .get('/tasks/my/staff-name-options', {
+        params: { taskCategory },
+      })
+      .catch((error: unknown) => {
+        throw new Error(getApiErrorMessage(error, 'Failed to load staff options'));
+      });
     return response.data as string[];
   },
 
@@ -227,22 +232,20 @@ export const myTaskApi = {
     const data = CreateMyTaskRequestSchema.parse(payload);
 
     if (env.useTasksMock) {
-      return MyTaskSchema.parse(
-        await mockCreateMyTask(data, creatorUserId, creatorUserName),
-      );
+      return MyTaskSchema.parse(await mockCreateMyTask(data, creatorUserId, creatorUserName));
     }
 
     const response = await api.post('/tasks/my', data);
     return MyTaskSchema.parse(response.data);
   },
 
-  getPmOptions: async (): Promise<{ code: string; name: string }[]> => {
+  getPmOptions: async (): Promise<TaskPerson[]> => {
     if (env.useTasksMock) {
       return mockGetMyTaskPmOptions();
     }
 
     const response = await api.get('/tasks/my/pm-options');
-    return response.data as { code: string; name: string }[];
+    return response.data as TaskPerson[];
   },
 
   getStaffOptions: async (): Promise<TaskAssignee[]> => {

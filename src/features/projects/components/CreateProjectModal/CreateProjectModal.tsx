@@ -1,37 +1,55 @@
 import { DatePicker, Form, Input, Modal, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
-import { EVALUATION_LEVEL_OPTIONS, EVALUATION_LEVEL_LABELS, STATUS_OPTIONS } from '../../constants';
+import { ROLES, type Role } from '@/config/permissions';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
+import { TaskUrgencySelect } from '@/features/tasks/components/TaskUrgencySelect/TaskUrgencySelect';
+import { EVALUATION_LEVEL_OPTIONS, EVALUATION_LEVEL_LABELS } from '../../constants';
 import { useCreateProject } from '../../hooks/useCreateProject';
 import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProjectList';
+import { CREATE_PROJECT_DEFAULTS } from '../../utils/projectDefaults';
 import { computeProjectLevel } from '../../utils/projectLevel';
 import { resolvePersonRef } from '../../utils/personRef';
-import type { CreateProjectRequest, EvaluationLevel } from '../../schemas/project.schema';
+import type {
+  CreateProjectRequest,
+  EvaluationLevel,
+  PersonWithCode,
+  ProjectUrgency,
+} from '../../schemas/project.schema';
 import { ClientSelectField } from '../ClientSelectField/ClientSelectField';
 import styles from '../EditProjectModal/EditProjectModal.module.scss';
+
+/** Roles that pre-fill Dept. head with the signed-in user when the modal opens. */
+const DEPT_HEAD_AUTO_SELECT_ROLES: readonly Role[] = [
+  ROLES.ADMIN,
+  ROLES.HEAD,
+  ROLES.PM,
+  ROLES.CREATIVE_HEAD,
+  ROLES.CREATIVE_MANAGER,
+];
 
 interface CreateProjectModalProps {
   open: boolean;
   onClose: () => void;
 }
 
+/** Create form omits API fields that are defaulted server-side / at submit (not collected in UI). */
 type CreateProjectFormValues = Omit<
   CreateProjectRequest,
-  'startDate' | 'endDate' | 'department' | 'evaluation'
+  'startDate' | 'endDate' | 'department' | 'evaluation' | 'status'
 > & {
   startDate: Dayjs;
   endDate: Dayjs;
+  urgency: ProjectUrgency;
 };
-
-/** Department is assigned on tasks (via task score group), not in project create UI. */
-const DEFAULT_PROJECT_DEPARTMENT = 'project' as const;
 
 const DEFAULT_VALUES: CreateProjectFormValues = {
   clientId: '',
   name: '',
   startDate: dayjs(),
   endDate: dayjs().add(2, 'week'),
+  urgency: 'auto',
   departmentHead: { code: '', name: '' },
   brief: '',
   volume: 2,
@@ -40,7 +58,6 @@ const DEFAULT_VALUES: CreateProjectFormValues = {
   additionalFactors: '',
   pm: { code: '', name: '' },
   note: '',
-  status: 'not_updated',
 };
 
 export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
@@ -48,6 +65,17 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
   const { mutate, isPending } = useCreateProject();
   const { data: headOptions = [] } = useProjectHeadOptions();
   const { data: pmOptions = [] } = useProjectPmOptions();
+  const currentUser = useAppSelector((state) => state.auth.user);
+
+  const defaultDepartmentHead = useMemo((): PersonWithCode | undefined => {
+    if (!currentUser?.id || !currentUser.role) return undefined;
+    if (!DEPT_HEAD_AUTO_SELECT_ROLES.includes(currentUser.role as Role)) return undefined;
+
+    const match = headOptions.find((entry) => entry.userId === currentUser.id);
+    if (!match) return undefined;
+
+    return { code: match.code, name: match.name, userId: match.userId };
+  }, [currentUser, headOptions]);
 
   const volume = Form.useWatch('volume', form);
   const nature = Form.useWatch('nature', form);
@@ -59,10 +87,13 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
       : undefined;
 
   useEffect(() => {
-    if (open) {
-      form.setFieldsValue(DEFAULT_VALUES);
-    }
-  }, [open, form]);
+    if (!open) return;
+
+    form.setFieldsValue({
+      ...DEFAULT_VALUES,
+      departmentHead: defaultDepartmentHead ?? DEFAULT_VALUES.departmentHead,
+    });
+  }, [open, form, defaultDepartmentHead]);
 
   const handleClose = () => {
     form.resetFields();
@@ -97,11 +128,11 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
 
   const handleFinish = (values: CreateProjectFormValues) => {
     const payload: CreateProjectRequest = {
+      ...CREATE_PROJECT_DEFAULTS,
       clientId: values.clientId,
       name: values.name,
       startDate: values.startDate.toISOString(),
       endDate: values.endDate.toISOString(),
-      department: DEFAULT_PROJECT_DEPARTMENT,
       departmentHead: resolvePersonRef(
         values.departmentHead?.code,
         headOptions,
@@ -113,9 +144,8 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
       time: values.time,
       additionalFactors: values.additionalFactors ?? '',
       pm: resolvePersonRef(values.pm?.code, pmOptions, values.pm),
-      evaluation: '',
       note: values.note ?? '',
-      status: values.status,
+      urgency: values.urgency,
     };
 
     mutate(payload, {
@@ -174,6 +204,14 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
               <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
             </Form.Item>
           </div>
+
+          <Form.Item
+            name="urgency"
+            label="Urgency"
+            rules={[{ required: true, message: 'Urgency is required' }]}
+          >
+            <TaskUrgencySelect />
+          </Form.Item>
 
           <Form.Item name="brief" label="Brief">
             <Input.TextArea rows={2} />
@@ -259,14 +297,6 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
         </section>
 
         <section className={styles.section}>
-          <p className={styles.sectionTitle}>Status</p>
-          <Form.Item
-            name="status"
-            label="Project status"
-            rules={[{ required: true, message: 'Status is required' }]}
-          >
-            <Select options={[...STATUS_OPTIONS]} />
-          </Form.Item>
           <Form.Item name="note" label="Note">
             <Input.TextArea rows={2} />
           </Form.Item>

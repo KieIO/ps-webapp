@@ -2,8 +2,14 @@ import type { ReactNode } from 'react';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
-import { STATUS_LABELS } from '@/features/projects/constants';
-import { PROJECT_STATUSES, type EvaluationLevel, type ProjectStatus } from '@/features/projects/schemas/project.schema';
+import { PROJECT_URGENCY_STYLES, STATUS_LABELS } from '@/features/projects/constants';
+import {
+  PROJECT_STATUSES,
+  PROJECT_URGENCY_COLORS,
+  type EvaluationLevel,
+  type ProjectStatus,
+  type ProjectUrgencyColor,
+} from '@/features/projects/schemas/project.schema';
 import { ROLES, type Role } from '@/config/permissions';
 import {
   MY_TASK_ADMIN_COLUMN_KEYS,
@@ -20,13 +26,13 @@ import type { ClassificationLevel, MyTask } from '../schemas/task.schema';
 import { TASK_CONFIRMATION_STATUSES } from '../schemas/task.schema';
 import { resolveProjectContextFromTask } from './taskProjectContext';
 import { formatTaskStaffNames } from './staff';
+import { resolveTaskUrgencyDisplay } from './taskUrgency';
 
 const compareText = (a: string, b: string) => a.localeCompare(b, 'vi');
 
 const compareNumber = (a: number, b: number) => a - b;
 
-const compareOptionalNumber = (a?: number | null, b?: number | null) =>
-  (a ?? -1) - (b ?? -1);
+const compareOptionalNumber = (a?: number | null, b?: number | null) => (a ?? -1) - (b ?? -1);
 
 const compareDate = (a: string, b: string) => dayjs(a).unix() - dayjs(b).unix();
 
@@ -40,9 +46,7 @@ const compareOptionalDate = (a?: string | null, b?: string | null) => {
 const compareEnumIndex = <T extends string>(values: readonly T[], a: T, b: T) =>
   values.indexOf(a) - values.indexOf(b);
 
-export const getMyTaskColumnSorter = (
-  key: MyTaskColumnKey,
-): ((a: MyTask, b: MyTask) => number) => {
+export const getMyTaskColumnSorter = (key: MyTaskColumnKey): ((a: MyTask, b: MyTask) => number) => {
   switch (key) {
     case 'projectName':
       return (a, b) => compareText(a.projectName, b.projectName);
@@ -59,6 +63,13 @@ export const getMyTaskColumnSorter = (
       return (a, b) => compareNumber(a.quantity, b.quantity);
     case 'date':
       return (a, b) => compareDate(a.date, b.date);
+    case 'urgency':
+      return (a, b) =>
+        compareEnumIndex(
+          PROJECT_URGENCY_COLORS,
+          resolveTaskUrgencyDisplay(a),
+          resolveTaskUrgencyDisplay(b),
+        );
     case 'startDate':
       return (a, b) =>
         compareOptionalDate(
@@ -151,6 +162,7 @@ const COLUMN_WIDTHS: Record<MyTaskColumnKey, number> = {
   level: 90,
   quantity: 110,
   date: 110,
+  urgency: 135,
   description: 240,
   staffName: 180,
   designThinking: 130,
@@ -178,10 +190,7 @@ const COLUMN_HEADER_CHAR_WIDTH = 9;
 const COLUMN_HEADER_PADDING = 36;
 
 const resolveColumnWidth = (key: MyTaskColumnKey, title: string): number =>
-  Math.max(
-    COLUMN_WIDTHS[key],
-    title.length * COLUMN_HEADER_CHAR_WIDTH + COLUMN_HEADER_PADDING,
-  );
+  Math.max(COLUMN_WIDTHS[key], title.length * COLUMN_HEADER_CHAR_WIDTH + COLUMN_HEADER_PADDING);
 
 /** Column visibility per role for `/tasks/project` and `/tasks/non-project`. */
 export const getMyTaskColumnKeysForRole = (role: Role): MyTaskColumnKey[] => {
@@ -260,31 +269,21 @@ export const getMyTaskActionsWidth = ({
   canEvaluate = false,
   hasDelete = false,
 }: MyTaskActionsWidthOptions): number => {
-  const count = [
-    hasUpdateStatus,
-    canAssign,
-    hasEdit,
-    canEvaluate,
-    hasDelete,
-  ].filter(Boolean).length;
+  const count = [hasUpdateStatus, canAssign, hasEdit, canEvaluate, hasDelete].filter(
+    Boolean,
+  ).length;
 
   if (count === 0) return 0;
 
   return (
-    count * ACTION_BUTTON_WIDTH +
-    Math.max(0, count - 1) * ACTION_BUTTON_GAP +
-    ACTION_CELL_PADDING
+    count * ACTION_BUTTON_WIDTH + Math.max(0, count - 1) * ACTION_BUTTON_GAP + ACTION_CELL_PADDING
   );
 };
 
-const formatDate = (value?: string): string =>
-  value ? dayjs(value).format(DATE_FORMAT) : '';
+const formatDate = (value?: string): string => (value ? dayjs(value).format(DATE_FORMAT) : '');
 
 /** Resolve a cell value for CSV export from a single MyTask row. */
-export const getMyTaskColumnExportValue = (
-  task: MyTask,
-  key: MyTaskColumnKey,
-): string | number => {
+export const getMyTaskColumnExportValue = (task: MyTask, key: MyTaskColumnKey): string | number => {
   const ctx = resolveProjectContextFromTask(task);
 
   switch (key) {
@@ -303,6 +302,8 @@ export const getMyTaskColumnExportValue = (
       return task.quantity;
     case 'date':
       return formatDate(task.date);
+    case 'urgency':
+      return PROJECT_URGENCY_STYLES[resolveTaskUrgencyDisplay(task)].label;
     case 'startDate':
       return formatDate(ctx.projectStartDate);
     case 'endDate':
@@ -354,6 +355,8 @@ export type MyTaskTableRenderers = {
   renderStaffName: (record: MyTask) => ReactNode;
   renderDate: (value: string, record: MyTask, columnKey: MyTaskColumnKey) => ReactNode;
   renderCompletion: (value: number | undefined, record: MyTask) => ReactNode;
+  renderUrgency: (urgency: ProjectUrgencyColor, record: MyTask) => ReactNode;
+  renderUrgencyTitle: () => ReactNode;
   renderDescription?: (record: MyTask) => ReactNode;
 };
 
@@ -363,13 +366,14 @@ export const buildMyTaskDataColumns = (
 ): ColumnsType<MyTask> =>
   columnDefs.map((def) => {
     const base = {
-      title: def.title,
+      title: def.key === 'urgency' ? renderers.renderUrgencyTitle() : def.title,
       key: def.key,
       width: def.width,
       minWidth: def.width,
       fixed: def.fixed,
       align: def.align,
       sorter: getMyTaskColumnSorter(def.key),
+      showSorterTooltip: def.key === 'urgency' ? false : undefined,
     };
 
     switch (def.key) {
@@ -413,13 +417,14 @@ export const buildMyTaskDataColumns = (
           ...base,
           render: (_, record) => {
             const ctx = resolveProjectContextFromTask(record);
-            const value = ctx[
-              def.key === 'volume'
-                ? 'projectVolume'
-                : def.key === 'nature'
-                  ? 'projectNature'
-                  : 'projectTime'
-            ];
+            const value =
+              ctx[
+                def.key === 'volume'
+                  ? 'projectVolume'
+                  : def.key === 'nature'
+                    ? 'projectNature'
+                    : 'projectTime'
+              ];
             return value != null
               ? renderers.renderEvaluationLevel(value as EvaluationLevel)
               : renderers.renderText('');
@@ -443,16 +448,22 @@ export const buildMyTaskDataColumns = (
                   : def.key === 'endDate'
                     ? ctx.projectEndDate
                     : ctx.projectFinishedDate;
-            return value
-              ? renderers.renderDate(value, record, def.key)
-              : renderers.renderText('');
+            return value ? renderers.renderDate(value, record, def.key) : renderers.renderText('');
           },
+        };
+      case 'urgency':
+        return {
+          ...base,
+          dataIndex: 'urgency',
+          render: (_: MyTask['urgency'], record: MyTask) =>
+            renderers.renderUrgency(resolveTaskUrgencyDisplay(record), record),
         };
       case 'brief':
         return {
           ...base,
           ellipsis: true,
-          render: (_, record) => renderers.renderText(resolveProjectContextFromTask(record).projectBrief ?? ''),
+          render: (_, record) =>
+            renderers.renderText(resolveProjectContextFromTask(record).projectBrief ?? ''),
         };
       case 'description':
         return {

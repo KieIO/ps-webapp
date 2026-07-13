@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import type { ProgressProps } from 'antd';
 import type { MyTaskColumnKey } from '../constants';
 import type { MyTask } from '../schemas/task.schema';
+import { getTaskDeadline } from './taskDetail';
 import { resolveProjectContextFromTask } from './taskProjectContext';
 
 const isPastDate = (value: string): boolean => dayjs(value).isBefore(dayjs(), 'day');
@@ -15,7 +16,7 @@ export const isMyTaskDateAtRisk = (task: MyTask, columnKey: MyTaskColumnKey): bo
       if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'confirmed') {
         return false;
       }
-      return isPastDate(task.date);
+      return dayjs().isAfter(dayjs(getTaskDeadline(task)));
     case 'endDate':
       if (ctx.projectStatus === 'finish' || ctx.projectStatus === 'cancel') return false;
       if (!ctx.projectEndDate) return false;

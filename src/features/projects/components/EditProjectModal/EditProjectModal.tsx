@@ -2,6 +2,7 @@ import { DatePicker, Form, Input, Modal, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
+import { TaskUrgencySelect } from '@/features/tasks/components/TaskUrgencySelect/TaskUrgencySelect';
 import { EVALUATION_LEVEL_OPTIONS, EVALUATION_LEVEL_LABELS, STATUS_OPTIONS } from '../../constants';
 import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProjectList';
 import { useUpdateProject } from '../../hooks/useUpdateProject';
@@ -75,6 +76,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
         evaluation: project.evaluation,
         note: project.note,
         status: project.status,
+        urgency: project.urgency,
       });
     }
   }, [project, open, form]);
@@ -134,6 +136,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
       evaluation: values.evaluation ?? '',
       note: values.note ?? '',
       status: values.status,
+      urgency: values.status === 'finish' || values.status === 'cancel' ? 'gray' : values.urgency,
     };
 
     mutate(
@@ -216,6 +219,14 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
               <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
             </Form.Item>
           </div>
+
+          <Form.Item
+            name="urgency"
+            label="Urgency"
+            rules={[{ required: true, message: 'Urgency is required' }]}
+          >
+            <TaskUrgencySelect />
+          </Form.Item>
 
           <Form.Item name="brief" label="Brief">
             <Input.TextArea rows={2} />

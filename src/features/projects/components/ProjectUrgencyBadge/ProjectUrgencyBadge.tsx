@@ -1,10 +1,11 @@
 import classNames from 'classnames';
 import { PROJECT_URGENCY_STYLES } from '../../constants';
-import type { ProjectUrgency } from '../../schemas/project.schema';
+import type { ProjectUrgencyColor } from '../../schemas/project.schema';
 import styles from './ProjectUrgencyBadge.module.scss';
 
 interface ProjectUrgencyBadgeProps {
-  urgency: ProjectUrgency;
+  /** Display color only — resolve `auto` before passing. */
+  urgency: ProjectUrgencyColor;
   className?: string;
 }
 

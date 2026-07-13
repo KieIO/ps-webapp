@@ -7,6 +7,8 @@ import type { UpdateMyTaskRequest } from '../schemas/task.schema';
 interface UpdateMyTaskVariables {
   id: string;
   payload: UpdateMyTaskRequest;
+  /** Pass `null` to skip the toast (e.g. paired with another mutation that already notifies). */
+  successMessage?: string | null;
 }
 
 export const useUpdateMyTask = () => {
@@ -14,12 +16,12 @@ export const useUpdateMyTask = () => {
   const userId = useAppSelector((state) => state.auth.user?.id);
 
   return useMutation({
-    mutationFn: ({ id, payload }: UpdateMyTaskVariables) =>
-      myTaskApi.update(id, payload, userId),
-    onSuccess: () => {
+    mutationFn: ({ id, payload }: UpdateMyTaskVariables) => myTaskApi.update(id, payload, userId),
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'my'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'my', 'history'] });
-      message.success('Task updated successfully');
+      if (variables.successMessage === null) return;
+      message.success(variables.successMessage ?? 'Task updated successfully');
     },
     onError: (error: Error) => {
       message.error(error.message || 'Failed to update task');

@@ -14,9 +14,11 @@ import { buildMyTaskDetailPath } from '@/config/constants';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { ClassificationLevelBadge } from '../ClassificationLevelBadge/ClassificationLevelBadge';
 import { EvaluationLevelBadge } from '@/features/projects/components/EvaluationLevelBadge/EvaluationLevelBadge';
+import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { ProjectStatusBadge } from '@/features/projects/components/ProjectStatusBadge/ProjectStatusBadge';
 import type { EvaluationLevel } from '@/features/projects/schemas/project.schema';
 import { TaskConfirmationBadge } from '../TaskConfirmationBadge/TaskConfirmationBadge';
+import { TaskUrgencyColumnTitle } from '../TaskUrgencyColumnTitle/TaskUrgencyColumnTitle';
 import { MY_TASKS_PAGE_SIZE, MY_TASKS_PAGE_SIZE_OPTIONS } from '../../constants';
 import { useMyTaskColumns } from '../../hooks/useMyTaskColumns';
 import type { ClassificationLevel, MyTask } from '../../schemas/task.schema';
@@ -26,10 +28,7 @@ import {
   getMyTaskTableScrollWidth,
 } from '../../utils/myTaskColumns';
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
-import {
-  getMyTaskCompletionProgressStatus,
-  isMyTaskDateAtRisk,
-} from '../../utils/taskDeadline';
+import { getMyTaskCompletionProgressStatus, isMyTaskDateAtRisk } from '../../utils/taskDeadline';
 import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/CompletionProgressCell';
 import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
 import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
@@ -50,9 +49,7 @@ interface MyTaskTableProps {
   deletingTaskId?: string | null;
 }
 
-const renderLevel = (level: ClassificationLevel) => (
-  <ClassificationLevelBadge level={level} />
-);
+const renderLevel = (level: ClassificationLevel) => <ClassificationLevelBadge level={level} />;
 
 const renderWrapText = (value: string) => {
   if (!value) return <span className={styles.empty}>—</span>;
@@ -89,17 +86,12 @@ const renderDate = (value: string, record: MyTask, columnKey: MyTaskColumnKey) =
 
 const renderCompletion = (value: number | undefined, record: MyTask) =>
   value != null ? (
-    <CompletionProgressCell
-      percent={value}
-      status={getMyTaskCompletionProgressStatus(record)}
-    />
+    <CompletionProgressCell percent={value} status={getMyTaskCompletionProgressStatus(record)} />
   ) : (
     <span className={styles.empty}>—</span>
   );
 
-const renderEvaluationLevel = (level: EvaluationLevel) => (
-  <EvaluationLevelBadge level={level} />
-);
+const renderEvaluationLevel = (level: EvaluationLevel) => <EvaluationLevelBadge level={level} />;
 
 export function MyTaskTable({
   tasks,
@@ -149,6 +141,8 @@ export function MyTaskTable({
       renderStaffName: (record) => <TaskStaffNameCell staff={record.staff} />,
       renderDate,
       renderCompletion,
+      renderUrgency: (urgency) => <ProjectUrgencyBadge urgency={urgency} />,
+      renderUrgencyTitle: () => <TaskUrgencyColumnTitle />,
       renderDescription: (record) => renderWrapText(record.description),
     });
 
@@ -257,8 +251,7 @@ export function MyTaskTable({
           total,
           showSizeChanger: true,
           pageSizeOptions: [...MY_TASKS_PAGE_SIZE_OPTIONS],
-          showTotal: (count, range) =>
-            `Showing ${range[0]}-${range[1]} / ${count} tasks`,
+          showTotal: (count, range) => `Showing ${range[0]}-${range[1]} / ${count} tasks`,
         }}
       />
     </TableWrapper>
