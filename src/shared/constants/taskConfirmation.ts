@@ -5,6 +5,7 @@ export const TASK_CONFIRMATION_STATUSES = [
   'finished',
   'confirmed',
   'decline',
+  'cancelled',
 ] as const;
 
 export type TaskConfirmationStatus = (typeof TASK_CONFIRMATION_STATUSES)[number];
@@ -15,6 +16,7 @@ export const CONFIRMATION_LABELS: Record<TaskConfirmationStatus, string> = {
   finished: 'Hoàn thành',
   confirmed: 'Đã xác nhận',
   decline: 'Từ chối',
+  cancelled: 'Hủy',
 };
 
 export const CONFIRMATION_VARIANT: Record<TaskConfirmationStatus, StatusPillVariant> = {
@@ -22,22 +24,15 @@ export const CONFIRMATION_VARIANT: Record<TaskConfirmationStatus, StatusPillVari
   finished: 'completed',
   confirmed: 'in-progress',
   decline: 'overdue',
+  cancelled: 'cancelled',
 };
 
-export const TRACKER_BLOCK_TYPES = [
-  'pending',
-  'active',
-  'completed',
-  'decline',
-] as const;
+export const TRACKER_BLOCK_TYPES = ['pending', 'active', 'completed', 'decline'] as const;
 
 export type TrackerBlockType = (typeof TRACKER_BLOCK_TYPES)[number];
 
 /** Maps tracker timeline block type → task staffConfirmation semantics. */
-export const TRACKER_BLOCK_CONFIRMATION: Record<
-  TrackerBlockType,
-  TaskConfirmationStatus
-> = {
+export const TRACKER_BLOCK_CONFIRMATION: Record<TrackerBlockType, TaskConfirmationStatus> = {
   pending: 'not_updated',
   active: 'confirmed',
   completed: 'finished',

@@ -23,6 +23,7 @@ const confirmationToProjectStatus = (confirmation: TaskConfirmationStatus): Proj
     case 'confirmed':
       return 'in_progress';
     case 'decline':
+    case 'cancelled':
       return 'cancel';
     default:
       return 'not_updated';

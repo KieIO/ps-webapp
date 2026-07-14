@@ -13,7 +13,11 @@ export const isMyTaskDateAtRisk = (task: MyTask, columnKey: MyTaskColumnKey): bo
 
   switch (columnKey) {
     case 'date':
-      if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'confirmed') {
+      if (
+        task.staffConfirmation === 'finished' ||
+        task.staffConfirmation === 'confirmed' ||
+        task.staffConfirmation === 'cancelled'
+      ) {
         return false;
       }
       return dayjs().isAfter(dayjs(getTaskDeadline(task)));
@@ -33,6 +37,8 @@ export const getMyTaskCompletionProgressStatus = (task: MyTask): ProgressProps['
   if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'confirmed') {
     return 'success';
   }
-  if (task.staffConfirmation === 'decline') return 'exception';
+  if (task.staffConfirmation === 'decline' || task.staffConfirmation === 'cancelled') {
+    return 'exception';
+  }
   return 'active';
 };

@@ -8,6 +8,12 @@ import {
   PROJECT_STATUSES,
   PROJECT_URGENCIES,
 } from '@/features/projects/schemas/project.schema';
+import { TASK_CONFIRMATION_STATUSES } from '@/shared/constants/taskConfirmation';
+
+export {
+  TASK_CONFIRMATION_STATUSES,
+  type TaskConfirmationStatus,
+} from '@/shared/constants/taskConfirmation';
 
 export const CLASSIFICATION_LEVELS = [1, 2, 3, 4] as const;
 
@@ -19,15 +25,7 @@ export const TASK_DEPARTMENTS = PROJECT_DEPARTMENTS;
 
 export type TaskDepartment = (typeof TASK_DEPARTMENTS)[number];
 
-export const TASK_CONFIRMATION_STATUSES = [
-  'not_updated',
-  'finished',
-  'confirmed',
-  'decline',
-] as const;
-
 export type ClassificationLevel = (typeof CLASSIFICATION_LEVELS)[number];
-export type TaskConfirmationStatus = (typeof TASK_CONFIRMATION_STATUSES)[number];
 
 export const TaskPersonSchema = z.object({
   code: z.string(),
@@ -123,7 +121,7 @@ export const CreateMyTaskRequestSchema = z.object({
   technical: z.number().int().min(1).max(4),
   contentProcessing: z.number().int().min(1).max(4),
   additionalFactors: z.string(),
-  staff: z.array(TaskAssigneeSchema),
+  staff: z.array(TaskAssigneeSchema).max(1, 'Only one staff member can be assigned'),
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
   staffNote: z.string(),
   /** Persisted urgency — defaults from deadline when omitted on create. */
@@ -142,7 +140,10 @@ export const UpdateMyTaskPmEvaluationRequestSchema = z.object({
 });
 
 export const AssignMyTaskRequestSchema = z.object({
-  staff: z.array(TaskAssigneeSchema).min(1, 'Select at least one staff member'),
+  staff: z
+    .array(TaskAssigneeSchema)
+    .min(1, 'Select a staff member')
+    .max(1, 'Only one staff member can be assigned'),
   staffNote: z.string(),
 });
 
@@ -155,7 +156,7 @@ export const UpdateMyTaskRequestSchema = z.object({
   technical: z.number().int().min(1).max(4),
   contentProcessing: z.number().int().min(1).max(4),
   additionalFactors: z.string(),
-  staff: z.array(TaskAssigneeSchema),
+  staff: z.array(TaskAssigneeSchema).max(1, 'Only one staff member can be assigned'),
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
   staffNote: z.string(),
   urgency: z.enum(PROJECT_URGENCIES),

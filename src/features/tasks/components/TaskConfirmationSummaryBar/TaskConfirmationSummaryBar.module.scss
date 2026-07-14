@@ -14,7 +14,8 @@
 .pillNotUpdated,
 .pillFinished,
 .pillConfirmed,
-.pillDecline {
+.pillDecline,
+.pillCancelled {
   display: inline-flex;
   align-items: center;
   padding: 4px 12px;
@@ -46,4 +47,9 @@
 .pillDecline {
   background: $status-overdue-bg;
   color: $status-overdue-text;
+}
+
+.pillCancelled {
+  background: $status-on-leave-bg;
+  color: $status-on-leave-text;
 }

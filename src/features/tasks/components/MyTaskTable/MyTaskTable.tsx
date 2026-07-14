@@ -11,6 +11,7 @@ import type { MyTaskColumnKey } from '../../constants';
 import type { ColumnsType } from 'antd/es/table';
 import { Link } from 'react-router-dom';
 import { buildMyTaskDetailPath } from '@/config/constants';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { ClassificationLevelBadge } from '../ClassificationLevelBadge/ClassificationLevelBadge';
 import { EvaluationLevelBadge } from '@/features/projects/components/EvaluationLevelBadge/EvaluationLevelBadge';
@@ -29,6 +30,7 @@ import {
 } from '../../utils/myTaskColumns';
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
 import { getMyTaskCompletionProgressStatus, isMyTaskDateAtRisk } from '../../utils/taskDeadline';
+import { canChangeTaskStatus, TASK_STATUS_LOCKED_MESSAGE } from '../../utils/taskStatusLock';
 import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/CompletionProgressCell';
 import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
 import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
@@ -107,6 +109,7 @@ export function MyTaskTable({
   deletingTaskId = null,
 }: MyTaskTableProps) {
   const { columnDefs } = useMyTaskColumns();
+  const { role } = usePermission();
   const actionsWidth = getMyTaskActionsWidth({
     hasUpdateStatus: Boolean(onUpdateStatus),
     canAssign: canAssign && Boolean(onAssign),
@@ -153,71 +156,77 @@ export function MyTaskTable({
         key: 'actions',
         width: actionsWidth,
         fixed: 'right',
-        render: (_, record) => (
-          <div className={styles.actions}>
-            {onUpdateStatus ? (
-              <Tooltip title="Update status">
-                <Button
-                  type="text"
-                  icon={<SyncOutlined />}
-                  aria-label={`Update status for ${record.taskName}`}
-                  onClick={() => onUpdateStatus(record)}
-                />
-              </Tooltip>
-            ) : null}
-            {canAssign && onAssign ? (
-              <Tooltip title="Assign staff">
-                <Button
-                  type="text"
-                  icon={<UserAddOutlined />}
-                  aria-label={`Assign staff for ${record.taskName}`}
-                  onClick={() => onAssign(record)}
-                />
-              </Tooltip>
-            ) : null}
-            {onEdit ? (
-              <Tooltip title="Edit">
-                <Button
-                  type="text"
-                  icon={<EditOutlined />}
-                  aria-label={`Edit ${record.taskName}`}
-                  onClick={() => onEdit(record)}
-                />
-              </Tooltip>
-            ) : null}
-            {canEvaluate && onEvaluate ? (
-              <Tooltip title="Evaluate">
-                <Button
-                  type="text"
-                  icon={<StarOutlined />}
-                  aria-label={`Evaluate ${record.taskName}`}
-                  onClick={() => onEvaluate(record)}
-                />
-              </Tooltip>
-            ) : null}
-            {onDelete ? (
-              <Popconfirm
-                title="Delete this task?"
-                description="This action cannot be undone."
-                okText="Delete"
-                okButtonProps={{ danger: true }}
-                cancelText="Cancel"
-                onConfirm={() => onDelete(record)}
-              >
-                <Tooltip title="Delete">
+        render: (_, record) => {
+          const canUpdateStatus = Boolean(onUpdateStatus) && canChangeTaskStatus(record, role);
+          return (
+            <div className={styles.actions}>
+              {onUpdateStatus ? (
+                <Tooltip title={canUpdateStatus ? 'Update status' : TASK_STATUS_LOCKED_MESSAGE}>
                   <Button
                     type="text"
-                    danger
-                    icon={<DeleteOutlined />}
-                    aria-label={`Delete ${record.taskName}`}
-                    loading={deletingTaskId === record.id}
-                    disabled={deletingTaskId != null && deletingTaskId !== record.id}
+                    icon={<SyncOutlined />}
+                    aria-label={`Update status for ${record.taskName}`}
+                    disabled={!canUpdateStatus}
+                    onClick={() => {
+                      if (canUpdateStatus) onUpdateStatus(record);
+                    }}
                   />
                 </Tooltip>
-              </Popconfirm>
-            ) : null}
-          </div>
-        ),
+              ) : null}
+              {canAssign && onAssign ? (
+                <Tooltip title="Assign staff">
+                  <Button
+                    type="text"
+                    icon={<UserAddOutlined />}
+                    aria-label={`Assign staff for ${record.taskName}`}
+                    onClick={() => onAssign(record)}
+                  />
+                </Tooltip>
+              ) : null}
+              {onEdit ? (
+                <Tooltip title="Edit">
+                  <Button
+                    type="text"
+                    icon={<EditOutlined />}
+                    aria-label={`Edit ${record.taskName}`}
+                    onClick={() => onEdit(record)}
+                  />
+                </Tooltip>
+              ) : null}
+              {canEvaluate && onEvaluate ? (
+                <Tooltip title="Evaluate">
+                  <Button
+                    type="text"
+                    icon={<StarOutlined />}
+                    aria-label={`Evaluate ${record.taskName}`}
+                    onClick={() => onEvaluate(record)}
+                  />
+                </Tooltip>
+              ) : null}
+              {onDelete ? (
+                <Popconfirm
+                  title="Delete this task?"
+                  description="This action cannot be undone."
+                  okText="Delete"
+                  okButtonProps={{ danger: true }}
+                  cancelText="Cancel"
+                  onConfirm={() => onDelete(record)}
+                >
+                  <Tooltip title="Delete">
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      aria-label={`Delete ${record.taskName}`}
+                      loading={deletingTaskId === record.id}
+                      disabled={deletingTaskId != null && deletingTaskId !== record.id}
+                    />
+                  </Tooltip>
+                </Popconfirm>
+              ) : null}
+            </div>
+          );
+        },
       },
     ];
   }, [
@@ -231,6 +240,7 @@ export function MyTaskTable({
     onEdit,
     onEvaluate,
     onUpdateStatus,
+    role,
   ]);
 
   return (

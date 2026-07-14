@@ -1,6 +1,8 @@
 import {
   DeleteOutlined,
   EditOutlined,
+  InboxOutlined,
+  RollbackOutlined,
   StarOutlined,
   SyncOutlined,
   UserAddOutlined,
@@ -61,16 +63,29 @@ const compareMembers = (a: Project, b: Project) =>
     b.members.map((member) => member.name).join(', '),
   );
 
+const archiveConfirmDescription = (project: Project): string => {
+  if (project.status === 'finish' || project.status === 'cancel') {
+    return 'Dự án sẽ chuyển sang danh sách đã lưu trữ. Bạn có thể khôi phục lại sau.';
+  }
+  return 'Dự án này chưa hoàn thành hoặc hủy. Vẫn có thể lưu trữ và khôi phục lại sau.';
+};
+
 interface ProjectTableProps {
   projects: Project[];
   loading: boolean;
   total: number;
+  /** When true, shows unarchive instead of archive and hides day-to-day edit actions. */
+  archivedView?: boolean;
   onUpdateStatus?: (project: Project) => void;
   onAssign?: (project: Project) => void;
   onEdit?: (project: Project) => void;
   onEvaluate?: (project: Project) => void;
+  onArchive?: (project: Project) => void;
+  onUnarchive?: (project: Project) => void;
   onDelete?: (project: Project) => void;
   deletingProjectId?: string | null;
+  archivingProjectId?: string | null;
+  unarchivingProjectId?: string | null;
 }
 
 const renderLevel = (level: EvaluationLevel) => <EvaluationLevelBadge level={level} />;
@@ -93,23 +108,36 @@ export function ProjectTable({
   projects,
   loading,
   total,
+  archivedView = false,
   onUpdateStatus,
   onAssign,
   onEdit,
   onEvaluate,
+  onArchive,
+  onUnarchive,
   onDelete,
   deletingProjectId = null,
+  archivingProjectId = null,
+  unarchivingProjectId = null,
 }: ProjectTableProps) {
   const { can } = usePermission();
-  const canEdit = can('EDIT_PROJECT');
+  const canEdit = can('EDIT_PROJECT') && !archivedView;
+  const canArchive = can('ARCHIVE_PROJECT');
+  const canDelete = can('DELETE_PROJECT');
   const actionsWidth = getProjectActionsWidth({
     hasUpdateStatus: canEdit && Boolean(onUpdateStatus),
     canAssign: canEdit && Boolean(onAssign),
     hasEdit: canEdit && Boolean(onEdit),
     canEvaluate: canEdit && Boolean(onEvaluate),
-    hasDelete: Boolean(onDelete),
+    hasArchive: canArchive && !archivedView && Boolean(onArchive),
+    hasUnarchive: canArchive && archivedView && Boolean(onUnarchive),
+    hasDelete: canDelete && Boolean(onDelete),
   });
   const scrollX = 3150 + actionsWidth;
+  const emptyTitle = archivedView ? 'Không có dự án đã lưu trữ' : 'Không tìm thấy dự án';
+  const emptyDescription = archivedView
+    ? 'Các dự án đã lưu trữ sẽ hiện ở đây.'
+    : 'Thử điều chỉnh tìm kiếm hoặc bộ lọc.';
 
   const columns: ColumnsType<Project> = [
     {
@@ -175,7 +203,7 @@ export function ProjectTable({
           resolveProjectUrgencyDisplay(b),
         ),
       showSorterTooltip: false,
-      render: (_: Project['urgency'], record: Project) => (
+      render: (_: Project['urgency'], record) => (
         <ProjectUrgencyBadge urgency={resolveProjectUrgencyDisplay(record)} />
       ),
     },
@@ -312,71 +340,122 @@ export function ProjectTable({
       key: 'actions',
       width: actionsWidth,
       fixed: 'right',
-      render: (_, record) => (
-        <div className={styles.actions}>
-          {canEdit && onUpdateStatus ? (
-            <Tooltip title="Update status">
-              <Button
-                type="text"
-                icon={<SyncOutlined />}
-                aria-label={`Update status for ${record.name}`}
-                onClick={() => onUpdateStatus(record)}
-              />
-            </Tooltip>
-          ) : null}
-          {canEdit && onAssign ? (
-            <Tooltip title="Assign staff">
-              <Button
-                type="text"
-                icon={<UserAddOutlined />}
-                aria-label={`Assign staff for ${record.name}`}
-                onClick={() => onAssign(record)}
-              />
-            </Tooltip>
-          ) : null}
-          {canEdit && onEdit ? (
-            <Tooltip title="Edit">
-              <Button
-                type="text"
-                icon={<EditOutlined />}
-                aria-label={`Edit ${record.name}`}
-                onClick={() => onEdit(record)}
-              />
-            </Tooltip>
-          ) : null}
-          {canEdit && onEvaluate ? (
-            <Tooltip title="Evaluate">
-              <Button
-                type="text"
-                icon={<StarOutlined />}
-                aria-label={`Evaluate ${record.name}`}
-                onClick={() => onEvaluate(record)}
-              />
-            </Tooltip>
-          ) : null}
-          {onDelete ? (
-            <Popconfirm
-              title="Delete this project?"
-              description="This action cannot be undone."
-              okText="Delete"
-              okButtonProps={{ danger: true }}
-              cancelText="Cancel"
-              onConfirm={() => onDelete(record)}
-            >
-              <Tooltip title="Delete">
+      render: (_, record) => {
+        const busyId = deletingProjectId ?? archivingProjectId ?? unarchivingProjectId ?? null;
+        const isBusy = busyId != null;
+        const isThisBusy =
+          deletingProjectId === record.id ||
+          archivingProjectId === record.id ||
+          unarchivingProjectId === record.id;
+
+        return (
+          <div className={styles.actions}>
+            {canEdit && onUpdateStatus ? (
+              <Tooltip title="Update status">
                 <Button
                   type="text"
-                  danger
-                  icon={<DeleteOutlined />}
-                  aria-label={`Delete ${record.name}`}
-                  loading={deletingProjectId === record.id}
-                  disabled={deletingProjectId != null && deletingProjectId !== record.id}
+                  icon={<SyncOutlined />}
+                  aria-label={`Update status for ${record.name}`}
+                  onClick={() => onUpdateStatus(record)}
+                  disabled={isBusy && !isThisBusy}
                 />
               </Tooltip>
-            </Popconfirm>
-          ) : null}
-        </div>
-      ),
+            ) : null}
+            {canEdit && onAssign ? (
+              <Tooltip title="Assign staff">
+                <Button
+                  type="text"
+                  icon={<UserAddOutlined />}
+                  aria-label={`Assign staff for ${record.name}`}
+                  onClick={() => onAssign(record)}
+                  disabled={isBusy && !isThisBusy}
+                />
+              </Tooltip>
+            ) : null}
+            {canEdit && onEdit ? (
+              <Tooltip title="Edit">
+                <Button
+                  type="text"
+                  icon={<EditOutlined />}
+                  aria-label={`Edit ${record.name}`}
+                  onClick={() => onEdit(record)}
+                  disabled={isBusy && !isThisBusy}
+                />
+              </Tooltip>
+            ) : null}
+            {canEdit && onEvaluate ? (
+              <Tooltip title="Evaluate">
+                <Button
+                  type="text"
+                  icon={<StarOutlined />}
+                  aria-label={`Evaluate ${record.name}`}
+                  onClick={() => onEvaluate(record)}
+                  disabled={isBusy && !isThisBusy}
+                />
+              </Tooltip>
+            ) : null}
+            {canArchive && !archivedView && onArchive ? (
+              <Popconfirm
+                title="Lưu trữ dự án này?"
+                description={archiveConfirmDescription(record)}
+                okText="Lưu trữ"
+                cancelText="Hủy"
+                onConfirm={() => onArchive(record)}
+              >
+                <Tooltip title="Lưu trữ">
+                  <Button
+                    type="text"
+                    icon={<InboxOutlined />}
+                    aria-label={`Archive ${record.name}`}
+                    loading={archivingProjectId === record.id}
+                    disabled={isBusy && !isThisBusy}
+                  />
+                </Tooltip>
+              </Popconfirm>
+            ) : null}
+            {canArchive && archivedView && onUnarchive ? (
+              <Popconfirm
+                title="Khôi phục dự án này?"
+                description="Dự án sẽ quay lại danh sách đang hoạt động."
+                okText="Khôi phục"
+                cancelText="Hủy"
+                onConfirm={() => onUnarchive(record)}
+              >
+                <Tooltip title="Khôi phục">
+                  <Button
+                    type="text"
+                    icon={<RollbackOutlined />}
+                    aria-label={`Unarchive ${record.name}`}
+                    loading={unarchivingProjectId === record.id}
+                    disabled={isBusy && !isThisBusy}
+                  />
+                </Tooltip>
+              </Popconfirm>
+            ) : null}
+            {canDelete && onDelete ? (
+              <Popconfirm
+                title="Xóa dự án này?"
+                description="Hành động này không thể hoàn tác."
+                okText="Xóa"
+                okButtonProps={{ danger: true }}
+                cancelText="Hủy"
+                onConfirm={() => onDelete(record)}
+              >
+                <Tooltip title="Xóa">
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    aria-label={`Delete ${record.name}`}
+                    loading={deletingProjectId === record.id}
+                    disabled={isBusy && !isThisBusy}
+                  />
+                </Tooltip>
+              </Popconfirm>
+            ) : null}
+          </div>
+        );
+      },
     },
   ];
 
@@ -384,8 +463,8 @@ export function ProjectTable({
     <TableWrapper
       loading={loading}
       isEmpty={!loading && projects.length === 0}
-      emptyTitle="Không tìm thấy dự án"
-      emptyDescription="Thử điều chỉnh tìm kiếm hoặc bộ lọc."
+      emptyTitle={emptyTitle}
+      emptyDescription={emptyDescription}
     >
       <Table
         className={styles.table}

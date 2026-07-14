@@ -25,12 +25,13 @@ export const CONFIRMATION_OPTIONS = TASK_CONFIRMATION_STATUSES.map((value) => ({
   label: CONFIRMATION_LABELS[value],
 }));
 
-/** Status picker in My Tasks table — display order for employees. */
+/** Status picker in My Tasks — display order for staff workflow + cancel. */
 export const TASK_STATUS_OPTIONS = [
   { value: 'finished' as const, label: CONFIRMATION_LABELS.finished },
   { value: 'confirmed' as const, label: CONFIRMATION_LABELS.confirmed },
   { value: 'not_updated' as const, label: CONFIRMATION_LABELS.not_updated },
   { value: 'decline' as const, label: CONFIRMATION_LABELS.decline },
+  { value: 'cancelled' as const, label: CONFIRMATION_LABELS.cancelled },
 ];
 
 export const CLASSIFICATION_LEVEL_OPTIONS = CLASSIFICATION_LEVELS.map((value) => ({
@@ -91,7 +92,7 @@ export const MY_TASK_COLUMN_HEADERS: Record<MyTaskColumnKey, string> = {
   completion: 'Hoàn Thành',
   evaluation: 'Đánh Giá',
   pmNote: 'Note',
-  confirmation: 'Trạng Thái',
+  confirmation: 'Task status',
   staffNote: 'Note',
   startDate: 'Start Date',
   endDate: 'End Date',
@@ -117,7 +118,7 @@ export const MY_TASK_HEAD_COLUMN_HEADERS: Partial<Record<MyTaskColumnKey, string
   completion: 'Hoàn Thành',
   evaluation: 'Đánh Giá',
   pmNote: 'Note',
-  confirmation: 'Trạng Thái',
+  confirmation: 'Task status',
   staffNote: 'Note',
   startDate: 'Start Date',
   endDate: 'End Date',

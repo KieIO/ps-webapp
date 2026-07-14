@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { projectApi } from '../api';
 import type { ProjectListFilters } from '../schemas/project.schema';
 
-export const useProjectList = (filters: ProjectListFilters) =>
+export const useProjectList = (filters: ProjectListFilters, options?: { enabled?: boolean }) =>
   useQuery({
     queryKey: ['projects', filters],
     queryFn: () => projectApi.getList(filters),
     staleTime: 30_000,
+    enabled: options?.enabled ?? true,
   });
 
 export const useProject = (id: string) =>

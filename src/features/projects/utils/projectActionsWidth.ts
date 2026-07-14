@@ -7,6 +7,8 @@ export interface ProjectActionsWidthOptions {
   canAssign?: boolean;
   hasEdit?: boolean;
   canEvaluate?: boolean;
+  hasArchive?: boolean;
+  hasUnarchive?: boolean;
   hasDelete?: boolean;
 }
 
@@ -16,11 +18,19 @@ export const getProjectActionsWidth = ({
   canAssign = false,
   hasEdit = false,
   canEvaluate = false,
+  hasArchive = false,
+  hasUnarchive = false,
   hasDelete = false,
 }: ProjectActionsWidthOptions): number => {
-  const count = [hasUpdateStatus, canAssign, hasEdit, canEvaluate, hasDelete].filter(
-    Boolean,
-  ).length;
+  const count = [
+    hasUpdateStatus,
+    canAssign,
+    hasEdit,
+    canEvaluate,
+    hasArchive,
+    hasUnarchive,
+    hasDelete,
+  ].filter(Boolean).length;
 
   if (count === 0) return 0;
 

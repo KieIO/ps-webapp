@@ -11,19 +11,21 @@ export const formatTaskStaffNames = (
   return staff.map((member) => member.name).join(', ');
 };
 
-export const resolveStaffFromUserIds = (
-  userIds: string[],
+/** Resolves a single staff select value into a 0–1 length assignee array for the API. */
+export const resolveStaffFromUserId = (
+  userId: string | undefined,
   options: TaskAssignee[],
   fallbackStaff: TaskAssignee[] = [],
 ): TaskAssignee[] => {
+  if (!userId) return [];
+
   const lookup = new Map<string, TaskAssignee>();
   for (const staff of [...options, ...fallbackStaff]) {
     lookup.set(staffOptionKey(staff), staff);
   }
 
-  return userIds
-    .map((id) => lookup.get(id))
-    .filter((staff): staff is TaskAssignee => staff != null);
+  const staff = lookup.get(userId);
+  return staff ? [staff] : [];
 };
 
 export const mergeStaffSelectOptions = (

@@ -1,4 +1,4 @@
-import { DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd';
+import { Alert, DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
@@ -9,7 +9,6 @@ import type { ProjectDepartment } from '@/features/projects/schemas/project.sche
 import {
   CLASSIFICATION_LEVEL_LABELS,
   CLASSIFICATION_LEVEL_OPTIONS,
-  TASK_STATUS_OPTIONS,
   MY_TASK_COLUMN_HEADERS,
   PROJECT_EVALUATION_SCORE_OPTIONS,
   TASK_STATUS_CHANGE_NOTE_LABEL,
@@ -25,12 +24,16 @@ import {
   showsTaskLevelPreview,
   type EditTaskField,
 } from '../../utils/editTaskFields';
-import {
-  mergeStaffSelectOptions,
-  resolveStaffFromUserIds,
-  staffOptionKey,
-} from '../../utils/staff';
+import { mergeStaffSelectOptions, resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
 import { toTaskDateOnly } from '../../utils/taskDates';
+import {
+  canCancelTask,
+  canChangeTaskStatus,
+  confirmCancelTask,
+  getTaskStatusOptionsForRole,
+  isTransitioningToCancelled,
+  TASK_STATUS_LOCKED_MESSAGE,
+} from '../../utils/taskStatusLock';
 import type { ClassificationLevel, MyTask, UpdateMyTaskRequest } from '../../schemas/task.schema';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import styles from './EditTaskModal.module.scss';
@@ -45,7 +48,7 @@ interface EditTaskModalProps {
 
 type EditTaskFormValues = Omit<UpdateMyTaskRequest, 'date' | 'staff'> & {
   date: Dayjs;
-  staffUserIds: string[];
+  staffUserId?: string;
   completionPercent?: number;
   pmEvaluation?: string;
   pmNote?: string;
@@ -93,6 +96,11 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
     hasField(editableFields, 'completion') ||
     hasField(editableFields, 'evaluation') ||
     hasField(editableFields, 'pmNote');
+  const statusEditable = task ? canChangeTaskStatus(task, effectiveRole) : true;
+  const statusOptions = useMemo(
+    () => getTaskStatusOptionsForRole(effectiveRole, task?.staffConfirmation),
+    [effectiveRole, task?.staffConfirmation],
+  );
 
   useEffect(() => {
     if (task && open) {
@@ -105,7 +113,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
         technical: task.technical,
         contentProcessing: task.contentProcessing,
         additionalFactors: task.additionalFactors,
-        staffUserIds: task.staff.map((member) => staffOptionKey(member)),
+        staffUserId: task.staff[0] ? staffOptionKey(task.staff[0]) : undefined,
         staffConfirmation: task.staffConfirmation,
         staffNote: task.staffNote,
         urgency: task.urgency,
@@ -121,8 +129,22 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
     onClose();
   };
 
-  const handleFinish = (values: EditTaskFormValues) => {
+  const handleFinish = async (values: EditTaskFormValues) => {
     if (!task) return;
+
+    const nextConfirmation = hasField(editableFields, 'confirmation')
+      ? values.staffConfirmation
+      : task.staffConfirmation;
+
+    if (!canChangeTaskStatus(task, effectiveRole) && nextConfirmation !== task.staffConfirmation) {
+      return;
+    }
+
+    if (isTransitioningToCancelled(task.staffConfirmation, nextConfirmation)) {
+      if (!canCancelTask(effectiveRole)) return;
+      const confirmed = await confirmCancelTask();
+      if (!confirmed) return;
+    }
 
     const payload: UpdateMyTaskRequest = {
       taskName: hasField(editableFields, 'taskName') ? values.taskName : task.taskName,
@@ -142,11 +164,9 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
         ? (values.additionalFactors ?? '')
         : task.additionalFactors,
       staff: hasField(editableFields, 'staff')
-        ? resolveStaffFromUserIds(values.staffUserIds, staffOptions, task.staff)
-        : task.staff,
-      staffConfirmation: hasField(editableFields, 'confirmation')
-        ? values.staffConfirmation
-        : task.staffConfirmation,
+        ? resolveStaffFromUserId(values.staffUserId, staffOptions, task.staff)
+        : task.staff.slice(0, 1),
+      staffConfirmation: nextConfirmation,
       staffNote: hasField(editableFields, 'staffNote') ? (values.staffNote ?? '') : task.staffNote,
       urgency: hasField(editableFields, 'urgency') ? values.urgency : task.urgency,
     };
@@ -382,24 +402,18 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
           <section className={styles.section}>
             <p className={styles.sectionTitle}>Assignment</p>
             <Form.Item
-              name="staffUserIds"
+              name="staffUserId"
               label={MY_TASK_COLUMN_HEADERS.staffName}
               rules={
                 isProjectTask
-                  ? [
-                      {
-                        required: true,
-                        type: 'array',
-                        min: 1,
-                        message: 'Select at least one staff member for this project task',
-                      },
-                    ]
+                  ? [{ required: true, message: 'Select a staff member for this project task' }]
                   : []
               }
             >
               <Select
-                mode="multiple"
                 allowClear={!isProjectTask}
+                showSearch
+                optionFilterProp="label"
                 placeholder={isProjectTask ? 'Select staff for this task' : UNASSIGNED_STAFF_LABEL}
                 options={staffSelectOptions}
               />
@@ -455,17 +469,33 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
         {hasField(editableFields, 'confirmation') || hasField(editableFields, 'staffNote') ? (
           <section className={styles.section}>
             <p className={styles.sectionTitle}>{MY_TASK_COLUMN_HEADERS.confirmation}</p>
+            {!statusEditable ? (
+              <Alert
+                type="info"
+                showIcon
+                message={TASK_STATUS_LOCKED_MESSAGE}
+                style={{ marginBottom: 12 }}
+              />
+            ) : null}
             {hasField(editableFields, 'confirmation') ? (
               <Form.Item
                 name="staffConfirmation"
                 rules={[{ required: true, message: 'Confirmation is required' }]}
               >
-                <Select options={[...TASK_STATUS_OPTIONS]} placeholder="Select status" />
+                <Select
+                  options={statusOptions}
+                  placeholder="Select status"
+                  disabled={!statusEditable}
+                />
               </Form.Item>
             ) : null}
             {hasField(editableFields, 'staffNote') ? (
               <Form.Item name="staffNote" label={TASK_STATUS_CHANGE_NOTE_LABEL}>
-                <Input.TextArea rows={2} placeholder="Note for status change" />
+                <Input.TextArea
+                  rows={2}
+                  placeholder="Note for status change"
+                  disabled={!statusEditable}
+                />
               </Form.Item>
             ) : null}
           </section>

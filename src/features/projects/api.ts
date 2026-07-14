@@ -5,6 +5,7 @@
 import api from '@/shared/api/base.api';
 import { env } from '@/config/env';
 import {
+  mockArchiveProject,
   mockCreateProject,
   mockGetProjectById,
   mockDeleteProject,
@@ -12,6 +13,7 @@ import {
   mockGetProjectHeadOptions,
   mockGetProjectList,
   mockGetProjectPmOptions,
+  mockUnarchiveProject,
   mockUpdateProject,
 } from './mock/projects.mock';
 import {
@@ -119,5 +121,23 @@ export const projectApi = {
     }
 
     await api.delete(`/projects/${id}`);
+  },
+
+  archive: async (id: string): Promise<Project> => {
+    if (env.useProjectsMock) {
+      return ProjectSchema.parse(await mockArchiveProject(id));
+    }
+
+    const response = await api.post(`/projects/${id}/archive`);
+    return parseProjectResponse(response.data);
+  },
+
+  unarchive: async (id: string): Promise<Project> => {
+    if (env.useProjectsMock) {
+      return ProjectSchema.parse(await mockUnarchiveProject(id));
+    }
+
+    const response = await api.post(`/projects/${id}/unarchive`);
+    return parseProjectResponse(response.data);
   },
 };

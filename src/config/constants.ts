@@ -4,11 +4,13 @@ export const ROUTES = {
 
   // All roles
   /**
-   * Home route (`/`).
-   * `HomePage` renders Project Tracker when the user has `VIEW_CAPACITY_FULL`;
+   * Landing route (`/`).
+   * Renders Project Tracker when the user has `VIEW_CAPACITY_FULL`;
    * otherwise redirects to project tasks.
    */
   DASHBOARD: '/',
+  /** Role-aware Home dashboard (manager view; employee layout TBD). */
+  HOME: '/home',
   /** Hidden temporarily — dashboard page kept for later use */
   DASHBOARD_LEGACY: '/dashboard',
   MY_TASKS: '/tasks/project',
@@ -21,6 +23,7 @@ export const ROUTES = {
 
   // PM / Manager
   PROJECTS: '/projects',
+  PROJECTS_ARCHIVED: '/projects/archived',
   PROJECT_DETAIL: '/projects/:id',
   TASK_MANAGE: '/tasks/manage',
   TASK_NEW: '/tasks/new',

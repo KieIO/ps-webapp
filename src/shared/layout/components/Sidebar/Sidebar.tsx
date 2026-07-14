@@ -10,6 +10,7 @@ import {
   resolveTaskManagementSelectedPath,
 } from '@/config/sidebar';
 import { roleHasPermission } from '@/features/rbac/utils/permissionDerivation';
+import { canViewProjectTracker } from '@/features/rbac/utils/canViewProjectTracker';
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useSidebarShortcuts } from '@/shared/hooks/useSidebarShortcuts';
@@ -38,6 +39,10 @@ export function Sidebar() {
             return roleHasPermission(role, child.permission, permissionConfig);
           });
           return children.length > 0 ? [{ ...item, children }] : [];
+        }
+
+        if (item.key === 'project-tracker') {
+          return canViewProjectTracker(role, permissionConfig) ? [item] : [];
         }
 
         if (!item.permission) return [item];

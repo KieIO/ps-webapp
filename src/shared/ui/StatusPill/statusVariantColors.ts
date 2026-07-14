@@ -6,4 +6,5 @@ export const STATUS_VARIANT_STROKE_COLOR: Record<StatusPillVariant, string> = {
   pending: '#a16207',
   overdue: '#dc2626',
   'on-leave': '#64748b',
+  cancelled: '#475569',
 };

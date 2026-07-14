@@ -1,5 +1,6 @@
 import {
   CheckSquareOutlined,
+  HomeOutlined,
   ProjectOutlined,
   BarChartOutlined,
   TrophyOutlined,
@@ -39,6 +40,14 @@ export interface SidebarItem {
 }
 
 export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
+  {
+    key: 'home',
+    label: 'Home',
+    path: ROUTES.HOME,
+    icon: HomeOutlined,
+    permission: null,
+    shortcut: navShortcut('h'),
+  },
   // Hidden temporarily — route kept at ROUTES.DASHBOARD_LEGACY for later use.
   // {
   //   key: 'dashboard',

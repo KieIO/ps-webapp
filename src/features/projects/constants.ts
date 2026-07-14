@@ -18,7 +18,7 @@ export const STATUS_LABELS: Record<ProjectStatus, string> = {
   not_updated: 'Chưa cập nhật',
   in_progress: 'Đang làm',
   finish: 'Hoàn thành',
-  cancel: 'Đã hủy',
+  cancel: 'Hủy',
 };
 
 export const STATUS_VARIANT: Record<ProjectStatus, StatusPillVariant> = {

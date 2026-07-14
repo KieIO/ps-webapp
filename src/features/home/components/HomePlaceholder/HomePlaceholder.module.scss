@@ -1,0 +1,12 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.copy {
+  margin: 0;
+  color: var(--color-text-body);
+  line-height: 1.5;
+  font-size: 14px;
+}

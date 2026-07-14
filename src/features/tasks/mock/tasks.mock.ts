@@ -318,6 +318,28 @@ const canEditTask = (task: MyTask, editorUserId?: string): boolean => {
   return assigneeIds.includes(editorUserId);
 };
 
+const resolveEditorRole = (editorUserId?: string): Role | undefined =>
+  editorUserId ? deriveDevRoleFromUserId(editorUserId) : undefined;
+
+const assertCanChangeCancelledStatus = (
+  current: MyTask,
+  nextConfirmation: MyTask['staffConfirmation'],
+  editorUserId?: string,
+): void => {
+  const role = resolveEditorRole(editorUserId);
+  if (
+    nextConfirmation === 'cancelled' &&
+    current.staffConfirmation !== 'cancelled' &&
+    role === ROLES.EMPLOYEE
+  ) {
+    throw new Error('Employees cannot cancel tasks');
+  }
+  if (current.staffConfirmation !== 'cancelled') return;
+  if (nextConfirmation === 'cancelled') return;
+  if (role === ROLES.ADMIN) return;
+  throw new Error('Only an admin can change status of a cancelled task');
+};
+
 export const mockUpdateMyTask = async (
   id: string,
   payload: UpdateMyTaskRequest,
@@ -335,6 +357,7 @@ export const mockUpdateMyTask = async (
   if (!canEditTask(current, editorUserId)) {
     throw new Error('You do not have permission to edit this task');
   }
+  assertCanChangeCancelledStatus(current, payload.staffConfirmation, editorUserId);
 
   const level = computeTaskLevel(
     payload.designThinking,
@@ -357,7 +380,10 @@ export const mockUpdateMyTask = async (
     staff: payload.staff,
     staffConfirmation: payload.staffConfirmation,
     staffNote: payload.staffNote,
-    urgency: payload.staffConfirmation === 'finished' ? 'gray' : payload.urgency,
+    urgency:
+      payload.staffConfirmation === 'finished' || payload.staffConfirmation === 'cancelled'
+        ? 'gray'
+        : payload.urgency,
     updatedAt: new Date().toISOString(),
   };
 
@@ -466,12 +492,16 @@ export const mockUpdateMyTaskStatus = async (
   if (!canEditTask(current, editorUserId)) {
     throw new Error('You do not have permission to update this task status');
   }
+  assertCanChangeCancelledStatus(current, payload.staffConfirmation, editorUserId);
 
   const updated = {
     ...current,
     staffConfirmation: payload.staffConfirmation,
     staffNote: payload.staffNote,
-    urgency: payload.staffConfirmation === 'finished' ? ('gray' as const) : current.urgency,
+    urgency:
+      payload.staffConfirmation === 'finished' || payload.staffConfirmation === 'cancelled'
+        ? ('gray' as const)
+        : current.urgency,
     updatedAt: new Date().toISOString(),
   };
 

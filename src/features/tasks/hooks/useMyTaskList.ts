@@ -3,14 +3,14 @@ import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { myTaskApi } from '../api';
 import type { MyTaskListFilters, TaskCategory } from '../schemas/task.schema';
 
-export const useMyTaskList = (filters: MyTaskListFilters) => {
+export const useMyTaskList = (filters: MyTaskListFilters, options?: { enabled?: boolean }) => {
   const userId = useAppSelector((state) => state.auth.user?.id);
   const role = useAppSelector((state) => state.auth.user?.role);
 
   return useQuery({
     queryKey: ['tasks', 'my', userId, role, filters],
     queryFn: () => myTaskApi.getList(filters, userId, role),
-    enabled: Boolean(userId),
+    enabled: Boolean(userId) && (options?.enabled ?? true),
     staleTime: 30_000,
   });
 };
@@ -21,7 +21,8 @@ export const useMyTaskProjectOptions = (taskCategory?: TaskCategory) => {
 
   return useQuery({
     queryKey: ['tasks', 'my', 'project-options', userId, role, taskCategory],
-    queryFn: () => myTaskApi.getProjectOptions({ assigneeUserId: userId, taskCategory, viewerRole: role }),
+    queryFn: () =>
+      myTaskApi.getProjectOptions({ assigneeUserId: userId, taskCategory, viewerRole: role }),
     enabled: Boolean(userId),
     staleTime: 60_000,
   });

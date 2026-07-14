@@ -11,7 +11,7 @@ import { getTaskDeadline } from './taskDetail';
 export const calculateTaskUrgency = (
   task: Pick<MyTask, 'staffConfirmation' | 'date' | 'deadline'>,
 ): UrgencyKey => {
-  if (task.staffConfirmation === 'finished') {
+  if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') {
     return 'gray';
   }
 

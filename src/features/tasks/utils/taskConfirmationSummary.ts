@@ -6,6 +6,7 @@ export interface TaskConfirmationSummary {
   finished: number;
   confirmed: number;
   decline: number;
+  cancelled: number;
 }
 
 const EMPTY_SUMMARY: TaskConfirmationSummary = {
@@ -14,6 +15,7 @@ const EMPTY_SUMMARY: TaskConfirmationSummary = {
   finished: 0,
   confirmed: 0,
   decline: 0,
+  cancelled: 0,
 };
 
 const STATUS_KEY: Record<TaskConfirmationStatus, keyof Omit<TaskConfirmationSummary, 'total'>> = {
@@ -21,6 +23,7 @@ const STATUS_KEY: Record<TaskConfirmationStatus, keyof Omit<TaskConfirmationSumm
   finished: 'finished',
   confirmed: 'confirmed',
   decline: 'decline',
+  cancelled: 'cancelled',
 };
 
 export const computeTaskConfirmationSummary = (tasks: MyTask[]): TaskConfirmationSummary => {

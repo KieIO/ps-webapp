@@ -6,7 +6,7 @@ import { useAssignMyTask } from '../../hooks/useAssignMyTask';
 import {
   formatTaskStaffNames,
   mergeStaffSelectOptions,
-  resolveStaffFromUserIds,
+  resolveStaffFromUserId,
   staffOptionKey,
 } from '../../utils/staff';
 import type { MyTask } from '../../schemas/task.schema';
@@ -19,7 +19,7 @@ interface AssignTaskModalProps {
 }
 
 type AssignTaskFormValues = {
-  staffUserIds: string[];
+  staffUserId?: string;
   staffNote: string;
 };
 
@@ -37,7 +37,7 @@ export function AssignTaskModal({ open, task, onClose }: AssignTaskModalProps) {
   useEffect(() => {
     if (task && open) {
       form.setFieldsValue({
-        staffUserIds: task.staff.map((member) => staffOptionKey(member)),
+        staffUserId: task.staff[0] ? staffOptionKey(task.staff[0]) : undefined,
         staffNote: task.staffNote,
       });
     }
@@ -55,7 +55,7 @@ export function AssignTaskModal({ open, task, onClose }: AssignTaskModalProps) {
       {
         id: task.id,
         payload: {
-          staff: resolveStaffFromUserIds(values.staffUserIds, staffOptions, task.staff),
+          staff: resolveStaffFromUserId(values.staffUserId, staffOptions, task.staff),
           staffNote: values.staffNote ?? '',
         },
       },
@@ -99,21 +99,20 @@ export function AssignTaskModal({ open, task, onClose }: AssignTaskModalProps) {
       <Form form={form} layout="vertical" onFinish={handleFinish} requiredMark={false}>
         <p className={styles.sectionTitle}>Staff</p>
         <Form.Item
-          name="staffUserIds"
+          name="staffUserId"
           label={MY_TASK_COLUMN_HEADERS.staffName}
           rules={[
             {
               required: true,
-              type: 'array',
-              min: 1,
               message: isProjectTask
-                ? 'Select at least one staff member for this project task'
-                : 'Select at least one staff member for this task',
+                ? 'Select a staff member for this project task'
+                : 'Select a staff member for this task',
             },
           ]}
         >
           <Select
-            mode="multiple"
+            showSearch
+            optionFilterProp="label"
             placeholder="Select staff for this task"
             options={staffSelectOptions}
           />

@@ -2,19 +2,23 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
 import { ROUTES } from '@/config/constants';
 import { ROLES, type Role } from '@/config/permissions';
-import { roleHasPermission } from '@/features/rbac/utils/permissionDerivation';
+import { canViewProjectTracker } from '@/features/rbac/utils/canViewProjectTracker';
 import { AuthenticatedLayout } from '@/shared/layout/AuthenticatedLayout';
 import { UnauthenticatedLayout } from '@/shared/layout/UnauthenticatedLayout';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 
 const LoginPage = lazy(() => import('@/pages/LoginPage/LoginPage'));
+const HomePage = lazy(() => import('@/pages/HomePage/HomePage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage/DashboardPage'));
 const MyTasksPage = lazy(() => import('@/pages/MyTasksPage/MyTasksPage'));
 const NonProjectTasksPage = lazy(() => import('@/pages/NonProjectTasksPage/NonProjectTasksPage'));
 const MyTaskDetailPage = lazy(() => import('@/pages/MyTaskDetailPage/MyTaskDetailPage'));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage/NotificationsPage'));
 const ProjectsPage = lazy(() => import('@/pages/ProjectsPage/ProjectsPage'));
+const ArchivedProjectsPage = lazy(
+  () => import('@/pages/ArchivedProjectsPage/ArchivedProjectsPage'),
+);
 const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage/ProjectDetailPage'));
 const TaskManagePage = lazy(() => import('@/pages/TaskManagePage/TaskManagePage'));
 const TaskFormPage = lazy(() => import('@/pages/TaskFormPage/TaskFormPage'));
@@ -60,12 +64,12 @@ function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   return <Outlet />;
 }
 
-/** Landing page — permission-based, not role-based (see `VIEW_CAPACITY_FULL`). */
-function HomePage() {
+/** Landing page — Project Tracker for VIEW_CAPACITY_FULL roles and employees. */
+function LandingPage() {
   const role = useAppSelector((state) => state.auth.user?.role);
   const permissionConfig = useAppSelector((state) => state.permissionConfig.config);
 
-  if (role && roleHasPermission(role, 'VIEW_CAPACITY_FULL', permissionConfig)) {
+  if (canViewProjectTracker(role, permissionConfig)) {
     return <ProjectTrackerPage />;
   }
 
@@ -80,7 +84,8 @@ const router = createBrowserRouter([
   {
     element: <AuthenticatedLayout />,
     children: [
-      { index: true, element: <HomePage />, handle: { contentLayout: 'flush' } },
+      { index: true, element: <LandingPage />, handle: { contentLayout: 'flush' } },
+      { path: ROUTES.HOME.slice(1), element: <HomePage /> },
       { path: ROUTES.DASHBOARD_LEGACY.slice(1), element: <DashboardPage /> },
       {
         path: ROUTES.PROJECT_TRACKER_LEGACY.slice(1),
@@ -109,6 +114,7 @@ const router = createBrowserRouter([
         ),
         children: [
           { path: ROUTES.PROJECTS.slice(1), element: <ProjectsPage /> },
+          { path: ROUTES.PROJECTS_ARCHIVED.slice(1), element: <ArchivedProjectsPage /> },
           { path: 'projects/:id', element: <ProjectDetailPage /> },
           { path: 'tasks/manage', element: <TaskManagePage /> },
           { path: 'tasks/new', element: <TaskFormPage /> },

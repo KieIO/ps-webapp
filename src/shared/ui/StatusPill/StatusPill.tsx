@@ -6,7 +6,8 @@ export type StatusPillVariant =
   | 'in-progress'
   | 'pending'
   | 'overdue'
-  | 'on-leave';
+  | 'on-leave'
+  | 'cancelled';
 
 interface StatusPillProps {
   label: string;
@@ -15,9 +16,5 @@ interface StatusPillProps {
 }
 
 export function StatusPill({ label, variant, className }: StatusPillProps) {
-  return (
-    <span className={classNames(styles.pill, styles[variant], className)}>
-      {label}
-    </span>
-  );
+  return <span className={classNames(styles.pill, styles[variant], className)}>{label}</span>;
 }

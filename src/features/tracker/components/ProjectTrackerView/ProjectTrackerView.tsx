@@ -310,7 +310,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
               <div className={styles.leftHeader}>
                 <div className={styles.leftHeaderTop}>
                   <div className={styles.leftHeaderName}>{PROJECT_NAME_COLUMN_LABEL}</div>
-                  <div className={styles.leftHeaderTeam}>PM &amp; Team</div>
+                  <div className={styles.leftHeaderTeam}>PM</div>
                   <div className={styles.leftHeaderSlides}>Slides</div>
                 </div>
                 <div className={styles.offRowLabel}>Nghỉ hôm nay</div>
@@ -349,9 +349,6 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                       </div>
                       <div className={styles.teamCell}>
                         <div className={styles.pmName}>{project.pm}</div>
-                        {project.team.length > 0 && (
-                          <div className={styles.teamNames}>{project.team.join(', ')}</div>
-                        )}
                       </div>
                       <div
                         className={classNames(styles.slidesCell, {

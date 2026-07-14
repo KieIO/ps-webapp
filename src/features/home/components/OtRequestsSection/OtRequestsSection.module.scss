@@ -1,0 +1,80 @@
+.card {
+  height: 100%;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.itemBody {
+  min-width: 0;
+  flex: 1;
+}
+
+.itemTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--color-text);
+}
+
+.hours {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-warning);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.project {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-text-body);
+}
+
+.reason {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.approve {
+  background: var(--color-success) !important;
+  border-color: var(--color-success) !important;
+}
+
+@media (max-width: 640px) {
+  .item {
+    flex-direction: column;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions :global(button) {
+    flex: 1;
+  }
+}

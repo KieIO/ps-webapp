@@ -22,6 +22,9 @@ export function TaskConfirmationSummaryBar({ summary }: TaskConfirmationSummaryB
       <span className={styles.pillDecline}>
         {CONFIRMATION_LABELS.decline}: {summary.decline}
       </span>
+      <span className={styles.pillCancelled}>
+        {CONFIRMATION_LABELS.cancelled}: {summary.cancelled}
+      </span>
     </div>
   );
 }

@@ -18,7 +18,7 @@ import {
   useCreateTaskStaffOptions,
 } from '../../hooks/useCreateTaskOptions';
 import { useCreateMyTask } from '../../hooks/useCreateMyTask';
-import { mergeStaffSelectOptions, resolveStaffFromUserIds } from '../../utils/staff';
+import { mergeStaffSelectOptions, resolveStaffFromUserId } from '../../utils/staff';
 import { parseTaskScoreName, toClassificationLevel } from '../../utils/taskScoreName';
 import { toTaskDateOnly } from '../../utils/taskDates';
 import type {
@@ -56,7 +56,7 @@ type CreateTaskFormValues = Omit<
   'date' | 'staff' | 'staffConfirmation' | 'taskCategory' | 'taskName' | 'department'
 > & {
   date: Dayjs;
-  staffUserIds: string[];
+  staffUserId?: string;
   taskGroup: string;
   taskScoreName: string;
   department?: TaskDepartment;
@@ -77,7 +77,7 @@ const DEFAULT_VALUES: CreateTaskFormValues = {
   technical: 1,
   contentProcessing: 1,
   additionalFactors: '',
-  staffUserIds: [],
+  staffUserId: undefined,
   staffNote: '',
 };
 
@@ -176,7 +176,7 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
 
   useEffect(() => {
     if (!open || !isProjectTask) return;
-    form.setFieldValue('staffUserIds', []);
+    form.setFieldValue('staffUserId', undefined);
   }, [open, isProjectTask, projectName, form]);
 
   useEffect(() => {
@@ -238,7 +238,7 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
       technical: values.technical,
       contentProcessing: values.contentProcessing,
       additionalFactors: values.additionalFactors ?? '',
-      staff: resolveStaffFromUserIds(values.staffUserIds, staffOptions),
+      staff: resolveStaffFromUserId(values.staffUserId, staffOptions),
       staffConfirmation: 'not_updated',
       staffNote: values.staffNote ?? '',
       urgency: values.urgency,
@@ -426,30 +426,24 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
         <section className={styles.section}>
           <p className={styles.sectionTitle}>Assignment</p>
           <Form.Item
-            name="staffUserIds"
+            name="staffUserId"
             label={MY_TASK_COLUMN_HEADERS.staffName}
             rules={
               isProjectTask
-                ? [
-                    {
-                      required: true,
-                      type: 'array',
-                      min: 1,
-                      message: 'Select at least one staff member for this project task',
-                    },
-                  ]
+                ? [{ required: true, message: 'Select a staff member for this project task' }]
                 : []
             }
           >
             <Select
-              mode="multiple"
               allowClear={!isProjectTask}
+              showSearch
+              optionFilterProp="label"
               placeholder={isProjectTask ? 'Select staff for this task' : UNASSIGNED_STAFF_LABEL}
               options={staffSelectOptions}
             />
           </Form.Item>
           <Form.Item name="staffNote" label={MY_TASK_COLUMN_HEADERS.staffNote}>
-            <Input.TextArea rows={2} placeholder="Optional note for assignees" />
+            <Input.TextArea rows={2} placeholder="Optional note for assignee" />
           </Form.Item>
         </section>
       </Form>

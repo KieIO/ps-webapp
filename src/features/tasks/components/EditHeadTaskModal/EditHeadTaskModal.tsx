@@ -1,7 +1,8 @@
-import { DatePicker, Form, Input, Modal, Select } from 'antd';
+import { Alert, DatePicker, Form, Input, Modal, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
+import { ROLES } from '@/config/permissions';
 import {
   EVALUATION_LEVEL_LABELS,
   EVALUATION_LEVEL_OPTIONS,
@@ -16,11 +17,28 @@ import type {
   ProjectStatus,
   ProjectUrgency,
 } from '@/features/projects/schemas/project.schema';
-import { MY_TASK_HEAD_COLUMN_HEADERS, PROJECT_EVALUATION_SCORE_OPTIONS } from '../../constants';
+import { usePermission } from '@/shared/hooks/usePermission';
+import {
+  MY_TASK_HEAD_COLUMN_HEADERS,
+  PROJECT_EVALUATION_SCORE_OPTIONS,
+  TASK_STATUS_CHANGE_NOTE_LABEL,
+} from '../../constants';
 import { useUpdateHeadMyTask } from '../../hooks/useUpdateHeadMyTask';
 import { useUpdateMyTask } from '../../hooks/useUpdateMyTask';
-import type { MyTask, UpdateHeadMyTaskRequest } from '../../schemas/task.schema';
+import type {
+  MyTask,
+  TaskConfirmationStatus,
+  UpdateHeadMyTaskRequest,
+} from '../../schemas/task.schema';
 import { resolveProjectContextFromTask } from '../../utils/taskProjectContext';
+import {
+  canCancelTask,
+  canChangeTaskStatus,
+  confirmCancelTask,
+  getTaskStatusOptionsForRole,
+  isTransitioningToCancelled,
+  TASK_STATUS_LOCKED_MESSAGE,
+} from '../../utils/taskStatusLock';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import styles from '../EditTaskModal/EditTaskModal.module.scss';
 
@@ -40,16 +58,18 @@ type HeadTaskFormValues = {
   additionalFactors: string;
   pmEvaluation: string;
   pmNote: string;
+  /** Task lifecycle status (staffConfirmation) — not project status. */
+  staffConfirmation: TaskConfirmationStatus;
+  staffNote: string;
   projectStatus: ProjectStatus;
   projectFinishedDate?: Dayjs;
-  /** Linked project urgency — independent from taskUrgency. */
-  projectUrgency: ProjectUrgency;
-  /** Task urgency — independent from projectUrgency. */
-  taskUrgency: ProjectUrgency;
+  /** Task urgency only — project urgency is edited in Create/Edit project modals. */
+  urgency: ProjectUrgency;
 };
 
 export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProps) {
   const [form] = Form.useForm<HeadTaskFormValues>();
+  const { role } = usePermission();
   const { mutateAsync: updateProjectAsync, isPending: isProjectPending } = useUpdateProject();
   const { mutateAsync: updateHeadTaskAsync, isPending: isTaskPending } = useUpdateHeadMyTask();
   const { mutateAsync: updateTaskAsync, isPending: isTaskUrgencyPending } = useUpdateMyTask();
@@ -62,6 +82,8 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
   const nature = Form.useWatch('nature', form);
   const projectTime = Form.useWatch('projectTime', form);
   const projectStatus = Form.useWatch('projectStatus', form);
+  const statusEditable = task ? canChangeTaskStatus(task, role) : true;
+  const statusOptions = getTaskStatusOptionsForRole(role, task?.staffConfirmation);
 
   const previewLevel: EvaluationLevel | undefined =
     volume != null && nature != null && projectTime != null
@@ -84,12 +106,13 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
       additionalFactors: ctx.additionalFactors ?? '',
       pmEvaluation: ctx.pmEvaluation ?? '',
       pmNote: ctx.pmNote ?? '',
+      staffConfirmation: task.staffConfirmation,
+      staffNote: task.staffNote,
       projectStatus: (ctx.projectStatus ?? 'not_updated') as ProjectStatus,
       projectFinishedDate: ctx.projectFinishedDate ? dayjs(ctx.projectFinishedDate) : undefined,
-      projectUrgency: linkedProject?.urgency ?? 'auto',
-      taskUrgency: task.urgency,
+      urgency: task.urgency,
     });
-  }, [task, open, form, linkedProject?.urgency]);
+  }, [task, open, form]);
 
   const handleClose = () => {
     form.resetFields();
@@ -99,10 +122,25 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
   const handleFinish = async (values: HeadTaskFormValues) => {
     if (!task) return;
 
+    if (!canChangeTaskStatus(task, role) && values.staffConfirmation !== task.staffConfirmation) {
+      return;
+    }
+
+    if (isTransitioningToCancelled(task.staffConfirmation, values.staffConfirmation)) {
+      if (!canCancelTask(role)) return;
+      const confirmed = await confirmCancelTask();
+      if (!confirmed) return;
+    }
+
     const closeModal = () => {
       form.resetFields();
       onClose();
     };
+
+    const taskPayloadChanged =
+      values.urgency !== task.urgency ||
+      values.staffConfirmation !== task.staffConfirmation ||
+      (values.staffNote ?? '') !== task.staffNote;
 
     try {
       if (saveViaProject && linkedProject) {
@@ -120,16 +158,16 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
               evaluation: values.pmEvaluation ?? '',
               note: values.pmNote ?? '',
               status: values.projectStatus,
+              // Keep existing project urgency — only force gray when project is closed.
               urgency:
                 values.projectStatus === 'finish' || values.projectStatus === 'cancel'
                   ? 'gray'
-                  : values.projectUrgency,
+                  : linkedProject.urgency,
             }),
           }),
         ];
 
-        // Task urgency is a separate resource from project urgency.
-        if (values.taskUrgency !== task.urgency) {
+        if (taskPayloadChanged) {
           jobs.push(
             updateTaskAsync({
               id: task.id,
@@ -143,9 +181,9 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
                 contentProcessing: task.contentProcessing,
                 additionalFactors: task.additionalFactors,
                 staff: task.staff,
-                staffConfirmation: task.staffConfirmation,
-                staffNote: task.staffNote,
-                urgency: values.taskUrgency,
+                staffConfirmation: values.staffConfirmation,
+                staffNote: values.staffNote ?? '',
+                urgency: values.urgency,
               },
               successMessage: null,
             }),
@@ -157,7 +195,7 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
         return;
       }
 
-      // Non-linked: one head-context request includes task urgency.
+      // Non-linked: head-context request includes task urgency; status via task update.
       const payload: UpdateHeadMyTaskRequest = {
         projectStartDate: values.startDate.toISOString(),
         projectEndDate: values.endDate.toISOString(),
@@ -173,10 +211,38 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
           values.projectStatus === 'finish'
             ? (values.projectFinishedDate ?? dayjs()).toISOString()
             : undefined,
-        urgency: values.taskUrgency,
+        urgency: values.urgency,
       };
 
-      await updateHeadTaskAsync({ id: task.id, payload });
+      const jobs: Promise<unknown>[] = [updateHeadTaskAsync({ id: task.id, payload })];
+
+      if (
+        values.staffConfirmation !== task.staffConfirmation ||
+        (values.staffNote ?? '') !== task.staffNote
+      ) {
+        jobs.push(
+          updateTaskAsync({
+            id: task.id,
+            payload: {
+              taskName: task.taskName,
+              quantity: task.quantity,
+              date: task.date,
+              description: task.description,
+              designThinking: task.designThinking,
+              technical: task.technical,
+              contentProcessing: task.contentProcessing,
+              additionalFactors: values.additionalFactors ?? task.additionalFactors,
+              staff: task.staff,
+              staffConfirmation: values.staffConfirmation,
+              staffNote: values.staffNote ?? '',
+              urgency: values.urgency,
+            },
+            successMessage: null,
+          }),
+        );
+      }
+
+      await Promise.all(jobs);
       closeModal();
     } catch {
       // Mutation hooks already surface errors via toast.
@@ -246,24 +312,13 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
             </Form.Item>
           </div>
 
-          <div className={saveViaProject ? styles.row : undefined}>
-            <Form.Item
-              name="taskUrgency"
-              label="Task urgency"
-              rules={[{ required: true, message: 'Task urgency is required' }]}
-            >
-              <TaskUrgencySelect />
-            </Form.Item>
-            {saveViaProject ? (
-              <Form.Item
-                name="projectUrgency"
-                label="Project urgency"
-                rules={[{ required: true, message: 'Project urgency is required' }]}
-              >
-                <TaskUrgencySelect />
-              </Form.Item>
-            ) : null}
-          </div>
+          <Form.Item
+            name="urgency"
+            label="Urgency"
+            rules={[{ required: true, message: 'Urgency is required' }]}
+          >
+            <TaskUrgencySelect />
+          </Form.Item>
 
           <Form.Item name="brief" label={headers.brief}>
             <Input.TextArea rows={2} placeholder="Project brief" />
@@ -302,6 +357,14 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
 
         <section className={styles.section}>
           <p className={styles.sectionTitle}>Quality & status</p>
+          {!statusEditable ? (
+            <Alert
+              type="info"
+              showIcon
+              message={TASK_STATUS_LOCKED_MESSAGE}
+              style={{ marginBottom: 12 }}
+            />
+          ) : null}
           <div className={styles.row}>
             <Form.Item name="pmEvaluation" label={headers.evaluation}>
               <Select
@@ -311,13 +374,35 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
               />
             </Form.Item>
             <Form.Item
-              name="projectStatus"
-              label={headers.projectStatus}
-              rules={[{ required: true, message: 'Status is required' }]}
+              name="staffConfirmation"
+              label={headers.confirmation}
+              rules={[{ required: true, message: 'Task status is required' }]}
             >
-              <Select options={[...STATUS_OPTIONS]} />
+              <Select
+                options={statusOptions}
+                disabled={!statusEditable}
+                placeholder="Select status"
+              />
             </Form.Item>
           </div>
+
+          {statusEditable || role === ROLES.ADMIN ? (
+            <Form.Item name="staffNote" label={TASK_STATUS_CHANGE_NOTE_LABEL}>
+              <Input.TextArea
+                rows={2}
+                placeholder="Note for status change"
+                disabled={!statusEditable}
+              />
+            </Form.Item>
+          ) : null}
+
+          <Form.Item
+            name="projectStatus"
+            label={headers.projectStatus}
+            rules={[{ required: true, message: 'Project status is required' }]}
+          >
+            <Select options={[...STATUS_OPTIONS]} />
+          </Form.Item>
 
           {projectStatus === 'finish' ? (
             <Form.Item name="projectFinishedDate" label={headers.finishedDate}>

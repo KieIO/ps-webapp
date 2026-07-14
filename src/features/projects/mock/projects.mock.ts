@@ -52,6 +52,12 @@ const filterProjects = (
   const search = filters.search?.trim().toLowerCase();
 
   return projects.filter((project) => {
+    const isArchived = Boolean(project.archivedAt);
+    if (filters.archived) {
+      if (!isArchived) return false;
+    } else if (isArchived) {
+      return false;
+    }
     if (filters.clientId && project.clientId !== filters.clientId) return false;
     if (filters.status && project.status !== filters.status) return false;
     if (filters.pmCode && project.pm.code !== filters.pmCode) return false;
@@ -245,4 +251,62 @@ export const mockDeleteProject = async (id: string, userId?: string): Promise<vo
   }
 
   setMockProjectsStore(projects.filter((entry) => entry.id !== id));
+};
+
+export const mockArchiveProject = async (id: string): Promise<Project> => {
+  await mockDelay();
+
+  const projects = getMockProjectsStore();
+  const index = projects.findIndex((entry) => entry.id === id);
+  if (index === -1) {
+    throw new Error('Project not found');
+  }
+
+  const current = projects[index];
+  if (current.archivedAt) {
+    throw new Error('Project is already archived');
+  }
+
+  const now = new Date().toISOString();
+  const updated: StoredProject = {
+    ...current,
+    archivedAt: now,
+    updatedAt: now,
+  };
+  const next = [...projects];
+  next[index] = updated;
+  setMockProjectsStore(next);
+
+  return enrichProject(updated, getMockTasksStore(), next, {
+    extraMembers: mockExtraMembersForProject(updated.name),
+  });
+};
+
+export const mockUnarchiveProject = async (id: string): Promise<Project> => {
+  await mockDelay();
+
+  const projects = getMockProjectsStore();
+  const index = projects.findIndex((entry) => entry.id === id);
+  if (index === -1) {
+    throw new Error('Project not found');
+  }
+
+  const current = projects[index];
+  if (!current.archivedAt) {
+    throw new Error('Project is not archived');
+  }
+
+  const now = new Date().toISOString();
+  const updated: StoredProject = {
+    ...current,
+    archivedAt: undefined,
+    updatedAt: now,
+  };
+  const next = [...projects];
+  next[index] = updated;
+  setMockProjectsStore(next);
+
+  return enrichProject(updated, getMockTasksStore(), next, {
+    extraMembers: mockExtraMembersForProject(updated.name),
+  });
 };

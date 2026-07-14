@@ -55,6 +55,7 @@ export const ProjectRecordSchema = z.object({
   status: z.enum(PROJECT_STATUSES),
   urgency: z.enum(PROJECT_URGENCIES).optional().default('auto'),
   finishedDate: z.string().optional(),
+  archivedAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
 
@@ -81,6 +82,8 @@ export const ProjectListFiltersSchema = z.object({
   pmCode: z.string().optional(),
   headName: z.string().optional(),
   projectLevel: z.number().int().min(1).max(4).optional(),
+  /** When true, list archived projects only; default/false = active projects. */
+  archived: z.boolean().optional(),
 });
 
 export const ProjectListResponseSchema = z.object({
