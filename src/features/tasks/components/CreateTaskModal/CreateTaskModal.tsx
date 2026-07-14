@@ -90,14 +90,14 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
   const [form] = Form.useForm<CreateTaskFormValues>();
   const { mutate, isPending } = useCreateMyTask();
   const currentUser = useAppSelector((state) => state.auth.user);
-  const { data: projectOptions = [] } = useCreateTaskProjectOptions(taskCategory);
-  const { data: pmOptions = [] } = useCreateTaskPmOptions();
-  const { data: staffOptions = [] } = useCreateTaskStaffOptions();
+  const { data: projectOptions = [] } = useCreateTaskProjectOptions(taskCategory, open);
+  const { data: pmOptions = [] } = useCreateTaskPmOptions(open);
+  const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
   const {
     options: taskGroupOptions,
     groupByCode,
     isLoading: taskGroupLoading,
-  } = useTaskScoreGroupOptions();
+  } = useTaskScoreGroupOptions({ enabled: open });
   const isProjectTask = taskCategory === 'project';
   const projectName = Form.useWatch('projectName', form);
   const taskGroup = Form.useWatch('taskGroup', form);
@@ -106,7 +106,7 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
     data: scoreList,
     isLoading: scoresLoading,
     isFetching: scoresFetching,
-  } = useTaskScoreList(scoreFilters, { enabled: Boolean(taskGroup) });
+  } = useTaskScoreList(scoreFilters, { enabled: open && Boolean(taskGroup) });
   const staffSelectOptions = useMemo(() => mergeStaffSelectOptions(staffOptions), [staffOptions]);
   const taskScoreOptions = useMemo(
     () =>

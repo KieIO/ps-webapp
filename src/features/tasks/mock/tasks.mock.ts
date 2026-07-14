@@ -4,9 +4,12 @@ import { getMockUsersStore } from '@/features/users/mock/users.data';
 import type {
   AssignMyTaskRequest,
   CreateMyTaskRequest,
+  CreateQualityReviewRequest,
   MyTask,
   MyTaskListFilters,
   MyTaskListResponse,
+  QualityReview,
+  QualityReviewListResponse,
   TaskAssignee,
   UpdateHeadMyTaskRequest,
   UpdateMyTaskRequest,
@@ -142,6 +145,44 @@ export const mockGetMyTaskHistory = async (
   await mockDelay();
   const task = await mockGetMyTaskById(id, viewerUserId, viewerRole);
   return { items: buildFallbackTaskHistory(task) };
+};
+
+const mockQualityReviewsByTask = new Map<string, QualityReview[]>();
+
+export const mockListQualityReviews = async (
+  id: string,
+  viewerUserId?: string,
+  viewerRole?: Role,
+): Promise<QualityReviewListResponse> => {
+  await mockDelay();
+  await mockGetMyTaskById(id, viewerUserId, viewerRole);
+  return { items: mockQualityReviewsByTask.get(id) ?? [] };
+};
+
+export const mockCreateQualityReview = async (
+  id: string,
+  payload: CreateQualityReviewRequest,
+  editorUserId?: string,
+  editorUserName?: string,
+): Promise<QualityReview> => {
+  await mockDelay();
+  await mockGetMyTaskById(id, editorUserId);
+  if (editorUserId && !canEvaluateTask(editorUserId)) {
+    throw new Error('Employees cannot update task revisions');
+  }
+
+  const item: QualityReview = {
+    id: `qr-mock-${Date.now()}`,
+    taskId: id,
+    reviewerId: editorUserId ?? 'unknown',
+    reviewerName: editorUserName?.trim() || 'Reviewer',
+    revisionCount: payload.revisionCount,
+    comment: payload.comment ?? '',
+    createdAt: new Date().toISOString(),
+  };
+  const existing = mockQualityReviewsByTask.get(id) ?? [];
+  mockQualityReviewsByTask.set(id, [item, ...existing]);
+  return item;
 };
 
 export const mockGetMyTaskProjectOptions = async (

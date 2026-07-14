@@ -1,0 +1,108 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card {
+  height: 100%;
+}
+
+.placeholderCard {
+  border-style: dashed;
+  background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-surface) 100%);
+}
+
+.metricHeader {
+  margin-bottom: 8px;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+}
+
+.info {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  cursor: help;
+}
+
+.valueRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.value {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.valueMuted {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.slash {
+  margin: 0 4px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.weeklyPercent {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.deltaUp {
+  color: var(--color-success, #16a34a);
+}
+
+.deltaDown {
+  color: var(--color-error);
+}
+
+.progress {
+  margin-bottom: 8px;
+
+  :global(.ant-progress) {
+    margin: 0;
+  }
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

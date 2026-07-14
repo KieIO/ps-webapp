@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { useTaskScoreGroupList } from './useTaskScoreGroupList';
 
-export const useTaskScoreGroupOptions = () => {
-  const { data, isLoading } = useTaskScoreGroupList();
+export const useTaskScoreGroupOptions = (options?: { enabled?: boolean }) => {
+  const { data, isLoading } = useTaskScoreGroupList(options);
 
-  const options = useMemo(
+  const groupOptions = useMemo(
     () =>
       (data?.items ?? []).map((group) => ({
         value: group.code,
@@ -20,5 +20,5 @@ export const useTaskScoreGroupOptions = () => {
 
   const defaultGroupCode = data?.items[0]?.code;
 
-  return { options, groupByCode, defaultGroupCode, isLoading };
+  return { options: groupOptions, groupByCode, defaultGroupCode, isLoading };
 };

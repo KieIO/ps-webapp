@@ -16,6 +16,7 @@ import { useDeleteMyTask } from '../../hooks/useDeleteMyTask';
 import { useMyTaskColumns } from '../../hooks/useMyTaskColumns';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { exportMyTasksToCsv } from '../../utils/exportMyTasks';
+import { canDeleteTask } from '../../utils/taskStatusLock';
 import { computeTaskConfirmationSummary } from '../../utils/taskConfirmationSummary';
 import type { MyTask, MyTaskListFilters, TaskCategory } from '../../schemas/task.schema';
 
@@ -35,6 +36,7 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
   const { columnDefs } = useMyTaskColumns();
   const canAssign = can('ASSIGN_TASK');
   const canEvaluate = can('EVALUATE_TASK');
+  const canDelete = canDeleteTask(role);
 
   const queryFilters = useMemo(
     () => ({ ...filters, taskCategory, search: debouncedSearch }),
@@ -47,8 +49,11 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
     () => computeTaskConfirmationSummary(data?.items ?? []),
     [data?.items],
   );
-  const { mutate: deleteTask, isPending: isDeleting, variables: deletingVariables } =
-    useDeleteMyTask();
+  const {
+    mutate: deleteTask,
+    isPending: isDeleting,
+    variables: deletingVariables,
+  } = useDeleteMyTask();
 
   const handleDelete = (task: MyTask) => {
     deleteTask(task.id, {
@@ -108,7 +113,7 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
         onAssign={setAssigningTask}
         onUpdateStatus={setStatusTask}
         onEvaluate={setEvaluatingTask}
-        onDelete={handleDelete}
+        onDelete={canDelete ? handleDelete : undefined}
         canAssign={canAssign}
         canEvaluate={canEvaluate}
         deletingTaskId={isDeleting ? (deletingVariables ?? null) : null}

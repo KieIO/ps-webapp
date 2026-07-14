@@ -40,12 +40,12 @@ api.interceptors.response.use(
       const requestUrl = error.config?.url ?? '';
       const isLoginRequest = requestUrl.includes('/auth/login');
 
+      // Route-level access is enforced by ProtectedRoute. Do not redirect on API 403 —
+      // secondary calls (e.g. optional option endpoints) must not bounce the whole page.
       if (status === 401 && !isLoginRequest) {
         store.dispatch(logout());
         queryClient.clear();
         window.location.replace(ROUTES.LOGIN);
-      } else if (status === 403 && !isLoginRequest) {
-        window.location.replace(ROUTES.FORBIDDEN);
       }
     }
     return Promise.reject(error);

@@ -1,0 +1,111 @@
+.card {
+  height: 100%;
+}
+
+.tableWrap {
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--color-divider);
+  }
+
+  th {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    background: var(--color-bg);
+    z-index: 1;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.code {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.taskName {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.35;
+}
+
+.description {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 280px;
+}
+
+.muted {
+  color: var(--color-text-muted);
+  line-height: 1.35;
+  max-width: 160px;
+}
+
+.deadline {
+  color: var(--color-text-body);
+  white-space: nowrap;
+}
+
+.actionsCol {
+  text-align: right;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.finishBtn {
+  background: var(--color-success, #16a34a);
+  border-color: var(--color-success, #16a34a);
+
+  &:hover:not(:disabled) {
+    background: #15803d !important;
+    border-color: #15803d !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .table {
+    th:nth-child(2),
+    td:nth-child(2) {
+      display: none;
+    }
+  }
+}

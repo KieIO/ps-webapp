@@ -2,6 +2,7 @@ import { Alert, Tabs } from 'antd';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
 import { TaskDetailHistoryPanel } from '../TaskDetailHistoryPanel/TaskDetailHistoryPanel';
 import { TaskDetailSummaryCard } from '../TaskDetailSummaryCard/TaskDetailSummaryCard';
+import { TaskRevisionHistoryTab } from '../TaskRevisionHistoryTab/TaskRevisionHistoryTab';
 import { useMyTask } from '../../hooks/useMyTask';
 import styles from './TaskDetailView.module.scss';
 
@@ -71,9 +72,7 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
               {
                 key: 'revision',
                 label: 'Revision history',
-                children: (
-                  <div className={styles.emptyBlock}>No revision history for this task yet.</div>
-                ),
+                children: <TaskRevisionHistoryTab taskId={task.id} />,
               },
               {
                 key: 'evaluation',

@@ -68,6 +68,8 @@ export const MyTaskSchema = z.object({
   /** Stored setting — `auto` lets the API/UI derive display color from deadline. */
   urgency: z.enum(PROJECT_URGENCIES).optional().default('auto'),
   updatedAt: z.string().nullish(),
+  /** Set when status becomes finished. */
+  completedAt: z.string().nullish(),
   /** Denormalized project fields — populated by API or mock for Department Head columns. */
   projectStartDate: z.string().nullish(),
   projectEndDate: z.string().nullish(),
@@ -105,6 +107,25 @@ export const TaskHistoryEventSchema = z.object({
 
 export const TaskHistoryListResponseSchema = z.object({
   items: z.array(TaskHistoryEventSchema),
+});
+
+export const QualityReviewSchema = z.object({
+  id: z.string(),
+  taskId: z.string(),
+  reviewerId: z.string(),
+  reviewerName: z.string(),
+  revisionCount: z.number().int().min(0),
+  comment: z.string(),
+  createdAt: z.string(),
+});
+
+export const QualityReviewListResponseSchema = z.object({
+  items: z.array(QualityReviewSchema),
+});
+
+export const CreateQualityReviewRequestSchema = z.object({
+  revisionCount: z.number().int().min(0, 'Revision count must be >= 0'),
+  comment: z.string().optional().default(''),
 });
 
 export const CreateMyTaskRequestSchema = z.object({
@@ -186,6 +207,9 @@ export type MyTaskListFilters = z.infer<typeof MyTaskListFiltersSchema>;
 export type MyTaskListResponse = z.infer<typeof MyTaskListResponseSchema>;
 export type TaskHistoryEvent = z.infer<typeof TaskHistoryEventSchema>;
 export type TaskHistoryListResponse = z.infer<typeof TaskHistoryListResponseSchema>;
+export type QualityReview = z.infer<typeof QualityReviewSchema>;
+export type QualityReviewListResponse = z.infer<typeof QualityReviewListResponseSchema>;
+export type CreateQualityReviewRequest = z.infer<typeof CreateQualityReviewRequestSchema>;
 export type CreateMyTaskRequest = z.infer<typeof CreateMyTaskRequestSchema>;
 export type UpdateMyTaskStatusRequest = z.infer<typeof UpdateMyTaskStatusRequestSchema>;
 export type UpdateMyTaskPmEvaluationRequest = z.infer<typeof UpdateMyTaskPmEvaluationRequestSchema>;

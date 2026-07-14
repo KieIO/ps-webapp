@@ -20,7 +20,7 @@ export const isCreativeHomeRole = (role: Role): boolean => role === ROLES.CREATI
 
 /**
  * Current Home dashboard UI is for leadership only.
- * PM / Creative Manager use `ManagerHomeDashboard`; Employee is deferred.
+ * PM / Creative Manager use `ManagerHomeDashboard`; Employee uses `EmployeeHomeDashboard`.
  */
 export const isHeadHomeDashboardRole = (role: Role | undefined): boolean =>
   role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD || role === ROLES.ADMIN;
@@ -28,6 +28,9 @@ export const isHeadHomeDashboardRole = (role: Role | undefined): boolean =>
 /** Operational manager Home (PM + Creative Manager). */
 export const isOpsManagerHomeRole = (role: Role | undefined): boolean =>
   role === ROLES.PM || role === ROLES.CREATIVE_MANAGER;
+
+/** Individual contributor Home. */
+export const isEmployeeHomeRole = (role: Role | undefined): boolean => role === ROLES.EMPLOYEE;
 
 const matchesPerson = (
   person: { userId?: string | null; name: string },

@@ -20,6 +20,7 @@ export const useUpdateMyTaskStatus = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'my'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'my', 'history'] });
+      queryClient.invalidateQueries({ queryKey: ['home', 'employee', 'productivity'] });
       message.success('Task status updated');
     },
     onError: (error: Error) => {

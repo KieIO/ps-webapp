@@ -19,6 +19,8 @@ import {
   mockGetMyTaskStaffNameOptions,
   mockGetProjectStaffOptions,
   mockGetStaffOptions,
+  mockListQualityReviews,
+  mockCreateQualityReview,
   mockUpdateMyTask,
   mockUpdateHeadMyTask,
   mockUpdateMyTaskPmEvaluation,
@@ -31,17 +33,23 @@ import {
   MyTaskListResponseSchema,
   MyTaskSchema,
   TaskHistoryListResponseSchema,
+  QualityReviewListResponseSchema,
+  QualityReviewSchema,
+  CreateQualityReviewRequestSchema,
   UpdateMyTaskPmEvaluationRequestSchema,
   UpdateMyTaskRequestSchema,
   UpdateHeadMyTaskRequestSchema,
   UpdateMyTaskStatusRequestSchema,
   type AssignMyTaskRequest,
   type CreateMyTaskRequest,
+  type CreateQualityReviewRequest,
   type MyTask,
   type TaskAssignee,
   type TaskPerson,
   type MyTaskListFilters,
   type MyTaskListResponse,
+  type QualityReview,
+  type QualityReviewListResponse,
   type TaskHistoryListResponse,
   type UpdateMyTaskPmEvaluationRequest,
   type UpdateMyTaskRequest,
@@ -97,6 +105,39 @@ export const myTaskApi = {
       throw new Error(getApiErrorMessage(error, 'Failed to load task history'));
     });
     return TaskHistoryListResponseSchema.parse(response.data);
+  },
+
+  listQualityReviews: async (id: string): Promise<QualityReviewListResponse> => {
+    if (env.useTasksMock) {
+      return QualityReviewListResponseSchema.parse(await mockListQualityReviews(id));
+    }
+
+    const response = await api.get(`/tasks/my/${id}/quality-reviews`).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Failed to load revision history'));
+    });
+    return QualityReviewListResponseSchema.parse(response.data);
+  },
+
+  createQualityReview: async (
+    id: string,
+    payload: CreateQualityReviewRequest,
+    editorUserId?: string,
+    editorUserName?: string,
+  ): Promise<QualityReview> => {
+    const data = CreateQualityReviewRequestSchema.parse(payload);
+
+    if (env.useTasksMock) {
+      return QualityReviewSchema.parse(
+        await mockCreateQualityReview(id, data, editorUserId, editorUserName),
+      );
+    }
+
+    const response = await api
+      .post(`/tasks/my/${id}/quality-reviews`, data)
+      .catch((error: unknown) => {
+        throw new Error(getApiErrorMessage(error, 'Failed to save revision'));
+      });
+    return QualityReviewSchema.parse(response.data);
   },
 
   getProjectOptions: async ({

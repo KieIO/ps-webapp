@@ -1,10 +1,5 @@
 import { useState } from 'react';
-import {
-  DeleteOutlined,
-  EditOutlined,
-  StarOutlined,
-  SyncOutlined,
-} from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, StarOutlined, SyncOutlined } from '@ant-design/icons';
 import { Button, Divider, Popconfirm } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { ROLES } from '@/config/permissions';
@@ -16,6 +11,7 @@ import { UpdateTaskStatusModal } from '../UpdateTaskStatusModal/UpdateTaskStatus
 import { useDeleteMyTask } from '../../hooks/useDeleteMyTask';
 import type { MyTask } from '../../schemas/task.schema';
 import { getTaskListPath } from '../../utils/taskDetail';
+import { canDeleteTask } from '../../utils/taskStatusLock';
 import styles from './TaskDetailActions.module.scss';
 
 interface TaskDetailActionsProps {
@@ -26,6 +22,7 @@ export function TaskDetailActions({ task }: TaskDetailActionsProps) {
   const navigate = useNavigate();
   const { can, role } = usePermission();
   const canEvaluate = can('EVALUATE_TASK');
+  const canDelete = canDeleteTask(role);
 
   const [editOpen, setEditOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -62,27 +59,31 @@ export function TaskDetailActions({ task }: TaskDetailActionsProps) {
           ) : null}
         </div>
 
-        <Divider className={styles.divider} />
+        {canDelete ? (
+          <>
+            <Divider className={styles.divider} />
 
-        <Popconfirm
-          title="Delete this task?"
-          description="This action cannot be undone."
-          okText="Delete"
-          okButtonProps={{ danger: true }}
-          cancelText="Cancel"
-          onConfirm={handleDelete}
-        >
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            loading={isDeleting}
-            disabled={isDeleting}
-            block
-            className={styles.deleteBtn}
-          >
-            Delete task
-          </Button>
-        </Popconfirm>
+            <Popconfirm
+              title="Delete this task?"
+              description="This action cannot be undone."
+              okText="Delete"
+              okButtonProps={{ danger: true }}
+              cancelText="Cancel"
+              onConfirm={handleDelete}
+            >
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                loading={isDeleting}
+                disabled={isDeleting}
+                block
+                className={styles.deleteBtn}
+              >
+                Delete task
+              </Button>
+            </Popconfirm>
+          </>
+        ) : null}
       </div>
 
       {role === ROLES.HEAD ? (
