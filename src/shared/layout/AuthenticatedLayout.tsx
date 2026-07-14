@@ -2,6 +2,7 @@ import classNames from 'classnames';
 import { Suspense } from 'react';
 import { Navigate, Outlet, useMatches } from 'react-router-dom';
 import { ROUTES } from '@/config/constants';
+import { NotificationStreamProvider } from '@/features/notifications/components/NotificationStreamProvider/NotificationStreamProvider';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import { TopHeader } from './components/TopHeader/TopHeader';
@@ -23,16 +24,18 @@ export function AuthenticatedLayout() {
   }
 
   return (
-    <div className={styles.layout}>
-      <Sidebar />
-      <div className={styles.main}>
-        <TopHeader />
-        <main className={classNames(styles.content, isFlushContent && styles.contentFlush)}>
-          <Suspense fallback={null}>
-            <Outlet />
-          </Suspense>
-        </main>
+    <NotificationStreamProvider>
+      <div className={styles.layout}>
+        <Sidebar />
+        <div className={styles.main}>
+          <TopHeader />
+          <main className={classNames(styles.content, isFlushContent && styles.contentFlush)}>
+            <Suspense fallback={null}>
+              <Outlet />
+            </Suspense>
+          </main>
+        </div>
       </div>
-    </div>
+    </NotificationStreamProvider>
   );
 }

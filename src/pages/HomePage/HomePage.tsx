@@ -1,6 +1,7 @@
 import { HomeDashboard } from '@/features/home/components/HomeDashboard/HomeDashboard';
 import { HomePlaceholder } from '@/features/home/components/HomePlaceholder/HomePlaceholder';
-import { isHeadHomeDashboardRole } from '@/features/home/utils/homeScope';
+import { ManagerHomeDashboard } from '@/features/home/components/ManagerHomeDashboard/ManagerHomeDashboard';
+import { isHeadHomeDashboardRole, isOpsManagerHomeRole } from '@/features/home/utils/homeScope';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 
 export default function HomePage() {
@@ -12,6 +13,10 @@ export default function HomePage() {
 
   if (isHeadHomeDashboardRole(role)) {
     return <HomeDashboard />;
+  }
+
+  if (isOpsManagerHomeRole(role)) {
+    return <ManagerHomeDashboard />;
   }
 
   return <HomePlaceholder role={role} />;

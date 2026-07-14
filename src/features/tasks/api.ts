@@ -224,6 +224,20 @@ export const myTaskApi = {
     return MyTaskSchema.parse(response.data);
   },
 
+  remind: async (id: string): Promise<{ notifiedCount: number }> => {
+    if (env.useTasksMock) {
+      return { notifiedCount: 1 };
+    }
+
+    try {
+      const response = await api.post(`/tasks/my/${id}/remind`);
+      const data = response.data as { notifiedCount?: number };
+      return { notifiedCount: data.notifiedCount ?? 0 };
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Failed to send reminder'));
+    }
+  },
+
   create: async (
     payload: CreateMyTaskRequest,
     creatorUserId?: string,

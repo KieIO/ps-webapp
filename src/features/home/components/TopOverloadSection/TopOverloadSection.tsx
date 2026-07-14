@@ -4,6 +4,7 @@ import { ROUTES } from '@/config/constants';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import { UserNameLink } from '@/shared/ui/UserNameLink/UserNameLink';
 import { OVERLOAD_CAPACITY_THRESHOLD } from '../../constants';
+import homeStyles from '../../styles/homeSection.module.scss';
 import type { OverloadRankingItem } from '../../utils/workloadOverview';
 import styles from './TopOverloadSection.module.scss';
 
@@ -17,7 +18,7 @@ export function TopOverloadSection({ items }: TopOverloadSectionProps) {
       title="Top 5 nhân viên overload"
       subtitle={`Capacity > ${OVERLOAD_CAPACITY_THRESHOLD}% hôm nay`}
       actions={
-        <Link to={ROUTES.CAPACITY} className={styles.link}>
+        <Link to={ROUTES.CAPACITY} className={homeStyles.link}>
           Capacity
         </Link>
       }

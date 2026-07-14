@@ -20,10 +20,14 @@ export const isCreativeHomeRole = (role: Role): boolean => role === ROLES.CREATI
 
 /**
  * Current Home dashboard UI is for leadership only.
- * PM / Creative Manager / Employee use deferred layouts.
+ * PM / Creative Manager use `ManagerHomeDashboard`; Employee is deferred.
  */
 export const isHeadHomeDashboardRole = (role: Role | undefined): boolean =>
   role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD || role === ROLES.ADMIN;
+
+/** Operational manager Home (PM + Creative Manager). */
+export const isOpsManagerHomeRole = (role: Role | undefined): boolean =>
+  role === ROLES.PM || role === ROLES.CREATIVE_MANAGER;
 
 const matchesPerson = (
   person: { userId?: string | null; name: string },
@@ -49,6 +53,10 @@ export const scopeProjectsForHome = (
 
   if (isCreativeHomeRole(user.role)) {
     return scopeCreativeHeadProjects(active, context?.tasks ?? [], context?.users ?? []);
+  }
+
+  if (user.role === ROLES.CREATIVE_MANAGER) {
+    return active.filter((project) => project.department === 'creative');
   }
 
   if (user.role === ROLES.PM) {
@@ -103,6 +111,13 @@ export const scopeTasksForHome = (
   if (isCreativeHomeRole(user.role)) {
     return tasks.filter((task) => {
       if (task.department === 'creative') return true;
+      if (task.projectId && projectIds.has(task.projectId)) return true;
+      return projectNames.has(task.projectName);
+    });
+  }
+
+  if (user.role === ROLES.CREATIVE_MANAGER) {
+    return tasks.filter((task) => {
       if (task.projectId && projectIds.has(task.projectId)) return true;
       return projectNames.has(task.projectName);
     });

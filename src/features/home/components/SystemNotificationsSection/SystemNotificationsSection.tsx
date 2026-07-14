@@ -1,92 +1,53 @@
-import { AlertOutlined, ClockCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { Empty, Tag } from 'antd';
+import { Empty } from 'antd';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/config/constants';
+import { NotificationFeed } from '@/features/notifications/components/NotificationFeed/NotificationFeed';
+import {
+  useMarkNotificationRead,
+  useNotificationList,
+} from '@/features/notifications/hooks/useNotifications';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
-import { HOME_PLACEHOLDER_COMING_SOON, HOME_PLACEHOLDER_FORMULA_NOTE } from '../../constants';
+import homeStyles from '../../styles/homeSection.module.scss';
 import styles from './SystemNotificationsSection.module.scss';
 
-type PlaceholderNotifType = 'ot' | 'overdue' | 'info';
-
-/**
- * TODO(home-system-notifications): Replace placeholder feed with real notification
- * pipeline / formula when provided.
- */
-const PLACEHOLDER_ITEMS: Array<{
-  id: string;
-  type: PlaceholderNotifType;
-  message: string;
-  time: string;
-}> = [
-  {
-    id: 'n1',
-    type: 'ot',
-    message: 'PM Nguyễn Long đã gửi OT Request — 4h cho Pokeslide App',
-    time: '5 phút trước',
-  },
-  {
-    id: 'n2',
-    type: 'overdue',
-    message: 'Task SCR-011 quá hạn chưa hoàn thành — giao cho Trần Minh',
-    time: '22 phút trước',
-  },
-  {
-    id: 'n3',
-    type: 'info',
-    message: 'Nhân viên Phạm Đức chưa confirm task SCR-018 sau 20 phút',
-    time: '41 phút trước',
-  },
-  {
-    id: 'n4',
-    type: 'overdue',
-    message: '2 task trong dự án CRM Redesign sắp vượt deadline hôm nay',
-    time: '1 giờ trước',
-  },
-];
-
-const TYPE_ICON: Record<PlaceholderNotifType, typeof ClockCircleOutlined> = {
-  ot: ClockCircleOutlined,
-  overdue: AlertOutlined,
-  info: InfoCircleOutlined,
-};
+const HOME_FEED_LIMIT = 6;
 
 export function SystemNotificationsSection() {
+  const listQuery = useNotificationList(HOME_FEED_LIMIT);
+  const markRead = useMarkNotificationRead();
+
+  const items = listQuery.data?.items ?? [];
+  const unreadCount = listQuery.data?.unreadCount ?? 0;
+
   return (
     <CardWrapper
       title="Thông báo hệ thống"
-      subtitle={HOME_PLACEHOLDER_FORMULA_NOTE}
+      subtitle={
+        unreadCount > 0
+          ? `${unreadCount} chưa đọc · cập nhật trong phạm vi của bạn`
+          : 'Cập nhật từ hệ thống trong phạm vi của bạn'
+      }
       actions={
-        <div className={styles.actions}>
-          <Tag color="gold">{HOME_PLACEHOLDER_COMING_SOON}</Tag>
-          <Link to={ROUTES.NOTIFICATIONS} className={styles.link}>
-            Xem tất cả
-          </Link>
-        </div>
+        <Link to={ROUTES.NOTIFICATIONS} className={homeStyles.link}>
+          Notifications
+        </Link>
       }
       className={styles.card}
     >
-      <div data-todo="home-system-notifications">
-        {PLACEHOLDER_ITEMS.length === 0 ? (
-          <Empty description="Chưa có thông báo" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-        ) : (
-          <ul className={styles.list}>
-            {PLACEHOLDER_ITEMS.map((item) => {
-              const Icon = TYPE_ICON[item.type];
-              return (
-                <li key={item.id} className={styles.item}>
-                  <span className={styles.icon} data-type={item.type}>
-                    <Icon />
-                  </span>
-                  <div className={styles.body}>
-                    <p className={styles.message}>{item.message}</p>
-                    <span className={styles.time}>{item.time}</span>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+      {listQuery.isError ? (
+        <Empty description="Không tải được thông báo" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+      ) : (
+        <div className={homeStyles.scrollBody}>
+          <NotificationFeed
+            items={items}
+            isLoading={listQuery.isLoading}
+            dense
+            onItemClick={(item) => {
+              if (!item.isRead) markRead.mutate(item.id);
+            }}
+          />
+        </div>
+      )}
     </CardWrapper>
   );
 }

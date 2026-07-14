@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { ROUTES } from '@/config/constants';
 import { env } from '@/config/env';
+import { queryClient } from '@/shared/api/queryClient';
 import { store } from '@/store/store';
 import { logout } from '@/store/slices/authSlice';
 
@@ -41,6 +42,7 @@ api.interceptors.response.use(
 
       if (status === 401 && !isLoginRequest) {
         store.dispatch(logout());
+        queryClient.clear();
         window.location.replace(ROUTES.LOGIN);
       } else if (status === 403 && !isLoginRequest) {
         window.location.replace(ROUTES.FORBIDDEN);

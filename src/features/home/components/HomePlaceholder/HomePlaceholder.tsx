@@ -8,8 +8,8 @@ interface HomePlaceholderProps {
 }
 
 /**
- * Deferred Home layouts — Employee / PM / Creative Manager designs TBD.
- * Leadership dashboard lives in `HomeDashboard`.
+ * Deferred Home layout — Employee (and any role without a dedicated dashboard).
+ * Leadership → `HomeDashboard`; PM / Creative Manager → `ManagerHomeDashboard`.
  */
 export function HomePlaceholder({ role }: HomePlaceholderProps) {
   const roleLabel = ROLE_LABELS[role];

@@ -1,0 +1,46 @@
+.card {
+  height: 100%;
+}
+
+.valueRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.value {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.slash {
+  margin: 0 4px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.percent {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-success, #16a34a);
+}
+
+.progress {
+  margin-bottom: 10px;
+
+  :global(.ant-progress) {
+    margin: 0;
+  }
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}

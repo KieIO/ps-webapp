@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { message, Modal } from 'antd';
 import { ROUTES } from '@/config/constants';
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
@@ -7,6 +7,7 @@ import { settingsApi } from '../api';
 
 export const useResetDatabase = () => {
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
@@ -31,6 +32,7 @@ export const useResetDatabase = () => {
     },
     onSuccess: (result) => {
       dispatch(logout());
+      queryClient.clear();
       message.success(result.message || 'Database reset to initial seed data');
       window.location.replace(ROUTES.LOGIN);
     },
