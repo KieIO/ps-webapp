@@ -1,82 +1,71 @@
-import { Alert, Button, Skeleton } from 'antd';
-import { ROLE_LABELS } from '@/config/permissions';
-import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { useState } from 'react';
+import { Alert, Button, DatePicker, Skeleton } from 'antd';
+import dayjs, { type Dayjs } from 'dayjs';
 import { PendingReactivationBanner } from '@/features/leave/components/PendingReactivationBanner/PendingReactivationBanner';
-import { useHomeDashboardData } from '../../hooks/useHomeDashboardData';
-import { HomeMetricGrid } from '../HomeMetricGrid/HomeMetricGrid';
-import { OtRequestsSection } from '../OtRequestsSection/OtRequestsSection';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { useOverallDashboard } from '../../hooks/useOverallDashboard';
+import { OverallMetricGrid } from '../OverallMetricGrid/OverallMetricGrid';
+import { OverallTrendSection } from '../OverallTrendSection/OverallTrendSection';
 import { SystemNotificationsSection } from '../SystemNotificationsSection/SystemNotificationsSection';
-import { TopOverloadSection } from '../TopOverloadSection/TopOverloadSection';
-import { WorkloadOverviewTable } from '../WorkloadOverviewTable/WorkloadOverviewTable';
 import styles from './HomeDashboard.module.scss';
 
 export function HomeDashboard() {
-  const { role, isLoading, isError, data, refetch } = useHomeDashboardData();
-
-  const roleLabel = role ? ROLE_LABELS[role] : 'Manager';
+  const [selectedMonth, setSelectedMonth] = useState<Dayjs>(() => dayjs().startOf('month'));
+  const period = { year: selectedMonth.year(), month: selectedMonth.month() + 1 };
+  const dashboardQuery = useOverallDashboard(period);
+  const data = dashboardQuery.data;
 
   return (
     <div className={styles.root}>
       <PageHeader
-        title="Home"
-        subtitle={`${roleLabel} · tổng quan dự án, task và capacity trong phạm vi của bạn`}
+        title="Overall Dashboard"
+        subtitle="Tổng quan capacity, output và hiệu suất toàn công ty"
+        actions={
+          <DatePicker
+            picker="month"
+            allowClear={false}
+            value={selectedMonth}
+            format="[Tháng] M/YYYY"
+            onChange={(value) => {
+              if (value) setSelectedMonth(value.startOf('month'));
+            }}
+            aria-label="Chọn tháng báo cáo"
+          />
+        }
       />
 
       <PendingReactivationBanner />
 
-      {isError && (
+      {dashboardQuery.isError && (
         <Alert
           type="error"
           showIcon
           className={styles.alert}
-          message="Không tải được dữ liệu Home"
+          message="Không tải được Overall Dashboard"
+          description="Dữ liệu hiện chưa thể đồng bộ. Vui lòng thử lại."
           action={
-            <Button size="small" onClick={() => refetch()}>
+            <Button size="small" onClick={() => void dashboardQuery.refetch()}>
               Thử lại
             </Button>
           }
         />
       )}
 
-      {isLoading || !data ? (
+      {dashboardQuery.isLoading ? (
         <div className={styles.loading}>
-          <Skeleton active paragraph={{ rows: 3 }} />
-          <Skeleton active paragraph={{ rows: 6 }} />
+          <Skeleton active paragraph={{ rows: 4 }} />
+          <div className={styles.loadingCharts}>
+            <Skeleton active paragraph={{ rows: 6 }} />
+            <Skeleton active paragraph={{ rows: 6 }} />
+          </div>
         </div>
-      ) : (
+      ) : data ? (
         <>
-          <HomeMetricGrid
-            runningProjectCount={data.runningProjectCount}
-            runningProjectsPreview={data.runningProjectsPreview}
-            deadlineRiskCount={data.deadlineRiskCount}
-            deadlineRiskDays={data.deadlineRiskDays}
-            deadlineRiskProjects={data.deadlineRiskProjects}
-            todayTaskCount={data.todayTaskCount}
-            todayLabel={data.todayLabel}
-            scopedTaskTotal={data.scopedTaskTotal}
-            tasksByType={data.tasksByType}
-            departmentCapacityPercent={data.departmentCapacityPercent}
-            companyCapacityPercent={data.companyCapacityPercent}
-          />
-
-          <div className={styles.midRow}>
-            <div className={styles.midPrimary}>
-              <WorkloadOverviewTable
-                rows={data.workloadRows}
-                personColumnLabel={data.workloadPersonColumnLabel}
-              />
-            </div>
-            <div className={styles.midSecondary}>
-              <OtRequestsSection />
-            </div>
-          </div>
-
-          <div className={styles.bottomRow}>
-            <TopOverloadSection items={data.topOverload} />
-            <SystemNotificationsSection />
-          </div>
+          <OverallMetricGrid data={data} />
+          <OverallTrendSection data={data} />
+          <SystemNotificationsSection />
         </>
-      )}
+      ) : null}
     </div>
   );
 }

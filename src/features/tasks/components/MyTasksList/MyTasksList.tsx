@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, message } from 'antd';
+import { useSearchParams } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { ROLES } from '@/config/permissions';
@@ -19,13 +20,37 @@ import { exportMyTasksToCsv } from '../../utils/exportMyTasks';
 import { canDeleteTask } from '../../utils/taskStatusLock';
 import { computeTaskConfirmationSummary } from '../../utils/taskConfirmationSummary';
 import type { MyTask, MyTaskListFilters, TaskCategory } from '../../schemas/task.schema';
+import styles from './MyTasksList.module.scss';
 
 interface MyTasksListProps {
   taskCategory: TaskCategory;
 }
 
+const formatNumber = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 });
+
+const parseTimeliness = (value: string | null): MyTaskListFilters['timeliness'] =>
+  value === 'completed' || value === 'on_time' || value === 'not_on_time' ? value : undefined;
+
+const parseOutputMetric = (value: string | null): MyTaskListFilters['outputMetric'] =>
+  value === 'project_slides' || value === 'creative_da' ? value : undefined;
+
 export function MyTasksList({ taskCategory }: MyTasksListProps) {
-  const [filters, setFilters] = useState<MyTaskListFilters>({ taskCategory });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [filters, setFilters] = useState<MyTaskListFilters>(() => {
+    const completedMonth = searchParams.get('completedMonth') ?? undefined;
+    const hasValidMonth = completedMonth != null && /^\d{4}-\d{2}$/.test(completedMonth);
+    const timeliness = parseTimeliness(searchParams.get('timeliness'));
+    const outputMonth = searchParams.get('outputMonth') ?? undefined;
+    const hasValidOutputMonth = outputMonth != null && /^\d{4}-\d{2}$/.test(outputMonth);
+    const outputMetric = parseOutputMetric(searchParams.get('outputMetric'));
+    return {
+      taskCategory,
+      timeliness: hasValidMonth ? timeliness : undefined,
+      completedMonth: hasValidMonth && timeliness ? completedMonth : undefined,
+      outputMetric: hasValidOutputMonth ? outputMetric : undefined,
+      outputMonth: hasValidOutputMonth && outputMetric ? outputMonth : undefined,
+    };
+  });
   const [exporting, setExporting] = useState(false);
   const [editingTask, setEditingTask] = useState<MyTask | null>(null);
   const [assigningTask, setAssigningTask] = useState<MyTask | null>(null);
@@ -37,6 +62,59 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
   const canAssign = can('ASSIGN_TASK');
   const canEvaluate = can('EVALUATE_TASK');
   const canDelete = canDeleteTask(role);
+
+  useEffect(() => {
+    const completedMonth = searchParams.get('completedMonth') ?? undefined;
+    const hasValidMonth = completedMonth != null && /^\d{4}-\d{2}$/.test(completedMonth);
+    const timeliness = parseTimeliness(searchParams.get('timeliness'));
+    const outputMonth = searchParams.get('outputMonth') ?? undefined;
+    const hasValidOutputMonth = outputMonth != null && /^\d{4}-\d{2}$/.test(outputMonth);
+    const outputMetric = parseOutputMetric(searchParams.get('outputMetric'));
+    setFilters((current) => ({
+      ...current,
+      taskCategory,
+      timeliness: hasValidMonth ? timeliness : undefined,
+      completedMonth: hasValidMonth && timeliness ? completedMonth : undefined,
+      outputMetric: hasValidOutputMonth ? outputMetric : undefined,
+      outputMonth: hasValidOutputMonth && outputMetric ? outputMonth : undefined,
+    }));
+  }, [searchParams, taskCategory]);
+
+  const handleFiltersChange = (nextFilters: MyTaskListFilters) => {
+    setFilters(nextFilters);
+    const nextSearchParams = new URLSearchParams(searchParams);
+    if (nextFilters.timeliness) {
+      nextSearchParams.set('timeliness', nextFilters.timeliness);
+    } else {
+      nextSearchParams.delete('timeliness');
+    }
+    if (nextFilters.completedMonth) {
+      nextSearchParams.set('completedMonth', nextFilters.completedMonth);
+    } else {
+      nextSearchParams.delete('completedMonth');
+    }
+    if (nextFilters.outputMetric) {
+      nextSearchParams.set('outputMetric', nextFilters.outputMetric);
+    } else {
+      nextSearchParams.delete('outputMetric');
+    }
+    if (nextFilters.outputMonth) {
+      nextSearchParams.set('outputMonth', nextFilters.outputMonth);
+    } else {
+      nextSearchParams.delete('outputMonth');
+    }
+    setSearchParams(nextSearchParams, { replace: true });
+  };
+
+  const handleReset = () => {
+    setFilters({ taskCategory });
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete('timeliness');
+    nextSearchParams.delete('completedMonth');
+    nextSearchParams.delete('outputMetric');
+    nextSearchParams.delete('outputMonth');
+    setSearchParams(nextSearchParams, { replace: true });
+  };
 
   const queryFilters = useMemo(
     () => ({ ...filters, taskCategory, search: debouncedSearch }),
@@ -87,11 +165,24 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
       <MyTaskFilters
         taskCategory={taskCategory}
         filters={filters}
-        onChange={setFilters}
-        onReset={() => setFilters({ taskCategory })}
+        onChange={handleFiltersChange}
+        onReset={handleReset}
         onExport={handleExport}
         exporting={exporting}
       />
+
+      {filters.outputMetric && data ? (
+        <p className={styles.outputSummary}>
+          <strong>
+            {formatNumber.format(data.items.reduce((total, task) => total + task.quantity, 0))}{' '}
+            {filters.outputMetric === 'project_slides' ? 'slides' : 'DA'}
+          </strong>
+          <span>
+            {' '}
+            từ {data.total} task · {filters.outputMonth ?? ''}
+          </span>
+        </p>
+      ) : null}
 
       {isError ? (
         <Alert

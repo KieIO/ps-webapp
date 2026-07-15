@@ -1,0 +1,268 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.capacityGrid,
+.statGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.capacityGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.statGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.capacityCard,
+.statCard {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 5%);
+}
+
+.capacityCard {
+  --card-accent: #2563eb;
+  --card-tint: #eff6ff;
+  padding: 20px;
+  border-color: color-mix(in srgb, var(--card-accent) 20%, var(--color-border));
+  background: linear-gradient(135deg, var(--card-tint), #fff 78%);
+}
+
+.company {
+  --card-accent: #0f766e;
+  --card-tint: #f0fdfa;
+}
+
+.project {
+  --card-accent: #2563eb;
+  --card-tint: #eff6ff;
+}
+
+.creative {
+  --card-accent: #7c3aed;
+  --card-tint: #f5f3ff;
+}
+
+.capacityHeader,
+.statHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--color-text-body);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.helpButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: var(--color-text-muted);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: help;
+
+  &:hover {
+    color: var(--color-primary);
+    background: var(--color-primary-subtle);
+  }
+
+  &:focus-visible {
+    color: var(--color-primary);
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+  }
+}
+
+.metricTooltipOverlay {
+  max-width: min(320px, calc(100vw - 32px));
+}
+
+.tooltipContent {
+  font-size: 12px;
+  line-height: 1.4;
+
+  p {
+    margin: 5px 0 0;
+  }
+}
+
+.capacityValue {
+  margin: 5px 0 0;
+  color: var(--color-text);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -1.2px;
+  line-height: 1;
+}
+
+.iconBubble,
+.statIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+}
+
+.iconBubble {
+  color: var(--card-accent);
+  background: color-mix(in srgb, var(--card-accent) 10%, white);
+}
+
+.muted {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.miniBars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.miniBarItem {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  color: var(--color-text-disabled);
+  border: 0;
+  background: transparent;
+  font-size: 9px;
+  font-family: inherit;
+  text-align: center;
+  cursor: help;
+
+  &:focus-visible {
+    outline: 2px solid var(--card-accent);
+    outline-offset: 3px;
+  }
+}
+
+.miniBarItemInactive {
+  cursor: default;
+}
+
+.miniBarTrack {
+  display: block;
+  height: 7px;
+  margin-bottom: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card-accent) 10%, white);
+}
+
+.miniBarFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--card-accent);
+}
+
+.weeklyTooltipContent {
+  font-size: 12px;
+  line-height: 1.4;
+
+  p {
+    margin: 4px 0 0;
+  }
+}
+
+.statCard {
+  padding: 18px;
+}
+
+.clickableStatCard {
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+    box-shadow: 0 5px 14px rgb(15 23 42 / 8%);
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.actionHint {
+  margin: 8px 0 0;
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.statIcon {
+  color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.statValue,
+.unavailableValue {
+  margin: 16px 0 0;
+  color: var(--color-text);
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  line-height: 1.15;
+}
+
+.unavailableValue {
+  color: var(--color-text-muted);
+  font-size: 19px;
+  letter-spacing: -0.2px;
+}
+
+@media (max-width: 1180px) {
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 880px) {
+  .capacityGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .statGrid {
+    grid-template-columns: 1fr;
+  }
+}

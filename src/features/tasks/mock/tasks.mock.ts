@@ -1,5 +1,6 @@
 import { PERMISSIONS, ROLES, type Role } from '@/config/permissions';
 import { DEV_MOCK_USERS } from '@/features/auth/mock/devUsers';
+import { getMockProjectsStore } from '@/features/projects/mock/projects.data';
 import { getMockUsersStore } from '@/features/users/mock/users.data';
 import type {
   AssignMyTaskRequest,
@@ -66,7 +67,45 @@ const canUpdatePmEvaluation = (userId?: string): boolean => {
   return role === ROLES.CREATIVE_HEAD || role === ROLES.CREATIVE_MANAGER;
 };
 
-const filterTasks = (
+const monthKey = (value: string | null | undefined): string | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 7);
+};
+
+const dateKey = (value: string | null | undefined): string | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
+};
+
+const isCreativeAssignee = (userId: string | null | undefined): boolean => {
+  if (!userId) return false;
+  const user = getMockUsersStore().find((entry) => entry.id === userId);
+  if (user) return user.department === 'creative_hcm' || user.department === 'creative_ag';
+
+  const role = deriveDevRoleFromUserId(userId);
+  return role === ROLES.CREATIVE_HEAD || role === ROLES.CREATIVE_MANAGER;
+};
+
+const isCreativeDATask = (task: MyTask): boolean => {
+  const normalizedName = task.taskName.trim().toLowerCase().replace(/\s+/g, ' ');
+  const hasDAName = /^(da|edit da|rework da)( |$)/.test(normalizedName);
+  const hasCreativeDepartment =
+    task.department === 'creative' ||
+    task.staff.some((member) => isCreativeAssignee(member.userId));
+  return hasDAName && hasCreativeDepartment;
+};
+
+const isProjectOutputTask = (task: MyTask): boolean => {
+  const project = getMockProjectsStore().find(
+    (entry) => entry.id === task.projectId || entry.name === task.projectName,
+  );
+  return project?.department?.trim().toLowerCase() === 'project';
+};
+
+export const filterMockTasks = (
+  tasks: MyTask[],
   filters: MyTaskListFilters,
   assigneeUserId?: string,
   viewerRole?: Role,
@@ -74,7 +113,7 @@ const filterTasks = (
   const search = filters.search?.trim().toLowerCase();
   const viewAllTasks = canViewAllTasks(assigneeUserId, viewerRole);
 
-  return getMockTasksStore().filter((task) => {
+  return tasks.filter((task) => {
     if (assigneeUserId && !viewAllTasks) {
       const assigneeIds = task.staff.map((member) => member.userId).filter(Boolean);
       if (assigneeIds.length > 0 && !assigneeIds.includes(assigneeUserId)) {
@@ -92,6 +131,28 @@ const filterTasks = (
       }
     }
     if (filters.confirmation && task.staffConfirmation !== filters.confirmation) return false;
+    if (filters.timeliness) {
+      if (
+        task.staffConfirmation !== 'finished' ||
+        !task.completedAt ||
+        monthKey(task.completedAt) !== filters.completedMonth
+      ) {
+        return false;
+      }
+      if (filters.timeliness !== 'completed') {
+        const completedDate = dateKey(task.completedAt);
+        const deadlineDate = dateKey(task.deadline ?? task.date);
+        const isOnTime =
+          completedDate != null && deadlineDate != null && completedDate <= deadlineDate;
+        if (filters.timeliness === 'on_time' && !isOnTime) return false;
+        if (filters.timeliness === 'not_on_time' && isOnTime) return false;
+      }
+    }
+    if (filters.outputMetric) {
+      if (monthKey(task.date) !== filters.outputMonth) return false;
+      if (filters.outputMetric === 'project_slides' && !isProjectOutputTask(task)) return false;
+      if (filters.outputMetric === 'creative_da' && !isCreativeDATask(task)) return false;
+    }
     if (search) {
       const haystack =
         `${task.taskCode} ${task.projectName} ${task.taskName} ${task.description}`.toLowerCase();
@@ -107,7 +168,10 @@ export const mockGetMyTaskList = async (
   viewerRole?: Role,
 ): Promise<MyTaskListResponse> => {
   await mockDelay();
-  const items = filterTasks(filters, assigneeUserId, viewerRole).map(
+  if (Boolean(filters.outputMetric) !== Boolean(filters.outputMonth)) {
+    throw new Error('outputMetric and outputMonth must be provided together');
+  }
+  const items = filterMockTasks(getMockTasksStore(), filters, assigneeUserId, viewerRole).map(
     enrichMockTaskWithProjectContext,
   );
   return { items, total: items.length };
@@ -192,7 +256,9 @@ export const mockGetMyTaskProjectOptions = async (
 ): Promise<string[]> => {
   await mockDelay();
   const projects = new Set(
-    filterTasks({ taskCategory }, assigneeUserId, viewerRole).map((task) => task.projectName),
+    filterMockTasks(getMockTasksStore(), { taskCategory }, assigneeUserId, viewerRole).map(
+      (task) => task.projectName,
+    ),
   );
   return [...projects].sort((a, b) => a.localeCompare(b));
 };
@@ -206,7 +272,12 @@ export const mockGetMyTaskStaffNameOptions = async (
   const names = new Set<string>();
   let hasUnassigned = false;
 
-  for (const task of filterTasks({ taskCategory }, assigneeUserId, viewerRole)) {
+  for (const task of filterMockTasks(
+    getMockTasksStore(),
+    { taskCategory },
+    assigneeUserId,
+    viewerRole,
+  )) {
     if (task.staff.length === 0) {
       hasUnassigned = true;
       continue;

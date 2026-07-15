@@ -1,5 +1,6 @@
-import { Button, Input, Select } from 'antd';
+import { Button, DatePicker, Input, Select } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { FilterSection } from '@/shared/ui/FilterSection/FilterSection';
 import { CONFIRMATION_OPTIONS } from '../../constants';
 import { useMyTaskProjectOptions, useMyTaskStaffNameOptions } from '../../hooks/useMyTaskList';
@@ -38,9 +39,7 @@ export function MyTaskFilters({
             placeholder="Search project, task, or description..."
             allowClear
             value={filters.search ?? ''}
-            onChange={(event) =>
-              onChange({ ...filters, search: event.target.value || undefined })
-            }
+            onChange={(event) => onChange({ ...filters, search: event.target.value || undefined })}
             className={styles.search}
           />
         </div>
@@ -93,6 +92,104 @@ export function MyTaskFilters({
             className={styles.select}
           />
         </div>
+
+        {taskCategory === 'project' ? (
+          <>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="my-task-timeliness-filter">
+                Kết quả hoàn thành
+              </label>
+              <Select
+                id="my-task-timeliness-filter"
+                placeholder="Tất cả task"
+                allowClear
+                value={filters.timeliness}
+                onChange={(value) => {
+                  onChange({
+                    ...filters,
+                    timeliness: value,
+                    completedMonth: value
+                      ? (filters.completedMonth ?? dayjs().format('YYYY-MM'))
+                      : undefined,
+                  });
+                }}
+                options={[
+                  { value: 'completed', label: 'Tất cả đã hoàn thành' },
+                  { value: 'on_time', label: 'Đúng hạn' },
+                  { value: 'not_on_time', label: 'Không đúng hạn' },
+                ]}
+                className={styles.select}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="my-task-completed-month-filter">
+                Tháng hoàn thành
+              </label>
+              <DatePicker
+                id="my-task-completed-month-filter"
+                picker="month"
+                format="MM/YYYY"
+                allowClear
+                disabled={!filters.timeliness}
+                value={filters.completedMonth ? dayjs(filters.completedMonth, 'YYYY-MM') : null}
+                onChange={(value) =>
+                  onChange({
+                    ...filters,
+                    timeliness: value ? filters.timeliness : undefined,
+                    completedMonth: value?.format('YYYY-MM'),
+                  })
+                }
+                className={styles.select}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="my-task-output-filter">
+                Loại output
+              </label>
+              <Select
+                id="my-task-output-filter"
+                placeholder="Tất cả output"
+                allowClear
+                value={filters.outputMetric}
+                onChange={(value) =>
+                  onChange({
+                    ...filters,
+                    outputMetric: value,
+                    outputMonth: value
+                      ? (filters.outputMonth ?? dayjs().format('YYYY-MM'))
+                      : undefined,
+                  })
+                }
+                options={[
+                  { value: 'project_slides', label: 'Slides · Project' },
+                  { value: 'creative_da', label: 'DA · Creative' },
+                ]}
+                className={styles.select}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="my-task-output-month-filter">
+                Tháng task
+              </label>
+              <DatePicker
+                id="my-task-output-month-filter"
+                picker="month"
+                format="MM/YYYY"
+                allowClear
+                disabled={!filters.outputMetric}
+                value={filters.outputMonth ? dayjs(filters.outputMonth, 'YYYY-MM') : null}
+                onChange={(value) =>
+                  onChange({
+                    ...filters,
+                    outputMetric: value ? filters.outputMetric : undefined,
+                    outputMonth: value?.format('YYYY-MM'),
+                  })
+                }
+                className={styles.select}
+              />
+            </div>
+          </>
+        ) : null}
       </FilterSection>
 
       <Button

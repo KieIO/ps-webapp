@@ -88,6 +88,16 @@ export const MyTaskListFiltersSchema = z.object({
   projectName: z.string().optional(),
   staffName: z.string().optional(),
   confirmation: z.enum(TASK_CONFIRMATION_STATUSES).optional(),
+  timeliness: z.enum(['completed', 'on_time', 'not_on_time']).optional(),
+  completedMonth: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/)
+    .optional(),
+  outputMetric: z.enum(['project_slides', 'creative_da']).optional(),
+  outputMonth: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/)
+    .optional(),
 });
 
 export const MyTaskListResponseSchema = z.object({

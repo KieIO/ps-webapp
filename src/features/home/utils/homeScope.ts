@@ -19,11 +19,11 @@ export const isCompanyWideHomeRole = (role: Role): boolean =>
 export const isCreativeHomeRole = (role: Role): boolean => role === ROLES.CREATIVE_HEAD;
 
 /**
- * Current Home dashboard UI is for leadership only.
+ * Company-wide Overall Dashboard is limited to Department Head and Creative Head.
  * PM / Creative Manager use `ManagerHomeDashboard`; Employee uses `EmployeeHomeDashboard`.
  */
 export const isHeadHomeDashboardRole = (role: Role | undefined): boolean =>
-  role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD || role === ROLES.ADMIN;
+  role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD;
 
 /** Operational manager Home (PM + Creative Manager). */
 export const isOpsManagerHomeRole = (role: Role | undefined): boolean =>
