@@ -31,7 +31,7 @@ export function LoginForm() {
       className={styles.form}
       initialValues={env.useAuthMock ? { password: 'dev' } : undefined}
     >
-      {import.meta.env.DEV && (
+      {(import.meta.env.DEV || env.showTestAccounts) && (
         <Alert
           type="info"
           showIcon

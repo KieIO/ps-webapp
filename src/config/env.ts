@@ -4,6 +4,7 @@ export const env = {
   appVersion: import.meta.env.VITE_APP_VERSION as string,
   tokenKey: import.meta.env.VITE_TOKEN_KEY as string,
   enableQueryDevtools: import.meta.env.VITE_ENABLE_QUERY_DEVTOOLS === 'true',
+  showTestAccounts: import.meta.env.VITE_SHOW_TEST_ACCOUNTS === 'true',
   /** Opt-in only: set `VITE_USE_AUTH_MOCK=true` to bypass login API in dev. */
   useAuthMock: import.meta.env.VITE_USE_AUTH_MOCK === 'true',
   /** Opt-in only: set `VITE_USE_USERS_MOCK=true` to use in-memory user data. */
