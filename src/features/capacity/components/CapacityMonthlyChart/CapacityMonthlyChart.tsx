@@ -7,11 +7,10 @@ import {
   LineChart,
   ReferenceLine,
   ResponsiveContainer,
-  Tooltip,
+  Tooltip as ChartTooltip,
   XAxis,
   YAxis,
 } from 'recharts';
-import type { LineProps, TooltipProps } from 'recharts';
 import { DATE_FORMAT } from '@/config/constants';
 import type { CapacityMonthlyDay } from '../../schemas/capacityMonthly.schema';
 import {
@@ -26,45 +25,12 @@ interface CapacityMonthlyChartProps {
   days: CapacityMonthlyDay[];
 }
 
-function renderCapacityDot() {
-  return (dotProps: { cx?: number; cy?: number; stroke?: string; value?: number }) => {
-    const { cx, cy, value, stroke } = dotProps;
-    if (value === 0 || cx == null || cy == null) return null;
-    return (
-      <circle cx={cx} cy={cy} r={3.5} fill={stroke} stroke="#fff" strokeWidth={1.5} />
-    );
-  };
-}
+const axisProps = {
+  tick: { fontSize: 11, fill: '#64748b' },
+  tickLine: false,
+};
 
-function ChartTooltip({
-  active,
-  payload,
-}: TooltipProps<number, string>) {
-  if (!active || !payload?.length) return null;
-
-  const point = payload[0]?.payload as CapacityMonthlyChartPoint | undefined;
-  if (!point) return null;
-
-  return (
-    <div className={styles.tooltip}>
-      <p className={styles.tooltipTitle}>{dayjs(point.date).format(DATE_FORMAT)}</p>
-      <ul className={styles.tooltipList}>
-        {CAPACITY_CHART_SERIES.map((series) => (
-          <li key={series.key} className={styles.tooltipItem}>
-            <span className={styles.tooltipLabel}>
-              <span
-                className={styles.tooltipDot}
-                style={{ backgroundColor: series.color }}
-              />
-              {series.label}
-            </span>
-            <span className={styles.tooltipValue}>{point[series.key]}%</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+const percentFormatter = (value: number | string) => `${Number(value)}%`;
 
 export function CapacityMonthlyChart({ days }: CapacityMonthlyChartProps) {
   const chartData = useMemo(() => buildCapacityMonthlyChartData(days), [days]);
@@ -76,62 +42,54 @@ export function CapacityMonthlyChart({ days }: CapacityMonthlyChartProps) {
 
   return (
     <div className={styles.chartWrap}>
-      <ResponsiveContainer width="100%" height={320}>
-        <LineChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+      <ResponsiveContainer width="100%" height={290}>
+        <LineChart data={chartData} margin={{ top: 12, right: 8, left: -12, bottom: 0 }}>
+          <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
           <XAxis
             dataKey="dayLabel"
             scale="point"
             type="category"
             padding={{ left: 12, right: 12 }}
-            tick={{ fontSize: 11, fill: '#6b7280' }}
-            tickLine={false}
-            axisLine={{ stroke: '#d1d5db' }}
+            axisLine={{ stroke: '#e2e8f0' }}
             interval={0}
             minTickGap={0}
             angle={chartData.length > 20 ? -45 : 0}
             textAnchor={chartData.length > 20 ? 'end' : 'middle'}
             height={chartData.length > 20 ? 52 : 30}
+            {...axisProps}
           />
           <YAxis
             domain={[0, yMax]}
-            tickFormatter={(value) => `${value}%`}
-            width={44}
-            tick={{ fontSize: 11, fill: '#6b7280' }}
-            tickLine={false}
+            width={48}
             axisLine={false}
+            tickFormatter={percentFormatter}
+            {...axisProps}
           />
-          <Tooltip content={<ChartTooltip />} />
-          <Legend
-            verticalAlign="top"
-            align="right"
-            iconType="line"
-            wrapperStyle={{ fontSize: 12, paddingBottom: 8 }}
+          <ChartTooltip
+            formatter={(value) => percentFormatter(value as number)}
+            labelFormatter={(_label, payload) => {
+              const point = payload?.[0]?.payload as CapacityMonthlyChartPoint | undefined;
+              if (!point) return _label;
+              return dayjs(point.date).format(DATE_FORMAT);
+            }}
           />
+          <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
           <ReferenceLine
             y={80}
-            stroke="#94a3b8"
-            strokeDasharray="4 4"
-            label={{
-              value: '80% target',
-              position: 'insideTopRight',
-              fill: '#94a3b8',
-              fontSize: 11,
-            }}
+            stroke="#dc2626"
+            strokeDasharray="5 5"
+            label={{ value: '80% target', fill: '#dc2626', fontSize: 10 }}
           />
           {CAPACITY_CHART_SERIES.map((series) => (
             <Line
               key={series.key}
-              type="linear"
+              type="monotone"
               dataKey={series.key}
               name={series.label}
               stroke={series.color}
-              strokeWidth={series.key === 'total' ? 2.5 : 1.75}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              isAnimationActive={false}
-              dot={renderCapacityDot() as LineProps['dot']}
-              activeDot={{ r: 5, stroke: '#fff', strokeWidth: 1.5 }}
+              strokeWidth={series.key === 'total' ? 2.5 : 2}
+              dot={{ r: 4, fill: series.color }}
+              activeDot={{ r: 5 }}
             />
           ))}
         </LineChart>

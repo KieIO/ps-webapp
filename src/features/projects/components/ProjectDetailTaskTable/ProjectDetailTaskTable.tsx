@@ -1,13 +1,17 @@
 import { Button, Table, Tooltip } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
+import { DATE_FORMAT } from '@/config/constants';
+import { canViewCreativeDeadline } from '@/features/tasks/utils/creativeVisibility';
 import { ClassificationLevelBadge } from '@/features/tasks/components/ClassificationLevelBadge/ClassificationLevelBadge';
 import { TaskConfirmationBadge } from '@/features/tasks/components/TaskConfirmationBadge/TaskConfirmationBadge';
 import { TaskStaffNameCell } from '@/features/tasks/components/TaskStaffNameCell/TaskStaffNameCell';
 import { MY_TASK_COLUMN_HEADERS } from '@/features/tasks/constants';
 import { formatTaskCodeShort } from '@/features/tasks/utils/taskDetail';
 import { isMyTaskDateAtRisk } from '@/features/tasks/utils/taskDeadline';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
 import { PROJECT_TASKS_PAGE_SIZE, PROJECT_TASKS_PAGE_SIZE_OPTIONS } from '../../constants';
 import { getMyTaskColumnSorter } from '@/features/tasks/utils/myTaskColumns';
@@ -27,6 +31,12 @@ export function ProjectDetailTaskTable({
   total,
   onView,
 }: ProjectDetailTaskTableProps) {
+  const currentUser = useAppSelector((state) => state.auth.user);
+  const canViewCreativeDeadlineColumn = canViewCreativeDeadline(
+    currentUser?.role,
+    currentUser?.department,
+  );
+
   const columns: ColumnsType<MyTask> = [
     {
       title: 'Task Code',
@@ -93,6 +103,26 @@ export function ProjectDetailTaskTable({
         <DateWithRiskIndicator date={value} atRisk={isMyTaskDateAtRisk(record, 'date')} />
       ),
     },
+    ...(canViewCreativeDeadlineColumn
+      ? [
+          {
+            title: 'Deadline phòng Creative',
+            dataIndex: 'creativeDeadline',
+            key: 'creativeDeadline',
+            width: 155,
+            sorter: (a: MyTask, b: MyTask) => {
+              const aValue = a.creativeDeadline;
+              const bValue = b.creativeDeadline;
+              if (!aValue && !bValue) return 0;
+              if (!aValue) return 1;
+              if (!bValue) return -1;
+              return dayjs(aValue).unix() - dayjs(bValue).unix();
+            },
+            render: (value?: string | null) =>
+              value ? dayjs(value).format(DATE_FORMAT) : <span className={styles.empty}>—</span>,
+          },
+        ]
+      : []),
     {
       title: MY_TASK_COLUMN_HEADERS.completion,
       dataIndex: 'completionPercent',
@@ -147,7 +177,7 @@ export function ProjectDetailTaskTable({
         rowKey="id"
         columns={columns}
         dataSource={tasks}
-        scroll={{ x: 1160 }}
+        scroll={{ x: canViewCreativeDeadlineColumn ? 1315 : 1160 }}
         pagination={{
           pageSize: PROJECT_TASKS_PAGE_SIZE,
           total,

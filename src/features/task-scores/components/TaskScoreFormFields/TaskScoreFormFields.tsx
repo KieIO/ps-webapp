@@ -1,18 +1,18 @@
 import { Form, Input, InputNumber, Select } from 'antd';
 import { useEffect, useRef } from 'react';
-import { DEPARTMENT_OPTIONS } from '@/features/projects/constants';
-import type { ProjectDepartment } from '@/features/projects/schemas/project.schema';
+import { useDepartmentOptions } from '@/features/departments/hooks/useDepartmentOptions';
 import { useTaskScoreGroupOptions } from '../../hooks/useTaskScoreGroupOptions';
 import type { CreateTaskScoreRequest } from '../../schemas/taskScore.schema';
 
 export type TaskScoreFormValues = CreateTaskScoreRequest & {
   /** Department of the selected group (updated via group PATCH on save). */
-  department?: ProjectDepartment | null;
+  department?: string | null;
 };
 
 export function TaskScoreFormFields() {
   const form = Form.useFormInstance<TaskScoreFormValues>();
   const { options, groupByCode, isLoading } = useTaskScoreGroupOptions();
+  const { options: departmentOptions, isLoading: departmentLoading } = useDepartmentOptions();
   const selectedGroup = Form.useWatch('group', form);
   const lastSyncedGroupRef = useRef<string | undefined>(undefined);
 
@@ -74,7 +74,8 @@ export function TaskScoreFormFields() {
         <Select
           allowClear
           placeholder="No department"
-          options={[...DEPARTMENT_OPTIONS]}
+          options={departmentOptions}
+          loading={departmentLoading}
           disabled={!selectedGroup}
         />
       </Form.Item>

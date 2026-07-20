@@ -44,6 +44,7 @@ export const UserListFiltersSchema = z.object({
     ])
     .optional(),
   status: z.enum(USER_STATUSES).optional(),
+  department: z.enum(USER_DEPARTMENTS).optional(),
 });
 
 export const UserListResponseSchema = z.object({

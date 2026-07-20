@@ -1,6 +1,6 @@
 import { Input, Select } from 'antd';
 import { FilterSection } from '@/shared/ui/FilterSection/FilterSection';
-import { ROLE_OPTIONS, STATUS_OPTIONS } from '../../constants';
+import { DEPARTMENT_OPTIONS, ROLE_OPTIONS, STATUS_OPTIONS } from '../../constants';
 import type { UserListFilters } from '../../schemas/user.schema';
 import styles from './UserFilters.module.scss';
 
@@ -22,9 +22,7 @@ export function UserFilters({ filters, onChange, onReset }: UserFiltersProps) {
           placeholder="Search by name or email"
           allowClear
           value={filters.search ?? ''}
-          onChange={(event) =>
-            onChange({ ...filters, search: event.target.value || undefined })
-          }
+          onChange={(event) => onChange({ ...filters, search: event.target.value || undefined })}
           className={styles.search}
         />
       </div>
@@ -55,6 +53,21 @@ export function UserFilters({ filters, onChange, onReset }: UserFiltersProps) {
           value={filters.status}
           onChange={(value) => onChange({ ...filters, status: value })}
           options={STATUS_OPTIONS}
+          className={styles.select}
+        />
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="user-department-filter">
+          Department
+        </label>
+        <Select
+          id="user-department-filter"
+          placeholder="All departments"
+          allowClear
+          value={filters.department}
+          onChange={(value) => onChange({ ...filters, department: value })}
+          options={DEPARTMENT_OPTIONS}
           className={styles.select}
         />
       </div>

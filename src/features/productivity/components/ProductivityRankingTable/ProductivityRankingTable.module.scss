@@ -1,0 +1,80 @@
+.card {
+  min-width: 0;
+}
+
+.filter {
+  min-width: 180px;
+}
+
+.table {
+  :global(.ant-table-thead > tr > th) {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    background: var(--color-bg-subtle);
+  }
+}
+
+.nameCell {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.capacityOverload {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.overloadBadge {
+  display: inline-flex;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.good {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.warn {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.bad {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.trend {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.trendUp {
+  color: #16a34a;
+}
+
+.trendDown {
+  color: #dc2626;
+}
+
+.trendFlat {
+  color: var(--color-text-muted);
+}

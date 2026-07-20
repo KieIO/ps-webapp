@@ -35,6 +35,8 @@ export const TaskPersonSchema = z.object({
 
 export const TaskAssigneeSchema = TaskPersonSchema.extend({
   userId: z.string().nullish(),
+  /** Present on staff-options responses — used to filter assignees by task department. */
+  department: z.string().nullish(),
 });
 
 export const MyTaskSchema = z.object({
@@ -47,15 +49,18 @@ export const MyTaskSchema = z.object({
   projectManager: TaskPersonSchema,
   taskName: z.string(),
   level: z.number().int().min(1).max(4),
-  quantity: z.number().int().min(0),
+  /** Backend stores quantity as float64 (partial slides/units allowed). */
+  quantity: z.number().min(0),
   /** UTC start of the task calendar day (00:00:00). */
   date: z.string(),
   /** UTC end of the task calendar day (23:59:59), when provided by API. */
   deadline: z.string().nullish(),
+  /** Internal deadline dedicated for Creative department tasks. */
+  creativeDeadline: z.string().nullish(),
   description: z.string(),
   staff: z.array(TaskAssigneeSchema),
   /** Phòng ban of the task — required for new project tasks. */
-  department: z.enum(TASK_DEPARTMENTS).nullish(),
+  department: z.string().min(1).nullish(),
   designThinking: z.number().int().min(1).max(4),
   technical: z.number().int().min(1).max(4),
   contentProcessing: z.number().int().min(1).max(4),
@@ -144,10 +149,10 @@ export const CreateMyTaskRequestSchema = z.object({
   projectManager: TaskPersonSchema,
   taskName: z.string().min(1, 'Task name is required'),
   level: z.number().int().min(1).max(4),
-  quantity: z.number().int().min(0),
+  quantity: z.number().min(0),
   date: z.string(),
   description: z.string(),
-  department: z.enum(TASK_DEPARTMENTS).optional(),
+  department: z.string().min(1).optional(),
   designThinking: z.number().int().min(1).max(4),
   technical: z.number().int().min(1).max(4),
   contentProcessing: z.number().int().min(1).max(4),
@@ -157,6 +162,7 @@ export const CreateMyTaskRequestSchema = z.object({
   staffNote: z.string(),
   /** Persisted urgency — defaults from deadline when omitted on create. */
   urgency: z.enum(PROJECT_URGENCIES),
+  creativeDeadline: z.string().optional(),
 });
 
 export const UpdateMyTaskStatusRequestSchema = z.object({
@@ -180,7 +186,7 @@ export const AssignMyTaskRequestSchema = z.object({
 
 export const UpdateMyTaskRequestSchema = z.object({
   taskName: z.string().min(1, 'Task name is required'),
-  quantity: z.number().int().min(0),
+  quantity: z.number().min(0),
   date: z.string(),
   description: z.string(),
   designThinking: z.number().int().min(1).max(4),
@@ -191,6 +197,7 @@ export const UpdateMyTaskRequestSchema = z.object({
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
   staffNote: z.string(),
   urgency: z.enum(PROJECT_URGENCIES),
+  creativeDeadline: z.string().optional(),
 });
 
 /** Department Head — project-context fields on task rows (non-project or when no linked project). */

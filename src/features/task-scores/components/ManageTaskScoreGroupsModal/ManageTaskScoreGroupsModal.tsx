@@ -1,6 +1,9 @@
 import { Button, Form, Input, Modal, Popconfirm, Select } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
-import { DEPARTMENT_LABELS, DEPARTMENT_OPTIONS } from '@/features/projects/constants';
+import {
+  getDepartmentLabel,
+  useDepartmentOptions,
+} from '@/features/departments/hooks/useDepartmentOptions';
 import { useCreateTaskScoreGroup } from '../../hooks/useCreateTaskScoreGroup';
 import { useDeleteTaskScoreGroup } from '../../hooks/useDeleteTaskScoreGroup';
 import { useTaskScoreGroupList } from '../../hooks/useTaskScoreGroupList';
@@ -19,6 +22,11 @@ interface ManageTaskScoreGroupsModalProps {
 export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGroupsModalProps) {
   const [form] = Form.useForm<CreateTaskScoreGroupRequest>();
   const { data, isLoading } = useTaskScoreGroupList();
+  const {
+    options: departmentOptions,
+    labelByCode,
+    isLoading: departmentLoading,
+  } = useDepartmentOptions({ enabled: open });
   const { mutate: createGroup, isPending: isCreating } = useCreateTaskScoreGroup();
   const {
     mutate: deleteGroup,
@@ -72,7 +80,9 @@ export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGro
               <div className={styles.groupMeta}>
                 <TaskScoreGroupPill label={group.label} colorKey={group.colorKey} />
                 <span className={styles.department}>
-                  {group.department ? DEPARTMENT_LABELS[group.department] : 'No department'}
+                  {group.department
+                    ? getDepartmentLabel(group.department, labelByCode)
+                    : 'No department'}
                 </span>
               </div>
               <Popconfirm
@@ -117,7 +127,8 @@ export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGro
           <Select
             allowClear
             placeholder="No department"
-            options={[...DEPARTMENT_OPTIONS]}
+            options={departmentOptions}
+            loading={departmentLoading}
             disabled={isCreating || isDeleting}
           />
         </Form.Item>

@@ -20,12 +20,19 @@ export const isCreativeHomeRole = (role: Role): boolean => role === ROLES.CREATI
 
 /**
  * Company-wide Overall Dashboard is limited to Department Head and Creative Head.
- * PM / Creative Manager use `ManagerHomeDashboard`; Employee uses `EmployeeHomeDashboard`.
+ * Admin may see a placeholder. Employee / PM / Creative Manager do not use Home.
  */
 export const isHeadHomeDashboardRole = (role: Role | undefined): boolean =>
   role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD;
 
-/** Operational manager Home (PM + Creative Manager). */
+/** Roles allowed to open `/home` (sidebar + route). */
+export const canAccessHomePage = (role: Role | undefined): boolean =>
+  role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD || role === ROLES.ADMIN;
+
+/**
+ * PM / Creative Manager — team productivity report (not Home).
+ * Kept for Reports → Productivity role switch.
+ */
 export const isOpsManagerHomeRole = (role: Role | undefined): boolean =>
   role === ROLES.PM || role === ROLES.CREATIVE_MANAGER;
 

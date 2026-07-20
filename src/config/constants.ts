@@ -9,7 +9,7 @@ export const ROUTES = {
    * otherwise redirects to project tasks.
    */
   DASHBOARD: '/',
-  /** Role-aware Home dashboard (manager view; employee layout TBD). */
+  /** Role-aware Home dashboard (Head / Creative Head / Admin). Not available to Employee / PM / CM. */
   HOME: '/home',
   /** Hidden temporarily — dashboard page kept for later use */
   DASHBOARD_LEGACY: '/dashboard',
@@ -49,6 +49,13 @@ export const ROUTES = {
   KPI_SETTINGS: '/performance/settings',
   OVERTIME: '/overtime',
   REPORTS: '/reports',
+  PRODUCTIVITY: '/reports/productivity',
+  /** Team vs individual performance comparison (Head / Creative Head / Admin). */
+  TEAM_COMPARISON: '/reports/team-comparison',
+  /** Employee drill-down from Team comparison. */
+  EMPLOYEE_PERFORMANCE: '/reports/team-comparison/:userId',
+  /** @deprecated Use `PRODUCTIVITY` — kept for redirects from old bookmarks */
+  PRODUCTIVITY_LEGACY: '/performance/productivity',
 
   // Admin / HR
   USERS: '/users',
@@ -56,6 +63,7 @@ export const ROUTES = {
   ROLES: '/roles',
   AUDIT_LOG: '/audit',
   TITLE_MANAGEMENT: '/settings/titles',
+  DEPARTMENT_MANAGEMENT: '/settings/departments',
   EMPLOYEE_CAPACITY_FORMULA: '/settings/employee-capacity-formula',
   TASK_SCORE: '/settings/task-score',
   SETTINGS_GENERAL: '/settings/general',
@@ -70,6 +78,8 @@ export const buildProjectDetailPath = (id: string) => `/projects/${id}`;
 export const buildMyTaskDetailPath = (id: string) => `/tasks/detail/${id}`;
 export const buildTaskEditPath = (id: string) => `/tasks/${id}/edit`;
 export const buildUserDetailPath = (id: string) => `/users/${id}`;
+export const buildEmployeePerformancePath = (userId: string) =>
+  `/reports/team-comparison/${userId}`;
 
 export const APP_NAME = 'Pokeslide Internal Platform';
 

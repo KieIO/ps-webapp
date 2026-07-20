@@ -104,11 +104,13 @@ export function ProjectFilters({
             id="project-pm-filter"
             placeholder={PROJECT_FILTER_LABELS.pmPlaceholder}
             allowClear
+            showSearch
+            optionFilterProp="label"
             value={filters.pmCode}
             onChange={(value) => onChange({ ...filters, pmCode: value })}
             options={pmOptions.map((pm) => ({
               value: pm.code,
-              label: `${pm.code} — ${pm.name}`,
+              label: pm.name,
             }))}
             className={styles.select}
           />

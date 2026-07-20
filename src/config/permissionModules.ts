@@ -148,6 +148,12 @@ export const PERMISSION_MODULES: PermissionModuleDef[] = [
     actions: [{ permission: 'MANAGE_TITLES', label: 'Manage job titles, levels & groups' }],
   },
   {
+    key: 'departments',
+    label: 'Department Management',
+    accessType: 'permission',
+    actions: [{ permission: 'MANAGE_DEPARTMENTS', label: 'Manage departments' }],
+  },
+  {
     key: 'productivity',
     label: 'Productivity',
     accessType: 'planned',

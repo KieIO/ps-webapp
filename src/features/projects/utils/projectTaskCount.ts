@@ -2,10 +2,7 @@ import type { MyTask } from '@/features/tasks/schemas/task.schema';
 import type { PersonWithCode, Project, ProjectRecord } from '../schemas/project.schema';
 import { withProjectListDefaults } from './projectDefaults';
 import { collectProjectMembers } from './projectMembers';
-import {
-  computeProjectCompletionPercent,
-  computeProjectTotalSlides,
-} from './projectProgress';
+import { computeProjectCompletionPercent, computeProjectTotalSlides } from './projectProgress';
 
 type ProjectLike = Pick<Project, 'id' | 'code' | 'name'>;
 
@@ -48,7 +45,9 @@ export const enrichProject = <T extends ProjectRecord>(
     taskCount: countProjectTasks(project, tasks, allProjects),
     members: collectProjectMembers(project, tasks, allProjects, options?.extraMembers),
     totalSlides: computeProjectTotalSlides(project, tasks, allProjects),
-    completionPercent: computeProjectCompletionPercent(project, tasks, allProjects),
+    // Prefer a stored override (e.g. from Evaluate project); otherwise derive from tasks.
+    completionPercent:
+      project.completionPercent ?? computeProjectCompletionPercent(project, tasks, allProjects),
   });
 
 export const enrichProjectsForList = <T extends ProjectRecord>(

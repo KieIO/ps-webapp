@@ -4,8 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
 import type { Role } from '@/config/permissions';
 import { ROLES } from '@/config/permissions';
-import { DEPARTMENT_LABELS } from '@/features/projects/constants';
-import type { ProjectDepartment } from '@/features/projects/schemas/project.schema';
+import { getDepartmentLabel } from '@/features/departments/hooks/useDepartmentOptions';
 import {
   CLASSIFICATION_LEVEL_LABELS,
   CLASSIFICATION_LEVEL_OPTIONS,
@@ -18,6 +17,7 @@ import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
 import { useUpdateMyTask } from '../../hooks/useUpdateMyTask';
 import { useUpdateMyTaskPmEvaluation } from '../../hooks/useUpdateMyTaskPmEvaluation';
 import { computeTaskLevel } from '../../utils/taskLevel';
+import { canEditCreativeDeadline as canEditCreativeDeadlineRole } from '../../utils/creativeVisibility';
 import {
   getEditTaskFieldsForRole,
   showsEvaluationReadOnly,
@@ -46,8 +46,9 @@ interface EditTaskModalProps {
   onClose: () => void;
 }
 
-type EditTaskFormValues = Omit<UpdateMyTaskRequest, 'date' | 'staff'> & {
+type EditTaskFormValues = Omit<UpdateMyTaskRequest, 'date' | 'staff' | 'creativeDeadline'> & {
   date: Dayjs;
+  creativeDeadline?: Dayjs;
   staffUserId?: string;
   completionPercent?: number;
   pmEvaluation?: string;
@@ -87,6 +88,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
 
   const showLevelPreview = showsTaskLevelPreview(effectiveRole);
   const showEvaluationReadOnly = showsEvaluationReadOnly(effectiveRole, canEvaluate);
+  const canEditCreativeDeadline = canEditCreativeDeadlineRole(effectiveRole);
   const showClassification =
     hasField(editableFields, 'designThinking') ||
     hasField(editableFields, 'technical') ||
@@ -108,6 +110,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
         taskName: task.taskName,
         quantity: task.quantity,
         date: dayjs(task.date),
+        creativeDeadline: task.creativeDeadline ? dayjs(task.creativeDeadline) : undefined,
         description: task.description,
         designThinking: task.designThinking,
         technical: task.technical,
@@ -169,6 +172,11 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
       staffConfirmation: nextConfirmation,
       staffNote: hasField(editableFields, 'staffNote') ? (values.staffNote ?? '') : task.staffNote,
       urgency: hasField(editableFields, 'urgency') ? values.urgency : task.urgency,
+      creativeDeadline: canEditCreativeDeadline
+        ? values.creativeDeadline
+          ? toTaskDateOnly(values.creativeDeadline)
+          : undefined
+        : (task.creativeDeadline ?? undefined),
     };
 
     const saveEvaluation = showEvaluationEditable
@@ -244,11 +252,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
             {task.department ? (
               <div className={styles.contextItem}>
                 <span className={styles.readOnlyLabel}>Phòng ban</span>
-                <span className={styles.contextValue}>
-                  {task.department in DEPARTMENT_LABELS
-                    ? DEPARTMENT_LABELS[task.department as ProjectDepartment]
-                    : task.department}
-                </span>
+                <span className={styles.contextValue}>{getDepartmentLabel(task.department)}</span>
               </div>
             ) : null}
             {showLevelPreview ? (
@@ -346,6 +350,14 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
                       </Form.Item>
                     ) : null}
                   </div>
+                ) : null}
+                {canEditCreativeDeadline ? (
+                  <Form.Item
+                    name="creativeDeadline"
+                    label={MY_TASK_COLUMN_HEADERS.creativeDeadline}
+                  >
+                    <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+                  </Form.Item>
                 ) : null}
               </>
             ) : null}

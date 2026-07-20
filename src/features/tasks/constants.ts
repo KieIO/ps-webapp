@@ -53,6 +53,7 @@ export type MyTaskColumnKey =
   | 'level'
   | 'quantity'
   | 'date'
+  | 'creativeDeadline'
   | 'urgency'
   | 'description'
   | 'staffName'
@@ -81,7 +82,8 @@ export const MY_TASK_COLUMN_HEADERS: Record<MyTaskColumnKey, string> = {
   taskName: 'Task Name',
   level: 'Level',
   quantity: 'Quantity',
-  date: 'Date',
+  date: 'Deadline',
+  creativeDeadline: 'Deadline phòng Creative',
   urgency: 'Urgency',
   description: 'Description',
   staffName: 'Staff Name',
@@ -190,9 +192,21 @@ export const MY_TASK_HEAD_COLUMN_KEYS: MyTaskColumnKey[] = [
 /** Admin — full PM operational columns. */
 export const MY_TASK_ADMIN_COLUMN_KEYS: MyTaskColumnKey[] = [...MY_TASK_PM_COLUMN_KEYS];
 
-/** Creative Head & Creative Manager — same columns and PM classification labels as Project Manager. */
-export const MY_TASK_CREATIVE_HEAD_COLUMN_KEYS: MyTaskColumnKey[] = [...MY_TASK_PM_COLUMN_KEYS];
-export const MY_TASK_CREATIVE_MANAGER_COLUMN_KEYS: MyTaskColumnKey[] = [...MY_TASK_PM_COLUMN_KEYS];
+const insertAfter = <T extends string>(items: readonly T[], after: T, value: T): T[] => {
+  const index = items.indexOf(after);
+  if (index < 0) return [...items, value];
+  return [...items.slice(0, index + 1), value, ...items.slice(index + 1)];
+};
+
+/** Creative Head & Creative Manager — PM columns plus internal creative deadline. */
+export const MY_TASK_CREATIVE_HEAD_COLUMN_KEYS: MyTaskColumnKey[] = insertAfter(
+  MY_TASK_PM_COLUMN_KEYS,
+  'date',
+  'creativeDeadline',
+);
+export const MY_TASK_CREATIVE_MANAGER_COLUMN_KEYS: MyTaskColumnKey[] = [
+  ...MY_TASK_CREATIVE_HEAD_COLUMN_KEYS,
+];
 
 export const TASK_STATUS_CHANGE_NOTE_LABEL = 'Note khi đổi trạng thái (nếu có)';
 

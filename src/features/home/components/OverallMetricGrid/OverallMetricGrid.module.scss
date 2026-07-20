@@ -14,6 +14,10 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.capacityGridDepartment {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .statGrid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
@@ -109,6 +113,31 @@
 
   p {
     margin: 5px 0 0;
+  }
+}
+
+.breakdownButton {
+  width: 100%;
+  margin-top: 9px;
+  padding: 6px 9px;
+  color: #dbeafe;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 6px;
+  background: rgb(255 255 255 / 8%);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: #fff;
+    border-color: rgb(255 255 255 / 40%);
+    background: rgb(255 255 255 / 14%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #93c5fd;
+    outline-offset: 1px;
   }
 }
 

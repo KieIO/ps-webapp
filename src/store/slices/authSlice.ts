@@ -10,6 +10,7 @@ export interface AuthUser {
   id: string;
   name: string;
   role: Role;
+  department?: string;
 }
 
 interface AuthState {

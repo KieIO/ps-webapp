@@ -2,7 +2,6 @@ import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
 import { downloadCsv } from '@/shared/utils/exportCsv';
 import {
-  DEPARTMENT_LABELS,
   EVALUATION_LEVEL_LABELS,
   PROJECT_EVALUATION_COLUMN_HEADERS,
   PROJECT_NAME_COLUMN_LABEL,
@@ -12,6 +11,7 @@ import {
 } from '../constants';
 import type { Project } from '../schemas/project.schema';
 import { resolveProjectUrgencyDisplay } from './resolveProjectUrgencyDisplay';
+import { getDepartmentLabel } from '@/features/departments/hooks/useDepartmentOptions';
 
 export const exportProjectsToCsv = (projects: Project[]): void => {
   const headers = [
@@ -39,7 +39,7 @@ export const exportProjectsToCsv = (projects: Project[]): void => {
   const rows = projects.map((project) => [
     project.client.name,
     project.name,
-    DEPARTMENT_LABELS[project.department],
+    getDepartmentLabel(project.department),
     project.taskCount,
     dayjs(project.startDate).format(DATE_FORMAT),
     dayjs(project.endDate).format(DATE_FORMAT),

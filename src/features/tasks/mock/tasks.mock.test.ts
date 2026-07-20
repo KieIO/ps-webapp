@@ -65,6 +65,14 @@ describe('filterMockTasks dashboard drill-down filters', () => {
       department: 'creative',
       date: '2026-07-06T00:00:00.000Z',
     });
+    const projectCreativeDA = task({
+      id: 'project-creative-da',
+      projectName: 'Sanofi Meninga',
+      taskName: 'DA',
+      department: 'creative',
+      date: '2026-07-07T00:00:00.000Z',
+      staff: [{ code: 'THAO', name: 'Nguyen Thao', userId: 'user-thao' }],
+    });
     const otherMonth = task({
       id: 'other-month',
       projectName: 'Sanofi Meninga',
@@ -72,16 +80,16 @@ describe('filterMockTasks dashboard drill-down filters', () => {
     });
 
     expect(
-      filterMockTasks([projectOutput, creativeOutput, otherMonth], {
+      filterMockTasks([projectOutput, creativeOutput, projectCreativeDA, otherMonth], {
         outputMetric: 'project_slides',
         outputMonth: '2026-07',
       }).map((item) => item.id),
     ).toEqual(['project-output']);
     expect(
-      filterMockTasks([projectOutput, creativeOutput], {
+      filterMockTasks([projectOutput, creativeOutput, projectCreativeDA], {
         outputMetric: 'creative_da',
         outputMonth: '2026-07',
       }).map((item) => item.id),
-    ).toEqual(['creative-output']);
+    ).toEqual(['creative-output', 'project-creative-da']);
   });
 });

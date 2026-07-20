@@ -1,0 +1,119 @@
+.card {
+  min-width: 0;
+}
+
+.table {
+  :global(.ant-table-thead > tr > th) {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    background: var(--color-bg-subtle, #f8fafc);
+  }
+}
+
+.rankCell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  background: #f1f5f9;
+}
+
+.rankGold {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.rankSilver {
+  color: #334155;
+  background: #e2e8f0;
+}
+
+.rankBronze {
+  color: #9a3412;
+  background: #ffedd5;
+}
+
+.nameCell {
+  font-weight: 600;
+  color: var(--color-text-primary, var(--color-text));
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.good {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.warn {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.bad {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.trend {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.trendUp {
+  color: #16a34a;
+}
+
+.trendDown {
+  color: #dc2626;
+}
+
+.trendFlat {
+  color: var(--color-text-muted);
+}
+
+.rowClickable {
+  cursor: pointer;
+
+  &:hover > td,
+  &:focus-visible > td {
+    background: var(--color-primary-subtle) !important;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+}
+
+.rowSelected > td {
+  background: color-mix(in srgb, var(--color-primary) 8%, #fff) !important;
+}
+
+.rowSelected > td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.detailButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+
+  &:hover {
+    color: var(--color-primary) !important;
+    background: var(--color-primary-subtle) !important;
+  }
+}

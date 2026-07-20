@@ -19,21 +19,25 @@ const staffKhanh: TaskAssignee = {
   code: 'PO.047',
   name: 'Phan Hoang Phuong Khanh',
   userId: 'dev-employee',
+  department: 'project',
 };
 const staffLong: TaskAssignee = {
   code: 'PO.055',
   name: 'Truong Nhut Long',
   userId: 'dev-creative_manager',
+  department: 'creative_hcm',
 };
 const staffNgan: TaskAssignee = {
   code: 'PO.023',
   name: 'Lam Ngoc Kim Ngan',
   userId: 'dev-pm',
+  department: 'project',
 };
 const staffCreative: TaskAssignee = {
   code: 'CREATIVE',
   name: 'Creative Department',
   userId: 'dev-creative_head',
+  department: 'creative_hcm',
 };
 
 export const MOCK_ASSIGNABLE_STAFF: TaskAssignee[] = [
@@ -124,6 +128,7 @@ export const INITIAL_MOCK_PROJECT_TASKS: MyTask[] = [
     taskName: 'Edit feedback DE',
     quantity: 4,
     date: toIso(3, 6, 2026),
+    creativeDeadline: toIso(1, 6, 2026),
     description: 'Apply German-language feedback on selected slides.',
     staff: [staffLong],
     designThinking: 3,
@@ -144,6 +149,7 @@ export const INITIAL_MOCK_PROJECT_TASKS: MyTask[] = [
     taskName: 'Redo slide',
     quantity: 13,
     date: toIso(3, 6, 2026),
+    creativeDeadline: toIso(2, 6, 2026),
     description: 'Redo slides flagged in the latest QA pass.',
     staff: [staffCreative],
     designThinking: 2,

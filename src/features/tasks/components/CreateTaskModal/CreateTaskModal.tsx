@@ -1,9 +1,11 @@
-import { AutoComplete, DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd';
+import { AutoComplete, DatePicker, Form, Input, InputNumber, Modal, Select, message } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { DATE_FORMAT } from '@/config/constants';
 import { ROLES, type Role } from '@/config/permissions';
-import { DEPARTMENT_OPTIONS } from '@/features/projects/constants';
+import { useDepartmentOptions } from '@/features/departments/hooks/useDepartmentOptions';
+import { taskScoreApi } from '@/features/task-scores/api';
 import { useTaskScoreGroupOptions } from '@/features/task-scores/hooks/useTaskScoreGroupOptions';
 import { useTaskScoreList } from '@/features/task-scores/hooks/useTaskScoreList';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
@@ -19,8 +21,9 @@ import {
 } from '../../hooks/useCreateTaskOptions';
 import { useCreateMyTask } from '../../hooks/useCreateMyTask';
 import { mergeStaffSelectOptions, resolveStaffFromUserId } from '../../utils/staff';
-import { parseTaskScoreName, toClassificationLevel } from '../../utils/taskScoreName';
+import { parseTaskScoreName } from '../../utils/taskScoreName';
 import { toTaskDateOnly } from '../../utils/taskDates';
+import { computeTaskLevel } from '../../utils/taskLevel';
 import type {
   CreateMyTaskRequest,
   TaskCategory,
@@ -59,7 +62,7 @@ type CreateTaskFormValues = Omit<
   staffUserId?: string;
   taskGroup: string;
   taskScoreName: string;
-  department?: TaskDepartment;
+  department?: string;
 };
 
 const DEFAULT_VALUES: CreateTaskFormValues = {
@@ -86,28 +89,62 @@ const codeFromDisplayName = (name: string): string => {
   return slug || 'PM';
 };
 
+const normalizeDepartment = (value: string | undefined): TaskDepartment | undefined => {
+  if (!value) return undefined;
+  if (value === 'project') return 'project';
+  if (value === 'creative' || value.startsWith('creative_')) return 'creative';
+  return undefined;
+};
+
 export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateTaskModalProps) {
   const [form] = Form.useForm<CreateTaskFormValues>();
+  const [isPreparingCatalog, setIsPreparingCatalog] = useState(false);
+  const queryClient = useQueryClient();
   const { mutate, isPending } = useCreateMyTask();
   const currentUser = useAppSelector((state) => state.auth.user);
   const { data: projectOptions = [] } = useCreateTaskProjectOptions(taskCategory, open);
   const { data: pmOptions = [] } = useCreateTaskPmOptions(open);
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
-  const {
-    options: taskGroupOptions,
-    groupByCode,
-    isLoading: taskGroupLoading,
-  } = useTaskScoreGroupOptions({ enabled: open });
+  const { options: taskGroupOptions, groupByCode } = useTaskScoreGroupOptions({ enabled: open });
+  const { options: departmentOptions, isLoading: departmentLoading } = useDepartmentOptions({
+    enabled: open,
+  });
   const isProjectTask = taskCategory === 'project';
   const projectName = Form.useWatch('projectName', form);
   const taskGroup = Form.useWatch('taskGroup', form);
-  const scoreFilters = useMemo(() => ({ group: taskGroup }), [taskGroup]);
-  const {
-    data: scoreList,
-    isLoading: scoresLoading,
-    isFetching: scoresFetching,
-  } = useTaskScoreList(scoreFilters, { enabled: open && Boolean(taskGroup) });
+  const designThinking = Form.useWatch('designThinking', form);
+  const technical = Form.useWatch('technical', form);
+  const contentProcessing = Form.useWatch('contentProcessing', form);
+  const formDepartment = Form.useWatch('department', form);
+  const matchedTaskGroup = useMemo(
+    () =>
+      taskGroupOptions.find((option) => {
+        const normalizedGroup = taskGroup?.trim().toLowerCase();
+        if (!normalizedGroup) return false;
+        return (
+          option.value.toLowerCase() === normalizedGroup ||
+          option.label.toLowerCase() === normalizedGroup
+        );
+      }),
+    [taskGroup, taskGroupOptions],
+  );
+  const selectedGroupCode = matchedTaskGroup?.value;
+  const scoreFilters = useMemo(
+    () => ({ group: selectedGroupCode ?? taskGroup }),
+    [selectedGroupCode, taskGroup],
+  );
+  const { data: scoreList } = useTaskScoreList(scoreFilters, {
+    enabled: open && Boolean(taskGroup),
+  });
   const staffSelectOptions = useMemo(() => mergeStaffSelectOptions(staffOptions), [staffOptions]);
+  const taskGroupAutoCompleteOptions = useMemo(
+    () =>
+      taskGroupOptions.map((option) => ({
+        value: option.label,
+        label: option.label,
+      })),
+    [taskGroupOptions],
+  );
   const taskScoreOptions = useMemo(
     () =>
       (scoreList?.items ?? []).map((score) => ({
@@ -159,9 +196,28 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
   }, [pmOptions, defaultProjectManager]);
 
   const derivedDepartment = useMemo(() => {
-    if (!taskGroup) return undefined;
-    return (groupByCode[taskGroup]?.department ?? undefined) as TaskDepartment | undefined;
-  }, [taskGroup, groupByCode]);
+    if (!selectedGroupCode) return undefined;
+    return groupByCode[selectedGroupCode]?.department ?? undefined;
+  }, [selectedGroupCode, groupByCode]);
+  const effectiveDepartment = derivedDepartment ?? formDepartment;
+  const normalizedTaskDepartment = normalizeDepartment(effectiveDepartment);
+  const isCreativeTask = normalizedTaskDepartment === 'creative';
+  const areScoringFieldsDisabled = isCreativeTask;
+  const filteredStaffSelectOptions = useMemo(() => {
+    if (!normalizedTaskDepartment) return staffSelectOptions;
+    const staffByOptionValue = new Map(
+      staffOptions.map((staff) => [staff.userId ?? staff.code, staff] as const),
+    );
+    return staffSelectOptions.filter((option) => {
+      const matchedStaff = staffByOptionValue.get(option.value);
+      if (!matchedStaff) return false;
+      return normalizeDepartment(matchedStaff.department ?? undefined) === normalizedTaskDepartment;
+    });
+  }, [normalizedTaskDepartment, staffOptions, staffSelectOptions]);
+  const computedLevel = useMemo(() => {
+    if (designThinking == null || technical == null || contentProcessing == null) return undefined;
+    return computeTaskLevel(designThinking, technical, contentProcessing);
+  }, [designThinking, technical, contentProcessing]);
 
   useEffect(() => {
     if (open) {
@@ -186,6 +242,31 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
       form.setFields([{ name: 'department', errors: [] }]);
     }
   }, [open, derivedDepartment, form]);
+
+  useEffect(() => {
+    if (!open || computedLevel == null) return;
+    form.setFieldValue('level', computedLevel);
+  }, [open, computedLevel, form]);
+
+  useEffect(() => {
+    if (!open) return;
+    form.setFieldValue('staffUserId', undefined);
+  }, [open, normalizedTaskDepartment, form]);
+
+  useEffect(() => {
+    if (!open || !isCreativeTask) return;
+    // Creative tasks lock scoring UI — reset so a prior project-group selection
+    // cannot submit stale classification / quantity values under disabled fields.
+    form.setFieldsValue({
+      designThinking: DEFAULT_VALUES.designThinking,
+      technical: DEFAULT_VALUES.technical,
+      contentProcessing: DEFAULT_VALUES.contentProcessing,
+      additionalFactors: DEFAULT_VALUES.additionalFactors,
+      level: DEFAULT_VALUES.level,
+      quantity: DEFAULT_VALUES.quantity,
+      description: DEFAULT_VALUES.description,
+    });
+  }, [open, isCreativeTask, form]);
 
   const handleClose = () => {
     form.resetFields();
@@ -213,31 +294,68 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
     form.setFieldValue('taskScoreName', undefined);
   };
 
-  const handleTaskScoreChange = (scoreName: string | undefined) => {
-    if (!scoreName) return;
-    const level = toClassificationLevel(parseTaskScoreName(scoreName).level);
-    if (level != null) {
-      form.setFieldValue('level', level);
-    }
-  };
+  const handleFinish = async (values: CreateTaskFormValues) => {
+    const taskGroupInput = values.taskGroup.trim();
+    const taskScoreInput = values.taskScoreName.trim();
+    const { baseName } = parseTaskScoreName(taskScoreInput);
 
-  const handleFinish = (values: CreateTaskFormValues) => {
-    const { baseName } = parseTaskScoreName(values.taskScoreName);
-    const department = derivedDepartment ?? values.department;
+    const matchedGroup =
+      taskGroupOptions.find(
+        (option) =>
+          option.value.toLowerCase() === taskGroupInput.toLowerCase() ||
+          option.label.toLowerCase() === taskGroupInput.toLowerCase(),
+      ) ?? null;
+    const matchedGroupCode = matchedGroup?.value;
+    const knownGroupDepartment = matchedGroupCode
+      ? (groupByCode[matchedGroupCode]?.department ?? undefined)
+      : undefined;
+    const department = knownGroupDepartment ?? values.department;
+
+    let groupCode = matchedGroupCode ?? '';
+    setIsPreparingCatalog(true);
+    try {
+      if (!matchedGroupCode) {
+        const createdGroup = await taskScoreApi.createGroup({
+          label: taskGroupInput,
+          department: department ?? null,
+        });
+        groupCode = createdGroup.code;
+        await queryClient.invalidateQueries({ queryKey: ['task-score-groups'] });
+      }
+
+      const hasExistingScore = (scoreList?.items ?? []).some(
+        (score) => score.name.trim().toLowerCase() === taskScoreInput.toLowerCase(),
+      );
+      if (!hasExistingScore) {
+        await taskScoreApi.create({
+          name: taskScoreInput,
+          group: groupCode,
+          score: 0,
+        });
+        await queryClient.invalidateQueries({ queryKey: ['task-scores'] });
+      }
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'Failed to prepare group/task score');
+      setIsPreparingCatalog(false);
+      return;
+    }
+    setIsPreparingCatalog(false);
 
     const payload: CreateMyTaskRequest = {
       taskCategory,
       projectName: values.projectName,
       projectManager: values.projectManager,
       taskName: baseName,
-      level: values.level,
-      quantity: values.quantity,
+      level: isCreativeTask ? DEFAULT_VALUES.level : values.level,
+      quantity: isCreativeTask ? DEFAULT_VALUES.quantity : values.quantity,
       date: toTaskDateOnly(values.date),
-      description: values.description ?? '',
-      designThinking: values.designThinking,
-      technical: values.technical,
-      contentProcessing: values.contentProcessing,
-      additionalFactors: values.additionalFactors ?? '',
+      description: isCreativeTask ? '' : (values.description ?? ''),
+      designThinking: isCreativeTask ? DEFAULT_VALUES.designThinking : values.designThinking,
+      technical: isCreativeTask ? DEFAULT_VALUES.technical : values.technical,
+      contentProcessing: isCreativeTask
+        ? DEFAULT_VALUES.contentProcessing
+        : values.contentProcessing,
+      additionalFactors: isCreativeTask ? '' : (values.additionalFactors ?? ''),
       staff: resolveStaffFromUserId(values.staffUserId, staffOptions),
       staffConfirmation: 'not_updated',
       staffNote: values.staffNote ?? '',
@@ -263,7 +381,7 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
       onCancel={handleClose}
       onOk={() => form.submit()}
       okText="Create task"
-      confirmLoading={isPending}
+      confirmLoading={isPending || isPreparingCatalog}
       destroyOnHidden
       width={720}
       styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
@@ -303,38 +421,32 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
         </section>
 
         <section className={styles.section}>
-          <p className={styles.sectionTitle}>Task</p>
+          <p className={styles.sectionTitle}>1) Task + Department</p>
           <div className={isProjectTask ? styles.rowThree : styles.row}>
             <Form.Item
               name="taskGroup"
               label="Group"
               rules={[{ required: true, message: 'Group is required' }]}
             >
-              <Select
-                showSearch
-                loading={taskGroupLoading}
-                placeholder="Select group"
-                options={taskGroupOptions}
+              <AutoComplete
+                placeholder="Select or enter group"
+                options={taskGroupAutoCompleteOptions}
                 onChange={handleGroupChange}
                 filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
                 }
               />
             </Form.Item>
             <Form.Item
               name="taskScoreName"
-              label={MY_TASK_COLUMN_HEADERS.taskName}
+              label="Task"
               rules={[{ required: true, message: 'Task name is required' }]}
             >
-              <Select
-                showSearch
-                loading={Boolean(taskGroup) && (scoresLoading || scoresFetching)}
-                disabled={!taskGroup}
-                placeholder={taskGroup ? 'Select task score' : 'Select a group first'}
+              <AutoComplete
+                placeholder={taskGroup ? 'Select or enter task score' : 'Select a group first'}
                 options={taskScoreOptions}
-                onChange={handleTaskScoreChange}
                 filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
                 }
               />
             </Form.Item>
@@ -345,36 +457,100 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
                 rules={[
                   {
                     required: true,
-                    message: taskGroup ? 'Group này chưa có phòng ban' : 'Chọn group trước',
+                    message: !taskGroup
+                      ? 'Chọn group trước'
+                      : derivedDepartment
+                        ? 'Group này chưa có phòng ban'
+                        : 'Chọn phòng ban cho group mới',
                   },
                 ]}
               >
-                <Select disabled placeholder="—" options={[...DEPARTMENT_OPTIONS]} open={false} />
+                <Select
+                  disabled={Boolean(derivedDepartment)}
+                  placeholder={derivedDepartment ? 'Auto from group' : 'Select department'}
+                  options={departmentOptions}
+                  loading={departmentLoading}
+                  open={derivedDepartment ? false : undefined}
+                />
               </Form.Item>
             ) : null}
           </div>
 
+          <p className={styles.sectionTitle}>2) Classification</p>
+          <div className={styles.rowThree}>
+            <Form.Item
+              name="designThinking"
+              label={MY_TASK_COLUMN_HEADERS.designThinking}
+              rules={[{ required: true, message: 'Required' }]}
+            >
+              <Select
+                options={[...CLASSIFICATION_LEVEL_OPTIONS]}
+                disabled={areScoringFieldsDisabled}
+              />
+            </Form.Item>
+            <Form.Item
+              name="technical"
+              label={MY_TASK_COLUMN_HEADERS.technical}
+              rules={[{ required: true, message: 'Required' }]}
+            >
+              <Select
+                options={[...CLASSIFICATION_LEVEL_OPTIONS]}
+                disabled={areScoringFieldsDisabled}
+              />
+            </Form.Item>
+            <Form.Item
+              name="contentProcessing"
+              label={MY_TASK_COLUMN_HEADERS.contentProcessing}
+              rules={[{ required: true, message: 'Required' }]}
+            >
+              <Select
+                options={[...CLASSIFICATION_LEVEL_OPTIONS]}
+                disabled={areScoringFieldsDisabled}
+              />
+            </Form.Item>
+          </div>
+          <Form.Item name="additionalFactors" label={MY_TASK_COLUMN_HEADERS.additionalFactors}>
+            <Input placeholder="Optional factors" disabled={areScoringFieldsDisabled} />
+          </Form.Item>
+
           <div className={styles.row}>
             <Form.Item
               name="level"
-              label={MY_TASK_COLUMN_HEADERS.level}
+              label="3) Task level (auto from classification)"
               rules={[{ required: true, message: 'Level is required' }]}
             >
-              <InputNumber min={1} max={4} precision={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item
-              name="quantity"
-              label={MY_TASK_COLUMN_HEADERS.quantity}
-              rules={[{ required: true, message: 'Quantity is required' }]}
-            >
-              <InputNumber min={0} style={{ width: '100%' }} />
+              <InputNumber
+                min={1}
+                max={4}
+                precision={0}
+                style={{ width: '100%' }}
+                disabled={areScoringFieldsDisabled}
+              />
             </Form.Item>
           </div>
 
           <div className={styles.row}>
             <Form.Item
+              name="quantity"
+              label="4) Quantity"
+              rules={[{ required: true, message: 'Quantity is required' }]}
+            >
+              <InputNumber min={0} style={{ width: '100%' }} disabled={areScoringFieldsDisabled} />
+            </Form.Item>
+          </div>
+
+          <Form.Item name="description" label="5) Brief description">
+            <Input.TextArea
+              rows={3}
+              placeholder="Add context or requirements"
+              disabled={areScoringFieldsDisabled}
+            />
+          </Form.Item>
+
+          <div className={styles.row}>
+            <Form.Item
               name="date"
-              label={MY_TASK_COLUMN_HEADERS.date}
+              label="6) Deadline (tính đến 23:59:59 cuối ngày)"
               rules={[{ required: true, message: 'Date is required' }]}
             >
               <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
@@ -387,59 +563,35 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
               <TaskUrgencySelect />
             </Form.Item>
           </div>
-
-          <Form.Item name="description" label={MY_TASK_COLUMN_HEADERS.description}>
-            <Input.TextArea rows={3} placeholder="Add context or requirements" />
-          </Form.Item>
         </section>
 
         <section className={styles.section}>
-          <p className={styles.sectionTitle}>Classification</p>
-          <div className={styles.rowThree}>
-            <Form.Item
-              name="designThinking"
-              label={MY_TASK_COLUMN_HEADERS.designThinking}
-              rules={[{ required: true, message: 'Required' }]}
-            >
-              <Select options={[...CLASSIFICATION_LEVEL_OPTIONS]} />
-            </Form.Item>
-            <Form.Item
-              name="technical"
-              label={MY_TASK_COLUMN_HEADERS.technical}
-              rules={[{ required: true, message: 'Required' }]}
-            >
-              <Select options={[...CLASSIFICATION_LEVEL_OPTIONS]} />
-            </Form.Item>
-            <Form.Item
-              name="contentProcessing"
-              label={MY_TASK_COLUMN_HEADERS.contentProcessing}
-              rules={[{ required: true, message: 'Required' }]}
-            >
-              <Select options={[...CLASSIFICATION_LEVEL_OPTIONS]} />
-            </Form.Item>
-          </div>
-          <Form.Item name="additionalFactors" label={MY_TASK_COLUMN_HEADERS.additionalFactors}>
-            <Input placeholder="Optional factors" />
-          </Form.Item>
-        </section>
-
-        <section className={styles.section}>
-          <p className={styles.sectionTitle}>Assignment</p>
+          <p className={styles.sectionTitle}>7) Assign nhân viên</p>
           <Form.Item
             name="staffUserId"
             label={MY_TASK_COLUMN_HEADERS.staffName}
             rules={
-              isProjectTask
-                ? [{ required: true, message: 'Select a staff member for this project task' }]
-                : []
+              normalizedTaskDepartment
+                ? [{ required: true, message: 'Select a staff member in the same department' }]
+                : isProjectTask
+                  ? [{ required: true, message: 'Select a staff member for this project task' }]
+                  : []
             }
           >
             <Select
               allowClear={!isProjectTask}
               showSearch
               optionFilterProp="label"
-              placeholder={isProjectTask ? 'Select staff for this task' : UNASSIGNED_STAFF_LABEL}
-              options={staffSelectOptions}
+              placeholder={
+                normalizedTaskDepartment === 'creative'
+                  ? 'Select creative staff'
+                  : normalizedTaskDepartment === 'project'
+                    ? 'Select project staff'
+                    : isProjectTask
+                      ? 'Select staff for this task'
+                      : UNASSIGNED_STAFF_LABEL
+              }
+              options={filteredStaffSelectOptions}
             />
           </Form.Item>
           <Form.Item name="staffNote" label={MY_TASK_COLUMN_HEADERS.staffNote}>

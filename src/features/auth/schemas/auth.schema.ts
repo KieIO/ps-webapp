@@ -12,6 +12,7 @@ export const AuthUserSchema = z.object({
     ROLES.HEAD,
     ROLES.ADMIN,
   ]),
+  department: z.string().optional(),
 });
 
 export const LoginRequestSchema = z.object({

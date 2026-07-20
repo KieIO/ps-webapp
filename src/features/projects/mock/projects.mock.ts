@@ -226,6 +226,11 @@ export const mockUpdateProject = async (
     status: payload.status,
     urgency: payload.status === 'finish' || payload.status === 'cancel' ? 'gray' : payload.urgency,
     finishedDate,
+    // Only overwrite when Evaluate (or another caller) explicitly sends a value.
+    completionPercent:
+      payload.completionPercent !== undefined
+        ? payload.completionPercent
+        : current.completionPercent,
     updatedAt: now,
   };
 

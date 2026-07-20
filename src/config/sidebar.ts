@@ -4,12 +4,13 @@ import {
   ProjectOutlined,
   BarChartOutlined,
   TrophyOutlined,
+  FileTextOutlined,
   UserOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
 import type { ComponentType } from 'react';
 import { ROUTES } from './constants';
-import type { Permission } from './permissions';
+import { ROLES, type Permission, type Role } from './permissions';
 import type { KeyboardShortcut } from '@/shared/utils/keyboardShortcut';
 
 export type SidebarShortcut = KeyboardShortcut;
@@ -26,6 +27,8 @@ export interface SidebarChildItem {
   label: string;
   path: string;
   permission?: Permission | null;
+  /** When set, the child is only visible to these roles (in addition to permission). */
+  roles?: readonly Role[];
   shortcut?: SidebarShortcut;
 }
 
@@ -88,13 +91,6 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
     icon: TrophyOutlined,
     permission: null,
     children: [
-      // Hidden temporarily — routes kept at ROUTES.PERFORMANCE / ROUTES.WORKLOAD / ROUTES.QUALITY for later use.
-      // {
-      //   label: 'KPI Dashboard',
-      //   path: ROUTES.PERFORMANCE,
-      //   permission: 'VIEW_PERFORMANCE',
-      //   shortcut: navShortcut('d'),
-      // },
       // {
       //   label: 'Workload',
       //   path: ROUTES.WORKLOAD,
@@ -121,15 +117,27 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
       },
     ],
   },
-  // Hidden temporarily — route kept at ROUTES.REPORTS for later use.
-  // {
-  //   key: 'reports',
-  //   label: 'Reports',
-  //   path: ROUTES.REPORTS,
-  //   icon: FileTextOutlined,
-  //   permission: 'EXPORT_REPORT',
-  //   shortcut: navShortcut('r'),
-  // },
+  {
+    key: 'reports',
+    label: 'Reports',
+    icon: FileTextOutlined,
+    permission: null,
+    children: [
+      {
+        label: 'Productivity',
+        path: ROUTES.PRODUCTIVITY,
+        permission: 'EXPORT_REPORT',
+        shortcut: navShortcut('r'),
+      },
+      {
+        label: 'Team comparison',
+        path: ROUTES.TEAM_COMPARISON,
+        permission: 'EXPORT_REPORT',
+        roles: [ROLES.HEAD, ROLES.CREATIVE_HEAD, ROLES.ADMIN],
+        shortcut: navShortcut('v'),
+      },
+    ],
+  },
   {
     key: 'users',
     label: 'Users',
@@ -167,6 +175,12 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
         path: ROUTES.TITLE_MANAGEMENT,
         permission: 'MANAGE_TITLES',
         shortcut: navShortcut('m'),
+      },
+      {
+        label: 'Department management',
+        path: ROUTES.DEPARTMENT_MANAGEMENT,
+        permission: 'MANAGE_DEPARTMENTS',
+        shortcut: navShortcut('d'),
       },
       {
         label: 'Capacity formula',

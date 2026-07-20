@@ -1,5 +1,4 @@
-import { DEPARTMENT_LABELS } from '@/features/projects/constants';
-import type { ProjectDepartment } from '@/features/projects/schemas/project.schema';
+import { getDepartmentLabel } from '@/features/departments/hooks/useDepartmentOptions';
 import { ClassificationLevelBadge } from '../ClassificationLevelBadge/ClassificationLevelBadge';
 import { TaskConfirmationBadge } from '../TaskConfirmationBadge/TaskConfirmationBadge';
 import { TaskDetailActions } from '../TaskDetailActions/TaskDetailActions';
@@ -21,8 +20,8 @@ interface TaskDetailSummaryCardProps {
 }
 
 function formatTaskDepartment(task: MyTask): string {
-  if (task.department && task.department in DEPARTMENT_LABELS) {
-    return DEPARTMENT_LABELS[task.department as ProjectDepartment];
+  if (task.department) {
+    return getDepartmentLabel(task.department);
   }
   return TASK_CATEGORY_DEPARTMENT_LABELS[task.taskCategory];
 }

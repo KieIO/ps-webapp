@@ -1,7 +1,7 @@
 import { Button, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PAGINATION } from '@/config/constants';
-import { DEPARTMENT_LABELS } from '@/features/projects/constants';
+import { getDepartmentLabel } from '@/features/departments/hooks/useDepartmentOptions';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import type { TaskScoreGroupRecord } from '../../schemas/taskScoreGroup.schema';
 import type { TaskScore } from '../../schemas/taskScore.schema';
@@ -46,7 +46,7 @@ export function TaskScoreTable({ items, groupByCode, loading, onEdit }: TaskScor
       width: 130,
       render: (_, record) => {
         const department = groupByCode[record.group]?.department;
-        return department ? DEPARTMENT_LABELS[department] : '—';
+        return department ? getDepartmentLabel(department) : '—';
       },
     },
     {

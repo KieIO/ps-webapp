@@ -27,6 +27,7 @@ import { TASK_CONFIRMATION_STATUSES } from '../schemas/task.schema';
 import { resolveProjectContextFromTask } from './taskProjectContext';
 import { formatTaskStaffNames } from './staff';
 import { resolveTaskUrgencyDisplay } from './taskUrgency';
+import { canViewCreativeDeadline } from './creativeVisibility';
 
 const compareText = (a: string, b: string) => a.localeCompare(b, 'vi');
 
@@ -63,6 +64,8 @@ export const getMyTaskColumnSorter = (key: MyTaskColumnKey): ((a: MyTask, b: MyT
       return (a, b) => compareNumber(a.quantity, b.quantity);
     case 'date':
       return (a, b) => compareDate(a.date, b.date);
+    case 'creativeDeadline':
+      return (a, b) => compareOptionalDate(a.creativeDeadline, b.creativeDeadline);
     case 'urgency':
       return (a, b) =>
         compareEnumIndex(
@@ -162,6 +165,7 @@ const COLUMN_WIDTHS: Record<MyTaskColumnKey, number> = {
   level: 90,
   quantity: 110,
   date: 110,
+  creativeDeadline: 155,
   urgency: 135,
   description: 240,
   staffName: 180,
@@ -193,23 +197,44 @@ const resolveColumnWidth = (key: MyTaskColumnKey, title: string): number =>
   Math.max(COLUMN_WIDTHS[key], title.length * COLUMN_HEADER_CHAR_WIDTH + COLUMN_HEADER_PADDING);
 
 /** Column visibility per role for `/tasks/project` and `/tasks/non-project`. */
-export const getMyTaskColumnKeysForRole = (role: Role): MyTaskColumnKey[] => {
+export const getMyTaskColumnKeysForRole = (
+  role: Role,
+  department?: string | null,
+): MyTaskColumnKey[] => {
+  let keys: MyTaskColumnKey[];
   switch (role) {
     case ROLES.ADMIN:
-      return [...MY_TASK_ADMIN_COLUMN_KEYS];
+      keys = [...MY_TASK_ADMIN_COLUMN_KEYS];
+      break;
     case ROLES.HEAD:
-      return [...MY_TASK_HEAD_COLUMN_KEYS];
+      keys = [...MY_TASK_HEAD_COLUMN_KEYS];
+      break;
     case ROLES.EMPLOYEE:
-      return [...MY_TASK_EMPLOYEE_COLUMN_KEYS];
+      keys = [...MY_TASK_EMPLOYEE_COLUMN_KEYS];
+      break;
     case ROLES.PM:
-      return [...MY_TASK_PM_COLUMN_KEYS];
+      keys = [...MY_TASK_PM_COLUMN_KEYS];
+      break;
     case ROLES.CREATIVE_HEAD:
-      return [...MY_TASK_CREATIVE_HEAD_COLUMN_KEYS];
+      keys = [...MY_TASK_CREATIVE_HEAD_COLUMN_KEYS];
+      break;
     case ROLES.CREATIVE_MANAGER:
-      return [...MY_TASK_CREATIVE_MANAGER_COLUMN_KEYS];
+      keys = [...MY_TASK_CREATIVE_MANAGER_COLUMN_KEYS];
+      break;
     default:
-      return [...MY_TASK_EMPLOYEE_COLUMN_KEYS];
+      keys = [...MY_TASK_EMPLOYEE_COLUMN_KEYS];
   }
+
+  if (canViewCreativeDeadline(role, department) && !keys.includes('creativeDeadline')) {
+    const dateIndex = keys.indexOf('date');
+    if (dateIndex >= 0) {
+      keys = [...keys.slice(0, dateIndex + 1), 'creativeDeadline', ...keys.slice(dateIndex + 1)];
+    } else {
+      keys = [...keys, 'creativeDeadline'];
+    }
+  }
+
+  return keys;
 };
 
 const getColumnTitle = (key: MyTaskColumnKey, role: Role): string => {
@@ -220,8 +245,11 @@ const getColumnTitle = (key: MyTaskColumnKey, role: Role): string => {
   return MY_TASK_COLUMN_HEADERS[key];
 };
 
-export const getMyTaskColumnDefsForRole = (role: Role): MyTaskColumnDef[] =>
-  getMyTaskColumnKeysForRole(role).map((key) => {
+export const getMyTaskColumnDefsForRole = (
+  role: Role,
+  department?: string | null,
+): MyTaskColumnDef[] =>
+  getMyTaskColumnKeysForRole(role, department).map((key) => {
     const title = getColumnTitle(key, role);
     return {
       key,
@@ -302,6 +330,8 @@ export const getMyTaskColumnExportValue = (task: MyTask, key: MyTaskColumnKey): 
       return task.quantity;
     case 'date':
       return formatDate(task.date);
+    case 'creativeDeadline':
+      return formatDate(task.creativeDeadline ?? undefined);
     case 'urgency':
       return PROJECT_URGENCY_STYLES[resolveTaskUrgencyDisplay(task)].label;
     case 'startDate':
@@ -433,6 +463,7 @@ export const buildMyTaskDataColumns = (
       case 'quantity':
         return { ...base, dataIndex: 'quantity' };
       case 'date':
+      case 'creativeDeadline':
       case 'startDate':
       case 'endDate':
       case 'finishedDate':
@@ -443,11 +474,13 @@ export const buildMyTaskDataColumns = (
             const value =
               def.key === 'date'
                 ? record.date
-                : def.key === 'startDate'
-                  ? ctx.projectStartDate
-                  : def.key === 'endDate'
-                    ? ctx.projectEndDate
-                    : ctx.projectFinishedDate;
+                : def.key === 'creativeDeadline'
+                  ? record.creativeDeadline
+                  : def.key === 'startDate'
+                    ? ctx.projectStartDate
+                    : def.key === 'endDate'
+                      ? ctx.projectEndDate
+                      : ctx.projectFinishedDate;
             return value ? renderers.renderDate(value, record, def.key) : renderers.renderText('');
           },
         };

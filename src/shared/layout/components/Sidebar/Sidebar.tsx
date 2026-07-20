@@ -11,6 +11,7 @@ import {
 } from '@/config/sidebar';
 import { roleHasPermission } from '@/features/rbac/utils/permissionDerivation';
 import { canViewProjectTracker } from '@/features/rbac/utils/canViewProjectTracker';
+import { canAccessHomePage } from '@/features/home/utils/homeScope';
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useSidebarShortcuts } from '@/shared/hooks/useSidebarShortcuts';
@@ -34,11 +35,16 @@ export function Sidebar() {
       SIDEBAR_ITEMS.flatMap((item) => {
         if (item.children) {
           const children = item.children.filter((child) => {
-            if (!child.permission) return true;
             if (!role) return false;
+            if (child.roles && !child.roles.includes(role)) return false;
+            if (!child.permission) return true;
             return roleHasPermission(role, child.permission, permissionConfig);
           });
           return children.length > 0 ? [{ ...item, children }] : [];
+        }
+
+        if (item.key === 'home') {
+          return canAccessHomePage(role) ? [item] : [];
         }
 
         if (item.key === 'project-tracker') {

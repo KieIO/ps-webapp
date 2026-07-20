@@ -24,6 +24,7 @@ export const mockLogin = async (payload: LoginRequest): Promise<LoginResponse> =
       id: `dev-${user.role}`,
       name: user.name,
       role: user.role,
+      department: user.department,
     },
   };
 };

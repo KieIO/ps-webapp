@@ -43,6 +43,7 @@ const filterUsers = (users: UserRecord[], filters: UserListFilters): UserRecord[
   return users.filter((user) => {
     if (filters.role && user.role !== filters.role) return false;
     if (filters.status && user.status !== filters.status) return false;
+    if (filters.department && user.department !== filters.department) return false;
     if (search) {
       const haystack = `${user.name} ${user.email}`.toLowerCase();
       if (!haystack.includes(search)) return false;

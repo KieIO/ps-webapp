@@ -101,7 +101,13 @@ const isProjectOutputTask = (task: MyTask): boolean => {
   const project = getMockProjectsStore().find(
     (entry) => entry.id === task.projectId || entry.name === task.projectName,
   );
-  return project?.department?.trim().toLowerCase() === 'project';
+  if (project?.department?.trim().toLowerCase() !== 'project') {
+    return false;
+  }
+  if (isCreativeDATask(task)) {
+    return false;
+  }
+  return true;
 };
 
 export const filterMockTasks = (
@@ -403,6 +409,7 @@ export const mockCreateMyTask = async (
     quantity: payload.quantity,
     date: normalizeTaskDateStart(payload.date),
     deadline: normalizeTaskDateEnd(payload.date),
+    creativeDeadline: payload.creativeDeadline,
     description: payload.description,
     department: payload.department,
     staff: payload.staff,
@@ -483,6 +490,7 @@ export const mockUpdateMyTask = async (
     quantity: payload.quantity,
     date: normalizeTaskDateStart(payload.date),
     deadline: normalizeTaskDateEnd(payload.date),
+    creativeDeadline: payload.creativeDeadline ?? current.creativeDeadline,
     description: payload.description,
     designThinking: payload.designThinking,
     technical: payload.technical,

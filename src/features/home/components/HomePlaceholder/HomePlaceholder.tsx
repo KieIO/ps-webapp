@@ -8,8 +8,9 @@ interface HomePlaceholderProps {
 }
 
 /**
- * Fallback Home for roles without a dedicated dashboard.
- * Leadership → `HomeDashboard`; PM / CM → `ManagerHomeDashboard`; Employee → `EmployeeHomeDashboard`.
+ * Fallback Home for roles without a dedicated dashboard (e.g. Admin).
+ * Leadership → `HomeDashboard`.
+ * Employee / PM / CM cannot access `/home`.
  */
 export function HomePlaceholder({ role }: HomePlaceholderProps) {
   const roleLabel = ROLE_LABELS[role];

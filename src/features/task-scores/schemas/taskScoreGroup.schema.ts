@@ -1,7 +1,6 @@
 import { z } from 'zod';
-import { PROJECT_DEPARTMENTS } from '@/features/projects/schemas/project.schema';
 
-export const TaskScoreGroupDepartmentSchema = z.enum(PROJECT_DEPARTMENTS).nullable();
+export const TaskScoreGroupDepartmentSchema = z.string().min(1).nullable();
 
 export const TaskScoreGroupRecordSchema = z.object({
   id: z.string(),

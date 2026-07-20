@@ -11,6 +11,45 @@
   min-width: 0;
 }
 
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.breadcrumbItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.breadcrumbSeparator {
+  color: var(--color-text-disabled);
+  flex-shrink: 0;
+}
+
+.breadcrumbLink {
+  color: var(--color-text-muted);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+.breadcrumbMuted {
+  color: var(--color-text-muted);
+}
+
+.breadcrumbCurrent {
+  color: var(--color-text-body);
+  font-weight: 500;
+}
+
 .title {
   font-size: 24px;
   font-weight: 600;

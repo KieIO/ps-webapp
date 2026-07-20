@@ -29,14 +29,21 @@ const CapacityForecastPage = lazy(
   () => import('@/pages/CapacityForecastPage/CapacityForecastPage'),
 );
 const ProjectTrackerPage = lazy(() => import('@/pages/ProjectTrackerPage/ProjectTrackerPage'));
+const ProductivityPage = lazy(() => import('@/pages/ProductivityPage/ProductivityPage'));
+const TeamComparisonPage = lazy(() => import('@/pages/TeamComparisonPage/TeamComparisonPage'));
+const EmployeePerformancePage = lazy(
+  () => import('@/pages/EmployeePerformancePage/EmployeePerformancePage'),
+);
 const KPISettingsPage = lazy(() => import('@/pages/KPISettingsPage/KPISettingsPage'));
 const OvertimePage = lazy(() => import('@/pages/OvertimePage/OvertimePage'));
-const ReportsPage = lazy(() => import('@/pages/ReportsPage/ReportsPage'));
 const UsersPage = lazy(() => import('@/pages/UsersPage/UsersPage'));
 const UserDetailPage = lazy(() => import('@/pages/UserDetailPage/UserDetailPage'));
 const RolesPage = lazy(() => import('@/pages/RolesPage/RolesPage'));
 const AuditLogPage = lazy(() => import('@/pages/AuditLogPage/AuditLogPage'));
 const TitleManagementPage = lazy(() => import('@/pages/TitleManagementPage/TitleManagementPage'));
+const DepartmentManagementPage = lazy(
+  () => import('@/pages/DepartmentManagementPage/DepartmentManagementPage'),
+);
 const EmployeeCapacityFormulaPage = lazy(
   () => import('@/pages/EmployeeCapacityFormulaPage/EmployeeCapacityFormulaPage'),
 );
@@ -85,7 +92,10 @@ const router = createBrowserRouter([
     element: <AuthenticatedLayout />,
     children: [
       { index: true, element: <LandingPage />, handle: { contentLayout: 'flush' } },
-      { path: ROUTES.HOME.slice(1), element: <HomePage /> },
+      {
+        element: <ProtectedRoute allowedRoles={[ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN]} />,
+        children: [{ path: ROUTES.HOME.slice(1), element: <HomePage /> }],
+      },
       { path: ROUTES.DASHBOARD_LEGACY.slice(1), element: <DashboardPage /> },
       {
         path: ROUTES.PROJECT_TRACKER_LEGACY.slice(1),
@@ -139,6 +149,40 @@ const router = createBrowserRouter([
             allowedRoles={[
               ROLES.PM,
               ROLES.CREATIVE_MANAGER,
+              ROLES.HEAD,
+              ROLES.CREATIVE_HEAD,
+              ROLES.ADMIN,
+            ]}
+          />
+        ),
+        children: [
+          { path: ROUTES.PRODUCTIVITY.slice(1), element: <ProductivityPage /> },
+          {
+            path: ROUTES.PRODUCTIVITY_LEGACY.slice(1),
+            element: <Navigate to={ROUTES.PRODUCTIVITY} replace />,
+          },
+        ],
+      },
+      {
+        element: <ProtectedRoute allowedRoles={[ROLES.HEAD, ROLES.CREATIVE_HEAD, ROLES.ADMIN]} />,
+        children: [
+          { path: ROUTES.TEAM_COMPARISON.slice(1), element: <TeamComparisonPage /> },
+          {
+            path: ROUTES.EMPLOYEE_PERFORMANCE.slice(1),
+            element: <EmployeePerformancePage />,
+          },
+          {
+            path: ROUTES.DEPARTMENT_MANAGEMENT.slice(1),
+            element: <DepartmentManagementPage />,
+          },
+        ],
+      },
+      {
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              ROLES.PM,
+              ROLES.CREATIVE_MANAGER,
               ROLES.CREATIVE_HEAD,
               ROLES.HEAD,
               ROLES.ADMIN,
@@ -155,7 +199,10 @@ const router = createBrowserRouter([
           },
           { path: 'performance/settings', element: <KPISettingsPage /> },
           { path: ROUTES.OVERTIME.slice(1), element: <OvertimePage /> },
-          { path: ROUTES.REPORTS.slice(1), element: <ReportsPage /> },
+          {
+            path: ROUTES.REPORTS.slice(1),
+            element: <Navigate to={ROUTES.PRODUCTIVITY} replace />,
+          },
           { path: ROUTES.TITLE_MANAGEMENT.slice(1), element: <TitleManagementPage /> },
           {
             path: ROUTES.EMPLOYEE_CAPACITY_FORMULA.slice(1),

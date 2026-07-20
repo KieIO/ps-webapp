@@ -17,6 +17,7 @@ export const PROJECT_URGENCIES = ['auto', ...PROJECT_URGENCY_COLORS] as const;
 
 export type EvaluationLevel = (typeof EVALUATION_LEVELS)[number];
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+/** Built-in seed codes. Runtime departments may include additional API-managed codes. */
 export type ProjectDepartment = (typeof PROJECT_DEPARTMENTS)[number];
 export type ProjectUrgencyColor = (typeof PROJECT_URGENCY_COLORS)[number];
 export type ProjectUrgency = (typeof PROJECT_URGENCIES)[number];
@@ -42,7 +43,7 @@ export const ProjectRecordSchema = z.object({
   startDate: z.string(),
   endDate: z.string(),
   projectLevel: z.number().int().min(1).max(4),
-  department: z.enum(PROJECT_DEPARTMENTS),
+  department: z.string().min(1),
   departmentHead: PersonWithCodeSchema,
   brief: z.string(),
   volume: z.number().int().min(1).max(4),
@@ -54,6 +55,8 @@ export const ProjectRecordSchema = z.object({
   note: z.string(),
   status: z.enum(PROJECT_STATUSES),
   urgency: z.enum(PROJECT_URGENCIES).optional().default('auto'),
+  /** Stored override; when omitted, UI/API may derive from linked tasks. */
+  completionPercent: z.number().min(0).max(100).optional(),
   finishedDate: z.string().optional(),
   archivedAt: z.string().optional(),
   updatedAt: z.string().optional(),
@@ -101,7 +104,7 @@ export const UpdateProjectRequestSchema = z.object({
   name: z.string().min(1, 'Project name is required'),
   startDate: z.string(),
   endDate: z.string(),
-  department: z.enum(PROJECT_DEPARTMENTS),
+  department: z.string().min(1),
   departmentHead: PersonWithCodeSchema,
   brief: z.string(),
   volume: z.number().int().min(1).max(4),
@@ -113,6 +116,8 @@ export const UpdateProjectRequestSchema = z.object({
   note: z.string(),
   status: z.enum(PROJECT_STATUSES),
   urgency: z.enum(PROJECT_URGENCIES),
+  /** When set, persists a manual % hoàn thành override (Evaluate project). */
+  completionPercent: z.number().min(0).max(100).optional(),
 });
 
 export const CreateProjectRequestSchema = UpdateProjectRequestSchema;
