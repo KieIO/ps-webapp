@@ -12,19 +12,15 @@ import {
 import { roleHasPermission } from '@/features/rbac/utils/permissionDerivation';
 import { canViewProjectTracker } from '@/features/rbac/utils/canViewProjectTracker';
 import { canAccessHomePage } from '@/features/home/utils/homeScope';
-import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useSidebarShortcuts } from '@/shared/hooks/useSidebarShortcuts';
 import { formatShortcutLabel } from '@/shared/utils/keyboardShortcut';
-import { toggleSidebar } from '@/store/slices/uiSlice';
 import { SidebarMenuLabel } from './SidebarMenuLabel';
-import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import styles from './Sidebar.module.scss';
 
 export function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useAppDispatch();
   const collapsed = useAppSelector((state) => state.ui.sidebarCollapsed);
   const role = useAppSelector((state) => state.auth.user?.role);
   const permissionConfig = useAppSelector((state) => state.permissionConfig.config);
@@ -163,15 +159,6 @@ export function Sidebar() {
           }
         }}
       />
-
-      <button
-        type="button"
-        className={styles.toggle}
-        onClick={() => dispatch(toggleSidebar())}
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-      >
-        {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-      </button>
     </aside>
   );
 }
