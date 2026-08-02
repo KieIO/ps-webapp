@@ -154,6 +154,12 @@ export const PERMISSION_MODULES: PermissionModuleDef[] = [
     actions: [{ permission: 'MANAGE_DEPARTMENTS', label: 'Manage departments' }],
   },
   {
+    key: 'task-scores',
+    label: 'Task types & scores',
+    accessType: 'permission',
+    actions: [{ permission: 'MANAGE_TASK_SCORES', label: 'Manage task types & scores' }],
+  },
+  {
     key: 'productivity',
     label: 'Productivity',
     accessType: 'planned',

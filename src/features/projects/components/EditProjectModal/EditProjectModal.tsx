@@ -1,4 +1,4 @@
-import { DatePicker, Form, Input, Modal, Select } from 'antd';
+import { DatePicker, Form, Input, Modal, Select, message } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
@@ -7,7 +7,12 @@ import { EVALUATION_LEVEL_OPTIONS, EVALUATION_LEVEL_LABELS, STATUS_OPTIONS } fro
 import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProjectList';
 import { useUpdateProject } from '../../hooks/useUpdateProject';
 import { computeProjectLevel } from '../../utils/projectLevel';
-import { mergePersonOptions, resolvePersonRef } from '../../utils/personRef';
+import {
+  emptyPerson,
+  hasPersonUserId,
+  mergePersonOptions,
+  resolvePersonFromForm,
+} from '../../utils/personRef';
 import {
   EVALUATION_LEVELS,
   type EvaluationLevel,
@@ -88,7 +93,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
 
   const handleDepartmentHeadSelect = (code: string | undefined) => {
     if (!code) {
-      form.setFieldValue('departmentHead', { code: '', name: '', userId: undefined });
+      form.setFieldValue('departmentHead', emptyPerson());
       return;
     }
     const head = departmentHeadSelectOptions.find((entry) => entry.code === code);
@@ -103,7 +108,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
 
   const handlePmSelect = (code: string | undefined) => {
     if (!code) {
-      form.setFieldValue('pm', { code: '', name: '', userId: undefined });
+      form.setFieldValue('pm', emptyPerson());
       return;
     }
     const pm = pmSelectOptions.find((entry) => entry.code === code);
@@ -115,6 +120,20 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
   const handleFinish = (values: EditProjectFormValues) => {
     if (!project) return;
 
+    const stored = form.getFieldsValue(true) as EditProjectFormValues;
+    const departmentHead = resolvePersonFromForm(
+      values.departmentHead,
+      stored.departmentHead,
+      departmentHeadSelectOptions,
+      project.departmentHead,
+    );
+    const pm = resolvePersonFromForm(values.pm, stored.pm, pmSelectOptions, project.pm);
+
+    if (!hasPersonUserId(departmentHead) || !hasPersonUserId(pm)) {
+      message.error('Please select a department head and PM from the list');
+      return;
+    }
+
     const payload: UpdateProjectRequest = {
       clientId: values.clientId,
       name: values.name,
@@ -122,17 +141,13 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
       endDate: values.endDate.toISOString(),
       // Department is owned by tasks (task score group); keep existing project value.
       department: project.department,
-      departmentHead: resolvePersonRef(
-        values.departmentHead?.code,
-        departmentHeadSelectOptions,
-        values.departmentHead ?? project.departmentHead,
-      ),
+      departmentHead,
       brief: values.brief ?? '',
       volume: values.volume,
       nature: values.nature,
       time: values.time,
       additionalFactors: values.additionalFactors ?? '',
-      pm: resolvePersonRef(values.pm?.code, pmSelectOptions, values.pm ?? project.pm),
+      pm,
       evaluation: values.evaluation ?? '',
       note: values.note ?? '',
       status: values.status,

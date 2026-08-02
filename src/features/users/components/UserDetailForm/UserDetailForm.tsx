@@ -7,6 +7,7 @@ import type { Role } from '@/config/permissions';
 import { LeaveScheduleModal } from '@/features/leave/components/LeaveScheduleModal/LeaveScheduleModal';
 import { UserLeaveSection } from '@/features/leave/components/UserLeaveSection/UserLeaveSection';
 import { RoleAccessPreview } from '@/features/rbac/components/RoleAccessPreview/RoleAccessPreview';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import { StatusPill } from '@/shared/ui/StatusPill/StatusPill';
@@ -25,6 +26,11 @@ import { useUpdateUser } from '../../hooks/useUpdateUser';
 import { useUser } from '../../hooks/useUser';
 import type { UpdateUserRequest } from '../../schemas/user.schema';
 import { mapJobLevelCode } from '../../utils/jobLevel';
+import {
+  canEditUserOrgFields,
+  canEditUserProfile,
+  canFullyManageUserProfiles,
+} from '../../utils/userProfileAccess';
 import styles from './UserDetailForm.module.scss';
 
 const STATUS_VARIANT = {
@@ -44,8 +50,12 @@ interface UserDetailFormProps {
 
 export function UserDetailForm({ userId }: UserDetailFormProps) {
   const navigate = useNavigate();
-  const { can } = usePermission();
+  const { can, role } = usePermission();
+  const actorId = useAppSelector((state) => state.auth.user?.id);
   const canManageUsers = can('MANAGE_USERS');
+  const canFullyManage = canFullyManageUserProfiles(role);
+  const canEdit = canEditUserProfile(role, actorId, userId, canManageUsers);
+  const canEditOrg = canEditUserOrgFields(role, canManageUsers);
   const canManageLeave = can('MANAGE_LEAVE');
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const [form] = Form.useForm<UserDetailFormValues>();
@@ -93,7 +103,10 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
         message="User not found"
         description={error instanceof Error ? error.message : 'Unable to load user details.'}
         action={
-          <Button type="link" onClick={() => (canManageUsers ? navigate(ROUTES.USERS) : navigate(-1))}>
+          <Button
+            type="link"
+            onClick={() => (canManageUsers ? navigate(ROUTES.USERS) : navigate(-1))}
+          >
             {canManageUsers ? 'Back to users' : 'Back'}
           </Button>
         }
@@ -109,12 +122,15 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
     }
 
     if (values.status === 'active' && user.status === 'on_leave') {
-      message.warning('Use the Activate employee button in the Leave section to reactivate this user.');
+      message.warning(
+        'Use the Activate employee button in the Leave section to reactivate this user.',
+      );
       form.setFieldValue('status', user.status);
       return;
     }
 
-    const { jobLevelId: _jobLevelId, ...payload } = values;
+    const { jobLevelId, ...payload } = values;
+    void jobLevelId;
     mutate({ id: userId, payload });
   };
 
@@ -159,181 +175,187 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
   const levelBadge = mapJobLevelCode(user.jobLevelCode);
 
   return (
-    <div className={canManageUsers ? styles.layout : styles.layoutReadOnly}>
+    <div className={canEdit ? styles.layout : styles.layoutReadOnly}>
       <div className={styles.formColumn}>
-      <CardWrapper
-        title={user.name}
-        subtitle={`Joined ${dayjs(user.joinedAt).format(DATE_FORMAT)}`}
-        actions={
-          user.updatedAt ? (
-            <span className={styles.meta}>
-              Last updated {dayjs(user.updatedAt).format(DATE_FORMAT)}
-            </span>
-          ) : undefined
-        }
-      >
-        <div className={styles.summary}>
-          <StatusPill
-            label={STATUS_LABELS[user.status]}
-            variant={STATUS_VARIANT[user.status]}
-          />
-          <span className={styles.summaryText}>
-            {ROLE_LABELS[user.role]} · {DEPARTMENT_LABELS[user.department]}
-            {user.positionCode ? ` · ${user.positionCode}` : ''}
-          </span>
-        </div>
-
-        {canManageUsers ? (
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleFinish}
-          requiredMark={false}
-          className={styles.form}
+        <CardWrapper
+          title={user.name}
+          subtitle={`Joined ${dayjs(user.joinedAt).format(DATE_FORMAT)}`}
+          actions={
+            user.updatedAt ? (
+              <span className={styles.meta}>
+                Last updated {dayjs(user.updatedAt).format(DATE_FORMAT)}
+              </span>
+            ) : undefined
+          }
         >
-          <Form.Item
-            name="name"
-            label="Full name"
-            rules={[{ required: true, message: 'Name is required' }]}
-          >
-            <Input />
-          </Form.Item>
+          <div className={styles.summary}>
+            <StatusPill label={STATUS_LABELS[user.status]} variant={STATUS_VARIANT[user.status]} />
+            <span className={styles.summaryText}>
+              {ROLE_LABELS[user.role]} · {DEPARTMENT_LABELS[user.department]}
+              {user.positionCode ? ` · ${user.positionCode}` : ''}
+            </span>
+          </div>
 
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[
-              { required: true, message: 'Email is required' },
-              { type: 'email', message: 'Enter a valid email' },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-
-          <div className={styles.row}>
-            <Form.Item
-              name="role"
-              label="Role"
-              rules={[{ required: true, message: 'Role is required' }]}
-              className={styles.field}
+          {canEdit ? (
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleFinish}
+              requiredMark={false}
+              className={styles.form}
             >
-              <Select options={ROLE_OPTIONS} />
-            </Form.Item>
+              <Form.Item
+                name="name"
+                label="Full name"
+                rules={[{ required: true, message: 'Name is required' }]}
+              >
+                <Input />
+              </Form.Item>
 
-            <Form.Item
-              name="status"
-              label="Status"
-              rules={[{ required: true, message: 'Status is required' }]}
-              className={styles.field}
-            >
-              <Select options={STATUS_OPTIONS} />
-            </Form.Item>
-          </div>
+              <Form.Item
+                name="email"
+                label="Email"
+                rules={[
+                  { required: true, message: 'Email is required' },
+                  { type: 'email', message: 'Enter a valid email' },
+                ]}
+              >
+                <Input />
+              </Form.Item>
 
-          <Form.Item name="department" label="Department" rules={[{ required: true, message: 'Department is required' }]}>
-            <Select options={DEPARTMENT_OPTIONS} />
-          </Form.Item>
+              <div className={styles.row}>
+                <Form.Item
+                  name="role"
+                  label="Role"
+                  rules={[{ required: true, message: 'Role is required' }]}
+                  className={styles.field}
+                >
+                  <Select options={ROLE_OPTIONS} disabled={!canFullyManage} />
+                </Form.Item>
 
-          <Form.Item name="jobLevelId" label="Level">
-            <Select
-              allowClear
-              placeholder="Select level"
-              options={levelOptions}
-              loading={jobLevelsLoading}
-              onChange={handleLevelChange}
-            />
-          </Form.Item>
+                <Form.Item
+                  name="status"
+                  label="Status"
+                  rules={[{ required: true, message: 'Status is required' }]}
+                  className={styles.field}
+                >
+                  <Select options={STATUS_OPTIONS} disabled={!canFullyManage} />
+                </Form.Item>
+              </div>
 
-          <div className={styles.row}>
-            <Form.Item label="Position code" className={styles.field}>
-              <Select
-                allowClear
-                placeholder="Select position code"
-                value={selectedJobTitleId ?? undefined}
-                options={positionCodeOptions}
-                loading={jobTitlesLoading}
-                showSearch
-                optionFilterProp="label"
-                onChange={handleJobTitleSelection}
-              />
-            </Form.Item>
+              <Form.Item
+                name="department"
+                label="Department"
+                rules={[{ required: true, message: 'Department is required' }]}
+              >
+                <Select options={DEPARTMENT_OPTIONS} disabled={!canEditOrg} />
+              </Form.Item>
 
-            <Form.Item label="Job title" className={styles.field}>
-              <Select
-                allowClear
-                placeholder="Select job title"
-                value={selectedJobTitleId ?? undefined}
-                options={jobTitleOptions}
-                loading={jobTitlesLoading}
-                showSearch
-                optionFilterProp="label"
-                onChange={handleJobTitleSelection}
-              />
-            </Form.Item>
-          </div>
+              <Form.Item name="jobLevelId" label="Level">
+                <Select
+                  allowClear
+                  placeholder="Select level"
+                  options={levelOptions}
+                  loading={jobLevelsLoading}
+                  disabled={!canEditOrg}
+                  onChange={handleLevelChange}
+                />
+              </Form.Item>
 
-          <Form.Item name="jobTitleId" hidden>
-            <Input />
-          </Form.Item>
+              <div className={styles.row}>
+                <Form.Item label="Position code" className={styles.field}>
+                  <Select
+                    allowClear
+                    placeholder="Select position code"
+                    value={selectedJobTitleId ?? undefined}
+                    options={positionCodeOptions}
+                    loading={jobTitlesLoading}
+                    disabled={!canEditOrg}
+                    showSearch
+                    optionFilterProp="label"
+                    onChange={handleJobTitleSelection}
+                  />
+                </Form.Item>
 
-          <div className={styles.actions}>
-            <Button onClick={() => navigate(ROUTES.USERS)}>Cancel</Button>
-            <Button type="primary" htmlType="submit" loading={isPending}>
-              Save changes
-            </Button>
-          </div>
-        </Form>
-        ) : (
-          <dl className={styles.readOnlyFields}>
-            <div className={styles.readOnlyRow}>
-              <dt>Full name</dt>
-              <dd>{user.name}</dd>
-            </div>
-            <div className={styles.readOnlyRow}>
-              <dt>Email</dt>
-              <dd>{user.email}</dd>
-            </div>
-            <div className={styles.readOnlyRow}>
-              <dt>Role</dt>
-              <dd>{ROLE_LABELS[user.role]}</dd>
-            </div>
-            <div className={styles.readOnlyRow}>
-              <dt>Status</dt>
-              <dd>{STATUS_LABELS[user.status]}</dd>
-            </div>
-            <div className={styles.readOnlyRow}>
-              <dt>Department</dt>
-              <dd>{DEPARTMENT_LABELS[user.department]}</dd>
-            </div>
-            <div className={styles.readOnlyRow}>
-              <dt>Level</dt>
-              <dd>{levelBadge ? <JobLevelBadge level={levelBadge} /> : '—'}</dd>
-            </div>
-            <div className={styles.readOnlyRow}>
-              <dt>Position code</dt>
-              <dd>{user.positionCode ?? '—'}</dd>
-            </div>
-            <div className={styles.readOnlyRow}>
-              <dt>Job title</dt>
-              <dd>{jobTitleLabel}</dd>
-            </div>
-          </dl>
+                <Form.Item label="Job title" className={styles.field}>
+                  <Select
+                    allowClear
+                    placeholder="Select job title"
+                    value={selectedJobTitleId ?? undefined}
+                    options={jobTitleOptions}
+                    loading={jobTitlesLoading}
+                    disabled={!canEditOrg}
+                    showSearch
+                    optionFilterProp="label"
+                    onChange={handleJobTitleSelection}
+                  />
+                </Form.Item>
+              </div>
+
+              <Form.Item name="jobTitleId" hidden>
+                <Input />
+              </Form.Item>
+
+              <div className={styles.actions}>
+                <Button onClick={() => (canManageUsers ? navigate(ROUTES.USERS) : navigate(-1))}>
+                  Cancel
+                </Button>
+                <Button type="primary" htmlType="submit" loading={isPending}>
+                  Save changes
+                </Button>
+              </div>
+            </Form>
+          ) : (
+            <dl className={styles.readOnlyFields}>
+              <div className={styles.readOnlyRow}>
+                <dt>Full name</dt>
+                <dd>{user.name}</dd>
+              </div>
+              <div className={styles.readOnlyRow}>
+                <dt>Email</dt>
+                <dd>{user.email}</dd>
+              </div>
+              <div className={styles.readOnlyRow}>
+                <dt>Role</dt>
+                <dd>{ROLE_LABELS[user.role]}</dd>
+              </div>
+              <div className={styles.readOnlyRow}>
+                <dt>Status</dt>
+                <dd>{STATUS_LABELS[user.status]}</dd>
+              </div>
+              <div className={styles.readOnlyRow}>
+                <dt>Department</dt>
+                <dd>{DEPARTMENT_LABELS[user.department]}</dd>
+              </div>
+              <div className={styles.readOnlyRow}>
+                <dt>Level</dt>
+                <dd>{levelBadge ? <JobLevelBadge level={levelBadge} /> : '—'}</dd>
+              </div>
+              <div className={styles.readOnlyRow}>
+                <dt>Position code</dt>
+                <dd>{user.positionCode ?? '—'}</dd>
+              </div>
+              <div className={styles.readOnlyRow}>
+                <dt>Job title</dt>
+                <dd>{jobTitleLabel}</dd>
+              </div>
+            </dl>
+          )}
+        </CardWrapper>
+
+        {(canManageLeave || can('REACTIVATE_USER') || canEdit) && (
+          <UserLeaveSection
+            userId={userId}
+            userStatus={user.status}
+            onScheduleLeave={() => setLeaveModalOpen(true)}
+          />
         )}
-      </CardWrapper>
-
-      {(canManageLeave || can('REACTIVATE_USER') || can('VIEW_USER')) && (
-        <UserLeaveSection
-          userId={userId}
-          userStatus={user.status}
-          onScheduleLeave={() => setLeaveModalOpen(true)}
-        />
-      )}
       </div>
 
-      {canManageUsers ? (
-      <div className={styles.previewColumn}>
-        <RoleAccessPreview role={previewRole} />
-      </div>
+      {canFullyManage ? (
+        <div className={styles.previewColumn}>
+          <RoleAccessPreview role={previewRole} />
+        </div>
       ) : null}
 
       <LeaveScheduleModal

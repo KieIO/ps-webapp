@@ -1,4 +1,4 @@
-import { DatePicker, Form, Input, Modal, Select } from 'antd';
+import { DatePicker, Form, Input, Modal, Select, message } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
@@ -10,7 +10,7 @@ import { useCreateProject } from '../../hooks/useCreateProject';
 import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProjectList';
 import { CREATE_PROJECT_DEFAULTS } from '../../utils/projectDefaults';
 import { computeProjectLevel } from '../../utils/projectLevel';
-import { resolvePersonRef } from '../../utils/personRef';
+import { emptyPerson, hasPersonUserId, resolvePersonFromForm } from '../../utils/personRef';
 import type {
   CreateProjectRequest,
   EvaluationLevel,
@@ -44,21 +44,21 @@ type CreateProjectFormValues = Omit<
   urgency: ProjectUrgency;
 };
 
-const DEFAULT_VALUES: CreateProjectFormValues = {
+const buildDefaultValues = (): CreateProjectFormValues => ({
   clientId: '',
   name: '',
   startDate: dayjs(),
   endDate: dayjs().add(2, 'week'),
   urgency: 'auto',
-  departmentHead: { code: '', name: '' },
+  departmentHead: emptyPerson(),
   brief: '',
   volume: 2,
   nature: 2,
   time: 2,
   additionalFactors: '',
-  pm: { code: '', name: '' },
+  pm: emptyPerson(),
   note: '',
-};
+});
 
 export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
   const [form] = Form.useForm<CreateProjectFormValues>();
@@ -86,13 +86,18 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
       ? computeProjectLevel(volume, nature, time)
       : undefined;
 
+  // Reset the form only when the modal opens — not when head options finish loading.
   useEffect(() => {
     if (!open) return;
+    form.setFieldsValue(buildDefaultValues());
+  }, [open, form]);
 
-    form.setFieldsValue({
-      ...DEFAULT_VALUES,
-      departmentHead: defaultDepartmentHead ?? DEFAULT_VALUES.departmentHead,
-    });
+  // Prefill dept. head without wiping fields the user may already have entered.
+  useEffect(() => {
+    if (!open || !defaultDepartmentHead) return;
+    const currentCode = form.getFieldValue(['departmentHead', 'code']);
+    if (currentCode) return;
+    form.setFieldValue('departmentHead', defaultDepartmentHead);
   }, [open, form, defaultDepartmentHead]);
 
   const handleClose = () => {
@@ -102,7 +107,7 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
 
   const handleDepartmentHeadSelect = (code: string | undefined) => {
     if (!code) {
-      form.setFieldValue('departmentHead', { code: '', name: '' });
+      form.setFieldValue('departmentHead', emptyPerson());
       return;
     }
     const head = headOptions.find((entry) => entry.code === code);
@@ -117,7 +122,7 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
 
   const handlePmSelect = (code: string | undefined) => {
     if (!code) {
-      form.setFieldValue('pm', { code: '', name: '' });
+      form.setFieldValue('pm', emptyPerson());
       return;
     }
     const pm = pmOptions.find((entry) => entry.code === code);
@@ -127,23 +132,32 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
   };
 
   const handleFinish = (values: CreateProjectFormValues) => {
+    const stored = form.getFieldsValue(true) as CreateProjectFormValues;
+    const departmentHead = resolvePersonFromForm(
+      values.departmentHead,
+      stored.departmentHead,
+      headOptions,
+    );
+    const pm = resolvePersonFromForm(values.pm, stored.pm, pmOptions);
+
+    if (!hasPersonUserId(departmentHead) || !hasPersonUserId(pm)) {
+      message.error('Please select a department head and PM from the list');
+      return;
+    }
+
     const payload: CreateProjectRequest = {
       ...CREATE_PROJECT_DEFAULTS,
       clientId: values.clientId,
       name: values.name,
       startDate: values.startDate.toISOString(),
       endDate: values.endDate.toISOString(),
-      departmentHead: resolvePersonRef(
-        values.departmentHead?.code,
-        headOptions,
-        values.departmentHead,
-      ),
+      departmentHead,
       brief: values.brief ?? '',
       volume: values.volume,
       nature: values.nature,
       time: values.time,
       additionalFactors: values.additionalFactors ?? '',
-      pm: resolvePersonRef(values.pm?.code, pmOptions, values.pm),
+      pm,
       note: values.note ?? '',
       urgency: values.urgency,
     };

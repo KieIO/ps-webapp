@@ -1,8 +1,22 @@
 import { Alert, Button, Card, Typography } from 'antd';
+import { ROLES } from '@/config/permissions';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { useResetDatabase } from '../../hooks/useResetDatabase';
 
 export const GeneralSettingsPanel = () => {
+  const { role } = usePermission();
   const resetDatabase = useResetDatabase();
+  const canResetDatabase = role === ROLES.ADMIN;
+
+  if (!canResetDatabase) {
+    return (
+      <Card title="General">
+        <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+          No general settings are available for your role.
+        </Typography.Paragraph>
+      </Card>
+    );
+  }
 
   return (
     <Card title="Database">

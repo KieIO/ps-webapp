@@ -164,17 +164,41 @@ const router = createBrowserRouter([
         ],
       },
       {
-        element: <ProtectedRoute allowedRoles={[ROLES.HEAD, ROLES.CREATIVE_HEAD, ROLES.ADMIN]} />,
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              ROLES.PM,
+              ROLES.CREATIVE_MANAGER,
+              ROLES.HEAD,
+              ROLES.CREATIVE_HEAD,
+              ROLES.ADMIN,
+            ]}
+          />
+        ),
         children: [
           { path: ROUTES.TEAM_COMPARISON.slice(1), element: <TeamComparisonPage /> },
           {
             path: ROUTES.EMPLOYEE_PERFORMANCE.slice(1),
             element: <EmployeePerformancePage />,
           },
+        ],
+      },
+      {
+        element: <ProtectedRoute allowedRoles={[ROLES.HEAD, ROLES.CREATIVE_HEAD, ROLES.ADMIN]} />,
+        children: [
+          { path: ROUTES.SETTINGS_GENERAL.slice(1), element: <GeneralSettingsPage /> },
+          { path: ROUTES.ROLES.slice(1), element: <RolesPage /> },
+          { path: ROUTES.AUDIT_LOG.slice(1), element: <AuditLogPage /> },
+          { path: ROUTES.TITLE_MANAGEMENT.slice(1), element: <TitleManagementPage /> },
           {
             path: ROUTES.DEPARTMENT_MANAGEMENT.slice(1),
             element: <DepartmentManagementPage />,
           },
+          {
+            path: ROUTES.EMPLOYEE_CAPACITY_FORMULA.slice(1),
+            element: <EmployeeCapacityFormulaPage />,
+          },
+          { path: ROUTES.TASK_SCORE.slice(1), element: <TaskScorePage /> },
         ],
       },
       {
@@ -203,31 +227,13 @@ const router = createBrowserRouter([
             path: ROUTES.REPORTS.slice(1),
             element: <Navigate to={ROUTES.PRODUCTIVITY} replace />,
           },
-          { path: ROUTES.TITLE_MANAGEMENT.slice(1), element: <TitleManagementPage /> },
-          {
-            path: ROUTES.EMPLOYEE_CAPACITY_FORMULA.slice(1),
-            element: <EmployeeCapacityFormulaPage />,
-          },
         ],
       },
       {
         element: (
           <ProtectedRoute
             allowedRoles={[
-              ROLES.PM,
-              ROLES.CREATIVE_MANAGER,
-              ROLES.CREATIVE_HEAD,
-              ROLES.HEAD,
-              ROLES.ADMIN,
-            ]}
-          />
-        ),
-        children: [{ path: 'users/:id', element: <UserDetailPage /> }],
-      },
-      {
-        element: (
-          <ProtectedRoute
-            allowedRoles={[
+              ROLES.EMPLOYEE,
               ROLES.PM,
               ROLES.CREATIVE_MANAGER,
               ROLES.CREATIVE_HEAD,
@@ -238,25 +244,7 @@ const router = createBrowserRouter([
         ),
         children: [
           { path: ROUTES.USERS.slice(1), element: <UsersPage /> },
-          { path: ROUTES.AUDIT_LOG.slice(1), element: <AuditLogPage /> },
-        ],
-      },
-      {
-        element: (
-          <ProtectedRoute
-            allowedRoles={[
-              ROLES.PM,
-              ROLES.CREATIVE_MANAGER,
-              ROLES.CREATIVE_HEAD,
-              ROLES.HEAD,
-              ROLES.ADMIN,
-            ]}
-          />
-        ),
-        children: [
-          { path: ROUTES.SETTINGS_GENERAL.slice(1), element: <GeneralSettingsPage /> },
-          { path: ROUTES.ROLES.slice(1), element: <RolesPage /> },
-          { path: ROUTES.TASK_SCORE.slice(1), element: <TaskScorePage /> },
+          { path: 'users/:id', element: <UserDetailPage /> },
         ],
       },
     ],

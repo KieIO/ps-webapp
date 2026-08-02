@@ -5,8 +5,8 @@ export type DepartmentScope = 'all' | 'Project' | 'Creative';
 
 /** Default department scope for the viewer's role. */
 export function defaultDepartmentScope(role: Role): DepartmentScope {
-  if (role === ROLES.CREATIVE_HEAD) return 'Creative';
-  if (role === ROLES.HEAD) return 'Project';
+  if (role === ROLES.CREATIVE_HEAD || role === ROLES.CREATIVE_MANAGER) return 'Creative';
+  if (role === ROLES.HEAD || role === ROLES.PM) return 'Project';
   return 'all';
 }
 

@@ -17,7 +17,7 @@ interface TaskManagementViewProps {
 export function TaskManagementView({ title, subtitle, taskCategory }: TaskManagementViewProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const role = useAppSelector((state) => state.auth.user?.role);
-  // Create form loads task-score catalogs (MANAGE_USERS). Employees use Confirm/Finish on Home / detail.
+  // Create form loads task-score catalogs (authenticated GET). Employees use Confirm/Finish on Home / detail.
   const canCreateTask = role != null && role !== ROLES.EMPLOYEE;
 
   return (

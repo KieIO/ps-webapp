@@ -42,6 +42,9 @@ export interface SidebarItem {
   children?: readonly SidebarChildItem[];
 }
 
+/** Settings pages gated by role (no dedicated permission, or MANAGE_USERS is too broad). */
+const SETTINGS_HEAD_ROLES = [ROLES.HEAD, ROLES.CREATIVE_HEAD, ROLES.ADMIN] as const;
+
 export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
   {
     key: 'home',
@@ -133,7 +136,6 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
         label: 'Team comparison',
         path: ROUTES.TEAM_COMPARISON,
         permission: 'EXPORT_REPORT',
-        roles: [ROLES.HEAD, ROLES.CREATIVE_HEAD, ROLES.ADMIN],
         shortcut: navShortcut('v'),
       },
     ],
@@ -143,7 +145,7 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
     label: 'Users',
     path: ROUTES.USERS,
     icon: UserOutlined,
-    permission: 'MANAGE_USERS',
+    permission: 'VIEW_USER',
     shortcut: navShortcut('u'),
   },
   {
@@ -155,13 +157,15 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
       {
         label: 'General',
         path: ROUTES.SETTINGS_GENERAL,
-        permission: 'MANAGE_USERS',
+        permission: null,
+        roles: SETTINGS_HEAD_ROLES,
         shortcut: navShortcut('b'),
       },
       {
         label: 'Roles & Permissions',
         path: ROUTES.ROLES,
-        permission: 'MANAGE_USERS',
+        permission: null,
+        roles: SETTINGS_HEAD_ROLES,
         shortcut: navShortcut('e'),
       },
       {
@@ -191,7 +195,7 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
       {
         label: 'Task types & scores',
         path: ROUTES.TASK_SCORE,
-        permission: 'MANAGE_USERS',
+        permission: 'MANAGE_TASK_SCORES',
         shortcut: navShortcut('s'),
       },
     ],

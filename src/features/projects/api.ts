@@ -3,6 +3,7 @@
  * Backend contract: docs/PROJECTS_BACKEND_TODO.md (index: docs/BACKEND_API.md)
  */
 import api from '@/shared/api/base.api';
+import { rethrowApiError } from '@/shared/api/apiError';
 import { env } from '@/config/env';
 import {
   mockArchiveProject,
@@ -100,8 +101,12 @@ export const projectApi = {
       return ProjectSchema.parse(await mockCreateProject(data));
     }
 
-    const response = await api.post('/projects', data);
-    return parseProjectResponse(response.data);
+    try {
+      const response = await api.post('/projects', data);
+      return parseProjectResponse(response.data);
+    } catch (error) {
+      rethrowApiError(error, 'Failed to create project');
+    }
   },
 
   update: async (id: string, payload: UpdateProjectRequest): Promise<Project> => {
@@ -111,8 +116,12 @@ export const projectApi = {
       return ProjectSchema.parse(await mockUpdateProject(id, data));
     }
 
-    const response = await api.patch(`/projects/${id}`, data);
-    return parseProjectResponse(response.data);
+    try {
+      const response = await api.patch(`/projects/${id}`, data);
+      return parseProjectResponse(response.data);
+    } catch (error) {
+      rethrowApiError(error, 'Failed to update project');
+    }
   },
 
   delete: async (id: string, userId?: string): Promise<void> => {
