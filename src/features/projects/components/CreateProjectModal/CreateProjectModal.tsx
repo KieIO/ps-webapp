@@ -8,7 +8,8 @@ import { TaskUrgencySelect } from '@/features/tasks/components/TaskUrgencySelect
 import { EVALUATION_LEVEL_OPTIONS, EVALUATION_LEVEL_LABELS } from '../../constants';
 import { useCreateProject } from '../../hooks/useCreateProject';
 import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProjectList';
-import { CREATE_PROJECT_DEFAULTS } from '../../utils/projectDefaults';
+import { useDepartmentOptions } from '@/features/departments/hooks/useDepartmentOptions';
+import { CREATE_PROJECT_DEFAULTS, resolveCreateDepartment } from '../../utils/projectDefaults';
 import { computeProjectLevel } from '../../utils/projectLevel';
 import { emptyPerson, hasPersonUserId, resolvePersonFromForm } from '../../utils/personRef';
 import type {
@@ -65,6 +66,7 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
   const { mutate, isPending } = useCreateProject();
   const { data: headOptions = [] } = useProjectHeadOptions();
   const { data: pmOptions = [] } = useProjectPmOptions();
+  const { items: departmentItems } = useDepartmentOptions({ enabled: open });
   const currentUser = useAppSelector((state) => state.auth.user);
 
   const defaultDepartmentHead = useMemo((): PersonWithCode | undefined => {
@@ -145,12 +147,21 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
       return;
     }
 
+    const department = resolveCreateDepartment(departmentItems.map((entry) => entry.code));
+    if (!department) {
+      message.error(
+        'No departments configured. Add one in Settings → Department management, then try again.',
+      );
+      return;
+    }
+
     const payload: CreateProjectRequest = {
       ...CREATE_PROJECT_DEFAULTS,
       clientId: values.clientId,
       name: values.name,
       startDate: values.startDate.toISOString(),
       endDate: values.endDate.toISOString(),
+      department,
       departmentHead,
       brief: values.brief ?? '',
       volume: values.volume,
