@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useCreateTaskScore } from '../../hooks/useCreateTaskScore';
 import { useTaskScoreGroupOptions } from '../../hooks/useTaskScoreGroupOptions';
 import { useUpdateTaskScoreGroup } from '../../hooks/useUpdateTaskScoreGroup';
+import { resolveTaskType } from '../../utils/resolveTaskType';
 import { sameDepartment } from '../../utils/sameDepartment';
 import {
   TaskScoreFormFields,
@@ -24,6 +25,7 @@ export function CreateTaskScoreModal({ open, onClose }: CreateTaskScoreModalProp
     if (!open || !defaultGroupCode) return;
     const group = groupByCode[defaultGroupCode];
     form.setFieldsValue({
+      taskType: '',
       name: '',
       score: 0,
       group: defaultGroupCode,
@@ -37,14 +39,19 @@ export function CreateTaskScoreModal({ open, onClose }: CreateTaskScoreModalProp
   };
 
   const handleFinish = async (values: TaskScoreFormValues) => {
-    const { department, name, score, group: groupCode } = values;
+    const { department, taskType, name, score, group: groupCode } = values;
     const group = groupByCode[groupCode];
     const nextDepartment = department ?? null;
     const shouldUpdateGroup = Boolean(group) && !sameDepartment(group?.department, nextDepartment);
 
     try {
       // Score first so a failed create cannot leave a half-applied group change.
-      await createScore({ name, score, group: groupCode });
+      await createScore({
+        taskType: resolveTaskType(taskType, name),
+        name,
+        score,
+        group: groupCode,
+      });
     } catch {
       // Error toast handled by mutation hook.
       return;

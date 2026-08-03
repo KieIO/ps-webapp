@@ -56,6 +56,7 @@ export const mockCreateTaskScore = async (payload: CreateTaskScoreRequest): Prom
   const created: TaskScore = {
     id: `task-score-${Date.now()}`,
     name,
+    taskType: payload.taskType,
     score: payload.score,
     group: payload.group,
     sortOrder: getNextTaskScoreSortOrder(items),
@@ -91,6 +92,7 @@ export const mockUpdateTaskScore = async (
   const updated: TaskScore = {
     ...items[index],
     name,
+    taskType: payload.taskType,
     score: payload.score,
     group: payload.group,
     updatedAt: new Date().toISOString(),

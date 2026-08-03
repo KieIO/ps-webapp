@@ -10,6 +10,8 @@ const PM_CONTENT_WIDTH = 106;
 const CELL_VERTICAL_PADDING = 12;
 const NAME_LINE_HEIGHT = 16.8;
 const PM_LINE_HEIGHT = 14.4;
+const CM_LINE_HEIGHT = 13.2;
+const CM_GAP = 2;
 
 function estimateLineCount(text: string, contentWidth: number): number {
   const trimmed = text.trim();
@@ -22,9 +24,17 @@ function estimateLineCount(text: string, contentWidth: number): number {
 export function estimateTrackerLeftRowHeight(project: TrackerProject): number {
   const nameLines = Math.max(1, estimateLineCount(project.name, NAME_CONTENT_WIDTH));
   const pmLines = Math.max(1, estimateLineCount(project.pm, PM_CONTENT_WIDTH));
+  const cmNames = project.cm ?? [];
+  const cmLines = cmNames.reduce(
+    (sum, name) => sum + Math.max(1, estimateLineCount(name, PM_CONTENT_WIDTH)),
+    0,
+  );
 
   const nameHeight = CELL_VERTICAL_PADDING + nameLines * NAME_LINE_HEIGHT;
-  const pmHeight = CELL_VERTICAL_PADDING + pmLines * PM_LINE_HEIGHT;
+  const pmHeight =
+    CELL_VERTICAL_PADDING +
+    pmLines * PM_LINE_HEIGHT +
+    (cmLines > 0 ? cmLines * CM_LINE_HEIGHT + cmNames.length * CM_GAP : 0);
 
   return Math.max(TRACKER_ROW_HEIGHT, nameHeight, pmHeight);
 }

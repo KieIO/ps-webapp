@@ -4,6 +4,7 @@ import { useTaskScoreGroupOptions } from '../../hooks/useTaskScoreGroupOptions';
 import { useUpdateTaskScore } from '../../hooks/useUpdateTaskScore';
 import { useUpdateTaskScoreGroup } from '../../hooks/useUpdateTaskScoreGroup';
 import type { TaskScore } from '../../schemas/taskScore.schema';
+import { resolveTaskType } from '../../utils/resolveTaskType';
 import { sameDepartment } from '../../utils/sameDepartment';
 import {
   TaskScoreFormFields,
@@ -26,6 +27,7 @@ export function EditTaskScoreModal({ open, task, onClose }: EditTaskScoreModalPr
     if (!open || !task) return;
     const group = groupByCode[task.group];
     form.setFieldsValue({
+      taskType: resolveTaskType(task.taskType, task.name),
       name: task.name,
       score: task.score,
       group: task.group,
@@ -41,14 +43,22 @@ export function EditTaskScoreModal({ open, task, onClose }: EditTaskScoreModalPr
   const handleFinish = async (values: TaskScoreFormValues) => {
     if (!task) return;
 
-    const { department, name, score, group: groupCode } = values;
+    const { department, taskType, name, score, group: groupCode } = values;
     const group = groupByCode[groupCode];
     const nextDepartment = department ?? null;
     const shouldUpdateGroup = Boolean(group) && !sameDepartment(group?.department, nextDepartment);
 
     try {
       // Score first so a failed update cannot leave a half-applied group change.
-      await updateScore({ id: task.id, payload: { name, score, group: groupCode } });
+      await updateScore({
+        id: task.id,
+        payload: {
+          taskType: resolveTaskType(taskType, name),
+          name,
+          score,
+          group: groupCode,
+        },
+      });
     } catch {
       // Error toast handled by mutation hook.
       return;

@@ -187,6 +187,12 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
         shortcut: navShortcut('d'),
       },
       {
+        label: 'Client management',
+        path: ROUTES.CLIENT_MANAGEMENT,
+        permission: 'MANAGE_CLIENTS',
+        shortcut: navShortcut('i'),
+      },
+      {
         label: 'Capacity formula',
         path: ROUTES.EMPLOYEE_CAPACITY_FORMULA,
         permission: 'MANAGE_TITLES',

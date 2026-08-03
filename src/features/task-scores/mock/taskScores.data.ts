@@ -15,6 +15,7 @@ const buildLeveledTasks = (
     return {
       id: `task-score-${slug}-${level}`,
       name: `${baseName} ${level}`,
+      taskType: baseName,
       score,
       group,
       sortOrder: startSortOrder + index,
@@ -29,12 +30,7 @@ const buildInitialTaskScores = (): TaskScore[] => {
   let sortOrder = 0;
   const items: TaskScore[] = [];
 
-  const add = (
-    baseName: string,
-    scores: readonly number[],
-    group: string,
-    slug: string,
-  ) => {
+  const add = (baseName: string, scores: readonly number[], group: string, slug: string) => {
     const built = buildLeveledTasks(baseName, scores, group, sortOrder, slug);
     items.push(...built.items);
     sortOrder = built.nextSortOrder;

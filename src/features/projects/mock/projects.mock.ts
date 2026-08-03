@@ -171,7 +171,7 @@ export const mockCreateProject = async (payload: CreateProjectRequest): Promise<
     evaluation: payload.evaluation,
     note: payload.note,
     status: payload.status,
-    urgency: payload.status === 'finish' || payload.status === 'cancel' ? 'gray' : payload.urgency,
+    urgency: payload.urgency,
     finishedDate: payload.status === 'finish' ? now : undefined,
     updatedAt: now,
   };
@@ -224,7 +224,7 @@ export const mockUpdateProject = async (
     evaluation: payload.evaluation,
     note: payload.note,
     status: payload.status,
-    urgency: payload.status === 'finish' || payload.status === 'cancel' ? 'gray' : payload.urgency,
+    urgency: payload.urgency,
     finishedDate,
     // Only overwrite when Evaluate (or another caller) explicitly sends a value.
     completionPercent:

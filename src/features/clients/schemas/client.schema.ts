@@ -13,10 +13,15 @@ export const ClientListResponseSchema = z.object({
   total: z.number(),
 });
 
-export const CreateClientRequestSchema = z.object({
+/** Shared create/update body — rename and create both only accept a name. */
+export const ClientNameRequestSchema = z.object({
   name: z.string().min(1, 'Client name is required'),
 });
+
+export const CreateClientRequestSchema = ClientNameRequestSchema;
+export const UpdateClientRequestSchema = ClientNameRequestSchema;
 
 export type Client = z.infer<typeof ClientSchema>;
 export type ClientListResponse = z.infer<typeof ClientListResponseSchema>;
 export type CreateClientRequest = z.infer<typeof CreateClientRequestSchema>;
+export type UpdateClientRequest = z.infer<typeof UpdateClientRequestSchema>;

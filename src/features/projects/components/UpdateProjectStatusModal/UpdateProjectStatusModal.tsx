@@ -53,8 +53,6 @@ export function UpdateProjectStatusModal({
         payload: buildUpdateProjectPayload(project, {
           status: values.status,
           note: values.note ?? '',
-          urgency:
-            values.status === 'finish' || values.status === 'cancel' ? 'gray' : project.urgency,
         }),
         successMessage: 'Project status updated',
       },

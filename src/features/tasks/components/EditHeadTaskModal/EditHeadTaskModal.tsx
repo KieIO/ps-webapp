@@ -158,11 +158,8 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
               evaluation: values.pmEvaluation ?? '',
               note: values.pmNote ?? '',
               status: values.projectStatus,
-              // Keep existing project urgency — only force gray when project is closed.
-              urgency:
-                values.projectStatus === 'finish' || values.projectStatus === 'cancel'
-                  ? 'gray'
-                  : linkedProject.urgency,
+              // Keep existing project urgency; display resolves to gray when closed.
+              urgency: linkedProject.urgency,
             }),
           }),
         ];

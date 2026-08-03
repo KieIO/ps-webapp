@@ -34,6 +34,7 @@ import {
   type UpdateProjectRequest,
 } from './schemas/project.schema';
 import { withProjectListDefaults } from './utils/projectDefaults';
+import { buildUpdateProjectPayload } from './utils/buildUpdateProjectPayload';
 
 const parseProjectListResponse = (data: unknown): ProjectListResponse => {
   const parsed = ProjectListRecordResponseSchema.parse(data);
@@ -121,6 +122,25 @@ export const projectApi = {
       return parseProjectResponse(response.data);
     } catch (error) {
       return rethrowApiError(error, 'Failed to update project');
+    }
+  },
+
+  updateUrgency: async (id: string, urgency: Project['urgency']): Promise<Project> => {
+    if (env.useProjectsMock) {
+      const project = await mockGetProjectById(id);
+      return ProjectSchema.parse(
+        await mockUpdateProject(id, {
+          ...buildUpdateProjectPayload(project),
+          urgency,
+        }),
+      );
+    }
+
+    try {
+      const response = await api.patch(`/projects/${id}/urgency`, { urgency });
+      return parseProjectResponse(response.data);
+    } catch (error) {
+      return rethrowApiError(error, 'Failed to update urgency');
     }
   },
 

@@ -210,8 +210,8 @@ export const MY_TASK_CREATIVE_MANAGER_COLUMN_KEYS: MyTaskColumnKey[] = [
 
 export const TASK_STATUS_CHANGE_NOTE_LABEL = 'Note khi đổi trạng thái (nếu có)';
 
-/** Head / project evaluation score shown in ĐÁNH GIÁ column (1–4). */
-export const PROJECT_EVALUATION_SCORE_OPTIONS = ['1', '2', '3', '4'].map((value) => ({
+/** Head / project evaluation score shown in ĐÁNH GIÁ column (1–5). */
+export const PROJECT_EVALUATION_SCORE_OPTIONS = ['1', '2', '3', '4', '5'].map((value) => ({
   value,
   label: value,
 }));

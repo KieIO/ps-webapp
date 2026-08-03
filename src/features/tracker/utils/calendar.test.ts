@@ -7,6 +7,7 @@ import {
 import {
   buildCalendarDays,
   getBlockPosition,
+  getAdminZoomDayWidth,
   getFittedDayWidth,
   getInitialScrollDayIndex,
   getInitialScrollLeft,
@@ -43,5 +44,11 @@ describe('calendar initial scroll', () => {
   it('expands day width to fill available panel width', () => {
     expect(getFittedDayWidth(31, 1240)).toBeCloseTo(1240 / 31);
     expect(getFittedDayWidth(31, 400)).toBe(28);
+  });
+
+  it('applies admin zoom as a minimum day width', () => {
+    expect(getAdminZoomDayWidth(31, 1240, null)).toBeCloseTo(1240 / 31);
+    expect(getAdminZoomDayWidth(31, 400, 52)).toBe(52);
+    expect(getAdminZoomDayWidth(31, 1860, 52)).toBeCloseTo(1860 / 31);
   });
 });

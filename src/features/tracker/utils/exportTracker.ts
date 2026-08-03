@@ -3,10 +3,10 @@ import { downloadCsv } from '@/shared/utils/exportCsv';
 import type { TrackerProject } from '../schemas/tracker.schema';
 
 export const exportTrackerToCsv = (projects: TrackerProject[]): void => {
-  const headers = ['Project', 'PM', 'Team', 'Total Slides'];
+  const headers = ['Project', 'PM/CM', 'Team', 'Total Slides'];
   const rows = projects.map((project) => [
     project.name,
-    project.pm,
+    [project.pm, ...(project.cm ?? [])].filter(Boolean).join(' / '),
     project.team.join(', '),
     project.totalSlides,
   ]);

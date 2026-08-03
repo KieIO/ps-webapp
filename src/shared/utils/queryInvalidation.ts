@@ -6,4 +6,5 @@ export const invalidateProjectAndTaskQueries = (queryClient: QueryClient): void 
   queryClient.invalidateQueries({ queryKey: ['tasks', 'my'] });
   queryClient.invalidateQueries({ queryKey: ['tasks', 'my', 'history'] });
   queryClient.invalidateQueries({ queryKey: ['tasks', 'project'] });
+  queryClient.invalidateQueries({ queryKey: ['tracker'] });
 };

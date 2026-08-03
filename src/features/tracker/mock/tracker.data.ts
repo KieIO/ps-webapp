@@ -9,6 +9,7 @@ export const TRACKER_PROJECTS: TrackerProject[] = [
     id: 'p01',
     name: 'Allianz Trade API',
     pm: 'Thy',
+    cm: ['Minh Anh'],
     team: [],
     totalSlides: 15,
     urgency: 'gray',
@@ -18,6 +19,7 @@ export const TRACKER_PROJECTS: TrackerProject[] = [
     id: 'p02',
     name: 'Orisha AI Pillars Posters',
     pm: 'Kiet',
+    cm: ['Dev Creative Head'],
     team: ['Thong', 'Loc'],
     totalSlides: 50,
     urgency: 'orange',
@@ -34,7 +36,7 @@ export const TRACKER_PROJECTS: TrackerProject[] = [
   },
   {
     id: 'p04',
-    name: "Lagardère AO 2026",
+    name: 'Lagardère AO 2026',
     pm: 'Tu',
     team: ['Van Anh'],
     totalSlides: 50,
@@ -108,7 +110,9 @@ export const TRACKER_PROJECTS: TrackerProject[] = [
     team: ['Kiet', 'Linh'],
     totalSlides: 39,
     urgency: 'red',
-    blocks: [{ start: d(5, 9), end: d(5, 14), label: 'Edit 11am VN time', type: 'completed', band: 0 }],
+    blocks: [
+      { start: d(5, 9), end: d(5, 14), label: 'Edit 11am VN time', type: 'completed', band: 0 },
+    ],
   },
   {
     id: 'p11',
@@ -117,7 +121,9 @@ export const TRACKER_PROJECTS: TrackerProject[] = [
     team: ['Chi', 'Chien'],
     totalSlides: 153,
     urgency: 'red',
-    blocks: [{ start: d(5, 18), end: d(5, 23), label: 'Extra 7 slides', type: 'completed', band: 0 }],
+    blocks: [
+      { start: d(5, 18), end: d(5, 23), label: 'Extra 7 slides', type: 'completed', band: 0 },
+    ],
   },
   {
     id: 'p12',

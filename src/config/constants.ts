@@ -64,6 +64,7 @@ export const ROUTES = {
   AUDIT_LOG: '/audit',
   TITLE_MANAGEMENT: '/settings/titles',
   DEPARTMENT_MANAGEMENT: '/settings/departments',
+  CLIENT_MANAGEMENT: '/settings/clients',
   EMPLOYEE_CAPACITY_FORMULA: '/settings/employee-capacity-formula',
   TASK_SCORE: '/settings/task-score',
   SETTINGS_GENERAL: '/settings/general',

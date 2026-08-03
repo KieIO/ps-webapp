@@ -6,6 +6,7 @@ import { z } from 'zod';
 export const NOTIFICATION_TYPES = [
   'task_reminder',
   'task_assigned',
+  'project_assigned',
   'deadline_warning',
   'overload',
   'ot_pending',

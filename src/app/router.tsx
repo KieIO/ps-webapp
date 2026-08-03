@@ -44,6 +44,9 @@ const TitleManagementPage = lazy(() => import('@/pages/TitleManagementPage/Title
 const DepartmentManagementPage = lazy(
   () => import('@/pages/DepartmentManagementPage/DepartmentManagementPage'),
 );
+const ClientManagementPage = lazy(
+  () => import('@/pages/ClientManagementPage/ClientManagementPage'),
+);
 const EmployeeCapacityFormulaPage = lazy(
   () => import('@/pages/EmployeeCapacityFormulaPage/EmployeeCapacityFormulaPage'),
 );
@@ -193,6 +196,10 @@ const router = createBrowserRouter([
           {
             path: ROUTES.DEPARTMENT_MANAGEMENT.slice(1),
             element: <DepartmentManagementPage />,
+          },
+          {
+            path: ROUTES.CLIENT_MANAGEMENT.slice(1),
+            element: <ClientManagementPage />,
           },
           {
             path: ROUTES.EMPLOYEE_CAPACITY_FORMULA.slice(1),

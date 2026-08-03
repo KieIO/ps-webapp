@@ -3,9 +3,14 @@ import { DownloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ROLES } from '@/config/permissions';
 import { PROJECT_NAME_COLUMN_LABEL } from '@/features/projects/constants';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
 import {
+  TRACKER_ADMIN_DAY_ZOOM_DEFAULT,
+  TRACKER_ADMIN_DAY_ZOOM_OPTIONS,
+  TRACKER_ADMIN_DAY_ZOOM_WIDTH,
   TRACKER_BLOCK_HEIGHT,
   TRACKER_CAL_HEADER_HEIGHT,
   TRACKER_DOW_LABELS,
@@ -17,6 +22,7 @@ import {
   TRACKER_BLOCK_LEGEND,
   TRACKER_URGENCY_LEGEND,
   TRACKER_URGENCY_STYLES,
+  type TrackerAdminDayZoom,
 } from '../../constants';
 import type { TrackerOffDay, TrackerProject } from '../../schemas/tracker.schema';
 import type { CalendarDay } from '../../types';
@@ -26,6 +32,7 @@ import {
   buildCalendarDays,
   buildCalendarMonths,
   formatRangeSubtitle,
+  getAdminZoomDayWidth,
   getBlockPosition,
   getCalendarWidth,
   getDayIndex,
@@ -34,6 +41,7 @@ import {
   getMonthScrollLeft,
 } from '../../utils/calendar';
 import { exportTrackerToCsv } from '../../utils/exportTracker';
+import { TrackerUrgencyDot } from '../TrackerUrgencyDot/TrackerUrgencyDot';
 import styles from './ProjectTrackerView.module.scss';
 
 interface ProjectTrackerViewProps {
@@ -77,6 +85,11 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   const prevMonthKeyRef = useRef('');
   const prevDayWidthRef = useRef(0);
   const [selectedMonth, setSelectedMonth] = useState(() => dayjs(TRACKER_TODAY).startOf('month'));
+  const role = useAppSelector((state) => state.auth.user?.role);
+  const isAdmin = role === ROLES.ADMIN;
+  const [adminDayZoom, setAdminDayZoom] = useState<TrackerAdminDayZoom>(
+    TRACKER_ADMIN_DAY_ZOOM_DEFAULT,
+  );
   const [panelWidth, setPanelWidth] = useState(0);
   const [rowLayout, setRowLayout] = useState(() => ({
     visibleRowCount: projects.length,
@@ -92,10 +105,16 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     [selectedMonth],
   );
   const months = useMemo(() => buildCalendarMonths(days), [days]);
-  const dayWidth = useMemo(
-    () => getFittedDayWidth(days.length, panelWidth),
-    [days.length, panelWidth],
-  );
+  const dayWidth = useMemo(() => {
+    if (!isAdmin) {
+      return getFittedDayWidth(days.length, panelWidth);
+    }
+    return getAdminZoomDayWidth(
+      days.length,
+      panelWidth,
+      TRACKER_ADMIN_DAY_ZOOM_WIDTH[adminDayZoom],
+    );
+  }, [adminDayZoom, days.length, isAdmin, panelWidth]);
   const calendarWidth = useMemo(
     () => getCalendarWidth(days.length, dayWidth),
     [days.length, dayWidth],
@@ -234,7 +253,11 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   };
 
   return (
-    <div className={styles.root}>
+    <div
+      className={classNames(styles.root, {
+        [styles.rootAdminZoom]: isAdmin && adminDayZoom !== 'fit',
+      })}
+    >
       <div className={styles.board}>
         <div className={styles.controlsBar}>
           <p className={styles.controlsMeta}>
@@ -284,6 +307,27 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
               ) : null}
             </div>
 
+            {isAdmin ? (
+              <div className={styles.zoomGroup} role="group" aria-label="Zoom độ rộng ngày">
+                <span className={styles.zoomLabel}>Zoom</span>
+                <div className={styles.zoomToggle}>
+                  {TRACKER_ADMIN_DAY_ZOOM_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={classNames(styles.zoomBtn, {
+                        [styles.zoomBtnActive]: adminDayZoom === option.value,
+                      })}
+                      aria-pressed={adminDayZoom === option.value}
+                      onClick={() => setAdminDayZoom(option.value)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <Popover
               trigger="click"
               placement="bottomRight"
@@ -310,7 +354,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
               <div className={styles.leftHeader}>
                 <div className={styles.leftHeaderTop}>
                   <div className={styles.leftHeaderName}>{PROJECT_NAME_COLUMN_LABEL}</div>
-                  <div className={styles.leftHeaderTeam}>PM</div>
+                  <div className={styles.leftHeaderTeam}>PM/CM</div>
                   <div className={styles.leftHeaderSlides}>Slides</div>
                 </div>
                 <div className={styles.offRowLabel}>Nghỉ hôm nay</div>
@@ -332,12 +376,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                       }}
                     >
                       <div className={styles.nameCell}>
-                        <span
-                          className={classNames(
-                            styles.urgencyDot,
-                            styles[`urgencyDot_${project.urgency}`],
-                          )}
-                        />
+                        <TrackerUrgencyDot project={project} />
                         <span className={styles.rowIndex}>
                           {String(rowIndex + 1).padStart(2, '0')}.
                         </span>
@@ -349,6 +388,11 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                       </div>
                       <div className={styles.teamCell}>
                         <div className={styles.pmName}>{project.pm}</div>
+                        {(project.cm ?? []).map((name) => (
+                          <div key={name} className={styles.cmName}>
+                            {name}
+                          </div>
+                        ))}
                       </div>
                       <div
                         className={classNames(styles.slidesCell, {

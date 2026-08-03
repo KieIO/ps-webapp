@@ -81,6 +81,17 @@ export const getFittedDayWidth = (
   return Math.max(minDayWidth, availableWidth / dayCount);
 };
 
+/** Admin zoom: keep fit-to-panel, or enforce a wider day column (may require horizontal scroll). */
+export const getAdminZoomDayWidth = (
+  dayCount: number,
+  availableWidth: number,
+  zoomWidth: number | null,
+): number => {
+  const fitted = getFittedDayWidth(dayCount, availableWidth);
+  if (zoomWidth == null) return fitted;
+  return Math.max(fitted, zoomWidth);
+};
+
 export const getCalendarWidth = (dayCount: number, dayWidth = TRACKER_DAY_WIDTH): number =>
   dayCount * dayWidth;
 

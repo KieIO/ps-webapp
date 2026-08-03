@@ -7,6 +7,7 @@ import { TRACKER_BLOCK_TYPES } from '@/shared/constants/taskConfirmation';
 
 export { TRACKER_BLOCK_TYPES };
 export const TRACKER_URGENCIES = ['red', 'orange', 'green', 'gray'] as const;
+export const TRACKER_URGENCY_SETTINGS = ['auto', ...TRACKER_URGENCIES] as const;
 
 export const TrackerBlockSchema = z.object({
   start: z.string(),
@@ -20,10 +21,14 @@ export const TrackerProjectSchema = z.object({
   id: z.string(),
   name: z.string(),
   pm: z.string(),
+  /** Creative Manager / Creative Head names linked as department head. */
+  cm: z.array(z.string()).optional().default([]),
   team: z.array(z.string()),
   totalSlides: z.number().int().min(0),
   highlightSlides: z.boolean().optional(),
   urgency: z.enum(TRACKER_URGENCIES),
+  /** Stored urgency setting (includes `auto`). Falls back to resolved urgency for older payloads. */
+  urgencySetting: z.enum(TRACKER_URGENCY_SETTINGS).optional(),
   blocks: z.array(TrackerBlockSchema),
 });
 

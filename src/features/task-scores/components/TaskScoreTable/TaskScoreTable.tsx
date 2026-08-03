@@ -5,6 +5,7 @@ import { getDepartmentLabel } from '@/features/departments/hooks/useDepartmentOp
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import type { TaskScoreGroupRecord } from '../../schemas/taskScoreGroup.schema';
 import type { TaskScore } from '../../schemas/taskScore.schema';
+import { resolveTaskType } from '../../utils/resolveTaskType';
 import { TaskScoreGroupPill } from '../TaskScoreGroupPill/TaskScoreGroupPill';
 
 interface TaskScoreTableProps {
@@ -17,7 +18,14 @@ interface TaskScoreTableProps {
 export function TaskScoreTable({ items, groupByCode, loading, onEdit }: TaskScoreTableProps) {
   const columns: ColumnsType<TaskScore> = [
     {
-      title: 'Task',
+      title: 'Task type',
+      key: 'taskType',
+      width: 160,
+      ellipsis: true,
+      render: (_, record) => resolveTaskType(record.taskType, record.name),
+    },
+    {
+      title: 'Task name',
       dataIndex: 'name',
       key: 'name',
       ellipsis: true,

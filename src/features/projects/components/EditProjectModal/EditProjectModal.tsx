@@ -151,7 +151,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
       evaluation: values.evaluation ?? '',
       note: values.note ?? '',
       status: values.status,
-      urgency: values.status === 'finish' || values.status === 'cancel' ? 'gray' : values.urgency,
+      urgency: values.urgency,
     };
 
     mutate(
