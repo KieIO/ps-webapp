@@ -105,7 +105,7 @@ export const projectApi = {
       const response = await api.post('/projects', data);
       return parseProjectResponse(response.data);
     } catch (error) {
-      rethrowApiError(error, 'Failed to create project');
+      return rethrowApiError(error, 'Failed to create project');
     }
   },
 
@@ -120,7 +120,7 @@ export const projectApi = {
       const response = await api.patch(`/projects/${id}`, data);
       return parseProjectResponse(response.data);
     } catch (error) {
-      rethrowApiError(error, 'Failed to update project');
+      return rethrowApiError(error, 'Failed to update project');
     }
   },
 
