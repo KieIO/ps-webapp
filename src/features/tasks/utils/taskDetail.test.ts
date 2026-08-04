@@ -19,7 +19,7 @@ describe('getTaskStartDate', () => {
 });
 
 describe('getTaskDeadline', () => {
-  it('uses end of the task date day, not the linked project end date', () => {
+  it('uses end of the task date day when deadline is missing', () => {
     const task = {
       date: '2026-06-13T00:00:00.000Z',
       projectEndDate: '2026-06-25T00:00:00.000Z',
@@ -28,13 +28,13 @@ describe('getTaskDeadline', () => {
     expect(getTaskDeadline(task)).toBe('2026-06-13T23:59:59.000Z');
   });
 
-  it('prefers API deadline when present', () => {
+  it('prefers API deadline when present, including custom times', () => {
     const task = {
       date: '2026-06-13T00:00:00.000Z',
-      deadline: '2026-06-13T23:59:59.000Z',
+      deadline: '2026-06-13T18:30:00Z',
     } as MyTask;
 
-    expect(getTaskDeadline(task)).toBe('2026-06-13T23:59:59.000Z');
+    expect(getTaskDeadline(task)).toBe('2026-06-13T18:30:00.000Z');
   });
 });
 

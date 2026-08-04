@@ -6,7 +6,15 @@ import { z } from 'zod';
 import { TRACKER_BLOCK_TYPES } from '@/shared/constants/taskConfirmation';
 
 export { TRACKER_BLOCK_TYPES };
-export const TRACKER_URGENCIES = ['red', 'orange', 'green', 'gray'] as const;
+export const TRACKER_URGENCIES = [
+  'red',
+  'orange',
+  'yellow',
+  'cyan',
+  'purple',
+  'green',
+  'gray',
+] as const;
 export const TRACKER_URGENCY_SETTINGS = ['auto', ...TRACKER_URGENCIES] as const;
 
 export const TrackerBlockSchema = z.object({

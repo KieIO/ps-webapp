@@ -1,8 +1,9 @@
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import { Button, Empty, Modal, Tooltip } from 'antd';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames';
-import { DATE_FORMAT, ROUTES, buildMyTaskDetailPath } from '@/config/constants';
+import { DATETIME_SHORT_FORMAT, ROUTES, buildMyTaskDetailPath } from '@/config/constants';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { TaskConfirmationBadge } from '@/features/tasks/components/TaskConfirmationBadge/TaskConfirmationBadge';
 import { useUpdateMyTaskStatus } from '@/features/tasks/hooks/useUpdateMyTaskStatus';
@@ -12,6 +13,8 @@ import { resolveTaskUrgencyDisplay } from '@/features/tasks/utils/taskUrgency';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import homeStyles from '../../styles/homeSection.module.scss';
 import styles from './EmployeeTodayTasksSection.module.scss';
+
+dayjs.extend(utc);
 
 interface EmployeeTodayTasksSectionProps {
   items: MyTask[];
@@ -93,7 +96,7 @@ export function EmployeeTodayTasksSection({
                     </td>
                     <td className={styles.muted}>{task.projectName || '—'}</td>
                     <td className={styles.deadline}>
-                      {dayjs(getTaskDeadline(task)).format(DATE_FORMAT)}
+                      {dayjs.utc(getTaskDeadline(task)).format(DATETIME_SHORT_FORMAT)}
                     </td>
                     <td>
                       <ProjectUrgencyBadge urgency={urgency} />

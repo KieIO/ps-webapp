@@ -4,7 +4,10 @@ import classNames from 'classnames';
 import { useState } from 'react';
 import { PROJECT_URGENCY_SETTING_STYLES } from '@/features/projects/constants';
 import { useUpdateProjectUrgency } from '@/features/projects/hooks/useUpdateProjectUrgency';
-import { PROJECT_URGENCIES, type ProjectUrgency } from '@/features/projects/schemas/project.schema';
+import {
+  PROJECT_URGENCY_SETTING_ORDER,
+  type ProjectUrgency,
+} from '@/features/projects/schemas/project.schema';
 import { usePermission } from '@/shared/hooks/usePermission';
 import type { TrackerProject } from '../../schemas/tracker.schema';
 import { TRACKER_URGENCY_STYLES } from '../../constants';
@@ -62,7 +65,7 @@ export function TrackerUrgencyDot({ project }: TrackerUrgencyDotProps) {
       arrow={false}
       content={
         <div className={styles.menu} role="menu">
-          {PROJECT_URGENCIES.map((value) => {
+          {PROJECT_URGENCY_SETTING_ORDER.map((value) => {
             const setting = PROJECT_URGENCY_SETTING_STYLES[value];
             const isSelected = selectedSetting === value;
             return (
@@ -84,7 +87,13 @@ export function TrackerUrgencyDot({ project }: TrackerUrgencyDotProps) {
                   );
                 }}
               >
-                <span className={styles.optionDot} style={{ backgroundColor: setting.dot }} />
+                <span
+                  className={styles.optionDot}
+                  style={{
+                    backgroundColor: setting.dot,
+                    boxShadow: value === 'gray' ? 'inset 0 0 0 1px #D1D5DB' : undefined,
+                  }}
+                />
                 <span className={styles.optionLabel}>{setting.label}</span>
                 {isSelected ? <CheckOutlined className={styles.check} /> : null}
               </button>

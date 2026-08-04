@@ -65,6 +65,7 @@ export const ROUTES = {
   TITLE_MANAGEMENT: '/settings/titles',
   DEPARTMENT_MANAGEMENT: '/settings/departments',
   CLIENT_MANAGEMENT: '/settings/clients',
+  CLIENT_DETAIL: '/clients/:id',
   EMPLOYEE_CAPACITY_FORMULA: '/settings/employee-capacity-formula',
   TASK_SCORE: '/settings/task-score',
   SETTINGS_GENERAL: '/settings/general',
@@ -76,6 +77,7 @@ export const ROUTES = {
 
 // Dynamic route helpers
 export const buildProjectDetailPath = (id: string) => `/projects/${id}`;
+export const buildClientDetailPath = (id: string) => `/clients/${id}`;
 export const buildMyTaskDetailPath = (id: string) => `/tasks/detail/${id}`;
 export const buildTaskEditPath = (id: string) => `/tasks/${id}/edit`;
 export const buildUserDetailPath = (id: string) => `/users/${id}`;
@@ -90,5 +92,7 @@ export const PAGINATION = {
 } as const;
 
 export const DATE_FORMAT = 'DD/MM/YYYY';
-/** Task start/deadline timestamps stored as UTC day boundaries. */
+/** Task deadline picker / compact table display (date + hour:minute). */
+export const DATETIME_SHORT_FORMAT = 'DD/MM/YYYY HH:mm';
+/** Task start/deadline timestamps stored as UTC (wall-clock). */
 export const DATETIME_FORMAT = 'DD/MM/YYYY HH:mm:ss';

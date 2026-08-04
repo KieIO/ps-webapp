@@ -1,8 +1,11 @@
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import { ROUTES } from '@/config/constants';
 import { CONFIRMATION_LABELS } from '../constants';
 import { formatTaskDateTime, normalizeTaskDateEnd, normalizeTaskDateStart } from './taskDates';
 import type { MyTask, TaskCategory, TaskHistoryEvent } from '../schemas/task.schema';
+
+dayjs.extend(utc);
 
 export const TASK_CATEGORY_DEPARTMENT_LABELS: Record<TaskCategory, string> = {
   project: 'Creative',
@@ -46,12 +49,16 @@ export const formatTaskQuantity = (task: MyTask): string => {
 export const getTaskStartDate = (task: MyTask): string => normalizeTaskDateStart(task.date);
 
 /**
- * UTC end of the task calendar day (23:59:59).
- * Prefers API `deadline` when present; otherwise derives from `date`.
+ * Effective task deadline timestamp.
+ * Prefers API `deadline` (exact time) when present; otherwise end of `date` day.
  * Not the linked project's end date.
  */
-export const getTaskDeadline = (task: Pick<MyTask, 'date' | 'deadline'>): string =>
-  normalizeTaskDateEnd(task.deadline ?? task.date);
+export const getTaskDeadline = (task: Pick<MyTask, 'date' | 'deadline'>): string => {
+  if (task.deadline) {
+    return dayjs.utc(task.deadline).toISOString();
+  }
+  return normalizeTaskDateEnd(task.date);
+};
 
 export const formatTaskHistoryDateLabel = (
   occurredAt: string,

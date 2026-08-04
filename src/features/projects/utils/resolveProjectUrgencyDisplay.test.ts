@@ -41,4 +41,26 @@ describe('resolveProjectUrgencyDisplay', () => {
       }),
     ).toBe('gray');
   });
+
+  it('keeps locked manual statuses for active projects', () => {
+    expect(
+      resolveProjectUrgencyDisplay({
+        urgency: 'purple',
+        status: 'in_progress',
+        endDate: '2020-01-01',
+      }),
+    ).toBe('purple');
+    expect(
+      resolveProjectUrgencyDisplay({
+        urgency: 'yellow',
+        status: 'in_progress',
+      }),
+    ).toBe('yellow');
+    expect(
+      resolveProjectUrgencyDisplay({
+        urgency: 'cyan',
+        status: 'not_updated',
+      }),
+    ).toBe('cyan');
+  });
 });

@@ -1,7 +1,7 @@
 import { Alert, DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
-import { DATE_FORMAT } from '@/config/constants';
+import { DATE_FORMAT, DATETIME_SHORT_FORMAT } from '@/config/constants';
 import type { Role } from '@/config/permissions';
 import { ROLES } from '@/config/permissions';
 import { getDepartmentLabel } from '@/features/departments/hooks/useDepartmentOptions';
@@ -25,7 +25,8 @@ import {
   type EditTaskField,
 } from '../../utils/editTaskFields';
 import { mergeStaffSelectOptions, resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
-import { toTaskDateOnly } from '../../utils/taskDates';
+import { fromTaskDeadline, toTaskDateOnly, toTaskDeadline } from '../../utils/taskDates';
+import { getTaskDeadline } from '../../utils/taskDetail';
 import {
   canCancelTask,
   canChangeTaskStatus,
@@ -109,7 +110,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
       form.setFieldsValue({
         taskName: task.taskName,
         quantity: task.quantity,
-        date: dayjs(task.date),
+        date: fromTaskDeadline(getTaskDeadline(task)),
         creativeDeadline: task.creativeDeadline ? dayjs(task.creativeDeadline) : undefined,
         description: task.description,
         designThinking: task.designThinking,
@@ -152,7 +153,9 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
     const payload: UpdateMyTaskRequest = {
       taskName: hasField(editableFields, 'taskName') ? values.taskName : task.taskName,
       quantity: hasField(editableFields, 'quantity') ? values.quantity : task.quantity,
-      date: hasField(editableFields, 'date') ? toTaskDateOnly(values.date) : task.date,
+      date: hasField(editableFields, 'date')
+        ? toTaskDeadline(values.date)
+        : (task.deadline ?? task.date),
       description: hasField(editableFields, 'description')
         ? (values.description ?? '')
         : task.description,
@@ -335,9 +338,18 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
                       <Form.Item
                         name="date"
                         label={MY_TASK_COLUMN_HEADERS.date}
-                        rules={[{ required: true, message: 'Date is required' }]}
+                        rules={[{ required: true, message: 'Deadline is required' }]}
                       >
-                        <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+                        <DatePicker
+                          showTime={{
+                            format: 'HH:mm',
+                            defaultValue: dayjs().second(0).millisecond(0),
+                          }}
+                          format={DATETIME_SHORT_FORMAT}
+                          style={{ width: '100%' }}
+                          placeholder="Chọn ngày và giờ"
+                          showNow={false}
+                        />
                       </Form.Item>
                     ) : null}
                     {hasField(editableFields, 'urgency') ? (

@@ -1,8 +1,12 @@
 import type { ReactNode } from 'react';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { DATE_FORMAT } from '@/config/constants';
+import utc from 'dayjs/plugin/utc';
+import { DATE_FORMAT, DATETIME_SHORT_FORMAT } from '@/config/constants';
+import { getTaskDeadline } from './taskDetail';
 import { PROJECT_URGENCY_STYLES, STATUS_LABELS } from '@/features/projects/constants';
+
+dayjs.extend(utc);
 import {
   PROJECT_STATUSES,
   PROJECT_URGENCY_COLORS,
@@ -63,7 +67,7 @@ export const getMyTaskColumnSorter = (key: MyTaskColumnKey): ((a: MyTask, b: MyT
     case 'quantity':
       return (a, b) => compareNumber(a.quantity, b.quantity);
     case 'date':
-      return (a, b) => compareDate(a.date, b.date);
+      return (a, b) => compareDate(getTaskDeadline(a), getTaskDeadline(b));
     case 'creativeDeadline':
       return (a, b) => compareOptionalDate(a.creativeDeadline, b.creativeDeadline);
     case 'urgency':
@@ -164,7 +168,7 @@ const COLUMN_WIDTHS: Record<MyTaskColumnKey, number> = {
   taskName: 140,
   level: 90,
   quantity: 110,
-  date: 110,
+  date: 145,
   creativeDeadline: 155,
   urgency: 135,
   description: 240,
@@ -308,7 +312,9 @@ export const getMyTaskActionsWidth = ({
   );
 };
 
-const formatDate = (value?: string): string => (value ? dayjs(value).format(DATE_FORMAT) : '');
+const formatDate = (value?: string): string => (value ? dayjs.utc(value).format(DATE_FORMAT) : '');
+const formatDateTime = (value?: string): string =>
+  value ? dayjs.utc(value).format(DATETIME_SHORT_FORMAT) : '';
 
 /** Resolve a cell value for CSV export from a single MyTask row. */
 export const getMyTaskColumnExportValue = (task: MyTask, key: MyTaskColumnKey): string | number => {
@@ -329,7 +335,7 @@ export const getMyTaskColumnExportValue = (task: MyTask, key: MyTaskColumnKey): 
     case 'quantity':
       return task.quantity;
     case 'date':
-      return formatDate(task.date);
+      return formatDateTime(getTaskDeadline(task));
     case 'creativeDeadline':
       return formatDate(task.creativeDeadline ?? undefined);
     case 'urgency':

@@ -1,7 +1,7 @@
 import type { Project } from '../../schemas/project.schema';
-import styles from './ProjectClientNotesTab.module.scss';
+import styles from './ProjectBriefTab.module.scss';
 
-interface ProjectClientNotesTabProps {
+interface ProjectBriefTabProps {
   project: Project;
 }
 
@@ -16,7 +16,7 @@ const renderSection = (title: string, content: string) => (
   </section>
 );
 
-export function ProjectClientNotesTab({ project }: ProjectClientNotesTabProps) {
+export function ProjectBriefTab({ project }: ProjectBriefTabProps) {
   return (
     <div>
       {renderSection('Brief', project.brief)}

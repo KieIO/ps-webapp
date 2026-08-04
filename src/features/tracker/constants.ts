@@ -75,18 +75,25 @@ export const TRACKER_URGENCY_STYLES: Record<
   TrackerUrgency,
   { border: string; dot: string; label: string }
 > = {
-  red: URGENCY_STYLES.red,
-  orange: URGENCY_STYLES.orange,
   green: URGENCY_STYLES.green,
+  orange: URGENCY_STYLES.orange,
+  red: URGENCY_STYLES.red,
+  purple: URGENCY_STYLES.purple,
+  yellow: URGENCY_STYLES.yellow,
+  cyan: URGENCY_STYLES.cyan,
   gray: URGENCY_STYLES.gray,
 };
 
+/** Legend order matches the product urgency table. */
 export const TRACKER_URGENCY_LEGEND: ReadonlyArray<{
   key: TrackerUrgency;
   label: string;
 }> = [
-  { key: 'red', label: TRACKER_URGENCY_STYLES.red.label },
-  { key: 'orange', label: TRACKER_URGENCY_STYLES.orange.label },
   { key: 'green', label: TRACKER_URGENCY_STYLES.green.label },
+  { key: 'orange', label: TRACKER_URGENCY_STYLES.orange.label },
+  { key: 'red', label: TRACKER_URGENCY_STYLES.red.label },
+  { key: 'purple', label: TRACKER_URGENCY_STYLES.purple.label },
+  { key: 'yellow', label: TRACKER_URGENCY_STYLES.yellow.label },
+  { key: 'cyan', label: TRACKER_URGENCY_STYLES.cyan.label },
   { key: 'gray', label: TRACKER_URGENCY_STYLES.gray.label },
 ];

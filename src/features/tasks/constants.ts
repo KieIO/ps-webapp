@@ -7,7 +7,10 @@ import {
   PROJECT_NAME_COLUMN_LABEL,
   PROJECT_URGENCY_SETTING_STYLES,
 } from '@/features/projects/constants';
-import { PROJECT_URGENCIES, type ProjectUrgency } from '@/features/projects/schemas/project.schema';
+import {
+  PROJECT_URGENCY_SETTING_ORDER,
+  type ProjectUrgency,
+} from '@/features/projects/schemas/project.schema';
 
 import { CONFIRMATION_LABELS, CONFIRMATION_VARIANT } from '@/shared/constants/taskConfirmation';
 
@@ -216,8 +219,8 @@ export const PROJECT_EVALUATION_SCORE_OPTIONS = ['1', '2', '3', '4', '5'].map((v
   label: value,
 }));
 
-/** Urgency select options — Auto first, then locked color levels. */
-export const TASK_URGENCY_OPTIONS = PROJECT_URGENCIES.map((value: ProjectUrgency) => ({
+/** Urgency select options — Auto first, then locked levels in product table order. */
+export const TASK_URGENCY_OPTIONS = PROJECT_URGENCY_SETTING_ORDER.map((value: ProjectUrgency) => ({
   value,
   label: PROJECT_URGENCY_SETTING_STYLES[value].label,
   color: PROJECT_URGENCY_SETTING_STYLES[value].dot,

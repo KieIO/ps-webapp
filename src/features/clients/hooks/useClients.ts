@@ -16,6 +16,14 @@ export const useClientList = () =>
     staleTime: 60_000,
   });
 
+export const useClient = (id: string) =>
+  useQuery({
+    queryKey: [...CLIENTS_QUERY_KEY, id],
+    queryFn: () => clientApi.getById(id),
+    enabled: Boolean(id),
+    staleTime: 60_000,
+  });
+
 export const useCreateClient = () => {
   const queryClient = useQueryClient();
 

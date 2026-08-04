@@ -14,7 +14,14 @@ export function ProjectUrgencyBadge({ urgency, className }: ProjectUrgencyBadgeP
 
   return (
     <span className={classNames(styles.badge, className)}>
-      <span className={styles.dot} style={{ backgroundColor: dot }} aria-hidden />
+      <span
+        className={styles.dot}
+        style={{
+          backgroundColor: dot,
+          boxShadow: urgency === 'gray' ? 'inset 0 0 0 1px #D1D5DB' : undefined,
+        }}
+        aria-hidden
+      />
       {label}
     </span>
   );

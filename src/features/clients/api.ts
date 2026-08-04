@@ -35,6 +35,24 @@ export const clientApi = {
     }
   },
 
+  getById: async (id: string): Promise<Client> => {
+    if (env.useProjectsMock) {
+      const list = await mockGetClientList();
+      const client = list.items.find((item) => item.id === id);
+      if (!client) {
+        throw new Error('Client not found');
+      }
+      return ClientSchema.parse(client);
+    }
+
+    try {
+      const response = await api.get(`/clients/${id}`);
+      return ClientSchema.parse(response.data);
+    } catch (error) {
+      return rethrowApiError(error, 'Failed to load client');
+    }
+  },
+
   create: async (payload: CreateClientRequest): Promise<Client> => {
     const data = CreateClientRequestSchema.parse(payload);
 

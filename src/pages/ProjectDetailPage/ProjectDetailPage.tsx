@@ -21,7 +21,7 @@ export default function ProjectDetailPage() {
     <div>
       <PageHeader
         title={title}
-        subtitle="Timeline, tasks, and client notes"
+        subtitle="Timeline, tasks, and client knowledge"
         actions={
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTES.PROJECTS)}>
             Back to projects

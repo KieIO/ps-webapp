@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Alert, Tabs } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/constants';
+import { ClientKnowledgePanel } from '@/features/client-notes/components/ClientKnowledgePanel/ClientKnowledgePanel';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
 import { EditProjectModal } from '../EditProjectModal/EditProjectModal';
-import { ProjectClientNotesTab } from '../ProjectClientNotesTab/ProjectClientNotesTab';
+import { ProjectBriefTab } from '../ProjectBriefTab/ProjectBriefTab';
 import { ProjectHistoryTab } from '../ProjectHistoryTab/ProjectHistoryTab';
 import { ProjectSummaryCard } from '../ProjectSummaryCard/ProjectSummaryCard';
 import { ProjectTasksTab } from '../ProjectTasksTab/ProjectTasksTab';
@@ -84,6 +85,7 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
       <Tabs
         className={styles.tabs}
         defaultActiveKey="tasks"
+        destroyOnHidden
         items={[
           {
             key: 'tasks',
@@ -91,9 +93,28 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
             children: <ProjectTasksTab project={project} />,
           },
           {
-            key: 'notes',
-            label: 'Client Notes',
-            children: <ProjectClientNotesTab project={project} />,
+            key: 'brief',
+            label: 'Project Brief',
+            children: <ProjectBriefTab project={project} />,
+          },
+          {
+            key: 'knowledge',
+            label: 'Client Knowledge',
+            children: project.clientId ? (
+              <ClientKnowledgePanel
+                clientId={project.clientId}
+                clientName={project.client?.name}
+                defaultRelatedProjectId={project.id}
+                showOpenClientLink
+              />
+            ) : (
+              <Alert
+                type="info"
+                showIcon
+                message="No client linked"
+                description="Assign a client to this project to use Client Knowledge."
+              />
+            ),
           },
           {
             key: 'history',

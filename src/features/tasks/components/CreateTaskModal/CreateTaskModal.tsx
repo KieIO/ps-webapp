@@ -1,7 +1,7 @@
 import { AutoComplete, DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
-import { DATE_FORMAT } from '@/config/constants';
+import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { ROLES, type Role } from '@/config/permissions';
 import { useDepartmentOptions } from '@/features/departments/hooks/useDepartmentOptions';
 import { useTaskScoreGroupOptions } from '@/features/task-scores/hooks/useTaskScoreGroupOptions';
@@ -20,7 +20,7 @@ import {
 } from '../../hooks/useCreateTaskOptions';
 import { useCreateMyTask } from '../../hooks/useCreateMyTask';
 import { mergeStaffSelectOptions, resolveStaffFromUserId } from '../../utils/staff';
-import { toTaskDateOnly } from '../../utils/taskDates';
+import { defaultTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import type {
   CreateMyTaskRequest,
@@ -71,7 +71,7 @@ const DEFAULT_VALUES: CreateTaskFormValues = {
   taskType: '',
   level: 1,
   quantity: 1,
-  date: dayjs(),
+  date: defaultTaskDeadline(),
   urgency: 'auto',
   description: '',
   designThinking: 1,
@@ -210,6 +210,7 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
     if (open) {
       form.setFieldsValue({
         ...DEFAULT_VALUES,
+        date: defaultTaskDeadline(),
         projectName: preset?.projectName ?? DEFAULT_VALUES.projectName,
         projectManager:
           preset?.projectManager ?? defaultProjectManager ?? DEFAULT_VALUES.projectManager,
@@ -334,7 +335,7 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
       taskName,
       level: isCreativeTask ? DEFAULT_VALUES.level : values.level,
       quantity: isCreativeTask ? DEFAULT_VALUES.quantity : values.quantity,
-      date: toTaskDateOnly(values.date),
+      date: toTaskDeadline(values.date),
       description: isCreativeTask ? '' : (values.description ?? ''),
       designThinking: isCreativeTask ? DEFAULT_VALUES.designThinking : values.designThinking,
       technical: isCreativeTask ? DEFAULT_VALUES.technical : values.technical,
@@ -518,10 +519,19 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
           <div className={styles.row}>
             <Form.Item
               name="date"
-              label="6) Deadline (tính đến 23:59:59 cuối ngày)"
-              rules={[{ required: true, message: 'Date is required' }]}
+              label="6) Deadline"
+              rules={[{ required: true, message: 'Deadline is required' }]}
             >
-              <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+              <DatePicker
+                showTime={{
+                  format: 'HH:mm',
+                  defaultValue: dayjs().second(0).millisecond(0),
+                }}
+                format={DATETIME_SHORT_FORMAT}
+                style={{ width: '100%' }}
+                placeholder="Chọn ngày và giờ"
+                showNow={false}
+              />
             </Form.Item>
             <Form.Item
               name="urgency"

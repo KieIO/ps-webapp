@@ -14,7 +14,14 @@ function UrgencyOptionLabel({ value }: { value: ProjectUrgency }) {
   const style = PROJECT_URGENCY_SETTING_STYLES[value];
   return (
     <span className={styles.option}>
-      <span className={styles.dot} style={{ backgroundColor: style.dot }} aria-hidden />
+      <span
+        className={styles.dot}
+        style={{
+          backgroundColor: style.dot,
+          boxShadow: value === 'gray' ? 'inset 0 0 0 1px #D1D5DB' : undefined,
+        }}
+        aria-hidden
+      />
       {style.label}
     </span>
   );

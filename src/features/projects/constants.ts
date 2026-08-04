@@ -64,6 +64,9 @@ export const EVALUATION_LEVEL_LABELS: Record<EvaluationLevel, string> = {
 export const PROJECT_URGENCY_STYLES: Record<ProjectUrgencyColor, { dot: string; label: string }> = {
   red: { dot: URGENCY_STYLES.red.dot, label: URGENCY_STYLES.red.label },
   orange: { dot: URGENCY_STYLES.orange.dot, label: URGENCY_STYLES.orange.label },
+  yellow: { dot: URGENCY_STYLES.yellow.dot, label: URGENCY_STYLES.yellow.label },
+  cyan: { dot: URGENCY_STYLES.cyan.dot, label: URGENCY_STYLES.cyan.label },
+  purple: { dot: URGENCY_STYLES.purple.dot, label: URGENCY_STYLES.purple.label },
   green: { dot: URGENCY_STYLES.green.dot, label: URGENCY_STYLES.green.label },
   gray: { dot: URGENCY_STYLES.gray.dot, label: URGENCY_STYLES.gray.label },
 };

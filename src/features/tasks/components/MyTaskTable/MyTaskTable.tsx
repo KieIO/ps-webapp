@@ -10,7 +10,7 @@ import { Button, Popconfirm, Table, Tooltip } from 'antd';
 import type { MyTaskColumnKey } from '../../constants';
 import type { ColumnsType } from 'antd/es/table';
 import { Link } from 'react-router-dom';
-import { buildMyTaskDetailPath } from '@/config/constants';
+import { buildMyTaskDetailPath, DATE_FORMAT, DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { ClassificationLevelBadge } from '../ClassificationLevelBadge/ClassificationLevelBadge';
@@ -30,6 +30,7 @@ import {
 } from '../../utils/myTaskColumns';
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
 import { getMyTaskCompletionProgressStatus, isMyTaskDateAtRisk } from '../../utils/taskDeadline';
+import { getTaskDeadline } from '../../utils/taskDetail';
 import { canChangeTaskStatus, TASK_STATUS_LOCKED_MESSAGE } from '../../utils/taskStatusLock';
 import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/CompletionProgressCell';
 import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
@@ -83,7 +84,11 @@ const renderTaskDetailLink = (label: string, record: MyTask) => {
 };
 
 const renderDate = (value: string, record: MyTask, columnKey: MyTaskColumnKey) => (
-  <DateWithRiskIndicator date={value} atRisk={isMyTaskDateAtRisk(record, columnKey)} />
+  <DateWithRiskIndicator
+    date={columnKey === 'date' ? getTaskDeadline(record) : value}
+    atRisk={isMyTaskDateAtRisk(record, columnKey)}
+    format={columnKey === 'date' ? DATETIME_SHORT_FORMAT : DATE_FORMAT}
+  />
 );
 
 const renderCompletion = (value: number | undefined, record: MyTask) =>

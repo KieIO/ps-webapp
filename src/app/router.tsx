@@ -47,6 +47,7 @@ const DepartmentManagementPage = lazy(
 const ClientManagementPage = lazy(
   () => import('@/pages/ClientManagementPage/ClientManagementPage'),
 );
+const ClientDetailPage = lazy(() => import('@/pages/ClientDetailPage/ClientDetailPage'));
 const EmployeeCapacityFormulaPage = lazy(
   () => import('@/pages/EmployeeCapacityFormulaPage/EmployeeCapacityFormulaPage'),
 );
@@ -129,6 +130,7 @@ const router = createBrowserRouter([
           { path: ROUTES.PROJECTS.slice(1), element: <ProjectsPage /> },
           { path: ROUTES.PROJECTS_ARCHIVED.slice(1), element: <ArchivedProjectsPage /> },
           { path: 'projects/:id', element: <ProjectDetailPage /> },
+          { path: 'clients/:id', element: <ClientDetailPage /> },
           { path: 'tasks/manage', element: <TaskManagePage /> },
           { path: 'tasks/new', element: <TaskFormPage /> },
           { path: 'tasks/:id/edit', element: <TaskFormPage /> },

@@ -1,7 +1,8 @@
 import { Button, Popconfirm, Table } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { PAGINATION } from '@/config/constants';
+import { Link } from 'react-router-dom';
+import { buildClientDetailPath, PAGINATION } from '@/config/constants';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { useDeleteClient } from '../../hooks/useClients';
 import type { Client } from '../../schemas/client.schema';
@@ -22,6 +23,7 @@ export function ClientTable({ clients, loading, onEdit }: ClientTableProps) {
       dataIndex: 'name',
       key: 'name',
       sorter: (a, b) => a.name.localeCompare(b.name, 'vi'),
+      render: (name: string, client) => <Link to={buildClientDetailPath(client.id)}>{name}</Link>,
     },
     {
       title: '',

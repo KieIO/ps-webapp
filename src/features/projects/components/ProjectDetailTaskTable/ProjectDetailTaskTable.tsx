@@ -3,13 +3,13 @@ import { EyeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
-import { DATE_FORMAT } from '@/config/constants';
+import { DATE_FORMAT, DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { canViewCreativeDeadline } from '@/features/tasks/utils/creativeVisibility';
 import { ClassificationLevelBadge } from '@/features/tasks/components/ClassificationLevelBadge/ClassificationLevelBadge';
 import { TaskConfirmationBadge } from '@/features/tasks/components/TaskConfirmationBadge/TaskConfirmationBadge';
 import { TaskStaffNameCell } from '@/features/tasks/components/TaskStaffNameCell/TaskStaffNameCell';
 import { MY_TASK_COLUMN_HEADERS } from '@/features/tasks/constants';
-import { formatTaskCodeShort } from '@/features/tasks/utils/taskDetail';
+import { formatTaskCodeShort, getTaskDeadline } from '@/features/tasks/utils/taskDetail';
 import { isMyTaskDateAtRisk } from '@/features/tasks/utils/taskDeadline';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
@@ -97,10 +97,14 @@ export function ProjectDetailTaskTable({
       title: MY_TASK_COLUMN_HEADERS.date,
       dataIndex: 'date',
       key: 'date',
-      width: 110,
+      width: 145,
       sorter: getMyTaskColumnSorter('date'),
-      render: (value: string, record) => (
-        <DateWithRiskIndicator date={value} atRisk={isMyTaskDateAtRisk(record, 'date')} />
+      render: (_: string, record) => (
+        <DateWithRiskIndicator
+          date={getTaskDeadline(record)}
+          atRisk={isMyTaskDateAtRisk(record, 'date')}
+          format={DATETIME_SHORT_FORMAT}
+        />
       ),
     },
     ...(canViewCreativeDeadlineColumn
