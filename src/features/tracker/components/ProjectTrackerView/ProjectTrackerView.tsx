@@ -3,9 +3,7 @@ import { DownloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ROLES } from '@/config/permissions';
 import { PROJECT_NAME_COLUMN_LABEL } from '@/features/projects/constants';
-import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
 import {
   TRACKER_ADMIN_DAY_ZOOM_DEFAULT,
@@ -36,7 +34,6 @@ import {
   getBlockPosition,
   getCalendarWidth,
   getDayIndex,
-  getFittedDayWidth,
   getInitialScrollLeft,
   getMonthScrollLeft,
 } from '../../utils/calendar';
@@ -85,11 +82,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   const prevMonthKeyRef = useRef('');
   const prevDayWidthRef = useRef(0);
   const [selectedMonth, setSelectedMonth] = useState(() => dayjs(TRACKER_TODAY).startOf('month'));
-  const role = useAppSelector((state) => state.auth.user?.role);
-  const isAdmin = role === ROLES.ADMIN;
-  const [adminDayZoom, setAdminDayZoom] = useState<TrackerAdminDayZoom>(
-    TRACKER_ADMIN_DAY_ZOOM_DEFAULT,
-  );
+  const [dayZoom, setDayZoom] = useState<TrackerAdminDayZoom>(TRACKER_ADMIN_DAY_ZOOM_DEFAULT);
   const [panelWidth, setPanelWidth] = useState(0);
   const [rowLayout, setRowLayout] = useState(() => ({
     visibleRowCount: projects.length,
@@ -105,16 +98,10 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     [selectedMonth],
   );
   const months = useMemo(() => buildCalendarMonths(days), [days]);
-  const dayWidth = useMemo(() => {
-    if (!isAdmin) {
-      return getFittedDayWidth(days.length, panelWidth);
-    }
-    return getAdminZoomDayWidth(
-      days.length,
-      panelWidth,
-      TRACKER_ADMIN_DAY_ZOOM_WIDTH[adminDayZoom],
-    );
-  }, [adminDayZoom, days.length, isAdmin, panelWidth]);
+  const dayWidth = useMemo(
+    () => getAdminZoomDayWidth(days.length, panelWidth, TRACKER_ADMIN_DAY_ZOOM_WIDTH[dayZoom]),
+    [dayZoom, days.length, panelWidth],
+  );
   const calendarWidth = useMemo(
     () => getCalendarWidth(days.length, dayWidth),
     [days.length, dayWidth],
@@ -255,7 +242,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   return (
     <div
       className={classNames(styles.root, {
-        [styles.rootAdminZoom]: isAdmin && adminDayZoom !== 'fit',
+        [styles.rootAdminZoom]: dayZoom !== 'fit',
       })}
     >
       <div className={styles.board}>
@@ -307,26 +294,24 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
               ) : null}
             </div>
 
-            {isAdmin ? (
-              <div className={styles.zoomGroup} role="group" aria-label="Zoom độ rộng ngày">
-                <span className={styles.zoomLabel}>Zoom</span>
-                <div className={styles.zoomToggle}>
-                  {TRACKER_ADMIN_DAY_ZOOM_OPTIONS.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      className={classNames(styles.zoomBtn, {
-                        [styles.zoomBtnActive]: adminDayZoom === option.value,
-                      })}
-                      aria-pressed={adminDayZoom === option.value}
-                      onClick={() => setAdminDayZoom(option.value)}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+            <div className={styles.zoomGroup} role="group" aria-label="Zoom độ rộng ngày">
+              <span className={styles.zoomLabel}>Zoom</span>
+              <div className={styles.zoomToggle}>
+                {TRACKER_ADMIN_DAY_ZOOM_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={classNames(styles.zoomBtn, {
+                      [styles.zoomBtnActive]: dayZoom === option.value,
+                    })}
+                    aria-pressed={dayZoom === option.value}
+                    onClick={() => setDayZoom(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
-            ) : null}
+            </div>
 
             <Popover
               trigger="click"

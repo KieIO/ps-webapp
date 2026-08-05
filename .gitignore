@@ -29,3 +29,6 @@ coverage
 
 # Bundle analyzer
 stats.html
+
+# Vercel local link
+.vercel

@@ -13,7 +13,7 @@ export const TRACKER_BLOCK_PADDING = 5;
 export const TRACKER_OFF_ROW_HEIGHT = 36;
 export const TRACKER_CAL_HEADER_HEIGHT = 108; // 28 + 22 + 22 + 36
 
-/** Admin-only calendar day zoom. `fit` fills the panel; others enforce a wider day column. */
+/** Calendar day zoom for all roles. `fit` fills the panel; others enforce a wider day column. */
 export const TRACKER_ADMIN_DAY_ZOOM = {
   fit: 'fit',
   comfortable: 'comfortable',
@@ -38,7 +38,7 @@ export const TRACKER_ADMIN_DAY_ZOOM_OPTIONS: ReadonlyArray<{
   { value: TRACKER_ADMIN_DAY_ZOOM.wide, label: 'Rộng hơn' },
 ];
 
-/** Default Admin zoom so aggregated task labels are readable without manual tuning. */
+/** Default zoom so task labels are readable without manual tuning. */
 export const TRACKER_ADMIN_DAY_ZOOM_DEFAULT: TrackerAdminDayZoom =
   TRACKER_ADMIN_DAY_ZOOM.comfortable;
 

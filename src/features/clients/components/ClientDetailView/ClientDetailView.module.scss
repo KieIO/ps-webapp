@@ -1,3 +1,5 @@
 .tabs {
-  margin-top: 8px;
+  :global(.ant-tabs-nav) {
+    margin-bottom: 16px;
+  }
 }

@@ -6,7 +6,9 @@ import { buildProjectDetailPath } from '@/config/constants';
 import { ClientKnowledgePanel } from '@/features/client-notes/components/ClientKnowledgePanel/ClientKnowledgePanel';
 import { useProjectList } from '@/features/projects/hooks/useProjectList';
 import type { Project } from '@/features/projects/schemas/project.schema';
+import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
+import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { useClient } from '../../hooks/useClients';
 import styles from './ClientDetailView.module.scss';
 
@@ -19,6 +21,8 @@ function ClientProjectsTab({ clientId }: { clientId: string }) {
     { clientId },
     { enabled: Boolean(clientId) },
   );
+
+  const projects = projectsData?.items ?? [];
 
   const projectColumns: ColumnsType<Project> = useMemo(
     () => [
@@ -53,14 +57,16 @@ function ClientProjectsTab({ clientId }: { clientId: string }) {
   );
 
   return (
-    <Table
-      rowKey="id"
-      loading={isLoading}
-      columns={projectColumns}
-      dataSource={projectsData?.items ?? []}
-      pagination={false}
-      locale={{ emptyText: 'No projects for this client yet.' }}
-    />
+    <CardWrapper title="Projects" subtitle={`${projectsData?.total ?? 0} total for this client`}>
+      <TableWrapper
+        loading={isLoading}
+        isEmpty={!isLoading && projects.length === 0}
+        emptyTitle="No projects found"
+        emptyDescription="Projects linked to this client will appear here."
+      >
+        <Table rowKey="id" columns={projectColumns} dataSource={projects} pagination={false} />
+      </TableWrapper>
+    </CardWrapper>
   );
 }
 

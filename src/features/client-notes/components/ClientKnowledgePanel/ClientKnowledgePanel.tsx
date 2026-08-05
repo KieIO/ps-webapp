@@ -4,13 +4,13 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { buildClientDetailPath } from '@/config/constants';
 import { usePermission } from '@/shared/hooks/usePermission';
+import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
 import { useProjectList } from '@/features/projects/hooks/useProjectList';
 import type { ClientNote } from '../../schemas/clientNote.schema';
 import { useClientNotes } from '../../hooks/useClientNotes';
 import { ClientNoteFormModal } from '../ClientNoteFormModal/ClientNoteFormModal';
 import { ClientNoteList } from '../ClientNoteList/ClientNoteList';
-import styles from './ClientKnowledgePanel.module.scss';
 
 interface ClientKnowledgePanelProps {
   clientId: string;
@@ -33,7 +33,6 @@ export function ClientKnowledgePanel({
   const [editing, setEditing] = useState<ClientNote | null>(null);
 
   const { data, isLoading, isError } = useClientNotes(clientId);
-  // Only load project options when the form is open (avoid extra list fetch on view).
   const { data: projectsData } = useProjectList(
     { clientId },
     { enabled: Boolean(clientId) && modalOpen },
@@ -74,31 +73,43 @@ export function ClientKnowledgePanel({
     );
   }
 
-  return (
-    <div className={styles.panel}>
-      <div className={styles.toolbar}>
-        <p className={styles.banner}>
-          Notes for {clientName ?? 'this client'} · shared across all projects
-          {showOpenClientLink ? (
-            <>
-              {' · '}
-              <Link to={buildClientDetailPath(clientId)}>Open client</Link>
-            </>
-          ) : null}
-        </p>
-        {canEdit ? (
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-            Add note
-          </Button>
-        ) : null}
-      </div>
+  const noteCount = data?.total ?? 0;
+  const subtitleParts = [
+    noteCount === 1 ? '1 note' : `${noteCount} notes`,
+    clientName ? `for ${clientName}` : null,
+    'shared across all projects',
+  ].filter(Boolean);
 
-      <ClientNoteList
-        clientId={clientId}
-        notes={data?.items ?? []}
-        canEdit={canEdit}
-        onEdit={openEdit}
-      />
+  return (
+    <>
+      <CardWrapper
+        title="Knowledge"
+        subtitle={
+          <>
+            {subtitleParts.join(' · ')}
+            {showOpenClientLink ? (
+              <>
+                {' · '}
+                <Link to={buildClientDetailPath(clientId)}>Open client</Link>
+              </>
+            ) : null}
+          </>
+        }
+        actions={
+          canEdit ? (
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+              Add note
+            </Button>
+          ) : undefined
+        }
+      >
+        <ClientNoteList
+          clientId={clientId}
+          notes={data?.items ?? []}
+          canEdit={canEdit}
+          onEdit={openEdit}
+        />
+      </CardWrapper>
 
       {canEdit ? (
         <ClientNoteFormModal
@@ -110,6 +121,6 @@ export function ClientKnowledgePanel({
           onClose={closeModal}
         />
       ) : null}
-    </div>
+    </>
   );
 }

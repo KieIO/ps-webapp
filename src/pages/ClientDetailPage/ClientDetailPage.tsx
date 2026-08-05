@@ -25,7 +25,7 @@ export default function ClientDetailPage() {
     <div>
       <PageHeader
         title={client ? client.name : 'Client'}
-        subtitle="Client knowledge shared across projects"
+        subtitle="Knowledge and projects for this client"
         actions={
           <Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
             {can('MANAGE_CLIENTS') ? 'Back to clients' : 'Back to projects'}

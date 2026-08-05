@@ -1,8 +1,12 @@
-import { Button, Empty, Popconfirm, Tag, Typography } from 'antd';
+import { Button, Empty, Popconfirm, Tag } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { buildProjectDetailPath } from '@/config/constants';
-import { CLIENT_NOTE_CATEGORY_LABELS, type ClientNote } from '../../schemas/clientNote.schema';
+import {
+  CLIENT_NOTE_CATEGORY_LABELS,
+  type ClientNote,
+  type ClientNoteCategory,
+} from '../../schemas/clientNote.schema';
 import { useDeleteClientNote } from '../../hooks/useClientNotes';
 import styles from './ClientNoteList.module.scss';
 
@@ -12,6 +16,15 @@ interface ClientNoteListProps {
   canEdit: boolean;
   onEdit: (note: ClientNote) => void;
 }
+
+const CATEGORY_TAG_COLOR: Record<ClientNoteCategory, string> = {
+  preference: 'blue',
+  feedback: 'purple',
+  contact: 'cyan',
+  process: 'geekblue',
+  risk: 'orange',
+  general: 'default',
+};
 
 function formatNoteTimestamp(iso: string): string {
   const date = new Date(iso);
@@ -31,10 +44,12 @@ export function ClientNoteList({ clientId, notes, canEdit, onEdit }: ClientNoteL
 
   if (notes.length === 0) {
     return (
-      <Empty
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description="No knowledge for this client yet. Capture preferences, feedback, or process so the next project team does not start from zero."
-      />
+      <div className={styles.empty}>
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description="No knowledge for this client yet. Capture preferences, feedback, or process so the next project team does not start from zero."
+        />
+      </div>
     );
   }
 
@@ -46,8 +61,14 @@ export function ClientNoteList({ clientId, notes, canEdit, onEdit }: ClientNoteL
           <li key={note.id} className={styles.item}>
             <div className={styles.header}>
               <div className={styles.meta}>
-                <Tag>{CLIENT_NOTE_CATEGORY_LABELS[note.category]}</Tag>
-                <Typography.Text strong>{title}</Typography.Text>
+                <Tag
+                  className={styles.category}
+                  color={CATEGORY_TAG_COLOR[note.category]}
+                  bordered={false}
+                >
+                  {CLIENT_NOTE_CATEGORY_LABELS[note.category]}
+                </Tag>
+                <span className={styles.title}>{title}</span>
               </div>
               {canEdit ? (
                 <div className={styles.actions}>
@@ -80,9 +101,9 @@ export function ClientNoteList({ clientId, notes, canEdit, onEdit }: ClientNoteL
             <p className={styles.body}>{note.body}</p>
 
             <div className={styles.footer}>
-              <Typography.Text type="secondary" className={styles.footerText}>
+              <span className={styles.footerText}>
                 {note.updatedByName || note.createdByName} · {formatNoteTimestamp(note.updatedAt)}
-              </Typography.Text>
+              </span>
               {note.relatedProjectId ? (
                 <Link
                   to={buildProjectDetailPath(note.relatedProjectId)}

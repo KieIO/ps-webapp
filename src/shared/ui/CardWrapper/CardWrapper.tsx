@@ -3,7 +3,7 @@ import styles from './CardWrapper.module.scss';
 
 interface CardWrapperProps {
   title?: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
