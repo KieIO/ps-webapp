@@ -70,6 +70,10 @@ export const MyTaskSchema = z.object({
   pmNote: z.string(),
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
   staffNote: z.string(),
+  /** Linked overtime request when this task was created from OT assign-task. */
+  overtimeRequestId: z.string().nullish(),
+  /** Actual hours worked — required when finishing an OT-linked task. */
+  actualHours: z.number().nullish(),
   /** Stored setting — `auto` lets the API/UI derive display color from deadline. */
   urgency: z.enum(PROJECT_URGENCIES).optional().default('auto'),
   updatedAt: z.string().nullish(),
@@ -103,6 +107,8 @@ export const MyTaskListFiltersSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}$/)
     .optional(),
+  /** Client-side filter: only tasks linked to an overtime request. */
+  otOnly: z.boolean().optional(),
 });
 
 export const MyTaskListResponseSchema = z.object({
@@ -168,6 +174,7 @@ export const CreateMyTaskRequestSchema = z.object({
 export const UpdateMyTaskStatusRequestSchema = z.object({
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
   staffNote: z.string(),
+  actualHours: z.number().positive().optional(),
 });
 
 export const UpdateMyTaskPmEvaluationRequestSchema = z.object({

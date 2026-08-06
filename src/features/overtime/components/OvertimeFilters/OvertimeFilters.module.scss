@@ -1,0 +1,32 @@
+.wrapper {
+  margin-bottom: 16px;
+}
+
+.filterSection {
+  margin-bottom: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.search {
+  width: 240px;
+}
+
+.select {
+  width: 180px;
+}
+
+.range {
+  width: 260px;
+}

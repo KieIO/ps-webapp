@@ -70,13 +70,13 @@ export function buildTeamComparisonInsights(
       insights.push({
         id: 'team-revision-high',
         tone: 'warning',
-        text: `Revision rate trung bình team tháng ${monthLabel} ở mức ${Math.round(avg)}% — cao hơn ngưỡng ${REVISION_WARN}%.`,
+        text: `Revision trung bình nhóm tháng ${monthLabel}: ${Math.round(avg)}% — cao hơn ngưỡng ${REVISION_WARN}%.`,
       });
     } else {
       insights.push({
         id: 'team-revision-ok',
         tone: 'info',
-        text: `Revision rate trung bình team tháng ${monthLabel}: ${Math.round(avg)}%.`,
+        text: `Revision trung bình nhóm tháng ${monthLabel}: ${Math.round(avg)}%.`,
       });
     }
   }
@@ -88,7 +88,7 @@ export function buildTeamComparisonInsights(
     insights.push({
       id: 'ontime-risk',
       tone: 'warning',
-      text: `${lateCount}/${rows.length} nhân viên có on-time dưới ${ON_TIME_WARN}% trong tháng ${monthLabel}.`,
+      text: `${lateCount}/${rows.length} người có on-time dưới ${ON_TIME_WARN}% trong tháng ${monthLabel}.`,
     });
   }
 
@@ -99,7 +99,7 @@ export function buildTeamComparisonInsights(
     insights.push({
       id: 'quality-good',
       tone: 'info',
-      text: `${qualityGood}/${rows.length} nhân viên đạt quality ≥ ${QUALITY_GOOD}/100.`,
+      text: `${qualityGood}/${rows.length} người đạt quality ≥ ${QUALITY_GOOD}/100.`,
     });
   }
 

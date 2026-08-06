@@ -116,16 +116,23 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
     setSearchParams(nextSearchParams, { replace: true });
   };
 
-  const queryFilters = useMemo(
-    () => ({ ...filters, taskCategory, search: debouncedSearch }),
-    [filters, taskCategory, debouncedSearch],
-  );
+  const queryFilters = useMemo(() => {
+    const { otOnly, ...rest } = filters;
+    void otOnly;
+    return { ...rest, taskCategory, search: debouncedSearch };
+  }, [filters, taskCategory, debouncedSearch]);
 
   const { data, isLoading, isError, error } = useMyTaskList(queryFilters);
 
+  const displayItems = useMemo(() => {
+    const items = data?.items ?? [];
+    if (!filters.otOnly) return items;
+    return items.filter((task) => Boolean(task.overtimeRequestId));
+  }, [data?.items, filters.otOnly]);
+
   const confirmationSummary = useMemo(
-    () => computeTaskConfirmationSummary(data?.items ?? []),
-    [data?.items],
+    () => computeTaskConfirmationSummary(displayItems),
+    [displayItems],
   );
   const {
     mutate: deleteTask,
@@ -145,15 +152,14 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
   };
 
   const handleExport = () => {
-    const items = data?.items ?? [];
-    if (items.length === 0) {
+    if (displayItems.length === 0) {
       message.warning('No tasks to export.');
       return;
     }
 
     setExporting(true);
     try {
-      exportMyTasksToCsv(items, columnDefs);
+      exportMyTasksToCsv(displayItems, columnDefs);
       message.success('Export downloaded.');
     } finally {
       setExporting(false);
@@ -174,12 +180,13 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
       {filters.outputMetric && data ? (
         <p className={styles.outputSummary}>
           <strong>
-            {formatNumber.format(data.items.reduce((total, task) => total + task.quantity, 0))}{' '}
+            {formatNumber.format(displayItems.reduce((total, task) => total + task.quantity, 0))}{' '}
             {filters.outputMetric === 'project_slides' ? 'slides' : 'DA'}
           </strong>
           <span>
             {' '}
-            từ {data.total} task · {filters.outputMonth ?? ''}
+            từ {filters.otOnly ? displayItems.length : data.total} task ·{' '}
+            {filters.outputMonth ?? ''}
           </span>
         </p>
       ) : null}
@@ -197,9 +204,9 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
       <TaskConfirmationSummaryBar summary={confirmationSummary} />
 
       <MyTaskTable
-        tasks={data?.items ?? []}
+        tasks={displayItems}
         loading={isLoading}
-        total={data?.total ?? 0}
+        total={filters.otOnly ? displayItems.length : (data?.total ?? 0)}
         onEdit={setEditingTask}
         onAssign={setAssigningTask}
         onUpdateStatus={setStatusTask}

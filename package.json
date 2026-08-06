@@ -16,7 +16,10 @@
     "lint": "eslint src server",
     "lint:fix": "eslint src server --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,json,scss}\" \"server/**/*.{ts,json}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,json,scss}\" \"server/**/*.{ts,json}\""
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,json,scss}\" \"server/**/*.{ts,json}\"",
+    "docs:dev": "npm --prefix docs-site start",
+    "docs:build": "npm --prefix docs-site run build",
+    "docs:serve": "npm --prefix docs-site run serve"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

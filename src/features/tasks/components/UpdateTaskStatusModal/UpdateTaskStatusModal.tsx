@@ -1,4 +1,4 @@
-import { Alert, Form, Input, Modal, Select } from 'antd';
+import { Alert, Form, Input, InputNumber, Modal, Select } from 'antd';
 import { useEffect, useMemo } from 'react';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { MY_TASK_COLUMN_HEADERS, TASK_STATUS_CHANGE_NOTE_LABEL } from '../../constants';
@@ -30,12 +30,16 @@ export function UpdateTaskStatusModal({ open, task, onClose }: UpdateTaskStatusM
     () => getTaskStatusOptionsForRole(role, task?.staffConfirmation),
     [role, task?.staffConfirmation],
   );
+  const isOtTask = Boolean(task?.overtimeRequestId);
+  const selectedStatus = Form.useWatch('staffConfirmation', form);
+  const requiresActualHours = isOtTask && selectedStatus === 'finished';
 
   useEffect(() => {
     if (open && task) {
       form.setFieldsValue({
         staffConfirmation: task.staffConfirmation,
         staffNote: task.staffNote,
+        actualHours: task.actualHours ?? undefined,
       });
     }
   }, [open, task, form]);
@@ -62,6 +66,7 @@ export function UpdateTaskStatusModal({ open, task, onClose }: UpdateTaskStatusM
         id: task.id,
         staffConfirmation: values.staffConfirmation,
         staffNote: values.staffNote ?? '',
+        actualHours: values.actualHours,
       },
       {
         onSuccess: () => {
@@ -98,6 +103,13 @@ export function UpdateTaskStatusModal({ open, task, onClose }: UpdateTaskStatusM
             <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.confirmation}:</span>{' '}
             <TaskConfirmationBadge status={task.staffConfirmation} />
           </span>
+          {isOtTask ? (
+            <Alert
+              type="info"
+              showIcon
+              message="Task OT — cần nhập số giờ thực tế khi hoàn thành"
+            />
+          ) : null}
         </div>
       )}
 
@@ -117,7 +129,27 @@ export function UpdateTaskStatusModal({ open, task, onClose }: UpdateTaskStatusM
         >
           <Select options={statusOptions} placeholder="Select status" disabled={!statusEditable} />
         </Form.Item>
-        <Form.Item name="staffNote" label={TASK_STATUS_CHANGE_NOTE_LABEL}>
+        {requiresActualHours ? (
+          <Form.Item
+            name="actualHours"
+            label="Số giờ thực tế"
+            rules={[
+              { required: true, message: 'Nhập số giờ thực tế' },
+              { type: 'number', min: 0.5, message: 'Phải lớn hơn 0' },
+            ]}
+          >
+            <InputNumber min={0.5} step={0.5} style={{ width: '100%' }} addonAfter="giờ" />
+          </Form.Item>
+        ) : null}
+        <Form.Item
+          name="staffNote"
+          label={TASK_STATUS_CHANGE_NOTE_LABEL}
+          rules={
+            requiresActualHours
+              ? [{ required: true, message: 'Nhập ghi chú khi hoàn thành task OT' }]
+              : undefined
+          }
+        >
           <Input.TextArea
             rows={3}
             placeholder="Add a note for this status change"

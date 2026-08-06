@@ -14,7 +14,7 @@ interface TeamProductivityDashboardProps {
 }
 
 const groupLabelForRole = (role: Role): string =>
-  role === ROLES.CREATIVE_MANAGER ? 'CM group' : 'PM group';
+  role === ROLES.CREATIVE_MANAGER ? 'nhóm CM' : 'nhóm PM';
 
 export function TeamProductivityDashboard({ role }: TeamProductivityDashboardProps) {
   const [selectedMonth, setSelectedMonth] = useState<Dayjs>(() => dayjs().startOf('month'));
@@ -22,14 +22,13 @@ export function TeamProductivityDashboard({ role }: TeamProductivityDashboardPro
   const dashboardQuery = useTeamProductivityDashboard(period);
   const data = dashboardQuery.data;
   const groupLabel = groupLabelForRole(role);
-  const reportTitle = `Báo cáo Năng suất nhóm — Tháng ${selectedMonth.format('M/YYYY')}`;
 
   return (
     <div className={styles.root}>
       <PageHeader
-        breadcrumb={[{ label: 'Reports' }, { label: 'Báo cáo Năng suất nhóm' }]}
-        title={reportTitle}
-        subtitle={`Theo dõi capacity, output và chất lượng trong ${groupLabel}`}
+        breadcrumb={[{ label: 'Reports' }, { label: 'Năng suất nhóm' }]}
+        title="Năng suất nhóm"
+        subtitle={`Capacity, tiến độ và chất lượng của ${groupLabel} trong tháng`}
         actions={
           <DatePicker
             picker="month"
@@ -49,8 +48,8 @@ export function TeamProductivityDashboard({ role }: TeamProductivityDashboardPro
           type="error"
           showIcon
           className={styles.alert}
-          message="Không tải được báo cáo năng suất nhóm"
-          description="Dữ liệu hiện chưa thể đồng bộ. Vui lòng thử lại."
+          message="Không tải được dữ liệu"
+          description="Thử lại nhé."
           action={
             <Button size="small" onClick={() => void dashboardQuery.refetch()}>
               Thử lại
@@ -67,8 +66,7 @@ export function TeamProductivityDashboard({ role }: TeamProductivityDashboardPro
         </div>
       ) : data ? (
         <>
-          <TeamMetricGrid data={data} groupLabel={groupLabel} />
-          <TeamAlertsSection alerts={data.alerts} />
+          <TeamMetricGrid data={data} groupLabel={groupLabel} role={role} />
           <ProductivityRankingTable
             rows={data.ranking}
             teamSummary={{
@@ -76,6 +74,7 @@ export function TeamProductivityDashboard({ role }: TeamProductivityDashboardPro
               overloadedCount: data.overloadedCount,
             }}
           />
+          <TeamAlertsSection alerts={data.alerts} />
         </>
       ) : null}
     </div>

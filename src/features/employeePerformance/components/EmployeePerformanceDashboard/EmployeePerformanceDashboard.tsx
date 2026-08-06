@@ -44,7 +44,7 @@ export function EmployeePerformanceDashboard({ userId }: EmployeePerformanceDash
       <PageHeader
         breadcrumb={[
           { label: 'Reports' },
-          { label: 'So sánh Team', path: ROUTES.TEAM_COMPARISON },
+          { label: 'So sánh nhóm', path: ROUTES.TEAM_COMPARISON },
           { label: data?.profile.name ?? 'Chi tiết nhân viên' },
         ]}
         title={data ? `Hiệu suất cá nhân — ${data.profile.name}` : 'Hiệu suất cá nhân'}

@@ -87,7 +87,7 @@ Matrix column order (least → most privileged): `employee`, `pm`, `creative_man
 | `EDIT_KPI_SETTINGS`    | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
 | `VIEW_QUALITY`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
 | `REQUEST_OT`           | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `APPROVE_OT`           | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `APPROVE_OT`           | `creative_head`, `head`                                    |
 | `EXPORT_REPORT`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
 | `VIEW_USER`            | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
 | `MANAGE_USERS`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |

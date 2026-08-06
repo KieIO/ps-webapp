@@ -1,5 +1,6 @@
 import {
   CheckSquareOutlined,
+  FieldTimeOutlined,
   HomeOutlined,
   ProjectOutlined,
   BarChartOutlined,
@@ -38,6 +39,11 @@ export interface SidebarItem {
   path?: string;
   icon: ComponentType;
   permission: Permission | null;
+  /**
+   * When set, the item is visible if the user has ANY of these permissions
+   * (takes precedence over `permission`).
+   */
+  anyOfPermissions?: readonly Permission[];
   shortcut?: SidebarShortcut;
   children?: readonly SidebarChildItem[];
 }
@@ -207,15 +213,15 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
     ],
   },
 
-  // Hidden temporarily — route kept at ROUTES.OVERTIME for later use.
-  // {
-  //   key: 'overtime',
-  //   label: 'Overtime',
-  //   path: ROUTES.OVERTIME,
-  //   icon: FieldTimeOutlined,
-  //   permission: 'APPROVE_OT',
-  //   shortcut: navShortcut('o'),
-  // },
+  {
+    key: 'overtime',
+    label: 'Overtime',
+    path: ROUTES.OVERTIME,
+    icon: FieldTimeOutlined,
+    permission: null,
+    anyOfPermissions: ['REQUEST_OT', 'APPROVE_OT'],
+    shortcut: navShortcut('o'),
+  },
 ];
 
 export function collectSidebarShortcutTargets(

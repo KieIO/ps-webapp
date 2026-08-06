@@ -1,0 +1,119 @@
+import { DatePicker, Input, Select } from 'antd';
+import dayjs, { type Dayjs } from 'dayjs';
+import { FilterSection } from '@/shared/ui/FilterSection/FilterSection';
+import { DATE_FORMAT } from '@/config/constants';
+import { OT_FILTER_LABELS, OT_STATUS_OPTIONS } from '../../constants';
+import type { OvertimeListFilters } from '../../schemas/overtime.schema';
+import styles from './OvertimeFilters.module.scss';
+
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface OvertimeFiltersProps {
+  filters: OvertimeListFilters;
+  onChange: (filters: OvertimeListFilters) => void;
+  onReset: () => void;
+  projectOptions?: SelectOption[];
+  assigneeOptions?: SelectOption[];
+}
+
+export function OvertimeFilters({
+  filters,
+  onChange,
+  onReset,
+  projectOptions = [],
+  assigneeOptions = [],
+}: OvertimeFiltersProps) {
+  const rangeValue: [Dayjs, Dayjs] | null =
+    filters.fromDate && filters.toDate ? [dayjs(filters.fromDate), dayjs(filters.toDate)] : null;
+
+  return (
+    <div className={styles.wrapper}>
+      <FilterSection onReset={onReset} className={styles.filterSection}>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="ot-search">
+            {OT_FILTER_LABELS.search}
+          </label>
+          <Input.Search
+            id="ot-search"
+            placeholder={OT_FILTER_LABELS.searchPlaceholder}
+            allowClear
+            value={filters.search ?? ''}
+            onChange={(event) => onChange({ ...filters, search: event.target.value || undefined })}
+            className={styles.search}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="ot-status">
+            {OT_FILTER_LABELS.status}
+          </label>
+          <Select
+            id="ot-status"
+            placeholder={OT_FILTER_LABELS.statusPlaceholder}
+            allowClear
+            value={filters.status}
+            onChange={(value) => onChange({ ...filters, status: value })}
+            options={[...OT_STATUS_OPTIONS]}
+            className={styles.select}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="ot-project">
+            {OT_FILTER_LABELS.project}
+          </label>
+          <Select
+            id="ot-project"
+            placeholder={OT_FILTER_LABELS.projectPlaceholder}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            value={filters.projectId}
+            onChange={(value) => onChange({ ...filters, projectId: value })}
+            options={projectOptions}
+            className={styles.select}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="ot-assignee">
+            {OT_FILTER_LABELS.assignee}
+          </label>
+          <Select
+            id="ot-assignee"
+            placeholder={OT_FILTER_LABELS.assigneePlaceholder}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            value={filters.assigneeId}
+            onChange={(value) => onChange({ ...filters, assigneeId: value })}
+            options={assigneeOptions}
+            className={styles.select}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="ot-date-range">
+            {OT_FILTER_LABELS.dateRange}
+          </label>
+          <DatePicker.RangePicker
+            id="ot-date-range"
+            format={DATE_FORMAT}
+            value={rangeValue}
+            onChange={(dates) => {
+              onChange({
+                ...filters,
+                fromDate: dates?.[0]?.format('YYYY-MM-DD'),
+                toDate: dates?.[1]?.format('YYYY-MM-DD'),
+              });
+            }}
+            className={styles.range}
+          />
+        </div>
+      </FilterSection>
+    </div>
+  );
+}

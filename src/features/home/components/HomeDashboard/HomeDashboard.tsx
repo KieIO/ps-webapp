@@ -3,13 +3,17 @@ import { Alert, Button, DatePicker, Skeleton } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { PendingReactivationBanner } from '@/features/leave/components/PendingReactivationBanner/PendingReactivationBanner';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { useOverallDashboard } from '../../hooks/useOverallDashboard';
 import { OverallMetricGrid } from '../OverallMetricGrid/OverallMetricGrid';
 import { OverallTrendSection } from '../OverallTrendSection/OverallTrendSection';
+import { OtRequestsSection } from '../OtRequestsSection/OtRequestsSection';
 import { SystemNotificationsSection } from '../SystemNotificationsSection/SystemNotificationsSection';
 import styles from './HomeDashboard.module.scss';
 
 export function HomeDashboard() {
+  const { can } = usePermission();
+  const canApproveOt = can('APPROVE_OT');
   const [selectedMonth, setSelectedMonth] = useState<Dayjs>(() => dayjs().startOf('month'));
   const period = { year: selectedMonth.year(), month: selectedMonth.month() + 1 };
   const dashboardQuery = useOverallDashboard(period);
@@ -62,6 +66,7 @@ export function HomeDashboard() {
       ) : data ? (
         <>
           <OverallMetricGrid data={data} />
+          {canApproveOt ? <OtRequestsSection /> : null}
           <OverallTrendSection data={data} />
           <SystemNotificationsSection />
         </>

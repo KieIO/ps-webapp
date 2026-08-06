@@ -48,8 +48,8 @@ export function TeamComparisonRadar({
 
   return (
     <CardWrapper
-      title="Biểu đồ năng lực đa chiều — Team vs Cá nhân"
-      subtitle="So sánh trung bình team với nhân viên được chọn — chọn từ dropdown hoặc bảng xếp hạng bên dưới"
+      title="Team vs cá nhân"
+      subtitle="Trung bình nhóm so với nhân viên được chọn"
       className={styles.card}
       actions={
         <Select
@@ -69,10 +69,10 @@ export function TeamComparisonRadar({
       }
     >
       {rows.length === 0 || !individual ? (
-        <div className={styles.empty}>Chưa có dữ liệu để vẽ biểu đồ so sánh</div>
+        <div className={styles.empty}>Chưa có dữ liệu để so sánh</div>
       ) : (
         <div className={styles.content}>
-          <div className={styles.chart} aria-label="Biểu đồ radar team vs cá nhân">
+          <div className={styles.chart} aria-label="Biểu đồ radar nhóm vs cá nhân">
             {canRenderRadar ? (
               <ResponsiveContainer width="100%" height={300}>
                 <RadarChart data={chartData} cx="50%" cy="50%" outerRadius="76%">
@@ -86,7 +86,7 @@ export function TeamComparisonRadar({
                     axisLine={false}
                   />
                   <Radar
-                    name="TB Team"
+                    name="TB nhóm"
                     dataKey="team"
                     stroke="#2563eb"
                     fill="#2563eb"
@@ -119,8 +119,7 @@ export function TeamComparisonRadar({
                 </span>
                 <strong>Chưa đủ dữ liệu để vẽ radar</strong>
                 <p>
-                  Cần đủ On-time, Output vs Target, Capacity, Quality và Revision cho cả team và
-                  nhân viên.
+                  Cần đủ On-time, Vs target, Capacity, Quality và Revision cho cả nhóm và nhân viên.
                 </p>
                 <span className={styles.missing}>
                   Còn thiếu: {missingMetrics.map((metric) => metric.legendLabel).join(', ')}
@@ -134,7 +133,7 @@ export function TeamComparisonRadar({
               <span>Chỉ số</span>
               <span className={styles.legendColumn}>
                 <i className={styles.swatchTeam} aria-hidden />
-                TB Team
+                TB nhóm
               </span>
               <span className={styles.legendColumn}>
                 <i className={styles.swatchIndividual} aria-hidden />
@@ -163,9 +162,8 @@ export function TeamComparisonRadar({
               })}
             </div>
             <p className={styles.hint}>
-              Radar đảo Revision Rate thành 100 − tỷ lệ revision để mọi trục đều có cùng quy ước:
-              càng cao càng tốt. Output vs Target = % output chính so với target tính từ capacity
-              kỳ.
+              Radar đảo Revision thành 100 − tỷ lệ revision (càng cao càng tốt). Vs target = %
+              output chính so với target từ capacity kỳ.
             </p>
           </div>
         </div>

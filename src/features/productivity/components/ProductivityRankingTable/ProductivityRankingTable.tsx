@@ -150,12 +150,11 @@ export function ProductivityRankingTable({
   }, [rows, showManagers]);
 
   const subtitle = teamSummary
-    ? [
-        teamSummary.avgCapacity == null
-          ? `${rows.length} nhân sự trong nhóm`
-          : `TB nhóm ${formatCapacityPercent(teamSummary.avgCapacity)} · ${teamSummary.overloadedCount} người overload`,
-        'Mặc định sort capacity giảm dần · trend so với tháng trước',
-      ].join(' · ')
+    ? teamSummary.avgCapacity == null
+      ? `${rows.length} người trong nhóm`
+      : teamSummary.overloadedCount === 0
+        ? `TB nhóm ${formatCapacityPercent(teamSummary.avgCapacity)} · không overload`
+        : `TB nhóm ${formatCapacityPercent(teamSummary.avgCapacity)} · ${teamSummary.overloadedCount} người overload`
     : showManagers
       ? 'Sắp xếp mặc định theo capacity giảm dần · PM từ project · CM chỉ Creative (từ task)'
       : 'Sắp xếp mặc định theo capacity giảm dần · trend so với tháng trước';
@@ -332,7 +331,7 @@ export function ProductivityRankingTable({
 
   return (
     <CardWrapper
-      title="Xếp hạng theo Capacity"
+      title="Nhân sự theo Capacity"
       subtitle={subtitle}
       className={styles.card}
       actions={

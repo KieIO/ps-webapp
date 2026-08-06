@@ -3,25 +3,25 @@ import type { ProductivityRankingRow } from '@/features/productivity/schemas/pro
 export type MainMetricKey = 'onTime' | 'output' | 'capacity' | 'revision' | 'quality';
 
 export const MAIN_METRIC_OPTIONS: { value: MainMetricKey; label: string }[] = [
-  { value: 'onTime', label: 'Chỉ số chính: On-time Rate' },
+  { value: 'onTime', label: 'Chỉ số chính: On-time' },
   { value: 'output', label: 'Chỉ số chính: Output' },
   { value: 'capacity', label: 'Chỉ số chính: Capacity' },
-  { value: 'revision', label: 'Chỉ số chính: Revision Rate' },
-  { value: 'quality', label: 'Chỉ số chính: Quality Rating' },
+  { value: 'revision', label: 'Chỉ số chính: Revision' },
+  { value: 'quality', label: 'Chỉ số chính: Quality' },
 ];
 
 export function mainMetricShortLabel(metric: MainMetricKey): string {
   switch (metric) {
     case 'onTime':
-      return 'On-time Rate';
+      return 'On-time';
     case 'output':
       return 'Output';
     case 'capacity':
       return 'Capacity';
     case 'revision':
-      return 'Revision Rate';
+      return 'Revision';
     case 'quality':
-      return 'Quality Rating';
+      return 'Quality';
     default:
       return metric;
   }

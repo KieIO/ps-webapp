@@ -1,0 +1,9 @@
+.table {
+  :global(.ant-table-tbody > tr.clickable) {
+    cursor: pointer;
+  }
+}
+
+.clickable {
+  cursor: pointer;
+}

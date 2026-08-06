@@ -3,6 +3,8 @@ import { Alert, Tabs } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/constants';
 import { ClientKnowledgePanel } from '@/features/client-notes/components/ClientKnowledgePanel/ClientKnowledgePanel';
+import { ProjectOvertimeSection } from '@/features/overtime/components/ProjectOvertimeSection/ProjectOvertimeSection';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
 import { EditProjectModal } from '../EditProjectModal/EditProjectModal';
 import { ProjectBriefTab } from '../ProjectBriefTab/ProjectBriefTab';
@@ -20,6 +22,8 @@ interface ProjectDetailViewProps {
 
 export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
   const navigate = useNavigate();
+  const { can } = usePermission();
+  const canRequestOt = can('REQUEST_OT');
   const [editOpen, setEditOpen] = useState(false);
   const { data: project, isLoading, isError } = useProject(projectId);
   const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject();
@@ -81,6 +85,12 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
           isUnarchiving={isUnarchiving}
         />
       </div>
+
+      {canRequestOt ? (
+        <div className={styles.otSection}>
+          <ProjectOvertimeSection projectId={project.id} />
+        </div>
+      ) : null}
 
       <Tabs
         className={styles.tabs}

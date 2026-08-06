@@ -188,6 +188,22 @@ export function MyTaskFilters({
                 className={styles.select}
               />
             </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="my-task-ot-filter">
+                Overtime
+              </label>
+              <Select
+                id="my-task-ot-filter"
+                placeholder="Tất cả"
+                allowClear
+                value={filters.otOnly ? 'ot' : undefined}
+                onChange={(value) =>
+                  onChange({ ...filters, otOnly: value === 'ot' ? true : undefined })
+                }
+                options={[{ value: 'ot', label: 'Chỉ task OT' }]}
+                className={styles.select}
+              />
+            </div>
           </>
         ) : null}
       </FilterSection>

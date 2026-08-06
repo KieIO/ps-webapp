@@ -23,6 +23,11 @@ const TYPE_TONE: Record<string, FeedTone> = {
   overload: 'overload',
   ot_pending: 'ot',
   ot_approved: 'ot',
+  ot_rejected: 'ot',
+  ot_task_assigned: 'ot',
+  ot_awaiting_review: 'ot',
+  ot_result_rejected: 'ot',
+  ot_summary_ready: 'ot',
   system: 'info',
 };
 

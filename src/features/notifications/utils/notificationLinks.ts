@@ -1,4 +1,9 @@
-import { ROUTES, buildMyTaskDetailPath, buildProjectDetailPath } from '@/config/constants';
+import {
+  ROUTES,
+  buildMyTaskDetailPath,
+  buildOvertimeDetailPath,
+  buildProjectDetailPath,
+} from '@/config/constants';
 import type { Notification } from '../schemas/notification.schema';
 
 /** Resolve deep-link path for a notification; null when no navigable ref. */
@@ -13,7 +18,7 @@ export const getNotificationPath = (notification: Notification): string | null =
     return buildProjectDetailPath(refId);
   }
   if (refType === 'overtime') {
-    return ROUTES.OVERTIME;
+    return refId ? buildOvertimeDetailPath(refId) : ROUTES.OVERTIME;
   }
   return null;
 };

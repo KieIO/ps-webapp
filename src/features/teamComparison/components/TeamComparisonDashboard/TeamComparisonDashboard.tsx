@@ -42,7 +42,6 @@ export function TeamComparisonDashboard({ role }: TeamComparisonDashboardProps) 
     department: rankingDepartmentParam(department),
   });
   const monthLabel = selectedMonth.format('M/YYYY');
-  const reportTitle = `So sánh Team vs Cá nhân — Tháng ${monthLabel}`;
   const allowDepartmentFilter = canSelectDepartment(role);
   const year = period.year;
   const month = period.month;
@@ -53,11 +52,7 @@ export function TeamComparisonDashboard({ role }: TeamComparisonDashboardProps) 
     [navigate, year, month],
   );
   const scopeHint =
-    department === 'all'
-      ? 'toàn bộ phòng ban'
-      : department === 'Project'
-        ? 'phòng Project (output = slides)'
-        : 'phòng Creative (output = DA approved)';
+    department === 'all' ? 'toàn bộ phòng ban' : department === 'Project' ? 'Project' : 'Creative';
 
   const scopedRows = useMemo(() => {
     const ranking = rankingQuery.data?.ranking ?? [];
@@ -105,9 +100,9 @@ export function TeamComparisonDashboard({ role }: TeamComparisonDashboardProps) 
   return (
     <div className={styles.root}>
       <PageHeader
-        breadcrumb={[{ label: 'Reports' }, { label: 'So sánh Team' }]}
-        title={reportTitle}
-        subtitle={`So sánh năng lực đa chiều theo phạm vi bạn chọn bên dưới`}
+        breadcrumb={[{ label: 'Reports' }, { label: 'So sánh nhóm' }]}
+        title="So sánh nhóm"
+        subtitle="Capacity, tiến độ và chất lượng — nhóm vs cá nhân"
         actions={
           <DatePicker
             picker="month"
@@ -138,15 +133,15 @@ export function TeamComparisonDashboard({ role }: TeamComparisonDashboardProps) 
             value={department}
             onChange={setDepartment}
             options={[
-              { value: 'all', label: 'Phòng: Tất cả' },
-              { value: 'Project', label: 'Phòng: Project' },
-              { value: 'Creative', label: 'Phòng: Creative' },
+              { value: 'all', label: 'Tất cả phòng ban' },
+              { value: 'Project', label: 'Project' },
+              { value: 'Creative', label: 'Creative' },
             ]}
             aria-label="Lọc phòng ban"
           />
         ) : null}
         <label className={styles.hideNames}>
-          <span>Ẩn tên nhân viên</span>
+          <span>Ẩn tên</span>
           <Switch
             size="small"
             checked={hideNames}
@@ -156,7 +151,7 @@ export function TeamComparisonDashboard({ role }: TeamComparisonDashboardProps) 
         </label>
         {!rankingQuery.isLoading && rankedRows.length > 0 ? (
           <span className={styles.resultCount}>
-            {rankedRows.length} nhân viên · phạm vi {scopeHint}
+            {rankedRows.length} người · {scopeHint}
           </span>
         ) : null}
       </div>
@@ -165,8 +160,8 @@ export function TeamComparisonDashboard({ role }: TeamComparisonDashboardProps) 
         <Alert
           type="error"
           showIcon
-          message="Không tải được dữ liệu so sánh team"
-          description="Dữ liệu ranking hiện chưa thể đồng bộ. Vui lòng thử lại."
+          message="Không tải được dữ liệu"
+          description="Thử lại nhé."
           action={
             <Button size="small" onClick={() => void rankingQuery.refetch()}>
               Thử lại

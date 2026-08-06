@@ -1,5 +1,8 @@
 import { Alert, Tabs } from 'antd';
+import dayjs from 'dayjs';
+import { DATE_FORMAT } from '@/config/constants';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
+import { useOvertimeDetail } from '@/features/overtime/hooks/useOvertime';
 import { TaskDetailHistoryPanel } from '../TaskDetailHistoryPanel/TaskDetailHistoryPanel';
 import { TaskDetailSummaryCard } from '../TaskDetailSummaryCard/TaskDetailSummaryCard';
 import { TaskRevisionHistoryTab } from '../TaskRevisionHistoryTab/TaskRevisionHistoryTab';
@@ -12,6 +15,10 @@ interface TaskDetailViewProps {
 
 export function TaskDetailView({ taskId }: TaskDetailViewProps) {
   const { data: task, isLoading, isError } = useMyTask(taskId);
+  const otQuery = useOvertimeDetail(
+    task?.overtimeRequestId ?? null,
+    Boolean(task?.overtimeRequestId),
+  );
 
   if (isLoading) {
     return <GlobalLoadingSpinner />;
@@ -28,11 +35,29 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
     );
   }
 
+  const ot = otQuery.data;
+
   return (
     <>
       <div className={styles.summary}>
         <TaskDetailSummaryCard task={task} />
       </div>
+
+      {task.overtimeRequestId ? (
+        <Alert
+          className={styles.otBanner}
+          type="warning"
+          showIcon
+          message="Task gắn với OT request"
+          description={
+            ot
+              ? `Ngày OT ${dayjs(ot.otDate).format(DATE_FORMAT)} · ${ot.startTime}–${ot.endTime} · ước tính ${ot.estimatedHours}h${
+                  ot.actualHours != null ? ` · thực tế ${ot.actualHours}h` : ''
+                }`
+              : task.description || 'Task được tạo từ OT assign-task.'
+          }
+        />
+      ) : null}
 
       <div className={styles.body}>
         <div className={styles.main}>

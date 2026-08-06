@@ -1,5 +1,7 @@
+import { useState, type ReactNode } from 'react';
 import { Tooltip } from 'antd';
 import {
+  ChevronDown,
   CircleHelp,
   Clock3,
   Gauge,
@@ -9,7 +11,7 @@ import {
   Star,
   Target,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { ROLES, type Role } from '@/config/permissions';
 import type { TeamProductivity } from '../../schemas/teamProductivity.schema';
 import { formatCapacityPercent } from '../../utils/formatCapacityPercent';
 import styles from './TeamMetricGrid.module.scss';
@@ -17,6 +19,7 @@ import styles from './TeamMetricGrid.module.scss';
 interface TeamMetricGridProps {
   data: TeamProductivity;
   groupLabel: string;
+  role: Role;
 }
 
 const formatNumber = new Intl.NumberFormat('vi-VN');
@@ -57,53 +60,47 @@ function MetricCard({
   );
 }
 
-export function TeamMetricGrid({ data, groupLabel }: TeamMetricGridProps) {
+export function TeamMetricGrid({ data, groupLabel, role }: TeamMetricGridProps) {
+  const [showMore, setShowMore] = useState(false);
+  const isCreativeManager = role === ROLES.CREATIVE_MANAGER;
+
   const revisionValue =
     data.revisionRate.reviewedCount > 0 && data.revisionRate.percent != null
       ? `${data.revisionRate.percent.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%`
-      : 'Chưa có dữ liệu';
+      : 'Chưa có review';
   const qualityValue =
     data.qualityScore.available && data.qualityScore.average != null
       ? `${data.qualityScore.average.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} / 100`
-      : 'Chưa có dữ liệu';
+      : 'Chưa có review';
+
+  const capacityHint =
+    data.capacityPercent == null
+      ? 'Chưa có capacity trong kỳ'
+      : data.overloadedCount === 0
+        ? `${data.teamSize} người · không overload`
+        : `${data.teamSize} người · ${data.overloadedCount} overload`;
 
   return (
-    <section className={styles.section} aria-label={`Chỉ số nhóm ${groupLabel}`}>
+    <section className={styles.section} aria-label={`Chỉ số ${groupLabel}`}>
       <div className={styles.grid}>
         <MetricCard
-          label={`Capacity · ${groupLabel}`}
+          label="Capacity"
           value={
             data.capacityPercent == null
               ? 'Chưa có dữ liệu'
               : formatCapacityPercent(data.capacityPercent)
           }
-          hint={
-            data.capacityPercent == null
-              ? 'Chưa có capacity trong kỳ'
-              : `${data.teamSize} nhân sự · ${data.overloadedCount} overload`
-          }
+          hint={capacityHint}
           unavailable={data.capacityPercent == null}
           icon={<Gauge size={18} aria-hidden />}
           explanation="Trung bình capacity của nhân sự đang làm việc trong nhóm."
         />
         <MetricCard
-          label="Output slides"
-          value={formatNumber.format(data.output.projectSlides)}
-          hint={`+ ${formatNumber.format(data.output.creativeDa)} DA · ${formatNumber.format(data.editFeedback)} Edit Feedback`}
-          icon={<Presentation size={18} aria-hidden />}
-        />
-        <MetricCard
-          label="DA · Creative"
-          value={formatNumber.format(data.output.creativeDa)}
-          hint="DA / Edit DA / Rework DA trong nhóm"
-          icon={<Image size={18} aria-hidden />}
-        />
-        <MetricCard
-          label="On-time rate"
+          label="On-time"
           value={
             data.onTimeRate.available && data.onTimeRate.percent != null
               ? `${Math.round(data.onTimeRate.percent)}%`
-              : 'Chưa có dữ liệu'
+              : 'Chưa có task'
           }
           hint={
             data.onTimeRate.available
@@ -114,18 +111,14 @@ export function TeamMetricGrid({ data, groupLabel }: TeamMetricGridProps) {
           icon={<Clock3 size={18} aria-hidden />}
         />
         <MetricCard
-          label="Revision rate"
-          value={revisionValue}
-          hint={
-            data.revisionRate.reviewedCount > 0
-              ? `${data.revisionRate.revisedCount}/${data.revisionRate.reviewedCount} task có revision`
-              : (data.revisionRate.message ?? 'Chưa có quality review')
-          }
-          unavailable={data.revisionRate.reviewedCount === 0}
-          icon={<RotateCcw size={18} aria-hidden />}
+          label="Vs target"
+          value={data.vsTarget.label}
+          hint={data.vsTarget.message ?? 'Output chính so với target kỳ'}
+          unavailable={!data.vsTarget.available}
+          icon={<Target size={18} aria-hidden />}
         />
         <MetricCard
-          label="Avg. Quality"
+          label="Quality"
           value={qualityValue}
           hint={
             data.qualityScore.reviewCount > 0
@@ -135,27 +128,65 @@ export function TeamMetricGrid({ data, groupLabel }: TeamMetricGridProps) {
           unavailable={!data.qualityScore.available}
           icon={<Star size={18} aria-hidden />}
         />
-        <MetricCard
-          label="vs Role target"
-          value={data.vsTarget.label}
-          hint={data.vsTarget.message ?? 'So output chính (slides/DAs) với target từ capacity kỳ'}
-          unavailable={!data.vsTarget.available}
-          icon={<Target size={18} aria-hidden />}
-        />
-        <MetricCard
-          label="OT hours"
-          value={
-            data.overtime.available ? `${data.overtime.totalHours.toFixed(1)}h` : 'Chưa có dữ liệu'
-          }
-          hint={
-            data.overtime.available
-              ? `${data.overtime.requestCount} yêu cầu đã duyệt`
-              : 'Chưa có OT được duyệt'
-          }
-          unavailable={!data.overtime.available}
-          icon={<Clock3 size={18} aria-hidden />}
-        />
       </div>
+
+      <button
+        type="button"
+        className={styles.toggle}
+        aria-expanded={showMore}
+        onClick={() => setShowMore((prev) => !prev)}
+      >
+        <span>{showMore ? 'Thu gọn' : 'Xem thêm'}</span>
+        <ChevronDown
+          size={16}
+          aria-hidden
+          className={showMore ? styles.chevronOpen : styles.chevron}
+        />
+      </button>
+
+      {showMore ? (
+        <div className={styles.grid} aria-label="Chỉ số phụ">
+          {isCreativeManager ? (
+            <MetricCard
+              label="Output · DA"
+              value={formatNumber.format(data.output.creativeDa)}
+              hint="DA / Edit DA / Rework DA trong nhóm"
+              icon={<Image size={18} aria-hidden />}
+            />
+          ) : (
+            <MetricCard
+              label="Output · Slides"
+              value={formatNumber.format(data.output.projectSlides)}
+              hint={`${formatNumber.format(data.editFeedback)} edit feedback`}
+              icon={<Presentation size={18} aria-hidden />}
+            />
+          )}
+          <MetricCard
+            label="Revision"
+            value={revisionValue}
+            hint={
+              data.revisionRate.reviewedCount > 0
+                ? `${data.revisionRate.revisedCount}/${data.revisionRate.reviewedCount} task có revision`
+                : (data.revisionRate.message ?? 'Chưa có quality review')
+            }
+            unavailable={data.revisionRate.reviewedCount === 0}
+            icon={<RotateCcw size={18} aria-hidden />}
+          />
+          <MetricCard
+            label="OT"
+            value={
+              data.overtime.available ? `${data.overtime.totalHours.toFixed(1)}h` : 'Chưa có OT'
+            }
+            hint={
+              data.overtime.available
+                ? `${data.overtime.requestCount} yêu cầu đã duyệt`
+                : 'Chưa có yêu cầu được duyệt'
+            }
+            unavailable={!data.overtime.available}
+            icon={<Clock3 size={18} aria-hidden />}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

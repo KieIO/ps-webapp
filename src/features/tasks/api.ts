@@ -73,7 +73,8 @@ export const myTaskApi = {
     assigneeUserId?: string,
     viewerRole?: Role,
   ): Promise<MyTaskListResponse> => {
-    const params = MyTaskListFiltersSchema.parse(filters);
+    const params = { ...MyTaskListFiltersSchema.parse(filters) };
+    delete params.otOnly;
 
     if (env.useTasksMock) {
       return MyTaskListResponseSchema.parse(

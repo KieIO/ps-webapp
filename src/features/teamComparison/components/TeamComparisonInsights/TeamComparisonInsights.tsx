@@ -17,12 +17,12 @@ function iconForTone(tone: TeamComparisonInsight['tone']) {
 export function TeamComparisonInsights({ monthLabel, insights }: TeamComparisonInsightsProps) {
   return (
     <CardWrapper
-      title={`Insights — Tháng ${monthLabel}`}
-      subtitle="Tóm tắt tự động từ dữ liệu ranking tháng này"
+      title={`Tóm tắt · Tháng ${monthLabel}`}
+      subtitle="Tự động từ dữ liệu tháng này"
       className={styles.card}
     >
       {insights.length === 0 ? (
-        <p className={styles.empty}>Chưa đủ dữ liệu để tạo insights cho kỳ này.</p>
+        <p className={styles.empty}>Chưa đủ dữ liệu cho kỳ này</p>
       ) : (
         <ul className={styles.list}>
           {insights.map((insight) => (

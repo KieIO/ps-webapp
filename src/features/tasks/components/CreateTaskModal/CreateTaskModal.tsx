@@ -43,6 +43,11 @@ const PM_NAME_AUTO_SELECT_ROLES: readonly Role[] = [
 interface CreateTaskPreset {
   projectName?: string;
   projectManager?: TaskPerson;
+  staffUserId?: string;
+  date?: Dayjs;
+  description?: string;
+  lockProject?: boolean;
+  lockStaff?: boolean;
 }
 
 interface CreateTaskModalProps {
@@ -50,6 +55,8 @@ interface CreateTaskModalProps {
   onClose: () => void;
   taskCategory: TaskCategory;
   preset?: CreateTaskPreset;
+  /** Called after a successful create — receives the new task id. */
+  onCreated?: (taskId: string) => void;
 }
 
 type CreateTaskFormValues = Omit<
@@ -96,7 +103,13 @@ const normalizeDepartment = (value: string | undefined): TaskDepartment | undefi
   return undefined;
 };
 
-export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateTaskModalProps) {
+export function CreateTaskModal({
+  open,
+  onClose,
+  taskCategory,
+  preset,
+  onCreated,
+}: CreateTaskModalProps) {
   const [form] = Form.useForm<CreateTaskFormValues>();
   const { mutate, isPending } = useCreateMyTask();
   const currentUser = useAppSelector((state) => state.auth.user);
@@ -191,16 +204,35 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
   const isCreativeTask = normalizedTaskDepartment === 'creative';
   const areScoringFieldsDisabled = isCreativeTask;
   const filteredStaffSelectOptions = useMemo(() => {
-    if (!normalizedTaskDepartment) return staffSelectOptions;
-    const staffByOptionValue = new Map(
-      staffOptions.map((staff) => [staff.userId ?? staff.code, staff] as const),
-    );
-    return staffSelectOptions.filter((option) => {
-      const matchedStaff = staffByOptionValue.get(option.value);
-      if (!matchedStaff) return false;
-      return normalizeDepartment(matchedStaff.department ?? undefined) === normalizedTaskDepartment;
-    });
-  }, [normalizedTaskDepartment, staffOptions, staffSelectOptions]);
+    let options = staffSelectOptions;
+    if (normalizedTaskDepartment) {
+      const staffByOptionValue = new Map(
+        staffOptions.map((staff) => [staff.userId ?? staff.code, staff] as const),
+      );
+      options = staffSelectOptions.filter((option) => {
+        const matchedStaff = staffByOptionValue.get(option.value);
+        if (!matchedStaff) return false;
+        return (
+          normalizeDepartment(matchedStaff.department ?? undefined) === normalizedTaskDepartment
+        );
+      });
+    }
+
+    if (preset?.lockStaff && preset.staffUserId) {
+      const locked = staffSelectOptions.find((option) => option.value === preset.staffUserId);
+      if (locked && !options.some((option) => option.value === locked.value)) {
+        options = [locked, ...options];
+      }
+    }
+
+    return options;
+  }, [
+    normalizedTaskDepartment,
+    staffOptions,
+    staffSelectOptions,
+    preset?.lockStaff,
+    preset?.staffUserId,
+  ]);
   const computedLevel = useMemo(() => {
     if (designThinking == null || technical == null || contentProcessing == null) return undefined;
     return computeTaskLevel(designThinking, technical, contentProcessing);
@@ -210,18 +242,29 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
     if (open) {
       form.setFieldsValue({
         ...DEFAULT_VALUES,
-        date: defaultTaskDeadline(),
+        date: preset?.date ?? defaultTaskDeadline(),
         projectName: preset?.projectName ?? DEFAULT_VALUES.projectName,
         projectManager:
           preset?.projectManager ?? defaultProjectManager ?? DEFAULT_VALUES.projectManager,
+        staffUserId: preset?.staffUserId,
+        description: preset?.description ?? DEFAULT_VALUES.description,
       });
     }
-  }, [open, form, preset?.projectName, preset?.projectManager, defaultProjectManager]);
+  }, [
+    open,
+    form,
+    preset?.projectName,
+    preset?.projectManager,
+    preset?.staffUserId,
+    preset?.date,
+    preset?.description,
+    defaultProjectManager,
+  ]);
 
   useEffect(() => {
-    if (!open || !isProjectTask) return;
+    if (!open || !isProjectTask || preset?.lockStaff) return;
     form.setFieldValue('staffUserId', undefined);
-  }, [open, isProjectTask, projectName, form]);
+  }, [open, isProjectTask, projectName, form, preset?.lockStaff]);
 
   useEffect(() => {
     if (!open) return;
@@ -274,9 +317,9 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
   };
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || preset?.lockStaff) return;
     form.setFieldValue('staffUserId', undefined);
-  }, [open, normalizedTaskDepartment, form]);
+  }, [open, normalizedTaskDepartment, form, preset?.lockStaff]);
 
   useEffect(() => {
     if (!open || !isCreativeTask) return;
@@ -289,9 +332,9 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
       additionalFactors: DEFAULT_VALUES.additionalFactors,
       level: DEFAULT_VALUES.level,
       quantity: DEFAULT_VALUES.quantity,
-      description: DEFAULT_VALUES.description,
+      description: preset?.description ?? DEFAULT_VALUES.description,
     });
-  }, [open, isCreativeTask, form]);
+  }, [open, isCreativeTask, form, preset?.description]);
 
   const handleClose = () => {
     form.resetFields();
@@ -354,8 +397,9 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
     }
 
     mutate(payload, {
-      onSuccess: () => {
+      onSuccess: (created) => {
         form.resetFields();
+        onCreated?.(created.id);
         onClose();
       },
     });
@@ -384,6 +428,7 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
             <AutoComplete
               options={projectOptions.map((name) => ({ value: name }))}
               placeholder="Select or enter project name"
+              disabled={Boolean(preset?.lockProject)}
               filterOption={(input, option) =>
                 (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
               }
@@ -557,8 +602,9 @@ export function CreateTaskModal({ open, onClose, taskCategory, preset }: CreateT
             }
           >
             <Select
-              allowClear={!isProjectTask}
+              allowClear={!isProjectTask && !preset?.lockStaff}
               showSearch
+              disabled={Boolean(preset?.lockStaff)}
               optionFilterProp="label"
               placeholder={
                 normalizedTaskDepartment === 'creative'

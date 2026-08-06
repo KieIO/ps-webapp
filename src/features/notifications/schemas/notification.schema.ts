@@ -11,6 +11,11 @@ export const NOTIFICATION_TYPES = [
   'overload',
   'ot_pending',
   'ot_approved',
+  'ot_rejected',
+  'ot_task_assigned',
+  'ot_awaiting_review',
+  'ot_result_rejected',
+  'ot_summary_ready',
   'system',
 ] as const;
 

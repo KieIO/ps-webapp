@@ -2,6 +2,30 @@
   min-width: 0;
 }
 
+.emptyBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, #16a34a 22%, var(--color-border));
+  border-radius: 10px;
+  background: #f0fdf4;
+}
+
+.emptyIcon {
+  flex-shrink: 0;
+  color: #16a34a;
+}
+
+.emptyText {
+  flex: 1;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
 .helpButton {
   display: inline-flex;
   align-items: center;

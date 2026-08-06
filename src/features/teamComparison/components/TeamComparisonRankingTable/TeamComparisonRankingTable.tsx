@@ -125,7 +125,7 @@ export function TeamComparisonRankingTable({
         ),
       },
       {
-        title: 'vs Target',
+        title: 'Vs target',
         key: 'vsTarget',
         width: 100,
         render: (_, row) => {
@@ -202,7 +202,7 @@ export function TeamComparisonRankingTable({
           ),
       },
       {
-        title: 'OT hours',
+        title: 'OT',
         dataIndex: 'overtimeHours',
         key: 'overtimeHours',
         width: 90,
@@ -226,13 +226,13 @@ export function TeamComparisonRankingTable({
         fixed: 'right',
         align: 'center',
         render: (_, row) => (
-          <Tooltip title={`Xem báo cáo chi tiết — ${row.displayName}`}>
+          <Tooltip title={`Xem chi tiết — ${row.displayName}`}>
             <Button
               type="text"
               size="small"
               className={styles.detailButton}
               icon={<ArrowUpRight size={14} aria-hidden />}
-              aria-label={`Xem báo cáo chi tiết của ${row.displayName}`}
+              aria-label={`Xem chi tiết của ${row.displayName}`}
               onClick={(event) => {
                 event.stopPropagation();
                 onOpenUser(row.userId);
@@ -247,8 +247,8 @@ export function TeamComparisonRankingTable({
 
   return (
     <CardWrapper
-      title={`Xếp hạng tháng ${monthLabel} — ${mainMetricShortLabel(mainMetric)}`}
-      subtitle="Nhấn dòng để so sánh trên biểu đồ radar · biểu tượng → để mở báo cáo chi tiết"
+      title={`Nhân sự theo ${mainMetricShortLabel(mainMetric)}`}
+      subtitle={`Tháng ${monthLabel} · chọn dòng để so sánh trên radar`}
       className={styles.card}
     >
       <Table

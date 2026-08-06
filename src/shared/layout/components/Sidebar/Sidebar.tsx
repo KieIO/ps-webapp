@@ -47,6 +47,14 @@ export function Sidebar() {
           return canViewProjectTracker(role, permissionConfig) ? [item] : [];
         }
 
+        if (item.anyOfPermissions?.length) {
+          if (!role) return [];
+          const allowed = item.anyOfPermissions.some((permission) =>
+            roleHasPermission(role, permission, permissionConfig),
+          );
+          return allowed ? [item] : [];
+        }
+
         if (!item.permission) return [item];
         if (!role) return [];
         return roleHasPermission(role, item.permission, permissionConfig) ? [item] : [];

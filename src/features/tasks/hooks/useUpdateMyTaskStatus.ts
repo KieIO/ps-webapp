@@ -8,6 +8,7 @@ interface UpdateMyTaskStatusVariables {
   id: string;
   staffConfirmation: TaskConfirmationStatus;
   staffNote: string;
+  actualHours?: number;
 }
 
 export const useUpdateMyTaskStatus = () => {
@@ -15,12 +16,13 @@ export const useUpdateMyTaskStatus = () => {
   const userId = useAppSelector((state) => state.auth.user?.id);
 
   return useMutation({
-    mutationFn: ({ id, staffConfirmation, staffNote }: UpdateMyTaskStatusVariables) =>
-      myTaskApi.updateStatus(id, { staffConfirmation, staffNote }, userId),
+    mutationFn: ({ id, staffConfirmation, staffNote, actualHours }: UpdateMyTaskStatusVariables) =>
+      myTaskApi.updateStatus(id, { staffConfirmation, staffNote, actualHours }, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'my'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'my', 'history'] });
       queryClient.invalidateQueries({ queryKey: ['home', 'employee', 'productivity'] });
+      queryClient.invalidateQueries({ queryKey: ['overtime'] });
       message.success('Task status updated');
     },
     onError: (error: Error) => {

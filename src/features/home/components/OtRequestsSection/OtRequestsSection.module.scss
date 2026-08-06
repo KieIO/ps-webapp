@@ -8,6 +8,16 @@
   gap: 12px;
 }
 
+.loading,
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 80px;
+  color: var(--color-text-muted);
+}
+
 .item {
   display: flex;
   align-items: flex-start;

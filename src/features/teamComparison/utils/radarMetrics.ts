@@ -12,15 +12,15 @@ export interface RadarMetricDef {
 }
 
 export const RADAR_METRICS: readonly RadarMetricDef[] = [
-  { key: 'onTime', label: 'On-time Rate', legendLabel: 'On-time Rate' },
+  { key: 'onTime', label: 'On-time', legendLabel: 'On-time' },
   {
     key: 'outputVsTarget',
-    label: 'Output vs Target',
-    legendLabel: 'Output vs Target',
+    label: 'Vs target',
+    legendLabel: 'Vs target',
   },
   { key: 'capacity', label: 'Capacity', legendLabel: 'Capacity' },
-  { key: 'quality', label: 'Quality Rating', legendLabel: 'Quality Rating' },
-  { key: 'revisionInv', label: 'Rev Rate (inv)', legendLabel: 'Revision Rate' },
+  { key: 'quality', label: 'Quality', legendLabel: 'Quality' },
+  { key: 'revisionInv', label: 'Revision (inv)', legendLabel: 'Revision' },
 ] as const;
 
 export interface RadarAxisValues {

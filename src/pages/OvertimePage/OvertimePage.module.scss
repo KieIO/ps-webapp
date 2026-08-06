@@ -1,0 +1,15 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.requests {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alert {
+  margin-bottom: 8px;
+}

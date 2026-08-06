@@ -6,7 +6,7 @@ import {
   SyncOutlined,
   UserAddOutlined,
 } from '@ant-design/icons';
-import { Button, Popconfirm, Table, Tooltip } from 'antd';
+import { Button, Popconfirm, Table, Tag, Tooltip } from 'antd';
 import type { MyTaskColumnKey } from '../../constants';
 import type { ColumnsType } from 'antd/es/table';
 import { Link } from 'react-router-dom';
@@ -71,15 +71,22 @@ const renderText = (value: string) => {
 const renderTaskDetailLink = (label: string, record: MyTask) => {
   if (!label) return <span className={styles.empty}>—</span>;
   return (
-    <Link
-      to={buildMyTaskDetailPath(record.id)}
-      state={{ from: record.taskCategory }}
-      className={styles.taskNameLink}
-    >
-      <Tooltip title={label}>
-        <span className={styles.truncate}>{label}</span>
-      </Tooltip>
-    </Link>
+    <span className={styles.taskNameCell}>
+      <Link
+        to={buildMyTaskDetailPath(record.id)}
+        state={{ from: record.taskCategory }}
+        className={styles.taskNameLink}
+      >
+        <Tooltip title={label}>
+          <span className={styles.truncate}>{label}</span>
+        </Tooltip>
+      </Link>
+      {record.overtimeRequestId ? (
+        <Tag color="orange" className={styles.otBadge}>
+          OT
+        </Tag>
+      ) : null}
+    </span>
   );
 };
 

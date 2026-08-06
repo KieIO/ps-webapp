@@ -83,6 +83,8 @@ export const buildTaskEditPath = (id: string) => `/tasks/${id}/edit`;
 export const buildUserDetailPath = (id: string) => `/users/${id}`;
 export const buildEmployeePerformancePath = (userId: string) =>
   `/reports/team-comparison/${userId}`;
+export const buildOvertimeDetailPath = (id: string) =>
+  `${ROUTES.OVERTIME}?id=${encodeURIComponent(id)}`;
 
 export const APP_NAME = 'Pokeslide Internal Platform';
 
