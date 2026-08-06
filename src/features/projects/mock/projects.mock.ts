@@ -91,24 +91,12 @@ export const mockGetProjectPmOptions = async (): Promise<PersonWithCode[]> => {
 
 export const mockGetProjectHeadNameOptions = async (): Promise<string[]> => {
   await mockDelay();
-  return mockStaffOptions([
-    ROLES.PM,
-    ROLES.CREATIVE_MANAGER,
-    ROLES.CREATIVE_HEAD,
-    ROLES.HEAD,
-    ROLES.ADMIN,
-  ]).map((option) => option.name);
+  return mockStaffOptions([ROLES.HEAD, ROLES.ADMIN]).map((option) => option.name);
 };
 
 export const mockGetProjectHeadOptions = async (): Promise<PersonWithCode[]> => {
   await mockDelay();
-  return mockStaffOptions([
-    ROLES.PM,
-    ROLES.CREATIVE_MANAGER,
-    ROLES.CREATIVE_HEAD,
-    ROLES.HEAD,
-    ROLES.ADMIN,
-  ]);
+  return mockStaffOptions([ROLES.HEAD, ROLES.ADMIN]);
 };
 
 export const mockGetProjectById = async (id: string): Promise<Project> => {

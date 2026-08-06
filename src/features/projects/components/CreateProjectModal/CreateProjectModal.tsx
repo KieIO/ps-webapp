@@ -22,13 +22,7 @@ import { ClientSelectField } from '../ClientSelectField/ClientSelectField';
 import styles from '../EditProjectModal/EditProjectModal.module.scss';
 
 /** Roles that pre-fill Dept. head with the signed-in user when the modal opens. */
-const DEPT_HEAD_AUTO_SELECT_ROLES: readonly Role[] = [
-  ROLES.ADMIN,
-  ROLES.HEAD,
-  ROLES.PM,
-  ROLES.CREATIVE_HEAD,
-  ROLES.CREATIVE_MANAGER,
-];
+const DEPT_HEAD_AUTO_SELECT_ROLES: readonly Role[] = [ROLES.ADMIN, ROLES.HEAD];
 
 interface CreateProjectModalProps {
   open: boolean;

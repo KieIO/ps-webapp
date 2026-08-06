@@ -1,14 +1,19 @@
 import { useMemo } from 'react';
 import { Alert, Table, Tabs } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { Link } from 'react-router-dom';
-import { buildProjectDetailPath } from '@/config/constants';
 import { ClientKnowledgePanel } from '@/features/client-notes/components/ClientKnowledgePanel/ClientKnowledgePanel';
+import {
+  PROJECT_NAME_COLUMN_LABEL,
+  PROJECT_TABLE_COLUMN_HEADERS,
+} from '@/features/projects/constants';
+import { ProjectStatusBadge } from '@/features/projects/components/ProjectStatusBadge/ProjectStatusBadge';
 import { useProjectList } from '@/features/projects/hooks/useProjectList';
 import type { Project } from '@/features/projects/schemas/project.schema';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
+import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
+import { UserNameLink } from '@/shared/ui/UserNameLink/UserNameLink';
 import { useClient } from '../../hooks/useClients';
 import styles from './ClientDetailView.module.scss';
 
@@ -27,30 +32,35 @@ function ClientProjectsTab({ clientId }: { clientId: string }) {
   const projectColumns: ColumnsType<Project> = useMemo(
     () => [
       {
-        title: 'Code',
+        title: 'Mã dự án',
         dataIndex: 'code',
         key: 'code',
-        width: 120,
-        render: (code: string, project) => (
-          <Link to={buildProjectDetailPath(project.id)}>{code}</Link>
-        ),
+        width: 160,
+        render: (code: string) => code || '—',
       },
       {
-        title: 'Name',
+        title: PROJECT_NAME_COLUMN_LABEL,
         dataIndex: 'name',
         key: 'name',
+        render: (name: string, project) => <ProjectNameLink name={name} projectId={project.id} />,
       },
       {
-        title: 'Status',
+        title: PROJECT_TABLE_COLUMN_HEADERS.status,
         dataIndex: 'status',
         key: 'status',
         width: 140,
+        render: (status: Project['status']) => <ProjectStatusBadge status={status} />,
       },
       {
-        title: 'PM',
+        title: PROJECT_TABLE_COLUMN_HEADERS.pmName,
         key: 'pm',
-        width: 160,
-        render: (_, project) => project.pm?.name ?? '—',
+        width: 180,
+        render: (_, project) =>
+          project.pm?.name ? (
+            <UserNameLink name={project.pm.name} userId={project.pm.userId} showAvatar />
+          ) : (
+            '—'
+          ),
       },
     ],
     [],

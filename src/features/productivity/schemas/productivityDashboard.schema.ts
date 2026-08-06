@@ -40,6 +40,12 @@ const rankingRowSchema = z.object({
   name: z.string(),
   department: z.string(),
   displayDepartment: z.string(),
+  /** Primary PM for the period (majority of assigned project tasks). Empty when unknown. */
+  pmName: z.string(),
+  pmUserId: z.string().uuid().nullable(),
+  /** Primary CM for Creative staff only (tasks.creative_manager_id). Empty when unset. */
+  cmName: z.string(),
+  cmUserId: z.string().uuid().nullable(),
   capacityPercent: z.number().min(0).nullable(),
   projectSlides: z.number().min(0),
   creativeDa: z.number().min(0),

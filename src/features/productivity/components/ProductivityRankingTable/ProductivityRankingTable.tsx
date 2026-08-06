@@ -14,6 +14,8 @@ interface ProductivityRankingTableProps {
   loading?: boolean;
   error?: boolean;
   onRetry?: () => void;
+  /** Head/Admin view: show primary PM/CM derived from period work. */
+  showManagers?: boolean;
   /** Team report: show avg capacity / overload in subtitle and flag overload rows. */
   teamSummary?: {
     avgCapacity: number | null;
@@ -25,6 +27,67 @@ interface ProductivityRankingTableProps {
 const DEFAULT_OVERLOAD_THRESHOLD = 90;
 
 const formatNumber = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 });
+
+function trimName(value: string | null | undefined): string {
+  return value?.trim() ?? '';
+}
+
+/** Sort/filter key: PM first, then CM — matches display order. */
+function managerSortKey(row: ProductivityRankingRow): string {
+  const pm = trimName(row.pmName);
+  const cm = trimName(row.cmName);
+  return (pm || cm).toLocaleLowerCase('vi');
+}
+
+function ManagerCell({ row }: { row: ProductivityRankingRow }) {
+  const pm = trimName(row.pmName);
+  const cm = trimName(row.cmName);
+  const isCreative = row.displayDepartment === 'Creative';
+
+  // Project staff: PM only. Creative staff: PM (if any) + CM (— when unset).
+  if (!isCreative) {
+    if (!pm) return <span className={styles.muted}>—</span>;
+    return (
+      <Tooltip title={`PM: ${pm}`}>
+        <div className={styles.managerCell}>
+          <span className={styles.managerLine}>
+            <span className={styles.managerRole}>PM</span>
+            <span className={styles.managerName}>{pm}</span>
+          </span>
+        </div>
+      </Tooltip>
+    );
+  }
+
+  if (!pm && !cm) {
+    return <span className={styles.muted}>—</span>;
+  }
+
+  const tooltip = [pm ? `PM: ${pm}` : null, cm ? `CM: ${cm}` : 'CM: chưa gán']
+    .filter(Boolean)
+    .join(' · ');
+
+  return (
+    <Tooltip title={tooltip || undefined}>
+      <div className={styles.managerCell}>
+        {pm ? (
+          <span className={styles.managerLine}>
+            <span className={styles.managerRole}>PM</span>
+            <span className={styles.managerName}>{pm}</span>
+          </span>
+        ) : null}
+        <span className={pm ? styles.managerSecondary : styles.managerLine}>
+          <span className={styles.managerRole}>CM</span>
+          {cm ? (
+            <span className={styles.managerName}>{cm}</span>
+          ) : (
+            <span className={styles.muted}>—</span>
+          )}
+        </span>
+      </div>
+    </Tooltip>
+  );
+}
 
 function TrendCell({
   trend,
@@ -55,6 +118,7 @@ export function ProductivityRankingTable({
   loading = false,
   error = false,
   onRetry,
+  showManagers = false,
   teamSummary,
 }: ProductivityRankingTableProps) {
   const [departmentFilter, setDepartmentFilter] = useState<DepartmentFilter>('all');
@@ -65,6 +129,26 @@ export function ProductivityRankingTable({
     return rows.filter((row) => row.displayDepartment === departmentFilter);
   }, [departmentFilter, rows]);
 
+  const managerFilters = useMemo(() => {
+    if (!showManagers) return [];
+    const seen = new Map<string, string>();
+    for (const row of rows) {
+      const names = [trimName(row.pmName)];
+      // CM only applies to Creative staff in ranking.
+      if (row.displayDepartment === 'Creative') {
+        names.push(trimName(row.cmName));
+      }
+      for (const name of names) {
+        if (!name) continue;
+        const key = name.toLocaleLowerCase('vi');
+        if (!seen.has(key)) seen.set(key, name);
+      }
+    }
+    return [...seen.values()]
+      .sort((a, b) => a.localeCompare(b, 'vi'))
+      .map((name) => ({ text: name, value: name }));
+  }, [rows, showManagers]);
+
   const subtitle = teamSummary
     ? [
         teamSummary.avgCapacity == null
@@ -72,10 +156,12 @@ export function ProductivityRankingTable({
           : `TB nhóm ${formatCapacityPercent(teamSummary.avgCapacity)} · ${teamSummary.overloadedCount} người overload`,
         'Mặc định sort capacity giảm dần · trend so với tháng trước',
       ].join(' · ')
-    : 'Sắp xếp mặc định theo capacity giảm dần · trend so với tháng trước';
+    : showManagers
+      ? 'Sắp xếp mặc định theo capacity giảm dần · PM từ project · CM chỉ Creative (từ task)'
+      : 'Sắp xếp mặc định theo capacity giảm dần · trend so với tháng trước';
 
-  const columns = useMemo<ColumnsType<ProductivityRankingRow>>(
-    () => [
+  const columns = useMemo<ColumnsType<ProductivityRankingRow>>(() => {
+    const cols: ColumnsType<ProductivityRankingRow> = [
       {
         title: 'Nhân viên',
         dataIndex: 'name',
@@ -97,6 +183,29 @@ export function ProductivityRankingTable({
         onFilter: (value, record) => record.displayDepartment === value,
         render: (department: string) => <DepartmentTag department={department} />,
       },
+    ];
+
+    if (showManagers) {
+      cols.push({
+        title: 'PM / CM',
+        key: 'managers',
+        width: 168,
+        sorter: (a, b) => managerSortKey(a).localeCompare(managerSortKey(b), 'vi'),
+        filters: managerFilters.length > 0 ? managerFilters : undefined,
+        filterSearch: managerFilters.length > 8,
+        onFilter: (value, record) => {
+          const target = String(value).toLocaleLowerCase('vi');
+          if (trimName(record.pmName).toLocaleLowerCase('vi') === target) return true;
+          return (
+            record.displayDepartment === 'Creative' &&
+            trimName(record.cmName).toLocaleLowerCase('vi') === target
+          );
+        },
+        render: (_, row) => <ManagerCell row={row} />,
+      });
+    }
+
+    cols.push(
       {
         title: 'Capacity',
         dataIndex: 'capacityPercent',
@@ -216,9 +325,10 @@ export function ProductivityRankingTable({
           <TrendCell trend={trend} delta={row.capacityDelta} />
         ),
       },
-    ],
-    [overloadThreshold, teamSummary],
-  );
+    );
+
+    return cols;
+  }, [managerFilters, overloadThreshold, showManagers, teamSummary]);
 
   return (
     <CardWrapper
@@ -261,7 +371,7 @@ export function ProductivityRankingTable({
           columns={columns}
           dataSource={filteredRows}
           pagination={{ pageSize: 10, showSizeChanger: false, hideOnSinglePage: true }}
-          scroll={{ x: 1100 }}
+          scroll={{ x: showManagers ? 1260 : 1100 }}
           size="small"
           locale={{ emptyText: 'Chưa có dữ liệu nhân sự trong kỳ này' }}
         />

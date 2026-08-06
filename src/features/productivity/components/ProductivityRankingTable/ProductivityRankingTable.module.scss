@@ -22,6 +22,47 @@
   color: var(--color-text-primary);
 }
 
+.managerCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.managerLine,
+.managerSecondary {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.managerSecondary {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.managerRole {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.managerName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
+
+.managerSecondary .managerName {
+  color: var(--color-text-muted);
+}
+
 .muted {
   color: var(--color-text-muted);
 }

@@ -29,7 +29,7 @@ export const TrackerProjectSchema = z.object({
   id: z.string(),
   name: z.string(),
   pm: z.string(),
-  /** Creative Manager / Creative Head names linked as department head. */
+  /** Creative Manager names from tasks.creative_manager_id on the project. */
   cm: z.array(z.string()).optional().default([]),
   team: z.array(z.string()),
   totalSlides: z.number().int().min(0),
