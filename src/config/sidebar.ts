@@ -95,6 +95,15 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
     ],
   },
   {
+    key: 'overtime',
+    label: 'Overtime',
+    path: ROUTES.OVERTIME,
+    icon: FieldTimeOutlined,
+    permission: null,
+    anyOfPermissions: ['REQUEST_OT', 'APPROVE_OT'],
+    shortcut: navShortcut('o'),
+  },
+  {
     key: 'performance',
     label: 'Performance',
     icon: TrophyOutlined,
@@ -211,16 +220,6 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
         shortcut: navShortcut('s'),
       },
     ],
-  },
-
-  {
-    key: 'overtime',
-    label: 'Overtime',
-    path: ROUTES.OVERTIME,
-    icon: FieldTimeOutlined,
-    permission: null,
-    anyOfPermissions: ['REQUEST_OT', 'APPROVE_OT'],
-    shortcut: navShortcut('o'),
   },
 ];
 
