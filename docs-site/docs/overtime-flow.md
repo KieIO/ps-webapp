@@ -128,4 +128,3 @@ Head xem xét & duyệt/từ chối
 - Tổng giờ OT
 - OT theo từng project
 - Tỷ lệ OT được duyệt vs thực tế
-- Xu hướng OT theo thời gian

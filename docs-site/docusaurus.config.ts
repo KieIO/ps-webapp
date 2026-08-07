@@ -77,7 +77,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} PokeSlide. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} PokeSlide. Built with GoWare JSC.`,
     },
     prism: {
       theme: prismThemes.github,
