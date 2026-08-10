@@ -60,7 +60,7 @@ const config: Config = {
           type: 'docSidebar',
           sidebarId: 'docsSidebar',
           position: 'left',
-          label: 'Overtime',
+          label: 'Docs',
         },
       ],
     },
@@ -73,6 +73,10 @@ const config: Config = {
             {
               label: 'Luồng Overtime',
               to: '/',
+            },
+            {
+              label: 'On-time rate',
+              to: '/on-time-rate',
             },
           ],
         },

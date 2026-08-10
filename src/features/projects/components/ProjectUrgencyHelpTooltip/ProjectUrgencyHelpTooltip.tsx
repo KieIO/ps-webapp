@@ -32,8 +32,8 @@ function ProjectUrgencyTooltipContent() {
       </p>
       <ul className={styles.tooltipList}>
         <li>
-          <strong>Deadline</strong> — lấy theo thứ tự ưu tiên: End Date → Client Deadline → Internal
-          Deadline
+          <strong>Deadline</strong> — lấy theo field <strong>End date</strong> /{' '}
+          <strong>Ngày kết thúc</strong> của dự án
         </li>
         <li>
           <strong>Số ngày còn lại</strong> = deadline − hôm nay

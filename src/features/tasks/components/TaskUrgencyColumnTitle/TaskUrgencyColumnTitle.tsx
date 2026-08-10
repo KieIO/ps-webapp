@@ -32,7 +32,7 @@ function TaskUrgencyTooltipContent() {
       </p>
       <ul className={helpStyles.tooltipList}>
         <li>
-          <strong>Deadline</strong> — Client Deadline → Internal Deadline → Task Date
+          <strong>Deadline</strong> — lấy theo field <strong>Deadline</strong> trên task
         </li>
         <li>
           <strong>Số ngày còn lại</strong> = deadline − hôm nay
