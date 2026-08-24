@@ -31,8 +31,7 @@ export const ROUTES = {
   WORKLOAD: '/workload',
   QUALITY: '/quality',
 
-  // Creative Head
-  /** Reserved — page scaffold exists; not wired in sidebar/router yet */
+  // Creative Head / Creative Manager
   CREATIVE_REVIEW: '/creative/review',
   DA_TRACKING: '/creative/da',
 

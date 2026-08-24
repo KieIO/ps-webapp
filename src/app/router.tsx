@@ -22,6 +22,7 @@ const ArchivedProjectsPage = lazy(
 const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage/ProjectDetailPage'));
 const TaskManagePage = lazy(() => import('@/pages/TaskManagePage/TaskManagePage'));
 const TaskFormPage = lazy(() => import('@/pages/TaskFormPage/TaskFormPage'));
+const CreativeReviewPage = lazy(() => import('@/pages/CreativeReviewPage/CreativeReviewPage'));
 const DATrackingPage = lazy(() => import('@/pages/DATrackingPage/DATrackingPage'));
 const CapacityPage = lazy(() => import('@/pages/CapacityPage/CapacityPage'));
 const CapacityMonthlyPage = lazy(() => import('@/pages/CapacityMonthlyPage/CapacityMonthlyPage'));
@@ -143,6 +144,14 @@ const router = createBrowserRouter([
             element: <Navigate to={ROUTES.NOT_FOUND} replace />,
           },
         ],
+      },
+      {
+        element: (
+          <ProtectedRoute
+            allowedRoles={[ROLES.CREATIVE_HEAD, ROLES.CREATIVE_MANAGER, ROLES.ADMIN]}
+          />
+        ),
+        children: [{ path: ROUTES.CREATIVE_REVIEW.slice(1), element: <CreativeReviewPage /> }],
       },
       {
         element: <ProtectedRoute allowedRoles={[ROLES.CREATIVE_HEAD]} />,

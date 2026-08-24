@@ -10,11 +10,18 @@ export const useCreateMyTask = () => {
   const user = useAppSelector((state) => state.auth.user);
 
   return useMutation({
-    mutationFn: (payload: CreateMyTaskRequest) =>
-      myTaskApi.create(payload, user?.id, user?.name),
-    onSuccess: () => {
+    mutationFn: (payload: CreateMyTaskRequest) => myTaskApi.create(payload, user?.id, user?.name),
+    onSuccess: (_created, payload) => {
       invalidateProjectAndTaskQueries(queryClient);
-      message.success('Task created successfully');
+      const handedToCreative =
+        payload.workflowKind === 'creative' || payload.assignDirection === 'creative_department';
+      message.success(
+        handedToCreative
+          ? 'Đã chuyển task sang Creative Department.'
+          : payload.assignDirection === 'project_staff'
+            ? 'Đã giao task. Nhân viên có 15 phút để confirm.'
+            : 'Task created successfully',
+      );
     },
     onError: (error: Error) => {
       message.error(error.message || 'Failed to create task');

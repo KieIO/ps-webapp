@@ -48,6 +48,7 @@ export const PERMISSION_MODULES: PermissionModuleDef[] = [
     accessType: 'permission',
     actions: [
       { permission: 'VIEW_ALL_TASKS', label: 'View all tasks' },
+      { permission: 'CREATE_TASK', label: 'Create tasks' },
       { permission: 'ASSIGN_TASK', label: 'Assign tasks' },
       { permission: 'EVALUATE_TASK', label: 'Evaluate staff tasks' },
     ],
@@ -68,7 +69,7 @@ export const PERMISSION_MODULES: PermissionModuleDef[] = [
     key: 'creative',
     label: 'Creative Review',
     accessType: 'permission',
-    actions: [{ permission: 'REVIEW_CREATIVE_TASK', label: 'Review creative tasks' }],
+    actions: [{ permission: 'REVIEW_CREATIVE_TASK', label: 'Process Creative queue (CH)' }],
   },
   {
     key: 'da-tracking',

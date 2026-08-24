@@ -92,6 +92,12 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
     children: [
       { label: 'Project Tasks', path: ROUTES.PROJECT_TASKS, shortcut: navShortcut('k') },
       { label: 'Non-project tasks', path: ROUTES.NON_PROJECT_TASKS, shortcut: navShortcut('n') },
+      {
+        label: 'Creative queue',
+        path: ROUTES.CREATIVE_REVIEW,
+        roles: [ROLES.CREATIVE_HEAD, ROLES.CREATIVE_MANAGER, ROLES.ADMIN],
+        shortcut: navShortcut('g'),
+      },
     ],
   },
   {

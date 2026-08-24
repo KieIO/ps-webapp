@@ -3,6 +3,8 @@ import { DEV_MOCK_USERS } from '@/features/auth/mock/devUsers';
 import { getMockProjectsStore } from '@/features/projects/mock/projects.data';
 import { getMockUsersStore } from '@/features/users/mock/users.data';
 import type {
+  AssignCreativeHeadRequest,
+  AssignCreativeManagerRequest,
   AssignMyTaskRequest,
   CreateMyTaskRequest,
   CreateQualityReviewRequest,
@@ -22,6 +24,19 @@ import { UNASSIGNED_STAFF_LABEL } from '../constants';
 import { buildFallbackTaskHistory } from '../utils/taskDetail';
 import { normalizeTaskDateEnd, normalizeTaskDateStart } from '../utils/taskDates';
 import { computeTaskLevel } from '../utils/taskLevel';
+import { isStaffAssignable } from '../utils/staffAvailability';
+import { resolveStaffFromUserId } from '../utils/staff';
+import {
+  canProcessChQueue,
+  canProcessCmQueue,
+  filterCreativeManagers,
+  filterCreativeStaff,
+  isAwaitingCh,
+  isCreativeHandoffPayload,
+  needsChBrief,
+  resolveCreateBriefOwner,
+  resolveCreatePipelineStage,
+} from '../utils/creativePipeline';
 import { enrichMockTaskWithProjectContext } from './mockTaskProjectEnrichment';
 import { computeProjectLevel } from '@/features/projects/utils/projectLevel';
 import {
@@ -392,6 +407,18 @@ export const mockCreateMyTask = async (
     throw new Error('You must be logged in to create a task');
   }
 
+  const role = creatorUserId ? deriveDevRoleFromUserId(creatorUserId) : undefined;
+  if (role && !roleHasDefaultPermission(role, 'CREATE_TASK')) {
+    throw new Error('Only a Project Manager or Admin can create tasks');
+  }
+
+  if (payload.assignDirection === 'project_staff' && payload.staff.length !== 1) {
+    throw new Error('Select an assignable staff member');
+  }
+  if (payload.staff.some((member) => !isStaffAssignable(member.availability))) {
+    throw new Error('Cannot assign a task to an overloaded or on-leave staff member');
+  }
+
   const now = new Date().toISOString();
   const level = computeTaskLevel(
     payload.designThinking,
@@ -422,6 +449,11 @@ export const mockCreateMyTask = async (
     staffConfirmation: payload.staffConfirmation,
     staffNote: payload.staffNote,
     urgency: payload.urgency,
+    workflowKind: payload.workflowKind,
+    assignDirection: payload.assignDirection,
+    assignedAt: payload.staff.length > 0 && !isCreativeHandoffPayload(payload) ? now : undefined,
+    pipelineStage: resolveCreatePipelineStage(payload),
+    briefOwner: resolveCreateBriefOwner(payload),
     updatedAt: now,
   });
 
@@ -477,6 +509,26 @@ export const mockUpdateMyTask = async (
     throw new Error('You do not have permission to edit this task');
   }
   assertCanChangeCancelledStatus(current, payload.staffConfirmation, editorUserId);
+
+  if (current.pipelineStage === 'awaiting_ch' && current.briefOwner === 'pm') {
+    if (
+      payload.description !== current.description ||
+      payload.designThinking !== current.designThinking ||
+      payload.technical !== current.technical ||
+      payload.contentProcessing !== current.contentProcessing
+    ) {
+      throw new Error('Brief từ PM đã khóa — Creative Head chỉ assign cho CM');
+    }
+  }
+  if (current.pipelineStage === 'awaiting_cm' || current.pipelineStage === 'assigned_staff') {
+    if (
+      payload.designThinking !== current.designThinking ||
+      payload.technical !== current.technical ||
+      payload.contentProcessing !== current.contentProcessing
+    ) {
+      throw new Error('Task Level đã được CH phân loại — Creative Manager không được đổi');
+    }
+  }
 
   const level = computeTaskLevel(
     payload.designThinking,
@@ -660,6 +712,198 @@ export const mockUpdateMyTaskPmEvaluation = async (
   next[index] = updated;
   setMockTasksStore(next);
   return updated;
+};
+
+export const mockAssignCreativeHead = async (
+  id: string,
+  payload: AssignCreativeHeadRequest,
+  editorUserId?: string,
+): Promise<MyTask> => {
+  await mockDelay();
+
+  const role = resolveEditorRole(editorUserId);
+  if (!canProcessChQueue(role)) {
+    throw new Error('Chỉ Creative Head mới assign task cho Creative Manager');
+  }
+
+  const tasks = getMockTasksStore();
+  const index = tasks.findIndex((entry) => entry.id === id);
+  if (index === -1) {
+    throw new Error('Task not found');
+  }
+
+  const current = tasks[index];
+  if (!isAwaitingCh(current)) {
+    throw new Error('Task này đã được Creative Head khác xử lý');
+  }
+
+  const cm = filterCreativeManagers(MOCK_ASSIGNABLE_STAFF).find(
+    (member) => (member.userId ?? member.code) === payload.cmUserId,
+  );
+  if (!cm) {
+    throw new Error('Chọn Creative Manager hợp lệ');
+  }
+  if (!isStaffAssignable(cm.availability)) {
+    throw new Error('Không thể giao cho CM Overloaded hoặc đang nghỉ phép');
+  }
+
+  let description = current.description;
+  let designThinking = current.designThinking;
+  let technical = current.technical;
+  let contentProcessing = current.contentProcessing;
+
+  if (needsChBrief(current)) {
+    const brief = payload.description?.trim() ?? '';
+    if (!brief) {
+      throw new Error('Creative Head cần fill brief trước khi assign CM');
+    }
+    if (
+      payload.designThinking == null ||
+      payload.technical == null ||
+      payload.contentProcessing == null
+    ) {
+      throw new Error('Phân loại đủ 3 tiêu chí độ khó');
+    }
+    description = brief;
+    designThinking = payload.designThinking;
+    technical = payload.technical;
+    contentProcessing = payload.contentProcessing;
+  }
+
+  const updated: MyTask = {
+    ...current,
+    description,
+    designThinking,
+    technical,
+    contentProcessing,
+    level: computeTaskLevel(designThinking, technical, contentProcessing),
+    staff: [cm],
+    creativeManager: { code: cm.code, name: cm.name, userId: cm.userId },
+    pipelineStage: 'awaiting_cm',
+    cmNote: payload.cmNote ?? '',
+    staffConfirmation: 'not_updated',
+    updatedAt: new Date().toISOString(),
+  };
+
+  const next = [...tasks];
+  next[index] = updated;
+  setMockTasksStore(next);
+  return enrichMockTaskWithProjectContext(updated);
+};
+
+export const mockAssignCreativeManager = async (
+  id: string,
+  payload: AssignCreativeManagerRequest,
+  editorUserId?: string,
+): Promise<MyTask> => {
+  await mockDelay();
+
+  const role = resolveEditorRole(editorUserId);
+  if (!canProcessCmQueue(role)) {
+    throw new Error('Chỉ Creative Manager mới giao task cho Staff');
+  }
+
+  const tasks = getMockTasksStore();
+  const index = tasks.findIndex((entry) => entry.id === id);
+  if (index === -1) {
+    throw new Error('Task not found');
+  }
+
+  const current = tasks[index];
+  if (current.pipelineStage !== 'awaiting_cm') {
+    throw new Error('Task này không còn chờ Creative Manager xử lý');
+  }
+  if (role === ROLES.CREATIVE_MANAGER && editorUserId) {
+    const assignedToEditor =
+      current.staff.some((member) => member.userId === editorUserId) ||
+      current.creativeManager?.userId === editorUserId;
+    if (!assignedToEditor) {
+      throw new Error('Task này được giao cho Creative Manager khác');
+    }
+  }
+
+  const staffPool = filterCreativeStaff([
+    ...MOCK_ASSIGNABLE_STAFF,
+    ...tasks.flatMap((task) => task.staff),
+  ]);
+  const now = new Date().toISOString();
+
+  if (payload.mode === 'whole') {
+    const staff = resolveStaffFromUserId(payload.staffUserId, staffPool);
+    const assignee = staff[0];
+    if (!assignee) {
+      throw new Error('Chọn Staff nhận task');
+    }
+    if (!isStaffAssignable(assignee.availability)) {
+      throw new Error('Không thể giao cho nhân viên Overloaded hoặc đang nghỉ phép');
+    }
+
+    const updated: MyTask = {
+      ...current,
+      staff,
+      pipelineStage: 'assigned_staff',
+      assignedAt: now,
+      staffConfirmation: 'not_updated',
+      staffNote: payload.staffNote ?? current.staffNote,
+      updatedAt: now,
+    };
+    const next = [...tasks];
+    next[index] = updated;
+    setMockTasksStore(next);
+    return enrichMockTaskWithProjectContext(updated);
+  }
+
+  const subtasks = payload.subtasks ?? [];
+  if (subtasks.length < 2) {
+    throw new Error('Chia nhỏ cần ít nhất 2 task');
+  }
+
+  const children: MyTask[] = subtasks.map((subtask, offset) => {
+    const staff = resolveStaffFromUserId(subtask.staffUserId, staffPool);
+    const assignee = staff[0];
+    if (!assignee) {
+      throw new Error('Mỗi task nhỏ cần một Staff hợp lệ');
+    }
+    if (!isStaffAssignable(assignee.availability)) {
+      throw new Error('Không thể giao cho nhân viên Overloaded hoặc đang nghỉ phép');
+    }
+
+    return enrichMockTaskWithProjectContext({
+      ...current,
+      id: `task-${Date.now()}-${offset}`,
+      taskCode: `${current.taskCode}-S${offset + 1}`,
+      taskName: subtask.name.trim(),
+      quantity: subtask.quantity,
+      staff,
+      parentTaskId: current.id,
+      pipelineStage: 'assigned_staff',
+      assignedAt: now,
+      staffConfirmation: 'not_updated',
+      staffNote: payload.staffNote ?? '',
+      updatedAt: now,
+    });
+  });
+
+  const parent: MyTask = {
+    ...current,
+    pipelineStage: 'split',
+    staff: current.creativeManager
+      ? [
+          {
+            code: current.creativeManager.code,
+            name: current.creativeManager.name,
+            userId: current.creativeManager.userId,
+          },
+        ]
+      : current.staff,
+    assignedAt: undefined,
+    updatedAt: now,
+  };
+
+  const next = [...tasks];
+  next[index] = parent;
+  setMockTasksStore([...children, ...next]);
+  return enrichMockTaskWithProjectContext(parent);
 };
 
 export const mockDeleteMyTask = async (id: string, userId?: string): Promise<void> => {

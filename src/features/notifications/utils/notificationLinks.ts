@@ -11,6 +11,11 @@ export const getNotificationPath = (notification: Notification): string | null =
   const refType = notification.refType?.trim();
   const refId = notification.refId?.trim();
 
+  // Creative handoff → CH/CM inbox (not personal task detail).
+  if (notification.type === 'task_creative_handoff') {
+    return ROUTES.CREATIVE_REVIEW;
+  }
+
   if (refType === 'task' && refId) {
     return buildMyTaskDetailPath(refId);
   }

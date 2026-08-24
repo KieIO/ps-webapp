@@ -1,0 +1,212 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  gap: 12px;
+}
+
+.banner {
+  margin-bottom: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.bannerCount {
+  background: var(--color-primary-subtle, #eef3fb);
+}
+
+.bannerProject {
+  background: var(--color-primary-subtle, #eef3fb);
+}
+
+.bannerCreative {
+  background: #fff8e6;
+}
+
+.bannerNotify {
+  background: #e6fffb;
+}
+
+.contextCard {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--color-bg-subtle, #f5f6f8);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.contextTitle {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.contextMeta {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.briefBlock {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sectionLabel {
+  margin: 4px 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.levelBox {
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--color-primary-subtle, #eef3fb);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.note {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.staffOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.staffMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotFree {
+  background: #52c41a;
+}
+
+.dotNormal {
+  background: #faad14;
+}
+
+.dotOverloaded {
+  background: #ff4d4f;
+}
+
+.dotLeave {
+  background: #1f1f1f;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rowNeedsBrief {
+  background: #fffbeb;
+}
+
+.rowHasBrief {
+  background: #f0f7ff;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  height: 22px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pillReady {
+  background: #f6ffed;
+  color: #389e0d;
+}
+
+.pillNeed {
+  background: #fff7e6;
+  color: #d46b08;
+}
+
+.subtaskCard {
+  margin-bottom: 10px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+.subtaskHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.addSubtask {
+  width: 100%;
+}
+
+.workload {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--color-bg-subtle, #f5f6f8);
+}
+
+.workloadTitle {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.workloadRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.workloadRow:last-child {
+  border-bottom: 0;
+}
+
+.workloadMuted {
+  opacity: 0.45;
+}
+
+.modeToggle {
+  margin-bottom: 12px;
+}
+
+.lockedScale {
+  pointer-events: none;
+  opacity: 0.85;
+}

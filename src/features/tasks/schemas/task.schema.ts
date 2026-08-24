@@ -21,6 +21,37 @@ export const TASK_CATEGORIES = ['project', 'non_project'] as const;
 
 export type TaskCategory = (typeof TASK_CATEGORIES)[number];
 
+/** Project-vs-Creative assign pipeline (independent of `taskCategory`). */
+export const TASK_WORKFLOW_KINDS = ['project', 'creative'] as const;
+
+export type TaskWorkflowKind = (typeof TASK_WORKFLOW_KINDS)[number];
+
+export const ASSIGN_DIRECTIONS = ['project_staff', 'creative_department'] as const;
+
+export type AssignDirection = (typeof ASSIGN_DIRECTIONS)[number];
+
+export const STAFF_AVAILABILITIES = ['free', 'normal', 'overloaded', 'on_leave'] as const;
+
+export type StaffAvailability = (typeof STAFF_AVAILABILITIES)[number];
+
+/** Post-create Creative pipeline after PM hands the task to CH. */
+export const CREATIVE_PIPELINE_STAGES = [
+  'awaiting_ch',
+  'awaiting_cm',
+  'assigned_staff',
+  'split',
+] as const;
+
+export type CreativePipelineStage = (typeof CREATIVE_PIPELINE_STAGES)[number];
+
+export const BRIEF_OWNERS = ['pm', 'ch'] as const;
+
+export type BriefOwner = (typeof BRIEF_OWNERS)[number];
+
+export const CREATIVE_ASSIGN_MODES = ['whole', 'split'] as const;
+
+export type CreativeAssignMode = (typeof CREATIVE_ASSIGN_MODES)[number];
+
 export const TASK_DEPARTMENTS = PROJECT_DEPARTMENTS;
 
 export type TaskDepartment = (typeof TASK_DEPARTMENTS)[number];
@@ -37,6 +68,10 @@ export const TaskAssigneeSchema = TaskPersonSchema.extend({
   userId: z.string().nullish(),
   /** Present on staff-options responses — used to filter assignees by task department. */
   department: z.string().nullish(),
+  /** Assign picker: overloaded / on leave cannot be selected. */
+  availability: z.enum(STAFF_AVAILABILITIES).optional(),
+  /** Optional role hint for CM vs Staff pickers. */
+  role: z.string().optional(),
 });
 
 export const MyTaskSchema = z.object({
@@ -48,7 +83,7 @@ export const MyTaskSchema = z.object({
   projectName: z.string(),
   projectManager: TaskPersonSchema,
   taskName: z.string(),
-  level: z.number().int().min(1).max(4),
+  level: z.coerce.number().min(1).max(4),
   /** Backend stores quantity as float64 (partial slides/units allowed). */
   quantity: z.number().min(0),
   /** UTC start of the task calendar day (00:00:00). */
@@ -61,6 +96,15 @@ export const MyTaskSchema = z.object({
   staff: z.array(TaskAssigneeSchema),
   /** Phòng ban of the task — required for new project tasks. */
   department: z.string().min(1).nullish(),
+  workflowKind: z.enum(TASK_WORKFLOW_KINDS).optional(),
+  assignDirection: z.enum(ASSIGN_DIRECTIONS).optional(),
+  pipelineStage: z.enum(CREATIVE_PIPELINE_STAGES).optional(),
+  briefOwner: z.enum(BRIEF_OWNERS).optional(),
+  cmNote: z.string().optional(),
+  parentTaskId: z.string().nullish(),
+  creativeManager: TaskPersonSchema.optional(),
+  /** Set when the task is handed to a staff member (15-minute confirm SLA). */
+  assignedAt: z.string().nullish(),
   designThinking: z.number().int().min(1).max(4),
   technical: z.number().int().min(1).max(4),
   contentProcessing: z.number().int().min(1).max(4),
@@ -169,6 +213,8 @@ export const CreateMyTaskRequestSchema = z.object({
   /** Persisted urgency — defaults from deadline when omitted on create. */
   urgency: z.enum(PROJECT_URGENCIES),
   creativeDeadline: z.string().optional(),
+  workflowKind: z.enum(TASK_WORKFLOW_KINDS).optional(),
+  assignDirection: z.enum(ASSIGN_DIRECTIONS).optional(),
 });
 
 export const UpdateMyTaskStatusRequestSchema = z.object({
@@ -190,6 +236,45 @@ export const AssignMyTaskRequestSchema = z.object({
     .max(1, 'Only one staff member can be assigned'),
   staffNote: z.string(),
 });
+
+export const AssignCreativeHeadRequestSchema = z.object({
+  cmUserId: z.string().min(1, 'Chọn Creative Manager'),
+  description: z.string().optional(),
+  designThinking: z.number().int().min(1).max(4).optional(),
+  technical: z.number().int().min(1).max(4).optional(),
+  contentProcessing: z.number().int().min(1).max(4).optional(),
+  cmNote: z.string().optional(),
+});
+
+export const CreativeManagerSubtaskSchema = z.object({
+  name: z.string().min(1, 'Tên task nhỏ is required'),
+  staffUserId: z.string().min(1, 'Chọn Staff'),
+  quantity: z.number().min(0),
+});
+
+export const AssignCreativeManagerRequestSchema = z
+  .object({
+    mode: z.enum(CREATIVE_ASSIGN_MODES),
+    staffUserId: z.string().optional(),
+    staffNote: z.string().optional(),
+    subtasks: z.array(CreativeManagerSubtaskSchema).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.mode === 'whole' && !value.staffUserId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['staffUserId'],
+        message: 'Chọn Staff nhận task',
+      });
+    }
+    if (value.mode === 'split' && (!value.subtasks || value.subtasks.length < 2)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['subtasks'],
+        message: 'Chia nhỏ cần ít nhất 2 task',
+      });
+    }
+  });
 
 export const UpdateMyTaskRequestSchema = z.object({
   taskName: z.string().min(1, 'Task name is required'),
@@ -238,5 +323,8 @@ export type CreateMyTaskRequest = z.infer<typeof CreateMyTaskRequestSchema>;
 export type UpdateMyTaskStatusRequest = z.infer<typeof UpdateMyTaskStatusRequestSchema>;
 export type UpdateMyTaskPmEvaluationRequest = z.infer<typeof UpdateMyTaskPmEvaluationRequestSchema>;
 export type AssignMyTaskRequest = z.infer<typeof AssignMyTaskRequestSchema>;
+export type AssignCreativeHeadRequest = z.infer<typeof AssignCreativeHeadRequestSchema>;
+export type CreativeManagerSubtask = z.infer<typeof CreativeManagerSubtaskSchema>;
+export type AssignCreativeManagerRequest = z.infer<typeof AssignCreativeManagerRequestSchema>;
 export type UpdateMyTaskRequest = z.infer<typeof UpdateMyTaskRequestSchema>;
 export type UpdateHeadMyTaskRequest = z.infer<typeof UpdateHeadMyTaskRequestSchema>;

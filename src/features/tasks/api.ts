@@ -7,6 +7,8 @@ import { getApiErrorMessage } from '@/shared/api/apiError';
 import type { Role } from '@/config/permissions';
 import { env } from '@/config/env';
 import {
+  mockAssignCreativeHead,
+  mockAssignCreativeManager,
   mockAssignMyTask,
   mockCreateMyTask,
   mockDeleteMyTask,
@@ -27,6 +29,8 @@ import {
   mockUpdateMyTaskStatus,
 } from './mock/tasks.mock';
 import {
+  AssignCreativeHeadRequestSchema,
+  AssignCreativeManagerRequestSchema,
   AssignMyTaskRequestSchema,
   CreateMyTaskRequestSchema,
   MyTaskListFiltersSchema,
@@ -40,6 +44,8 @@ import {
   UpdateMyTaskRequestSchema,
   UpdateHeadMyTaskRequestSchema,
   UpdateMyTaskStatusRequestSchema,
+  type AssignCreativeHeadRequest,
+  type AssignCreativeManagerRequest,
   type AssignMyTaskRequest,
   type CreateMyTaskRequest,
   type CreateQualityReviewRequest,
@@ -56,6 +62,14 @@ import {
   type UpdateHeadMyTaskRequest,
   type UpdateMyTaskStatusRequest,
 } from './schemas/task.schema';
+
+const parseMyTaskResponse = (data: unknown): MyTask => {
+  const parsed = MyTaskSchema.safeParse(data);
+  if (!parsed.success) {
+    throw new Error('Server returned an unexpected task payload. Refresh and try again.');
+  }
+  return parsed.data;
+};
 
 /** `assignee` = projects from user's tasks (filters). `all` = broader list (create form). */
 export type MyTaskProjectOptionsScope = 'assignee' | 'all';
@@ -266,6 +280,42 @@ export const myTaskApi = {
     return MyTaskSchema.parse(response.data);
   },
 
+  assignCreativeHead: async (
+    id: string,
+    payload: AssignCreativeHeadRequest,
+    editorUserId?: string,
+  ): Promise<MyTask> => {
+    const data = AssignCreativeHeadRequestSchema.parse(payload);
+
+    if (env.useTasksMock) {
+      return MyTaskSchema.parse(await mockAssignCreativeHead(id, data, editorUserId));
+    }
+
+    const response = await api.patch(`/tasks/my/${id}/assign-cm`, data).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Không thể assign Creative Manager'));
+    });
+    return parseMyTaskResponse(response.data);
+  },
+
+  assignCreativeManager: async (
+    id: string,
+    payload: AssignCreativeManagerRequest,
+    editorUserId?: string,
+  ): Promise<MyTask> => {
+    const data = AssignCreativeManagerRequestSchema.parse(payload);
+
+    if (env.useTasksMock) {
+      return MyTaskSchema.parse(await mockAssignCreativeManager(id, data, editorUserId));
+    }
+
+    const response = await api
+      .patch(`/tasks/my/${id}/assign-staff`, data)
+      .catch((error: unknown) => {
+        throw new Error(getApiErrorMessage(error, 'Không thể giao task cho Staff'));
+      });
+    return parseMyTaskResponse(response.data);
+  },
+
   remind: async (id: string): Promise<{ notifiedCount: number }> => {
     if (env.useTasksMock) {
       return { notifiedCount: 1 };
@@ -291,8 +341,10 @@ export const myTaskApi = {
       return MyTaskSchema.parse(await mockCreateMyTask(data, creatorUserId, creatorUserName));
     }
 
-    const response = await api.post('/tasks/my', data);
-    return MyTaskSchema.parse(response.data);
+    const response = await api.post('/tasks/my', data).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Không thể tạo task'));
+    });
+    return parseMyTaskResponse(response.data);
   },
 
   getPmOptions: async (): Promise<TaskPerson[]> => {

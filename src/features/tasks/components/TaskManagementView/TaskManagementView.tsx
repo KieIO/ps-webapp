@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { ROLES } from '@/config/permissions';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
-import { useAppSelector } from '@/shared/hooks/useAppSelector';
+import { usePermission } from '@/shared/hooks/usePermission';
+import { CreateTaskDrawer } from '../CreateTaskDrawer/CreateTaskDrawer';
 import { CreateTaskModal } from '../CreateTaskModal/CreateTaskModal';
 import { MyTasksList } from '../MyTasksList/MyTasksList';
 import type { TaskCategory } from '../../schemas/task.schema';
@@ -16,9 +16,9 @@ interface TaskManagementViewProps {
 
 export function TaskManagementView({ title, subtitle, taskCategory }: TaskManagementViewProps) {
   const [createOpen, setCreateOpen] = useState(false);
-  const role = useAppSelector((state) => state.auth.user?.role);
-  // Create form loads task-score catalogs (authenticated GET). Employees use Confirm/Finish on Home / detail.
-  const canCreateTask = role != null && role !== ROLES.EMPLOYEE;
+  const { can } = usePermission();
+  const canCreate = can('CREATE_TASK');
+  const isProjectList = taskCategory === 'project';
 
   return (
     <div>
@@ -26,9 +26,9 @@ export function TaskManagementView({ title, subtitle, taskCategory }: TaskManage
         title={title}
         subtitle={subtitle}
         actions={
-          canCreateTask ? (
+          canCreate ? (
             <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-              Create task
+              {isProjectList ? 'Tạo task' : 'Create task'}
             </Button>
           ) : undefined
         }
@@ -36,7 +36,11 @@ export function TaskManagementView({ title, subtitle, taskCategory }: TaskManage
 
       <MyTasksList taskCategory={taskCategory} />
 
-      {canCreateTask ? (
+      {canCreate && isProjectList ? (
+        <CreateTaskDrawer open={createOpen} onClose={() => setCreateOpen(false)} />
+      ) : null}
+
+      {canCreate && !isProjectList ? (
         <CreateTaskModal
           open={createOpen}
           onClose={() => setCreateOpen(false)}

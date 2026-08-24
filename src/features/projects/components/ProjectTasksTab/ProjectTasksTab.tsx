@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { CreateTaskModal } from '@/features/tasks/components/CreateTaskModal/CreateTaskModal';
 import { usePermission } from '@/shared/hooks/usePermission';
+import { CreateTaskDrawer } from '@/features/tasks/components/CreateTaskDrawer/CreateTaskDrawer';
 import { useProjectTasks } from '../../hooks/useProjectTasks';
 import { ProjectDetailTaskTable } from '../ProjectDetailTaskTable/ProjectDetailTaskTable';
 import { ProjectTaskViewModal } from '../ProjectTaskViewModal/ProjectTaskViewModal';
@@ -18,7 +18,7 @@ export function ProjectTasksTab({ project }: ProjectTasksTabProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [viewingTask, setViewingTask] = useState<MyTask | null>(null);
   const { can } = usePermission();
-  const canAssignTask = can('ASSIGN_TASK');
+  const canCreate = can('CREATE_TASK');
 
   const { data, isLoading } = useProjectTasks(project.name);
 
@@ -31,23 +31,25 @@ export function ProjectTasksTab({ project }: ProjectTasksTabProps) {
         onView={setViewingTask}
       />
 
-      {canAssignTask && (
+      {canCreate ? (
         <div className={styles.footer}>
-          <Button icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-            Assign new task
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+            Tạo task
           </Button>
         </div>
-      )}
+      ) : null}
 
-      <CreateTaskModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        taskCategory="project"
-        preset={{
-          projectName: project.name,
-          projectManager: project.pm,
-        }}
-      />
+      {canCreate ? (
+        <CreateTaskDrawer
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          preset={{
+            projectName: project.name,
+            projectManager: project.pm,
+            lockProject: true,
+          }}
+        />
+      ) : null}
 
       <ProjectTaskViewModal
         open={viewingTask !== null}
