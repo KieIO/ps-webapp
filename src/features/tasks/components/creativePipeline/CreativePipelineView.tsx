@@ -11,6 +11,7 @@ import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
 import type { MyTask } from '../../schemas/task.schema';
 import {
+  canEditCreativePipelineTask,
   canProcessChQueue,
   canProcessCmQueue,
   countActionableQueueItems,
@@ -20,10 +21,12 @@ import {
   isAwaitingCm,
   needsChBrief,
   PIPELINE_STAGE_LABELS,
+  pipelineAssigneeLabel,
   queueActionLabel,
   resolveEffectivePipelineStage,
   type CreativeQueueView,
 } from '../../utils/creativePipeline';
+import { CreativeEditDrawer } from './CreativeEditDrawer';
 import { CreativeHeadAssignDrawer } from './CreativeHeadAssignDrawer';
 import { CreativeManagerAssignDrawer } from './CreativeManagerAssignDrawer';
 import styles from './creativePipeline.module.scss';
@@ -56,15 +59,25 @@ export function CreativePipelineView() {
   const openTask = (task: MyTask) => setSelected(task);
   const closeDrawer = () => setSelected(null);
 
-  const title = view === 'cm' ? 'Task được giao từ Creative Head' : 'Task từ PM';
+  const openHeadAssign = Boolean(selected && view === 'ch' && isAwaitingCh(selected));
+  const openManagerAssign = Boolean(selected && view === 'cm' && isAwaitingCm(selected));
+  const openEdit = Boolean(
+    selected &&
+      !openHeadAssign &&
+      !openManagerAssign &&
+      (canEditCreativePipelineTask(selected, role, user?.id) ||
+        resolveEffectivePipelineStage(selected) !== 'awaiting_ch'),
+  );
+
+  const title = view === 'cm' ? 'Hàng chờ Creative Manager' : 'Hàng chờ Creative Head';
   const subtitle =
     view === 'cm'
-      ? 'Nhận brief đã sẵn, giao nguyên task hoặc chia nhỏ cho Creative Staff'
-      : 'Xử lý task Creative từ PM rồi assign cho Creative Manager';
+      ? 'Nhận task từ Creative Head, rồi giao nguyên hoặc chia nhỏ cho Staff.'
+      : 'Nhận task từ PM, bổ sung brief nếu cần, rồi giao cho Creative Manager.';
 
   const columns: ColumnsType<MyTask> = [
     {
-      title: 'Task Code',
+      title: 'Mã task',
       dataIndex: 'taskCode',
       width: 120,
       render: (value: string) => value,
@@ -75,7 +88,7 @@ export function CreativePipelineView() {
       ellipsis: true,
     },
     {
-      title: 'Project',
+      title: 'Dự án',
       dataIndex: 'projectName',
       ellipsis: true,
     },
@@ -85,40 +98,60 @@ export function CreativePipelineView() {
       width: 140,
     },
     {
-      title: 'Loại brief',
-      width: 140,
+      title: 'Brief',
+      width: 120,
       render: (_, record) =>
         needsChBrief(record) ? (
-          <span className={`${styles.pill} ${styles.pillNeed}`}>Cần fill brief</span>
+          <span className={`${styles.pill} ${styles.pillNeed}`}>Thiếu brief</span>
         ) : (
-          <span className={`${styles.pill} ${styles.pillReady}`}>Có brief</span>
+          <span className={`${styles.pill} ${styles.pillReady}`}>Đủ brief</span>
         ),
     },
     {
-      title: 'Ngày YC',
+      title: 'Deadline',
       dataIndex: 'date',
       width: 110,
       render: (value: string) => dayjs(value).format(DATE_FORMAT),
     },
     {
+      title: 'Người nhận',
+      key: 'assignee',
+      width: 160,
+      ellipsis: true,
+      render: (_, record) => pipelineAssigneeLabel(record, tasks),
+    },
+    {
       title: 'Trạng thái',
       dataIndex: 'pipelineStage',
-      width: 130,
+      width: 140,
       render: (_, record) => {
         const stage = resolveEffectivePipelineStage(record);
         if (!stage) return '—';
         const color =
-          stage === 'awaiting_ch' ? 'orange' : stage === 'awaiting_cm' ? 'gold' : 'green';
+          stage === 'awaiting_ch'
+            ? 'orange'
+            : stage === 'awaiting_cm'
+              ? 'gold'
+              : stage === 'split'
+                ? 'blue'
+                : 'green';
         return <Tag color={color}>{PIPELINE_STAGE_LABELS[stage]}</Tag>;
       },
     },
     {
-      title: 'Hành động',
+      title: '',
       key: 'action',
-      width: 170,
+      width: 180,
       render: (_, record) => (
-        <Button type="link" onClick={() => openTask(record)}>
-          {queueActionLabel(record, view)}
+        <Button
+          type="link"
+          className={styles.actionLink}
+          onClick={(event) => {
+            event.stopPropagation();
+            openTask(record);
+          }}
+        >
+          {queueActionLabel(record, view, role, user?.id)}
         </Button>
       ),
     },
@@ -128,7 +161,7 @@ export function CreativePipelineView() {
   const managerReadOnly = !selected || !cmEnabled || !isAwaitingCm(selected) || view !== 'cm';
 
   return (
-    <div>
+    <div className={styles.page}>
       <PageHeader
         title={title}
         subtitle={subtitle}
@@ -138,8 +171,8 @@ export function CreativePipelineView() {
               value={view}
               onChange={(value) => setView(value as CreativeQueueView)}
               options={[
-                { label: 'Inbox CH', value: 'ch' },
-                { label: 'Inbox CM', value: 'cm' },
+                { label: 'Hàng chờ CH', value: 'ch' },
+                { label: 'Hàng chờ CM', value: 'cm' },
               ]}
             />
           ) : null
@@ -148,26 +181,26 @@ export function CreativePipelineView() {
 
       {actionableCount > 0 ? (
         <Alert
-          className={`${styles.banner} ${styles.bannerCount}`}
+          className={styles.pageAlert}
           type="info"
           showIcon
           message={
             view === 'ch'
-              ? `Bạn có ${actionableCount} task mới từ PM — cần xử lý và assign cho CM`
-              : `Bạn có ${actionableCount} task từ Creative Head — giao cho Staff hoặc chia nhỏ`
+              ? `${actionableCount} task cần xử lý và giao cho CM`
+              : `${actionableCount} task cần giao cho Staff`
           }
         />
       ) : null}
 
-      <CardWrapper title="Task chờ xử lý">
+      <CardWrapper title="Danh sách task">
         <TableWrapper
           loading={isLoading}
           isEmpty={!isLoading && queue.length === 0}
-          emptyTitle="Không có task trong hàng chờ"
+          emptyTitle="Chưa có task trong hàng chờ"
           emptyDescription={
             view === 'ch'
-              ? 'Khi PM chuyển task sang Creative, toàn bộ Creative Head sẽ thấy task ở đây.'
-              : 'Khi Creative Head assign cho bạn, task sẽ xuất hiện ở đây để giao Staff.'
+              ? 'Task Creative từ PM sẽ xuất hiện tại đây khi cần bạn xử lý.'
+              : 'Task Creative Head giao cho bạn sẽ xuất hiện tại đây.'
           }
         >
           <Table
@@ -189,17 +222,18 @@ export function CreativePipelineView() {
       </CardWrapper>
 
       <CreativeHeadAssignDrawer
-        open={Boolean(selected) && view === 'ch'}
-        task={view === 'ch' ? selected : null}
+        open={openHeadAssign}
+        task={openHeadAssign ? selected : null}
         readOnly={headReadOnly}
         onClose={closeDrawer}
       />
       <CreativeManagerAssignDrawer
-        open={Boolean(selected) && view === 'cm'}
-        task={view === 'cm' ? selected : null}
+        open={openManagerAssign}
+        task={openManagerAssign ? selected : null}
         readOnly={managerReadOnly}
         onClose={closeDrawer}
       />
+      <CreativeEditDrawer open={openEdit} task={openEdit ? selected : null} onClose={closeDrawer} />
     </div>
   );
 }

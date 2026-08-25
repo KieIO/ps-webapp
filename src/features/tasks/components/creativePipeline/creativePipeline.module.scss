@@ -1,16 +1,31 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pageAlert {
+  margin: 0;
+}
+
+.actionLink {
+  padding-inline: 0;
+  font-weight: 600;
+}
+
 .root {
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  gap: 12px;
+  gap: 10px;
 }
 
 .banner {
-  margin-bottom: 4px;
-  padding: 10px 12px;
+  margin-bottom: 0;
+  padding: 8px 10px;
   border-radius: 8px;
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .bannerCount {
@@ -30,17 +45,18 @@
 }
 
 .contextCard {
-  padding: 12px;
+  padding: 10px 12px;
   border-radius: 8px;
   background: var(--color-bg-subtle, #f5f6f8);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 .contextTitle {
-  margin: 0 0 4px;
+  margin: 0 0 2px;
   font-size: 14px;
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .contextMeta {
@@ -49,32 +65,129 @@
   font-size: 12px;
 }
 
+.metaInline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
 .briefBlock {
-  margin: 8px 0 0;
+  margin: 0 0 4px;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .sectionLabel {
-  margin: 4px 0 10px;
-  font-size: 13px;
+  margin: 0 0 6px;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
 .levelBox {
-  margin: 4px 0 12px;
-  padding: 10px 12px;
+  margin: 0;
+  padding: 8px 10px;
   border-radius: 8px;
   background: var(--color-primary-subtle, #eef3fb);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
 .note {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: 12px;
-  font-style: italic;
+  line-height: 1.4;
   color: var(--color-text-muted);
+}
+
+.deadlineRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.deadlineReadOnly {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.deadlineLabel {
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.deadlineValue {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 2px 10px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  background: #fafafa;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.88);
+}
+
+.deadlineField {
+  margin-bottom: 0;
+}
+
+.compactForm {
+  :global(.ant-form-item) {
+    margin-bottom: 10px;
+  }
+
+  :global(.ant-form-item-extra) {
+    font-size: 12px;
+  }
+}
+
+.compactCriteria {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.compactCriterion {
+  margin-bottom: 4px !important;
+
+  :global(.ant-form-item-row) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  :global(.ant-form-item-label) {
+    padding: 0;
+  }
+
+  :global(.ant-form-item-control) {
+    flex: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .deadlineRow {
+    grid-template-columns: 1fr;
+  }
+
+  .compactCriterion {
+    :global(.ant-form-item-row) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
 }
 
 .staffOption {
@@ -122,11 +235,11 @@
 }
 
 .rowNeedsBrief {
-  background: #fffbeb;
+  background: #fffdf5;
 }
 
 .rowHasBrief {
-  background: #f0f7ff;
+  background: #f7faff;
 }
 
 .pill {
@@ -150,10 +263,11 @@
 }
 
 .subtaskCard {
-  margin-bottom: 10px;
-  padding: 12px;
+  margin-bottom: 8px;
+  padding: 10px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
+  background: #fff;
 }
 
 .subtaskHeader {
@@ -171,14 +285,14 @@
 }
 
 .workload {
-  padding: 12px;
+  padding: 10px 12px;
   border-radius: 8px;
   background: var(--color-bg-subtle, #f5f6f8);
 }
 
 .workloadTitle {
-  margin: 0 0 8px;
-  font-size: 12px;
+  margin: 0 0 6px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--color-text-muted);
   text-transform: uppercase;
@@ -189,7 +303,7 @@
   display: grid;
   grid-template-columns: 1fr auto auto;
   gap: 8px;
-  padding: 6px 0;
+  padding: 4px 0;
   font-size: 12px;
   border-bottom: 1px solid var(--color-border);
 }
@@ -203,10 +317,20 @@
 }
 
 .modeToggle {
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .lockedScale {
   pointer-events: none;
   opacity: 0.85;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lockedScaleRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
 }

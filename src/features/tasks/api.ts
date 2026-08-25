@@ -7,10 +7,47 @@ import { getApiErrorMessage } from '@/shared/api/apiError';
 import type { Role } from '@/config/permissions';
 import { env } from '@/config/env';
 import {
+  AssignCreativeHeadRequestSchema,
+  AssignCreativeManagerRequestSchema,
+  AssignMyTaskRequestSchema,
+  CreateMyTaskRequestSchema,
+  CreateQualityReviewRequestSchema,
+  MyTaskListFiltersSchema,
+  MyTaskListResponseSchema,
+  MyTaskSchema,
+  QualityReviewListResponseSchema,
+  QualityReviewSchema,
+  TaskHistoryListResponseSchema,
+  UpdateCreativePipelineRequestSchema,
+  UpdateHeadMyTaskRequestSchema,
+  UpdateMyTaskPmEvaluationRequestSchema,
+  UpdateMyTaskRequestSchema,
+  UpdateMyTaskStatusRequestSchema,
+  type AssignCreativeHeadRequest,
+  type AssignCreativeManagerRequest,
+  type AssignMyTaskRequest,
+  type CreateMyTaskRequest,
+  type CreateQualityReviewRequest,
+  type MyTask,
+  type MyTaskListFilters,
+  type MyTaskListResponse,
+  type QualityReview,
+  type QualityReviewListResponse,
+  type TaskAssignee,
+  type TaskHistoryListResponse,
+  type TaskPerson,
+  type UpdateCreativePipelineRequest,
+  type UpdateHeadMyTaskRequest,
+  type UpdateMyTaskPmEvaluationRequest,
+  type UpdateMyTaskRequest,
+  type UpdateMyTaskStatusRequest,
+} from './schemas/task.schema';
+import {
   mockAssignCreativeHead,
   mockAssignCreativeManager,
   mockAssignMyTask,
   mockCreateMyTask,
+  mockCreateQualityReview,
   mockDeleteMyTask,
   mockGetAllTaskProjectOptions,
   mockGetMyTaskById,
@@ -22,46 +59,12 @@ import {
   mockGetProjectStaffOptions,
   mockGetStaffOptions,
   mockListQualityReviews,
-  mockCreateQualityReview,
-  mockUpdateMyTask,
+  mockUpdateCreativePipeline,
   mockUpdateHeadMyTask,
+  mockUpdateMyTask,
   mockUpdateMyTaskPmEvaluation,
   mockUpdateMyTaskStatus,
 } from './mock/tasks.mock';
-import {
-  AssignCreativeHeadRequestSchema,
-  AssignCreativeManagerRequestSchema,
-  AssignMyTaskRequestSchema,
-  CreateMyTaskRequestSchema,
-  MyTaskListFiltersSchema,
-  MyTaskListResponseSchema,
-  MyTaskSchema,
-  TaskHistoryListResponseSchema,
-  QualityReviewListResponseSchema,
-  QualityReviewSchema,
-  CreateQualityReviewRequestSchema,
-  UpdateMyTaskPmEvaluationRequestSchema,
-  UpdateMyTaskRequestSchema,
-  UpdateHeadMyTaskRequestSchema,
-  UpdateMyTaskStatusRequestSchema,
-  type AssignCreativeHeadRequest,
-  type AssignCreativeManagerRequest,
-  type AssignMyTaskRequest,
-  type CreateMyTaskRequest,
-  type CreateQualityReviewRequest,
-  type MyTask,
-  type TaskAssignee,
-  type TaskPerson,
-  type MyTaskListFilters,
-  type MyTaskListResponse,
-  type QualityReview,
-  type QualityReviewListResponse,
-  type TaskHistoryListResponse,
-  type UpdateMyTaskPmEvaluationRequest,
-  type UpdateMyTaskRequest,
-  type UpdateHeadMyTaskRequest,
-  type UpdateMyTaskStatusRequest,
-} from './schemas/task.schema';
 
 const parseMyTaskResponse = (data: unknown): MyTask => {
   const parsed = MyTaskSchema.safeParse(data);
@@ -312,6 +315,28 @@ export const myTaskApi = {
       .patch(`/tasks/my/${id}/assign-staff`, data)
       .catch((error: unknown) => {
         throw new Error(getApiErrorMessage(error, 'Không thể giao task cho Staff'));
+      });
+    return parseMyTaskResponse(response.data);
+  },
+
+  updateCreativePipeline: async (
+    id: string,
+    payload: UpdateCreativePipelineRequest,
+    editorUserId?: string,
+    editorRole?: Role,
+  ): Promise<MyTask> => {
+    const data = UpdateCreativePipelineRequestSchema.parse(payload);
+
+    if (env.useTasksMock) {
+      return MyTaskSchema.parse(
+        await mockUpdateCreativePipeline(id, data, editorUserId, editorRole),
+      );
+    }
+
+    const response = await api
+      .patch(`/tasks/my/${id}/creative-edit`, data)
+      .catch((error: unknown) => {
+        throw new Error(getApiErrorMessage(error, 'Không thể cập nhật task Creative'));
       });
     return parseMyTaskResponse(response.data);
   },

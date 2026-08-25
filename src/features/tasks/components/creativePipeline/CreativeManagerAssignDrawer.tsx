@@ -1,7 +1,7 @@
 import { Alert, Button, Drawer, Form, Input, InputNumber, Modal, Segmented, Select } from 'antd';
-import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
-import { DATE_FORMAT } from '@/config/constants';
+import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useAssignCreativeManager } from '../../hooks/useAssignCreativeManager';
 import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
 import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
@@ -15,8 +15,12 @@ import {
   isAwaitingCm,
   resolveAssigneeAvailability,
 } from '../../utils/creativePipeline';
+import { getTaskDeadline } from '../../utils/taskDetail';
+import { formatTaskDateTime } from '../../utils/taskDates';
 import { ASSIGN_OVERLOAD_CAPACITY_PERCENT } from '../../utils/staffAvailability';
+import { resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
+import { CreativeAssignModeSection } from './CreativeAssignModeSection';
 import styles from './creativePipeline.module.scss';
 
 interface CreativeManagerAssignDrawerProps {
@@ -30,6 +34,7 @@ type SubtaskForm = {
   name?: string;
   staffUserId?: string;
   quantity?: number;
+  description?: string;
 };
 
 type ManagerFormValues = {
@@ -37,7 +42,25 @@ type ManagerFormValues = {
   subtasks?: SubtaskForm[];
 };
 
-const emptySubtask = (): SubtaskForm => ({ name: '', staffUserId: undefined, quantity: 1 });
+const emptySubtask = (): SubtaskForm => ({
+  name: '',
+  staffUserId: undefined,
+  quantity: 1,
+  description: '',
+});
+
+const resolveCreativeDeadlineLabel = (task: MyTask): string => {
+  const source = task.creativeDeadline ?? getTaskDeadline(task);
+  return source ? formatTaskDateTime(source) : '—';
+};
+
+/** CH note is stored as staffNote on live API until CM reassigns staff. */
+const resolveChNote = (task: MyTask): string => {
+  const fromCmNote = task.cmNote?.trim();
+  if (fromCmNote) return fromCmNote;
+  if (isAwaitingCm(task)) return task.staffNote?.trim() ?? '';
+  return '';
+};
 
 export function CreativeManagerAssignDrawer({
   open,
@@ -47,6 +70,7 @@ export function CreativeManagerAssignDrawer({
 }: CreativeManagerAssignDrawerProps) {
   const [form] = Form.useForm<ManagerFormValues>();
   const [mode, setMode] = useState<CreativeAssignMode>('whole');
+  const currentUser = useAppSelector((state) => state.auth.user);
   const { mutate, isPending } = useAssignCreativeManager();
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
   const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
@@ -58,6 +82,11 @@ export function CreativeManagerAssignDrawer({
     isError: capacityError,
   } = useAssignPickerCapacity(task, open);
   const canSubmit = Boolean(task && !readOnly && isAwaitingCm(task));
+  const chNote = task ? resolveChNote(task) : '';
+  const creativeManagerName = currentUser?.name?.trim() || '—';
+  const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
+  const pmDeadlineLabel = task ? formatTaskDateTime(getTaskDeadline(task)) : '—';
+  const creativeDeadlineLabel = task ? resolveCreativeDeadlineLabel(task) : '—';
 
   const staffSelectOptions = useMemo(
     () =>
@@ -122,6 +151,7 @@ export function CreativeManagerAssignDrawer({
                   name: (subtask.name ?? '').trim(),
                   staffUserId: subtask.staffUserId ?? '',
                   quantity: subtask.quantity ?? 1,
+                  description: (subtask.description ?? '').trim(),
                 })),
               },
       },
@@ -180,37 +210,53 @@ export function CreativeManagerAssignDrawer({
         <div className={styles.root}>
           <div className={styles.contextCard}>
             <p className={styles.contextTitle}>
-              {task.taskCode} — {task.taskName}
+              {task.taskCode}: {task.taskName}
             </p>
             <p className={styles.contextMeta}>
-              {task.projectName} · Level {task.level} · {dayjs(task.date).format(DATE_FORMAT)}
-              {task.creativeManager?.name ? ` · Từ CH / CM: ${task.creativeManager.name}` : ''}
+              {task.projectName}
+              {task.projectManager.name ? ` · PM: ${task.projectManager.name}` : ''}
+              {` · SL ${task.quantity}`}
+              {` · CM: ${creativeManagerName}`}
             </p>
-            <div className={styles.briefBlock}>{task.description || '—'}</div>
+            <p className={`${styles.contextMeta} ${styles.metaInline}`}>
+              Deadline gốc: {pmDeadlineLabel}
+              {' · '}
+              Creative: {creativeDeadlineLabel}
+              {urgencyDisplay ? (
+                <>
+                  {' · '}
+                  <ProjectUrgencyBadge urgency={urgencyDisplay} />
+                </>
+              ) : null}
+            </p>
           </div>
 
-          <div className={styles.levelBox}>
-            Level task: {task.level} — đã khóa, Creative Manager không phân loại lại.
+          <div className={styles.contextCard}>
+            <div className={styles.briefBlock}>{task.description?.trim() || 'Chưa có mô tả'}</div>
+            <p className={styles.contextMeta}>
+              Level {task.level} · TD {task.designThinking} · KT {task.technical} · NL{' '}
+              {task.contentProcessing}
+              {task.additionalFactors?.trim() ? ` · ${task.additionalFactors.trim()}` : ''}
+            </p>
           </div>
 
-          {task.cmNote ? (
-            <Alert type="info" showIcon message={`Ghi chú từ CH: ${task.cmNote}`} />
-          ) : null}
+          {chNote ? <Alert type="info" showIcon message={`Ghi chú từ CH: ${chNote}`} /> : null}
 
           {canSubmit ? (
             <>
               <Segmented
                 className={styles.modeToggle}
                 block
+                size="small"
                 value={mode}
                 onChange={(value) => setMode(value as CreativeAssignMode)}
                 options={[
-                  { label: 'Giao nguyên task', value: 'whole' },
-                  { label: 'Chia thành task nhỏ', value: 'split' },
+                  { label: 'Giao nguyên', value: 'whole' },
+                  { label: 'Chia nhỏ', value: 'split' },
                 ]}
               />
 
-              <Form form={form} layout="vertical">
+              <Form form={form} layout="vertical" size="small">
                 {mode === 'whole' ? (
                   <Form.Item
                     name="staffUserId"
@@ -220,30 +266,37 @@ export function CreativeManagerAssignDrawer({
                     {renderStaffSelect(false)}
                   </Form.Item>
                 ) : (
-                  <>
-                    <div className={`${styles.banner} ${styles.bannerProject}`}>
-                      Có thể chia 1 task lớn thành nhiều task nhỏ để giao cho nhiều Staff cùng lúc.
-                    </div>
-                    <Form.List name="subtasks">
-                      {(fields, { add, remove }) => (
-                        <>
-                          {fields.map((field, index) => (
-                            <div className={styles.subtaskCard} key={field.key}>
-                              <div className={styles.subtaskHeader}>
-                                <span>Task nhỏ {index + 1}</span>
-                                {fields.length > 2 ? (
-                                  <Button type="link" danger onClick={() => remove(field.name)}>
-                                    Xóa
-                                  </Button>
-                                ) : null}
-                              </div>
-                              <Form.Item
-                                name={[field.name, 'name']}
-                                label="Tên task nhỏ"
-                                rules={[{ required: true, message: 'Nhập tên task nhỏ' }]}
-                              >
-                                <Input placeholder={`${task.taskName} — phần ${index + 1}`} />
-                              </Form.Item>
+                  <Form.List name="subtasks">
+                    {(fields, { add, remove }) => (
+                      <>
+                        {fields.map((field, index) => (
+                          <div className={styles.subtaskCard} key={field.key}>
+                            <div className={styles.subtaskHeader}>
+                              <span>Task nhỏ {index + 1}</span>
+                              {fields.length > 2 ? (
+                                <Button type="link" danger onClick={() => remove(field.name)}>
+                                  Xóa
+                                </Button>
+                              ) : null}
+                            </div>
+                            <Form.Item
+                              name={[field.name, 'name']}
+                              label="Tên"
+                              rules={[{ required: true, message: 'Nhập tên task nhỏ' }]}
+                            >
+                              <Input placeholder={`${task.taskName} - phần ${index + 1}`} />
+                            </Form.Item>
+                            <Form.Item
+                              name={[field.name, 'description']}
+                              label="Brief"
+                              rules={[{ required: true, message: 'Nhập brief cho task nhỏ' }]}
+                            >
+                              <Input.TextArea
+                                rows={2}
+                                placeholder="Mô tả phần việc giao cho Staff..."
+                              />
+                            </Form.Item>
+                            <div className={styles.deadlineRow}>
                               <Form.Item
                                 name={[field.name, 'staffUserId']}
                                 label="Giao cho"
@@ -253,53 +306,43 @@ export function CreativeManagerAssignDrawer({
                               </Form.Item>
                               <Form.Item
                                 name={[field.name, 'quantity']}
-                                label="Số lượng"
-                                rules={[{ required: true, message: 'Required' }]}
+                                label="SL"
+                                rules={[{ required: true, message: 'Nhập số lượng' }]}
                               >
                                 <InputNumber min={0} style={{ width: '100%' }} />
                               </Form.Item>
                             </div>
-                          ))}
-                          <Button className={styles.addSubtask} onClick={() => add(emptySubtask())}>
-                            + Thêm task nhỏ
-                          </Button>
-                        </>
-                      )}
-                    </Form.List>
-                  </>
+                          </div>
+                        ))}
+                        <Button className={styles.addSubtask} onClick={() => add(emptySubtask())}>
+                          + Thêm task nhỏ
+                        </Button>
+                      </>
+                    )}
+                  </Form.List>
                 )}
               </Form>
             </>
           ) : (
-            <Alert
-              type="success"
-              showIcon
-              message={
-                task.pipelineStage === 'split'
-                  ? 'Task đã được chia nhỏ và giao cho Staff.'
-                  : `Đã giao cho ${task.staff[0]?.name ?? 'Staff'}.`
-              }
-            />
+            <CreativeAssignModeSection task={task} allTasks={allTasks} />
           )}
 
           <div className={styles.workload}>
-            <p className={styles.workloadTitle}>Workload team</p>
-            <p className={styles.note}>{periodNote}</p>
+            <p className={styles.workloadTitle}>Workload · {periodNote}</p>
             {staffSelectOptions.map((option) => (
               <div
                 key={option.value}
                 className={`${styles.workloadRow} ${option.disabled ? styles.workloadMuted : ''}`}
               >
                 <span>{option.staff.name}</span>
-                <span>{option.activeCount} tasks</span>
+                <span>{option.activeCount}</span>
                 <span>{option.capacityPercent}%</span>
               </div>
             ))}
             <p className={styles.note}>
-              Tham khảo khi chia task. Không giao khi capacity ≥ {ASSIGN_OVERLOAD_CAPACITY_PERCENT}%
-              (Overloaded).
-              {capacityLoading ? ' Đang tải capacity…' : null}
-              {capacityError ? ' Không tải được capacity — dùng ước lượng tạm.' : null}
+              Không giao khi capacity ≥ {ASSIGN_OVERLOAD_CAPACITY_PERCENT}%.
+              {capacityLoading ? ' Đang tải…' : null}
+              {capacityError ? ' Dùng ước lượng tạm.' : null}
             </p>
           </div>
         </div>

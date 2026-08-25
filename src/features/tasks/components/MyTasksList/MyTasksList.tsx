@@ -17,7 +17,7 @@ import { useDeleteMyTask } from '../../hooks/useDeleteMyTask';
 import { useMyTaskColumns } from '../../hooks/useMyTaskColumns';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { exportMyTasksToCsv } from '../../utils/exportMyTasks';
-import { canDeleteTask } from '../../utils/taskStatusLock';
+import { canDeleteTask, canEditTask } from '../../utils/taskStatusLock';
 import { computeTaskConfirmationSummary } from '../../utils/taskConfirmationSummary';
 import type { MyTask, MyTaskListFilters, TaskCategory } from '../../schemas/task.schema';
 import styles from './MyTasksList.module.scss';
@@ -61,6 +61,7 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
   const { columnDefs } = useMyTaskColumns();
   const canAssign = can('ASSIGN_TASK');
   const canEvaluate = can('EVALUATE_TASK');
+  const canEdit = canEditTask(role);
   const canDelete = canDeleteTask(role);
 
   useEffect(() => {
@@ -207,7 +208,7 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
         tasks={displayItems}
         loading={isLoading}
         total={filters.otOnly ? displayItems.length : (data?.total ?? 0)}
-        onEdit={setEditingTask}
+        onEdit={canEdit ? setEditingTask : undefined}
         onAssign={setAssigningTask}
         onUpdateStatus={setStatusTask}
         onEvaluate={setEvaluatingTask}
@@ -223,13 +224,14 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
         onClose={() => setAssigningTask(null)}
       />
 
-      {role === ROLES.HEAD ? (
+      {canEdit && role === ROLES.HEAD ? (
         <EditHeadTaskModal
           open={editingTask !== null}
           task={editingTask}
           onClose={() => setEditingTask(null)}
         />
-      ) : (
+      ) : null}
+      {canEdit && role !== ROLES.HEAD ? (
         <EditTaskModal
           open={editingTask !== null}
           task={editingTask}
@@ -237,7 +239,7 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
           canEvaluate={canEvaluate}
           onClose={() => setEditingTask(null)}
         />
-      )}
+      ) : null}
 
       <UpdateTaskStatusModal
         open={statusTask !== null}

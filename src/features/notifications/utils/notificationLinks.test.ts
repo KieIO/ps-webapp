@@ -26,6 +26,18 @@ describe('getNotificationPath', () => {
     ).toBe(ROUTES.CREATIVE_REVIEW);
   });
 
+  it('routes creative CM assign to Creative queue (not task detail)', () => {
+    expect(
+      getNotificationPath(
+        base({
+          type: 'task_creative_cm',
+          refType: 'task',
+          refId: 'task-456',
+        }),
+      ),
+    ).toBe(ROUTES.CREATIVE_REVIEW);
+  });
+
   it('routes task_assigned to task detail', () => {
     expect(
       getNotificationPath(
@@ -36,5 +48,17 @@ describe('getNotificationPath', () => {
         }),
       ),
     ).toContain('task-123');
+  });
+
+  it('keeps staff assign on task detail even when ref looks like creative task', () => {
+    const path = getNotificationPath(
+      base({
+        type: 'task_assigned',
+        refType: 'task',
+        refId: 'creative-parent-1',
+      }),
+    );
+    expect(path).not.toBe(ROUTES.CREATIVE_REVIEW);
+    expect(path).toContain('creative-parent-1');
   });
 });

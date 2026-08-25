@@ -15,6 +15,10 @@ export const isCancelledTask = (task: Pick<MyTask, 'staffConfirmation'>): boolea
 export const canCancelTask = (role: Role | undefined): boolean =>
   role != null && role !== ROLES.EMPLOYEE;
 
+/** Employees cannot edit task meta; PM+ (and Head/Admin) can. Status update stays separate. */
+export const canEditTask = (role: Role | undefined): boolean =>
+  role != null && role !== ROLES.EMPLOYEE;
+
 /** Employees cannot delete tasks; PM+ (and Head/Admin) can. */
 export const canDeleteTask = (role: Role | undefined): boolean =>
   role != null && role !== ROLES.EMPLOYEE;

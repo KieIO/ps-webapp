@@ -19,6 +19,7 @@ const TYPE_TONE: Record<string, FeedTone> = {
   task_reminder: 'reminder',
   task_assigned: 'info',
   task_creative_handoff: 'info',
+  task_creative_cm: 'info',
   project_assigned: 'info',
   deadline_warning: 'deadline',
   overload: 'overload',

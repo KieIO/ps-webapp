@@ -12,6 +12,7 @@ import type {
   TaskPerson,
   TaskWorkflowKind,
 } from '../schemas/task.schema';
+import { normalizeTaskUrgencySetting } from './taskUrgency';
 
 const DEFAULT_CLASSIFICATION = 1;
 
@@ -35,6 +36,7 @@ export interface CreateTaskFormSnapshot {
   assignDirection?: AssignDirection;
   staffUserId?: string;
   staffNote?: string;
+  urgency?: CreateMyTaskRequest['urgency'];
 }
 
 export const resolveMatchedScore = (
@@ -133,7 +135,7 @@ export const buildCreateTaskPayload = ({
     staff,
     staffConfirmation: 'not_updated',
     staffNote: values.staffNote ?? '',
-    urgency: 'auto',
+    urgency: normalizeTaskUrgencySetting(values.urgency),
     workflowKind,
     assignDirection,
   };

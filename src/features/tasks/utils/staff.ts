@@ -41,7 +41,7 @@ export const mergeStaffSelectOptions = (
     seen.add(key);
     options.push({
       value: key,
-      label: `${staff.code} — ${staff.name}`,
+      label: staff.name,
     });
   };
 

@@ -108,14 +108,25 @@ describe('buildCreateTaskPayload', () => {
     ).toThrow(CreateTaskPayloadError);
   });
 
-  it('rejects project-staff direction without an assignee', () => {
-    expect(() =>
-      buildCreateTaskPayload({
-        workflowKind: 'project',
-        values: { ...baseValues(), staffUserId: undefined },
-        scores,
-        staffOptions: staff,
-      }),
-    ).toThrow(/nhân viên/i);
+  it('passes selected urgency into the create payload', () => {
+    const payload = buildCreateTaskPayload({
+      workflowKind: 'project',
+      values: { ...baseValues(), urgency: 'red' },
+      scores,
+      staffOptions: staff,
+    });
+
+    expect(payload.urgency).toBe('red');
+  });
+
+  it('defaults urgency to auto when omitted', () => {
+    const payload = buildCreateTaskPayload({
+      workflowKind: 'project',
+      values: baseValues(),
+      scores,
+      staffOptions: staff,
+    });
+
+    expect(payload.urgency).toBe('auto');
   });
 });

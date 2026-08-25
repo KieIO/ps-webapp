@@ -245,11 +245,8 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
             </div>
             <div className={styles.contextItem}>
               <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.projectManager}</span>
-              <span
-                className={styles.contextValue}
-                title={`${task.projectManager.code} — ${task.projectManager.name}`}
-              >
-                {task.projectManager.code} — {task.projectManager.name}
+              <span className={styles.contextValue} title={task.projectManager.name}>
+                {task.projectManager.name}
               </span>
             </div>
             {task.department ? (

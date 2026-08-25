@@ -14,6 +14,7 @@ import type {
   QualityReview,
   QualityReviewListResponse,
   TaskAssignee,
+  UpdateCreativePipelineRequest,
   UpdateHeadMyTaskRequest,
   UpdateMyTaskRequest,
   UpdateMyTaskPmEvaluationRequest,
@@ -27,15 +28,20 @@ import { computeTaskLevel } from '../utils/taskLevel';
 import { isStaffAssignable } from '../utils/staffAvailability';
 import { resolveStaffFromUserId } from '../utils/staff';
 import {
+  canChangeCreativeLevelRole,
+  canEditCreativePipelineTask,
   canProcessChQueue,
   canProcessCmQueue,
+  canReassignCreativeStaff,
   filterCreativeManagers,
   filterCreativeStaff,
   isAwaitingCh,
   isCreativeHandoffPayload,
+  isCreativeLevelLockedByStaffConfirm,
   needsChBrief,
   resolveCreateBriefOwner,
   resolveCreatePipelineStage,
+  resolveEffectivePipelineStage,
 } from '../utils/creativePipeline';
 import { enrichMockTaskWithProjectContext } from './mockTaskProjectEnrichment';
 import { computeProjectLevel } from '@/features/projects/utils/projectLevel';
@@ -137,7 +143,9 @@ export const filterMockTasks = (
   return tasks.filter((task) => {
     if (assigneeUserId && !viewAllTasks) {
       const assigneeIds = task.staff.map((member) => member.userId).filter(Boolean);
-      if (assigneeIds.length > 0 && !assigneeIds.includes(assigneeUserId)) {
+      const isCreativeManager =
+        task.creativeManager?.userId != null && task.creativeManager.userId === assigneeUserId;
+      if (assigneeIds.length > 0 && !assigneeIds.includes(assigneeUserId) && !isCreativeManager) {
         return false;
       }
     }
@@ -751,6 +759,7 @@ export const mockAssignCreativeHead = async (
   let designThinking = current.designThinking;
   let technical = current.technical;
   let contentProcessing = current.contentProcessing;
+  let urgency = current.urgency;
 
   if (needsChBrief(current)) {
     const brief = payload.description?.trim() ?? '';
@@ -768,6 +777,9 @@ export const mockAssignCreativeHead = async (
     designThinking = payload.designThinking;
     technical = payload.technical;
     contentProcessing = payload.contentProcessing;
+    if (payload.urgency != null) {
+      urgency = payload.urgency;
+    }
   }
 
   const updated: MyTask = {
@@ -782,6 +794,9 @@ export const mockAssignCreativeHead = async (
     pipelineStage: 'awaiting_cm',
     cmNote: payload.cmNote ?? '',
     staffConfirmation: 'not_updated',
+    urgency,
+    creativeDeadline:
+      payload.creativeDeadline ?? current.creativeDeadline ?? current.deadline ?? current.date,
     updatedAt: new Date().toISOString(),
   };
 
@@ -857,6 +872,11 @@ export const mockAssignCreativeManager = async (
   if (subtasks.length < 2) {
     throw new Error('Chia nhỏ cần ít nhất 2 task');
   }
+  for (const subtask of subtasks) {
+    if (!subtask.description?.trim()) {
+      throw new Error('Mỗi task nhỏ cần brief');
+    }
+  }
 
   const children: MyTask[] = subtasks.map((subtask, offset) => {
     const staff = resolveStaffFromUserId(subtask.staffUserId, staffPool);
@@ -873,6 +893,7 @@ export const mockAssignCreativeManager = async (
       id: `task-${Date.now()}-${offset}`,
       taskCode: `${current.taskCode}-S${offset + 1}`,
       taskName: subtask.name.trim(),
+      description: subtask.description?.trim() ?? current.description,
       quantity: subtask.quantity,
       staff,
       parentTaskId: current.id,
@@ -880,22 +901,28 @@ export const mockAssignCreativeManager = async (
       assignedAt: now,
       staffConfirmation: 'not_updated',
       staffNote: payload.staffNote ?? '',
+      creativeDeadline: current.creativeDeadline ?? current.deadline ?? current.date,
+      urgency: current.urgency,
       updatedAt: now,
     });
   });
 
+  // Parent stays CM-owned for queue access; staff list mirrors unique child assignees for UI.
+  const uniqueChildStaff: TaskAssignee[] = [];
+  const seenStaff = new Set<string>();
+  for (const child of children) {
+    for (const member of child.staff) {
+      const key = member.userId ?? member.code;
+      if (!key || seenStaff.has(key)) continue;
+      seenStaff.add(key);
+      uniqueChildStaff.push(member);
+    }
+  }
+
   const parent: MyTask = {
     ...current,
     pipelineStage: 'split',
-    staff: current.creativeManager
-      ? [
-          {
-            code: current.creativeManager.code,
-            name: current.creativeManager.name,
-            userId: current.creativeManager.userId,
-          },
-        ]
-      : current.staff,
+    staff: uniqueChildStaff,
     assignedAt: undefined,
     updatedAt: now,
   };
@@ -904,6 +931,94 @@ export const mockAssignCreativeManager = async (
   next[index] = parent;
   setMockTasksStore([...children, ...next]);
   return enrichMockTaskWithProjectContext(parent);
+};
+
+export const mockUpdateCreativePipeline = async (
+  id: string,
+  payload: UpdateCreativePipelineRequest,
+  editorUserId?: string,
+  editorRole?: Role,
+): Promise<MyTask> => {
+  await mockDelay();
+  const tasks = getMockTasksStore();
+  const index = tasks.findIndex((entry) => entry.id === id);
+  if (index < 0) throw new Error('Task not found');
+  const current = tasks[index];
+
+  if (!canEditCreativePipelineTask(current, editorRole, editorUserId)) {
+    throw new Error('Bạn không có quyền sửa task này');
+  }
+
+  const wantsLevel =
+    payload.designThinking != null ||
+    payload.technical != null ||
+    payload.contentProcessing != null;
+  if (wantsLevel) {
+    if (!canChangeCreativeLevelRole(editorRole)) {
+      throw new Error('Creative Manager không được đổi Level');
+    }
+    if (isCreativeLevelLockedByStaffConfirm(current)) {
+      throw new Error('Task này staff đã confirm rồi nên không đổi level được');
+    }
+    if (
+      payload.designThinking == null ||
+      payload.technical == null ||
+      payload.contentProcessing == null
+    ) {
+      throw new Error('Cần đủ 3 tiêu chí để đổi Level');
+    }
+  }
+
+  let staff = current.staff;
+  let staffConfirmation = current.staffConfirmation;
+  let assignedAt = current.assignedAt;
+  if (payload.staffUserId) {
+    if (!canReassignCreativeStaff(current, editorRole)) {
+      throw new Error('Chỉ đổi Staff khi task đã giao Staff');
+    }
+    const nextStaff = filterCreativeStaff(MOCK_ASSIGNABLE_STAFF).find(
+      (member) => member.userId === payload.staffUserId,
+    );
+    if (!nextStaff) throw new Error('Staff user not found');
+    staff = [nextStaff];
+    staffConfirmation = 'not_updated';
+    assignedAt = new Date().toISOString();
+  }
+
+  const designThinking = wantsLevel ? payload.designThinking! : current.designThinking;
+  const technical = wantsLevel ? payload.technical! : current.technical;
+  const contentProcessing = wantsLevel ? payload.contentProcessing! : current.contentProcessing;
+
+  const updated: MyTask = {
+    ...current,
+    description: payload.description ?? current.description,
+    additionalFactors: payload.additionalFactors ?? current.additionalFactors,
+    quantity: payload.quantity ?? current.quantity,
+    creativeDeadline:
+      payload.creativeDeadline === undefined
+        ? current.creativeDeadline
+        : payload.creativeDeadline || null,
+    staffNote: payload.staffNote ?? current.staffNote,
+    designThinking,
+    technical,
+    contentProcessing,
+    level: wantsLevel
+      ? computeTaskLevel(designThinking, technical, contentProcessing)
+      : current.level,
+    staff,
+    staffConfirmation,
+    assignedAt,
+    pipelineStage:
+      resolveEffectivePipelineStage(current) === 'assigned_staff' || payload.staffUserId
+        ? 'assigned_staff'
+        : current.pipelineStage,
+    updatedAt: new Date().toISOString(),
+  };
+
+  const next = [...tasks];
+  next[index] = updated;
+  setMockTasksStore(next);
+  return enrichMockTaskWithProjectContext(updated);
 };
 
 export const mockDeleteMyTask = async (id: string, userId?: string): Promise<void> => {

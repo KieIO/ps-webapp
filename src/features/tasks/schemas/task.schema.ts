@@ -244,12 +244,17 @@ export const AssignCreativeHeadRequestSchema = z.object({
   technical: z.number().int().min(1).max(4).optional(),
   contentProcessing: z.number().int().min(1).max(4).optional(),
   cmNote: z.string().optional(),
+  /** Creative-department deadline; omit to default to Admin/PM deadline on the server. */
+  creativeDeadline: z.string().optional(),
+  /** Only applied when CH fills a creative-origin brief. */
+  urgency: z.enum(PROJECT_URGENCIES).optional(),
 });
 
 export const CreativeManagerSubtaskSchema = z.object({
   name: z.string().min(1, 'Tên task nhỏ is required'),
   staffUserId: z.string().min(1, 'Chọn Staff'),
   quantity: z.number().min(0),
+  description: z.string().min(1, 'Nhập brief cho task nhỏ'),
 });
 
 export const AssignCreativeManagerRequestSchema = z
@@ -272,6 +277,30 @@ export const AssignCreativeManagerRequestSchema = z
         code: z.ZodIssueCode.custom,
         path: ['subtasks'],
         message: 'Chia nhỏ cần ít nhất 2 task',
+      });
+    }
+  });
+
+export const UpdateCreativePipelineRequestSchema = z
+  .object({
+    description: z.string().optional(),
+    additionalFactors: z.string().optional(),
+    quantity: z.number().min(0).optional(),
+    creativeDeadline: z.string().nullish(),
+    designThinking: z.number().int().min(1).max(4).optional(),
+    technical: z.number().int().min(1).max(4).optional(),
+    contentProcessing: z.number().int().min(1).max(4).optional(),
+    staffUserId: z.string().optional(),
+    staffNote: z.string().optional(),
+  })
+  .superRefine((value, ctx) => {
+    const levelFields = [value.designThinking, value.technical, value.contentProcessing];
+    const provided = levelFields.filter((item) => item != null).length;
+    if (provided > 0 && provided < 3) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['designThinking'],
+        message: 'Cần đủ 3 tiêu chí để đổi Level',
       });
     }
   });
@@ -326,5 +355,6 @@ export type AssignMyTaskRequest = z.infer<typeof AssignMyTaskRequestSchema>;
 export type AssignCreativeHeadRequest = z.infer<typeof AssignCreativeHeadRequestSchema>;
 export type CreativeManagerSubtask = z.infer<typeof CreativeManagerSubtaskSchema>;
 export type AssignCreativeManagerRequest = z.infer<typeof AssignCreativeManagerRequestSchema>;
+export type UpdateCreativePipelineRequest = z.infer<typeof UpdateCreativePipelineRequestSchema>;
 export type UpdateMyTaskRequest = z.infer<typeof UpdateMyTaskRequestSchema>;
 export type UpdateHeadMyTaskRequest = z.infer<typeof UpdateHeadMyTaskRequestSchema>;

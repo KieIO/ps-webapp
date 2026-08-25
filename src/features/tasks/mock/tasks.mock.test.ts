@@ -202,6 +202,26 @@ describe('creative CH/CM pipeline', () => {
     expect(updated.description).toContain('Banner campaign Q3');
     expect(updated.staff[0]?.userId).toBe('dev-creative_manager');
     expect(updated.creativeManager?.userId).toBe('dev-creative_manager');
+    expect(updated.creativeDeadline).toBeTruthy();
+  });
+
+  it('persists an explicit creative deadline when CH picks one', async () => {
+    const creativeDeadline = '2026-08-22T09:30:00Z';
+    const updated = await mockAssignCreativeHead(
+      'task-ch-031',
+      { cmUserId: 'dev-creative_manager', creativeDeadline },
+      'dev-creative_head',
+    );
+    expect(updated.creativeDeadline).toBe(creativeDeadline);
+  });
+
+  it('defaults creative deadline to the Admin/PM deadline when CH leaves it empty', async () => {
+    const updated = await mockAssignCreativeHead(
+      'task-ch-031',
+      { cmUserId: 'dev-creative_manager' },
+      'dev-creative_head',
+    );
+    expect(updated.creativeDeadline).toBe(updated.deadline ?? updated.date);
   });
 
   it('requires CH to fill brief on a creative-origin task', async () => {
@@ -223,13 +243,24 @@ describe('creative CH/CM pipeline', () => {
         designThinking: 3,
         technical: 2,
         contentProcessing: 1,
+        urgency: 'red',
       },
       'dev-creative_head',
     );
     expect(updated.pipelineStage).toBe('awaiting_cm');
     expect(updated.description).toContain('Motion 15s');
     expect(updated.level).toBe(2);
+    expect(updated.urgency).toBe('red');
     expect(updated.staff[0]?.userId).toBe('usr-cm-yen');
+  });
+
+  it('does not change urgency when assigning a PM-briefed task', async () => {
+    const updated = await mockAssignCreativeHead(
+      'task-ch-031',
+      { cmUserId: 'dev-creative_manager', urgency: 'red' },
+      'dev-creative_head',
+    );
+    expect(updated.urgency).not.toBe('red');
   });
 
   it('rejects a second CH after the task left the inbox', async () => {
@@ -266,8 +297,18 @@ describe('creative CH/CM pipeline', () => {
       {
         mode: 'split',
         subtasks: [
-          { name: 'Icon dashboard', staffUserId: 'usr-creative-ha', quantity: 12 },
-          { name: 'Icon forms', staffUserId: 'usr-creative-tran', quantity: 12 },
+          {
+            name: 'Icon dashboard',
+            staffUserId: 'usr-creative-ha',
+            quantity: 12,
+            description: 'Brief icon dashboard',
+          },
+          {
+            name: 'Icon forms',
+            staffUserId: 'usr-creative-tran',
+            quantity: 12,
+            description: 'Brief icon forms',
+          },
         ],
       },
       'dev-creative_manager',
@@ -276,6 +317,11 @@ describe('creative CH/CM pipeline', () => {
     const children = getMockTasksStore().filter((item) => item.parentTaskId === 'task-cm-025');
     expect(children).toHaveLength(2);
     expect(children.every((item) => item.pipelineStage === 'assigned_staff')).toBe(true);
+    expect(children[0]?.description).toBe('Brief icon dashboard');
+    expect(children[1]?.description).toBe('Brief icon forms');
+    expect(parent.staff.map((member) => member.userId).sort()).toEqual(
+      ['usr-creative-ha', 'usr-creative-tran'].sort(),
+    );
   });
 
   it('blocks overloaded creative staff', async () => {

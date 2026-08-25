@@ -186,7 +186,7 @@ export function CreateTaskModal({
   const pmSelectOptions = useMemo(() => {
     const options = pmOptions.map((pm) => ({
       value: pm.code,
-      label: `${pm.code} — ${pm.name}`,
+      label: pm.name,
     }));
     if (
       defaultProjectManager?.code &&
@@ -194,7 +194,7 @@ export function CreateTaskModal({
     ) {
       options.unshift({
         value: defaultProjectManager.code,
-        label: `${defaultProjectManager.code} — ${defaultProjectManager.name}`,
+        label: defaultProjectManager.name,
       });
     }
     return options;

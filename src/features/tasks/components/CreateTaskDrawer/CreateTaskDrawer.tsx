@@ -14,7 +14,7 @@ import {
 } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { FolderKanban, Palette } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { ROLES, type Role } from '@/config/permissions';
 import { useTaskScoreGroupOptions } from '@/features/task-scores/hooks/useTaskScoreGroupOptions';
@@ -34,6 +34,11 @@ import {
   CreateTaskPayloadError,
   resolveMatchedScore,
 } from '../../utils/buildCreateTaskPayload';
+import {
+  hasCreateTaskDraftChanges,
+  snapshotCreateTaskDraft,
+  type CreateTaskDraftSnapshot,
+} from '../../utils/createTaskDraft';
 import { defaultTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import {
@@ -48,6 +53,7 @@ import type {
   TaskWorkflowKind,
 } from '../../schemas/task.schema';
 import { ClassificationScale } from './ClassificationScale';
+import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import styles from './CreateTaskDrawer.module.scss';
 
 const EMPTY_SCORE_FILTERS = {};
@@ -90,6 +96,7 @@ type CreateTaskFormValues = {
   assignDirection?: AssignDirection;
   staffUserId?: string;
   staffNote: string;
+  urgency: ProjectUrgency;
 };
 
 const DEFAULT_VALUES: CreateTaskFormValues = {
@@ -106,6 +113,7 @@ const DEFAULT_VALUES: CreateTaskFormValues = {
   assignDirection: undefined,
   staffUserId: undefined,
   staffNote: '',
+  urgency: 'auto',
 };
 
 const codeFromDisplayName = (name: string): string => {
@@ -123,7 +131,7 @@ const AVAILABILITY_DOT: Record<StaffAvailability, string> = {
 function WorkflowKindCards({ onSelect }: { onSelect: (kind: TaskWorkflowKind) => void }) {
   return (
     <div className={styles.cards}>
-      <p className={styles.sectionLabel}>Đây là loại task nào?</p>
+      <p className={styles.sectionLabel}>Chọn loại task</p>
       <button type="button" className={styles.card} onClick={() => onSelect('project')}>
         <span className={styles.cardIcon}>
           <FolderKanban size={16} />
@@ -131,7 +139,7 @@ function WorkflowKindCards({ onSelect }: { onSelect: (kind: TaskWorkflowKind) =>
         <span>
           <span className={styles.cardTitle}>Project Task</span>
           <span className={styles.cardSub}>
-            PM fill brief và phân loại Level, rồi giao Project Staff hoặc chuyển Creative kèm brief.
+            Bạn viết brief và phân loại Level, rồi giao Project Staff hoặc chuyển sang Creative.
           </span>
         </span>
       </button>
@@ -142,8 +150,7 @@ function WorkflowKindCards({ onSelect }: { onSelect: (kind: TaskWorkflowKind) =>
         <span>
           <span className={styles.cardTitle}>Creative Task</span>
           <span className={styles.cardSub}>
-            PM không fill brief. Chuyển cho Creative Head — CH sẽ fill brief, phân loại Level và
-            assign CM.
+            Chưa cần brief. Creative Head sẽ bổ sung brief, phân loại Level và giao CM.
           </span>
         </span>
       </button>
@@ -171,7 +178,7 @@ function AssignDirectionCards({
         <span>
           <span className={styles.cardTitle}>Phòng Project</span>
           <span className={styles.cardSub}>
-            Giao trực tiếp cho Project Staff. Brief đã fill sẵn đi kèm task.
+            Giao trực tiếp cho Project Staff. Brief đã sẵn đi kèm task.
           </span>
         </span>
       </button>
@@ -186,7 +193,7 @@ function AssignDirectionCards({
         <span>
           <span className={styles.cardTitle}>Phòng Creative</span>
           <span className={styles.cardSub}>
-            Chuyển sang Creative Department. Brief đã fill sẵn — CH chỉ cần assign cho CM.
+            Chuyển sang Creative kèm brief. Creative Head chỉ cần giao CM.
           </span>
         </span>
       </button>
@@ -198,6 +205,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
   const [form] = Form.useForm<CreateTaskFormValues>();
   const [workflowKind, setWorkflowKind] = useState<TaskWorkflowKind | null>(null);
   const [step, setStep] = useState(0);
+  const draftBaselineRef = useRef<CreateTaskDraftSnapshot | null>(null);
   const { mutate, isPending } = useCreateMyTask();
   const currentUser = useAppSelector((state) => state.auth.user);
   const isProjectWorkflow = workflowKind === 'project';
@@ -268,7 +276,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
   const pmSelectOptions = useMemo(() => {
     const options = pmOptions.map((pm) => ({
       value: pm.code,
-      label: `${pm.code} — ${pm.name}`,
+      label: pm.name,
     }));
     if (
       defaultProjectManager?.code &&
@@ -276,7 +284,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
     ) {
       options.unshift({
         value: defaultProjectManager.code,
-        label: `${defaultProjectManager.code} — ${defaultProjectManager.name}`,
+        label: defaultProjectManager.name,
       });
     }
     return options;
@@ -304,8 +312,15 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
     [projectStaffOptions, staffUserId],
   );
 
+  const captureDraftBaseline = () => {
+    draftBaselineRef.current = snapshotCreateTaskDraft(form.getFieldsValue(true));
+  };
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      draftBaselineRef.current = null;
+      return;
+    }
     setWorkflowKind(null);
     setStep(0);
     form.setFieldsValue({
@@ -317,6 +332,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
       description: preset?.description ?? DEFAULT_VALUES.description,
       assignDirection: undefined,
     });
+    captureDraftBaseline();
   }, [open, form, preset, defaultProjectManager]);
 
   useEffect(() => {
@@ -327,13 +343,15 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
   const resetAndClose = () => {
     setWorkflowKind(null);
     setStep(0);
+    draftBaselineRef.current = null;
     form.resetFields();
     onClose();
   };
 
   const handleCloseRequest = () => {
     if (isPending) return;
-    if (hasKind || step > 0 || form.isFieldsTouched()) {
+    const currentDraft = snapshotCreateTaskDraft(form.getFieldsValue(true));
+    if (hasCreateTaskDraftChanges(draftBaselineRef.current, currentDraft)) {
       Modal.confirm({
         title: 'Hủy tạo task?',
         content: 'Thông tin đã nhập sẽ không được lưu.',
@@ -388,12 +406,13 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
             'taskScoreName',
             'quantity',
             'date',
+            'urgency',
             'description',
             'designThinking',
             'technical',
             'contentProcessing',
           ]
-        : ['projectName', ['projectManager', 'code'], 'taskScoreName', 'date'];
+        : ['projectName', ['projectManager', 'code'], 'taskScoreName', 'date', 'urgency'];
     }
     if (current === 1 && isProjectWorkflow) {
       return assignDirection === 'project_staff'
@@ -410,6 +429,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
       assignDirection: kind === 'creative' ? 'creative_department' : undefined,
       staffUserId: undefined,
     });
+    captureDraftBaseline();
   };
 
   const goNext = async () => {
@@ -461,26 +481,22 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
   };
 
   const stepItems = isProjectWorkflow
-    ? [{ title: 'Fill Brief' }, { title: 'Chọn hướng' }, { title: 'Hoàn tất' }]
+    ? [{ title: 'Brief' }, { title: 'Hướng giao' }, { title: 'Xác nhận' }]
     : [{ title: 'Tạo task' }, { title: 'Xác nhận' }, { title: 'Hoàn tất' }];
 
   const primaryLabel =
     step < LAST_STEP
-      ? step === 0
-        ? isProjectWorkflow
-          ? 'Tiếp theo: Chọn hướng assign'
-          : 'Tiếp theo'
-        : 'Tiếp theo: Hoàn tất'
+      ? 'Tiếp tục'
       : isProjectWorkflow && assignDirection === 'project_staff'
         ? 'Giao task'
-        : 'Chuyển sang Creative';
+        : 'Gửi Creative';
 
   const briefFilled = Boolean(description?.trim());
   const summaryDeadline = date ? dayjs(toTaskDeadline(date)).format(DATETIME_SHORT_FORMAT) : '—';
 
   return (
     <Drawer
-      title="Tạo Task Mới"
+      title="Tạo task mới"
       open={open}
       onClose={handleCloseRequest}
       width={480}
@@ -522,38 +538,41 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
           <Form
             form={form}
             layout="vertical"
+            size="small"
             requiredMark
             className={styles.form}
             initialValues={DEFAULT_VALUES}
           >
             <div hidden={step !== 0}>
-              <Form.Item
-                name="projectName"
-                label={MY_TASK_COLUMN_HEADERS.projectName}
-                rules={[{ required: true, message: 'Project name is required' }]}
-              >
-                <AutoComplete
-                  options={projectOptions.map((name) => ({ value: name }))}
-                  placeholder="Select or enter project name"
-                  disabled={Boolean(preset?.lockProject)}
-                  filterOption={(input, option) =>
-                    (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
-                />
-              </Form.Item>
+              <div className={styles.row}>
+                <Form.Item
+                  name="projectName"
+                  label="Tên dự án"
+                  rules={[{ required: true, message: 'Nhập tên dự án' }]}
+                >
+                  <AutoComplete
+                    options={projectOptions.map((name) => ({ value: name }))}
+                    placeholder="Chọn hoặc nhập tên dự án"
+                    disabled={Boolean(preset?.lockProject)}
+                    filterOption={(input, option) =>
+                      (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                  />
+                </Form.Item>
 
-              <Form.Item
-                name={['projectManager', 'code']}
-                label={MY_TASK_COLUMN_HEADERS.projectManager}
-                rules={[{ required: true, message: 'Project manager is required' }]}
-              >
-                <Select
-                  allowClear
-                  placeholder="Select PM"
-                  onChange={handlePmSelect}
-                  options={pmSelectOptions}
-                />
-              </Form.Item>
+                <Form.Item
+                  name={['projectManager', 'code']}
+                  label="PM"
+                  rules={[{ required: true, message: 'Chọn PM' }]}
+                >
+                  <Select
+                    allowClear
+                    placeholder="Chọn PM"
+                    onChange={handlePmSelect}
+                    options={pmSelectOptions}
+                  />
+                </Form.Item>
+              </div>
               <Form.Item name={['projectManager', 'name']} hidden>
                 <Input />
               </Form.Item>
@@ -561,36 +580,37 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
               <Form.Item
                 name="taskScoreName"
                 label="Tên task"
-                rules={[{ required: true, message: 'Task name is required' }]}
+                rules={[{ required: true, message: 'Chọn tên task' }]}
+                extra={derivedTaskType ? `Loại: ${derivedTaskType}` : undefined}
               >
                 <Select
                   showSearch
                   allowClear
-                  placeholder="Nhập tên task..."
+                  placeholder="Chọn tên task..."
                   options={taskScoreOptions}
                   loading={scoresLoading}
                   optionFilterProp="label"
                   onChange={handleTaskScoreChange}
                 />
               </Form.Item>
-              <Form.Item name="taskType" label="Task type">
-                <Input disabled placeholder="Auto from task name" />
+              <Form.Item name="taskType" hidden>
+                <Input />
               </Form.Item>
 
               {isProjectWorkflow ? (
                 <>
-                  <div className={styles.row}>
+                  <div className={styles.rowThree}>
                     <Form.Item
                       name="quantity"
                       label="Số lượng"
-                      rules={[{ required: true, message: 'Quantity is required' }]}
+                      rules={[{ required: true, message: 'Nhập số lượng' }]}
                     >
                       <InputNumber min={0} style={{ width: '100%' }} />
                     </Form.Item>
                     <Form.Item
                       name="date"
                       label="Deadline"
-                      rules={[{ required: true, message: 'Deadline is required' }]}
+                      rules={[{ required: true, message: 'Chọn deadline' }]}
                     >
                       <DatePicker
                         showTime={{
@@ -599,65 +619,84 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                         }}
                         format={DATETIME_SHORT_FORMAT}
                         style={{ width: '100%' }}
-                        placeholder="Chọn ngày và giờ"
+                        placeholder="Ngày & giờ"
                         showNow={false}
                       />
+                    </Form.Item>
+                    <Form.Item
+                      name="urgency"
+                      label={MY_TASK_COLUMN_HEADERS.urgency}
+                      rules={[{ required: true, message: 'Chọn mức ưu tiên' }]}
+                    >
+                      <TaskUrgencySelect />
                     </Form.Item>
                   </div>
 
                   <Form.Item
                     name="description"
-                    label="Mô tả & yêu cầu"
-                    rules={[{ required: true, message: 'Brief is required' }]}
+                    label="Brief"
+                    rules={[{ required: true, message: 'Nhập brief' }]}
                   >
-                    <Input.TextArea
-                      rows={3}
-                      placeholder="Mô tả chi tiết công việc, yêu cầu kỹ thuật..."
-                    />
+                    <Input.TextArea rows={2} placeholder="Mô tả công việc, yêu cầu kỹ thuật..." />
                   </Form.Item>
 
-                  <p className={styles.sectionLabel}>Phân loại độ khó</p>
-                  <Form.Item
-                    name="designThinking"
-                    label={MY_TASK_COLUMN_HEADERS.designThinking}
-                    rules={[{ required: true, message: 'Required' }]}
-                  >
-                    <ClassificationScale />
-                  </Form.Item>
-                  <Form.Item
-                    name="technical"
-                    label={MY_TASK_COLUMN_HEADERS.technical}
-                    rules={[{ required: true, message: 'Required' }]}
-                  >
-                    <ClassificationScale />
-                  </Form.Item>
-                  <Form.Item
-                    name="contentProcessing"
-                    label={MY_TASK_COLUMN_HEADERS.contentProcessing}
-                    rules={[{ required: true, message: 'Required' }]}
-                  >
-                    <ClassificationScale />
-                  </Form.Item>
-                  <div className={styles.levelBox}>Level task dự kiến: {computedLevel ?? '—'}</div>
-                  <p className={styles.note}>Brief này sẽ đi kèm task dù assign cho phòng nào.</p>
+                  <p className={styles.sectionLabel}>
+                    Phân loại độ khó
+                    {computedLevel != null ? ` · Level ${computedLevel}` : ''}
+                  </p>
+                  <div className={styles.criteria}>
+                    <Form.Item
+                      name="designThinking"
+                      label={MY_TASK_COLUMN_HEADERS.designThinking}
+                      rules={[{ required: true, message: 'Chọn mức' }]}
+                      className={styles.criterionItem}
+                    >
+                      <ClassificationScale />
+                    </Form.Item>
+                    <Form.Item
+                      name="technical"
+                      label={MY_TASK_COLUMN_HEADERS.technical}
+                      rules={[{ required: true, message: 'Chọn mức' }]}
+                      className={styles.criterionItem}
+                    >
+                      <ClassificationScale />
+                    </Form.Item>
+                    <Form.Item
+                      name="contentProcessing"
+                      label={MY_TASK_COLUMN_HEADERS.contentProcessing}
+                      rules={[{ required: true, message: 'Chọn mức' }]}
+                      className={styles.criterionItem}
+                    >
+                      <ClassificationScale />
+                    </Form.Item>
+                  </div>
                 </>
               ) : (
-                <Form.Item
-                  name="date"
-                  label="Deadline"
-                  rules={[{ required: true, message: 'Deadline is required' }]}
-                >
-                  <DatePicker
-                    showTime={{
-                      format: 'HH:mm',
-                      defaultValue: dayjs().second(0).millisecond(0),
-                    }}
-                    format={DATETIME_SHORT_FORMAT}
-                    style={{ width: '100%' }}
-                    placeholder="Chọn ngày và giờ"
-                    showNow={false}
-                  />
-                </Form.Item>
+                <div className={styles.row}>
+                  <Form.Item
+                    name="date"
+                    label="Deadline"
+                    rules={[{ required: true, message: 'Chọn deadline' }]}
+                  >
+                    <DatePicker
+                      showTime={{
+                        format: 'HH:mm',
+                        defaultValue: dayjs().second(0).millisecond(0),
+                      }}
+                      format={DATETIME_SHORT_FORMAT}
+                      style={{ width: '100%' }}
+                      placeholder="Ngày & giờ"
+                      showNow={false}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="urgency"
+                    label={MY_TASK_COLUMN_HEADERS.urgency}
+                    rules={[{ required: true, message: 'Chọn mức ưu tiên' }]}
+                  >
+                    <TaskUrgencySelect />
+                  </Form.Item>
+                </div>
               )}
             </div>
 
@@ -665,33 +704,32 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
               {isProjectWorkflow ? (
                 <>
                   <div className={styles.summaryBar}>
-                    {derivedTaskType || 'Task'} | Level {computedLevel ?? '—'} | {quantity ?? '—'} |{' '}
-                    {date ? dayjs(date).format('DD/MM') : '—'} | Brief:{' '}
-                    {briefFilled ? '✓ Đã fill' : '—'}
+                    <span>{derivedTaskType || 'Task'}</span>
+                    <span>Level {computedLevel ?? '—'}</span>
+                    <span>SL {quantity ?? '—'}</span>
+                    <span>{date ? dayjs(date).format('DD/MM') : '—'}</span>
+                    <span>{briefFilled ? 'Có brief' : 'Chưa brief'}</span>
                   </div>
-                  <p className={styles.sectionLabel}>Task này sẽ được thực hiện bởi:</p>
+                  <p className={styles.sectionLabel}>Ai sẽ thực hiện?</p>
                   <Form.Item
                     name="assignDirection"
-                    rules={[{ required: true, message: 'Chọn hướng assign' }]}
+                    rules={[{ required: true, message: 'Chọn hướng giao' }]}
                   >
                     <AssignDirectionCards />
                   </Form.Item>
-                  <p className={styles.warn}>
-                    Nếu đây là Creative Task thuần (PM không fill brief), quay lại và chọn Creative
-                    Task.
-                  </p>
 
                   {assignDirection === 'project_staff' ? (
                     <>
                       <Form.Item
                         name="staffUserId"
-                        label="Giao cho nhân viên"
-                        rules={[{ required: true, message: 'Select a staff member' }]}
+                        label="Giao cho"
+                        rules={[{ required: true, message: 'Chọn nhân viên' }]}
+                        extra="Không chọn được khi Overloaded hoặc nghỉ phép."
                       >
                         <Select
                           showSearch
                           optionFilterProp="label"
-                          placeholder="Chọn nhân viên"
+                          placeholder="Chọn Project Staff"
                           options={projectStaffOptions}
                           optionRender={(option) => {
                             const availability = (
@@ -714,12 +752,11 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                           }}
                         />
                       </Form.Item>
-                      <p className={styles.note}>Overloaded / nghỉ phép không thể chọn.</p>
                       <Alert
                         className={styles.info}
                         type="info"
                         showIcon
-                        message="Nhân viên có 15 phút để confirm sau khi nhận task."
+                        message="Staff có 15 phút để confirm sau khi nhận task."
                       />
                     </>
                   ) : null}
@@ -729,39 +766,32 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                       className={styles.info}
                       type="info"
                       showIcon
-                      message="Toàn bộ Creative Head sẽ nhận được thông báo. Ai trong số họ cũng có thể assign task cho CM."
+                      message="Mọi Creative Head nhận thông báo. Ai giao trước sẽ khóa task cho CM."
                     />
                   ) : null}
                 </>
               ) : (
-                <>
-                  <div className={`${styles.banner} ${styles.bannerCreative}`}>
-                    Creative Task — Chưa có brief. PM không fill brief. Creative Head sẽ fill brief
-                    và phân loại Task Level sau khi nhận.
-                  </div>
-                  <div className={`${styles.banner} ${styles.bannerNotify}`}>
-                    Toàn bộ Creative Head sẽ nhận được thông báo này. Ai trong số họ cũng có thể
-                    assign task cho CM.
-                  </div>
-                </>
+                <div className={`${styles.banner} ${styles.bannerCreative}`}>
+                  Creative Task chưa cần brief. Creative Head sẽ bổ sung brief, phân loại Level và
+                  giao CM. Mọi CH đều nhận thông báo.
+                </div>
               )}
             </div>
 
             <div hidden={step !== 2}>
+              <p className={styles.sectionLabel}>Xác nhận trước khi tạo</p>
               <dl className={styles.summaryList}>
                 <div>
                   <dt>Loại</dt>
                   <dd>{isProjectWorkflow ? 'Project Task' : 'Creative Task'}</dd>
                 </div>
                 <div>
-                  <dt>Project</dt>
+                  <dt>Dự án</dt>
                   <dd>{projectName || '—'}</dd>
                 </div>
                 <div>
                   <dt>PM</dt>
-                  <dd>
-                    {projectManager?.name ? `${projectManager.code} — ${projectManager.name}` : '—'}
-                  </dd>
+                  <dd>{projectManager?.name ? projectManager.name : '—'}</dd>
                 </div>
                 <div>
                   <dt>Tên task</dt>
@@ -785,7 +815,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                 ) : (
                   <div>
                     <dt>Brief</dt>
-                    <dd>Chưa có — Creative Head sẽ fill</dd>
+                    <dd>Chưa có — Creative Head sẽ bổ sung</dd>
                   </div>
                 )}
                 <div>
@@ -793,11 +823,11 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                   <dd>{summaryDeadline}</dd>
                 </div>
                 <div>
-                  <dt>Hướng assign</dt>
+                  <dt>Hướng giao</dt>
                   <dd>
                     {assignDirection === 'project_staff'
                       ? `Phòng Project → ${selectedStaff?.name ?? '—'}`
-                      : 'Phòng Creative (mọi Creative Head nhận task)'}
+                      : 'Phòng Creative → Creative Head'}
                   </dd>
                 </div>
               </dl>

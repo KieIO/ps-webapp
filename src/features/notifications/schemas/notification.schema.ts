@@ -7,6 +7,7 @@ export const NOTIFICATION_TYPES = [
   'task_reminder',
   'task_assigned',
   'task_creative_handoff',
+  'task_creative_cm',
   'project_assigned',
   'deadline_warning',
   'overload',

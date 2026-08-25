@@ -2,30 +2,39 @@
   display: flex;
   flex-direction: column;
   min-height: 100%;
+  gap: 4px;
 }
 
 .steps {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .form {
   flex: 1;
+
+  :global(.ant-form-item) {
+    margin-bottom: 12px;
+  }
+
+  :global(.ant-form-item-extra) {
+    font-size: 12px;
+  }
 }
 
 .note {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   font-size: 12px;
-  font-style: italic;
+  line-height: 1.4;
   color: var(--color-text-muted);
 }
 
 .levelBox {
-  margin: 4px 0 16px;
-  padding: 10px 12px;
+  margin: 0 0 8px;
+  padding: 8px 10px;
   border-radius: 8px;
   background: var(--color-primary-subtle, #eef3fb);
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -34,7 +43,33 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+}
+
+.criteria {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.criterionItem {
+  margin-bottom: 4px !important;
+
+  :global(.ant-form-item-row) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  :global(.ant-form-item-label) {
+    padding: 0;
+  }
+
+  :global(.ant-form-item-control) {
+    flex: none;
+  }
 }
 
 .criterionLabel {
@@ -45,18 +80,18 @@
 
 .scale {
   display: inline-flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .scaleBtn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: 6px;
   background: var(--color-surface, #fff);
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 
@@ -79,43 +114,66 @@
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
+}
+
+.rowThree {
+  display: grid;
+  grid-template-columns: 0.7fr 1.2fr 1fr;
+  gap: 10px;
 }
 
 .summaryBar {
-  margin-bottom: 16px;
-  padding: 8px 12px;
-  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.summaryBar span {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
   background: var(--color-bg-subtle, #f5f6f8);
   font-size: 12px;
   color: var(--color-text);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .sectionLabel {
-  margin: 0 0 10px;
-  font-size: 13px;
+  margin: 0 0 8px;
+  font-size: 11px;
   font-weight: 700;
-  color: var(--color-text);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
 .cards {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 4px;
 }
 
 .card {
   display: flex;
   gap: 10px;
   width: 100%;
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--color-surface, #fff);
   text-align: left;
   cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: var(--color-primary);
+  }
 }
 
 .cardSelected {
@@ -127,10 +185,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: 7px;
   background: var(--color-bg-subtle, #f5f6f8);
   color: var(--color-text);
 }
@@ -151,15 +209,14 @@
 }
 
 .warn {
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   font-size: 12px;
-  font-style: italic;
-  color: var(--color-warning, #d48806);
   line-height: 1.4;
+  color: var(--color-warning, #d48806);
 }
 
 .info {
-  margin: 8px 0 0;
+  margin: 4px 0 0;
 }
 
 .staffOption {
@@ -200,11 +257,11 @@
 }
 
 .banner {
-  margin-bottom: 12px;
-  padding: 10px 12px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
   border-radius: 8px;
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .bannerProject {
@@ -221,8 +278,11 @@
 
 .summaryList {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--color-bg-subtle, #f5f6f8);
 }
 
 .summaryList dt {
@@ -252,8 +312,16 @@
 }
 
 @media (max-width: 520px) {
-  .row {
+  .row,
+  .rowThree {
     grid-template-columns: 1fr;
+  }
+
+  .criterionItem {
+    :global(.ant-form-item-row) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 
   .criterion {
