@@ -31,7 +31,14 @@ export const PIPELINE_STAGE_LABELS: Record<CreativePipelineStage, string> = {
 export type CreativeQueueView = 'ch' | 'cm';
 
 export const canViewCreativeQueue = (role: Role | undefined): boolean =>
-  role === ROLES.CREATIVE_HEAD || role === ROLES.CREATIVE_MANAGER || role === ROLES.ADMIN;
+  role === ROLES.CREATIVE_HEAD ||
+  role === ROLES.CREATIVE_MANAGER ||
+  role === ROLES.ADMIN ||
+  role === ROLES.PM;
+
+/** Admin/PM see the full CM board (not filtered to personal assignee). */
+export const canSeeFullCmQueue = (role: Role | undefined): boolean =>
+  role === ROLES.ADMIN || role === ROLES.PM;
 
 export const canProcessChQueue = (role: Role | undefined): boolean =>
   role === ROLES.CREATIVE_HEAD || role === ROLES.ADMIN || role === ROLES.PM;
@@ -331,7 +338,7 @@ export const filterCreativeQueue = (
 
     // CM board never lists CH-inbox items.
     if (stage === 'awaiting_ch') continue;
-    if (role === ROLES.ADMIN) {
+    if (canSeeFullCmQueue(role)) {
       rows.push({ task, stage });
       continue;
     }
@@ -443,13 +450,13 @@ export const queueActionLabel = (
 ): string => {
   if (view === 'ch') {
     if (isAwaitingCh(task)) {
-      return needsChBrief(task) ? 'Bổ sung brief & giao CM' : 'Giao cho CM';
+      return needsChBrief(task) ? 'Bổ sung brief' : 'Giao CM';
     }
-    if (canEditCreativePipelineTask(task, role, userId)) return 'Sửa / Đổi giao';
+    if (canEditCreativePipelineTask(task, role, userId)) return 'Sửa';
     return 'Xem';
   }
-  if (isAwaitingCm(task)) return 'Giao cho Staff';
-  if (canEditCreativePipelineTask(task, role, userId)) return 'Sửa / Đổi giao';
+  if (isAwaitingCm(task)) return 'Giao Staff';
+  if (canEditCreativePipelineTask(task, role, userId)) return 'Sửa';
   return 'Xem';
 };
 

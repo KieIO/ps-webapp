@@ -95,7 +95,7 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
       {
         label: 'Creative queue',
         path: ROUTES.CREATIVE_REVIEW,
-        roles: [ROLES.CREATIVE_HEAD, ROLES.CREATIVE_MANAGER, ROLES.ADMIN],
+        roles: [ROLES.CREATIVE_HEAD, ROLES.CREATIVE_MANAGER, ROLES.ADMIN, ROLES.PM],
         shortcut: navShortcut('g'),
       },
     ],

@@ -225,6 +225,27 @@ describe('creativePipeline helpers', () => {
     ]);
   });
 
+  it('PM CM view sees all post-CH pipeline tasks (like Admin)', () => {
+    const items = [
+      task({ id: 'ch', pipelineStage: 'awaiting_ch' }),
+      task({
+        id: 'cm1',
+        pipelineStage: 'awaiting_cm',
+        staff: [assignee({ userId: 'cm-a' })],
+      }),
+      task({
+        id: 'cm2',
+        pipelineStage: 'assigned_staff',
+        creativeManager: assignee({ userId: 'cm-b' }),
+        staff: [assignee({ userId: 'staff' })],
+      }),
+    ];
+    expect(filterCreativeQueue(items, 'cm', 'pm-1', ROLES.PM).map((item) => item.id)).toEqual([
+      'cm1',
+      'cm2',
+    ]);
+  });
+
   it('CM with missing userId sees an empty board', () => {
     const items = [
       task({

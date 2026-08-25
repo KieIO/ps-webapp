@@ -4,14 +4,12 @@ import { useEffect, useMemo } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import type { ProjectUrgency } from '@/features/projects/schemas/project.schema';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
-import { useAppSelector } from '@/shared/hooks/useAppSelector';
-import { MY_TASK_COLUMN_HEADERS } from '../../constants';
 import { useAssignCreativeHead } from '../../hooks/useAssignCreativeHead';
 import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
 import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
 import type { MyTask } from '../../schemas/task.schema';
-import { formatTaskDateTime, fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
+import { fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import {
   canSelectAssignee,
@@ -48,7 +46,18 @@ type HeadFormValues = {
   urgency?: ProjectUrgency;
 };
 
+const CRITERION_LABELS = {
+  designThinking: 'Tư duy TK',
+  technical: 'Kỹ thuật',
+  contentProcessing: 'Nội dung',
+} as const;
+
 const resolvePmDeadlineIso = (task: MyTask): string => getTaskDeadline(task);
+
+const formatDeadlineShort = (iso: string): string => {
+  const parsed = dayjs.utc(iso);
+  return parsed.isValid() ? parsed.format(DATETIME_SHORT_FORMAT) : '—';
+};
 
 export function CreativeHeadAssignDrawer({
   open,
@@ -57,7 +66,6 @@ export function CreativeHeadAssignDrawer({
   onClose,
 }: CreativeHeadAssignDrawerProps) {
   const [form] = Form.useForm<HeadFormValues>();
-  const currentUser = useAppSelector((state) => state.auth.user);
   const { mutate, isPending } = useAssignCreativeHead();
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
   const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
@@ -96,8 +104,7 @@ export function CreativeHeadAssignDrawer({
       ? computeTaskLevel(designThinking, technical, contentProcessing)
       : task?.level;
 
-  const pmDeadlineLabel = task ? formatTaskDateTime(resolvePmDeadlineIso(task)) : '—';
-  const creativeHeadName = currentUser?.name?.trim() || '—';
+  const pmDeadlineLabel = task ? formatDeadlineShort(resolvePmDeadlineIso(task)) : '—';
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
 
   const cmOptions = useMemo(
@@ -182,7 +189,8 @@ export function CreativeHeadAssignDrawer({
 
   return (
     <Drawer
-      title={fillBrief ? 'Bổ sung brief & giao CM' : 'Giao cho Creative Manager'}
+      className={styles.assignDrawer}
+      title={fillBrief ? 'Bổ sung brief & giao CM' : 'Giao cho CM'}
       open={open}
       onClose={handleCloseRequest}
       width={480}
@@ -195,7 +203,7 @@ export function CreativeHeadAssignDrawer({
           </Button>
           {canSubmit ? (
             <Button type="primary" loading={isPending} onClick={() => void handleSubmit()}>
-              {fillBrief ? 'Lưu brief & giao CM' : 'Giao cho CM'}
+              {fillBrief ? 'Lưu & giao CM' : 'Giao CM'}
             </Button>
           ) : null}
         </div>
@@ -207,26 +215,16 @@ export function CreativeHeadAssignDrawer({
             <p className={styles.contextTitle}>
               {task.taskCode} — {task.taskName}
             </p>
-            <p className={styles.contextMeta}>
-              {task.projectName} · {task.projectManager.name} · CH: {creativeHeadName}
-              {urgencyDisplay ? (
-                <>
-                  {' · '}
-                  <ProjectUrgencyBadge urgency={urgencyDisplay} />
-                </>
+            <p className={`${styles.contextMeta} ${styles.metaInline}`}>
+              <span>
+                {task.projectName}
+                {task.projectManager.name ? ` · ${task.projectManager.name}` : ''}
+              </span>
+              {!canEditUrgency && urgencyDisplay ? (
+                <ProjectUrgencyBadge urgency={urgencyDisplay} />
               ) : null}
             </p>
           </div>
-
-          {lockedBrief ? (
-            <div className={`${styles.banner} ${styles.bannerProject}`}>
-              Brief đã có từ PM — chỉ cần chọn CM.
-            </div>
-          ) : (
-            <div className={`${styles.banner} ${styles.bannerCreative}`}>
-              Chưa có brief — bổ sung mô tả, Level, rồi chọn CM.
-            </div>
-          )}
 
           <Form
             form={form}
@@ -236,10 +234,9 @@ export function CreativeHeadAssignDrawer({
             className={styles.compactForm}
           >
             <div className={styles.deadlineRow}>
-              <div className={styles.deadlineReadOnly}>
-                <span className={styles.deadlineLabel}>Deadline gốc</span>
-                <span className={styles.deadlineValue}>{pmDeadlineLabel}</span>
-              </div>
+              <Form.Item label="Deadline gốc" className={styles.deadlineField}>
+                <div className={styles.deadlineValue}>{pmDeadlineLabel}</div>
+              </Form.Item>
               <Form.Item
                 name="creativeDeadline"
                 label="Deadline Creative"
@@ -254,7 +251,7 @@ export function CreativeHeadAssignDrawer({
                   style={{ width: '100%' }}
                   allowClear={canEditCreativeDeadline}
                   disabled={readOnly || !canEditCreativeDeadline}
-                  placeholder="Deadline nội bộ"
+                  placeholder="Nội bộ"
                   showNow={false}
                 />
               </Form.Item>
@@ -263,23 +260,22 @@ export function CreativeHeadAssignDrawer({
             {canEditUrgency ? (
               <Form.Item
                 name="urgency"
-                label={MY_TASK_COLUMN_HEADERS.urgency}
-                rules={[{ required: true, message: 'Chọn mức ưu tiên' }]}
+                label="Urgency"
+                className={styles.urgencyField}
+                rules={[{ required: true, message: 'Chọn mức' }]}
               >
                 <TaskUrgencySelect disabled={readOnly} />
               </Form.Item>
             ) : null}
 
             {lockedBrief ? (
-              <>
-                <div className={styles.contextCard}>
-                  <div className={styles.briefBlock}>{task.description || '—'}</div>
-                  <p className={styles.contextMeta}>
-                    Level {task.level} · TD {task.designThinking} · KT {task.technical} · NL{' '}
-                    {task.contentProcessing}
-                  </p>
-                </div>
-              </>
+              <div className={styles.contextCard}>
+                <div className={styles.briefBlock}>{task.description || '—'}</div>
+                <p className={styles.contextMeta}>
+                  Level {task.level} · TD {task.designThinking} · KT {task.technical} · NL{' '}
+                  {task.contentProcessing}
+                </p>
+              </div>
             ) : (
               <>
                 <Form.Item
@@ -293,32 +289,34 @@ export function CreativeHeadAssignDrawer({
                     placeholder="Mô tả công việc, yêu cầu kỹ thuật..."
                   />
                 </Form.Item>
-                <p className={styles.sectionLabel}>
-                  Phân loại độ khó
-                  {computedLevel != null ? ` · Level ${computedLevel}` : ''}
-                </p>
-                <div className={styles.compactCriteria}>
+                <div className={styles.classificationHeader}>
+                  <span>Phân loại độ khó</span>
+                  {computedLevel != null ? (
+                    <span className={styles.levelBadge}>Level {computedLevel}</span>
+                  ) : null}
+                </div>
+                <div className={styles.criteriaGrid}>
                   <Form.Item
                     name="designThinking"
-                    label={MY_TASK_COLUMN_HEADERS.designThinking}
+                    label={CRITERION_LABELS.designThinking}
                     rules={[{ required: true, message: 'Chọn mức' }]}
-                    className={styles.compactCriterion}
+                    className={styles.criterionColumn}
                   >
                     <ClassificationScale disabled={readOnly} />
                   </Form.Item>
                   <Form.Item
                     name="technical"
-                    label={MY_TASK_COLUMN_HEADERS.technical}
+                    label={CRITERION_LABELS.technical}
                     rules={[{ required: true, message: 'Chọn mức' }]}
-                    className={styles.compactCriterion}
+                    className={styles.criterionColumn}
                   >
                     <ClassificationScale disabled={readOnly} />
                   </Form.Item>
                   <Form.Item
                     name="contentProcessing"
-                    label={MY_TASK_COLUMN_HEADERS.contentProcessing}
+                    label={CRITERION_LABELS.contentProcessing}
                     rules={[{ required: true, message: 'Chọn mức' }]}
-                    className={styles.compactCriterion}
+                    className={styles.criterionColumn}
                   >
                     <ClassificationScale disabled={readOnly} />
                   </Form.Item>
@@ -326,21 +324,11 @@ export function CreativeHeadAssignDrawer({
               </>
             )}
 
-            <Form.Item name="cmNote" label="Ghi chú cho CM">
-              <Input.TextArea rows={1} disabled={readOnly} placeholder="Tùy chọn" />
-            </Form.Item>
-
             <Form.Item
               name="cmUserId"
               label="Creative Manager"
               rules={[{ required: canSubmit, message: 'Chọn Creative Manager' }]}
-              extra={
-                <>
-                  {periodNote}. Không giao khi capacity ≥ {ASSIGN_OVERLOAD_CAPACITY_PERCENT}%.
-                  {capacityLoading ? ' Đang tải…' : null}
-                  {capacityError ? ' Dùng ước lượng tạm.' : null}
-                </>
-              }
+              className={styles.cmField}
             >
               <Select
                 showSearch
@@ -366,9 +354,18 @@ export function CreativeHeadAssignDrawer({
                 }}
               />
             </Form.Item>
+            <p className={styles.capacityHint}>
+              {periodNote} · Không thể giao khi capacity ≥ {ASSIGN_OVERLOAD_CAPACITY_PERCENT}%.
+              {capacityLoading ? ' Đang tải…' : null}
+              {capacityError ? ' Đang dùng số liệu ước tính.' : null}
+            </p>
             {cmOptions.length === 0 ? (
               <Alert type="warning" showIcon message="Chưa có Creative Manager khả dụng." />
             ) : null}
+
+            <Form.Item name="cmNote" label="Ghi chú CM">
+              <Input disabled={readOnly} placeholder="Tùy chọn" />
+            </Form.Item>
           </Form>
         </div>
       ) : null}

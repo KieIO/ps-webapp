@@ -148,7 +148,7 @@ const router = createBrowserRouter([
       {
         element: (
           <ProtectedRoute
-            allowedRoles={[ROLES.CREATIVE_HEAD, ROLES.CREATIVE_MANAGER, ROLES.ADMIN]}
+            allowedRoles={[ROLES.CREATIVE_HEAD, ROLES.CREATIVE_MANAGER, ROLES.ADMIN, ROLES.PM]}
           />
         ),
         children: [{ path: ROUTES.CREATIVE_REVIEW.slice(1), element: <CreativeReviewPage /> }],

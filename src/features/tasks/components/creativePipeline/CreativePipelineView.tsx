@@ -1,8 +1,7 @@
-import { Alert, Button, Segmented, Table, Tag } from 'antd';
+import { Alert, Button, Segmented, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
-import { DATE_FORMAT } from '@/config/constants';
 import { ROLES } from '@/config/permissions';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
@@ -52,7 +51,7 @@ export function CreativePipelineView() {
     [tasks, view, user?.id, role],
   );
 
-  const showViewToggle = role === ROLES.ADMIN;
+  const showViewToggle = role === ROLES.ADMIN || role === ROLES.PM;
   const chEnabled = canProcessChQueue(role);
   const cmEnabled = canProcessCmQueue(role);
 
@@ -77,53 +76,59 @@ export function CreativePipelineView() {
 
   const columns: ColumnsType<MyTask> = [
     {
-      title: 'Mã task',
-      dataIndex: 'taskCode',
-      width: 120,
-      render: (value: string) => value,
-    },
-    {
-      title: 'Tên task',
-      dataIndex: 'taskName',
-      ellipsis: true,
-    },
-    {
-      title: 'Dự án',
-      dataIndex: 'projectName',
-      ellipsis: true,
-    },
-    {
-      title: 'PM',
-      dataIndex: ['projectManager', 'name'],
-      width: 140,
+      title: 'Task',
+      key: 'identity',
+      render: (_, record) => {
+        const meta = [record.projectName, record.projectManager?.name].filter(Boolean).join(' · ');
+        return (
+          <div className={styles.identityCell}>
+            <span className={styles.identityCode}>{record.taskCode}</span>
+            <Tooltip title={record.taskName}>
+              <span className={styles.identityName}>{record.taskName}</span>
+            </Tooltip>
+            {meta ? (
+              <Tooltip title={meta}>
+                <span className={styles.identityMeta}>{meta}</span>
+              </Tooltip>
+            ) : null}
+          </div>
+        );
+      },
     },
     {
       title: 'Brief',
-      width: 120,
+      width: 88,
       render: (_, record) =>
         needsChBrief(record) ? (
-          <span className={`${styles.pill} ${styles.pillNeed}`}>Thiếu brief</span>
+          <span className={`${styles.pill} ${styles.pillNeed}`}>Thiếu</span>
         ) : (
-          <span className={`${styles.pill} ${styles.pillReady}`}>Đủ brief</span>
+          <span className={`${styles.pill} ${styles.pillReady}`}>Đủ</span>
         ),
     },
     {
       title: 'Deadline',
       dataIndex: 'date',
-      width: 110,
-      render: (value: string) => dayjs(value).format(DATE_FORMAT),
+      width: 72,
+      render: (value: string) => dayjs(value).format('DD/MM'),
     },
     {
       title: 'Người nhận',
       key: 'assignee',
-      width: 160,
+      width: 140,
       ellipsis: true,
-      render: (_, record) => pipelineAssigneeLabel(record, tasks),
+      render: (_, record) => {
+        const label = pipelineAssigneeLabel(record, tasks);
+        return (
+          <Tooltip title={label}>
+            <span className={styles.assigneeCell}>{label}</span>
+          </Tooltip>
+        );
+      },
     },
     {
       title: 'Trạng thái',
       dataIndex: 'pipelineStage',
-      width: 140,
+      width: 128,
       render: (_, record) => {
         const stage = resolveEffectivePipelineStage(record);
         if (!stage) return '—';
@@ -141,7 +146,7 @@ export function CreativePipelineView() {
     {
       title: '',
       key: 'action',
-      width: 180,
+      width: 120,
       render: (_, record) => (
         <Button
           type="link"
@@ -207,6 +212,7 @@ export function CreativePipelineView() {
             rowKey="id"
             size="middle"
             pagination={false}
+            tableLayout="fixed"
             columns={columns}
             dataSource={queue}
             rowClassName={(record) => {
