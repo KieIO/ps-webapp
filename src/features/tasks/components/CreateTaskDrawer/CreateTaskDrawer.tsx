@@ -17,6 +17,7 @@ import { FolderKanban, Palette } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { ROLES, type Role } from '@/config/permissions';
+import type { ProjectUrgency } from '@/features/projects/schemas/project.schema';
 import { useTaskScoreGroupOptions } from '@/features/task-scores/hooks/useTaskScoreGroupOptions';
 import { useTaskScoreList } from '@/features/task-scores/hooks/useTaskScoreList';
 import { resolveTaskType } from '@/features/task-scores/utils/resolveTaskType';
