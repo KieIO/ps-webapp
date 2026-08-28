@@ -1,8 +1,11 @@
 ---
 sidebar_position: 2
+sidebar_label: On-time rate
 ---
 
-# On-time rate — ý nghĩa & luồng liên quan
+# On-time rate
+
+Chỉ số đo mức độ hoàn thành task **đúng hạn** trong một tháng, và các luồng liên quan trong sản phẩm.
 
 ## On-time rate là gì?
 
@@ -10,7 +13,7 @@ sidebar_position: 2
 
 Nói ngắn gọn: trong số các task đã **Finished** trong tháng, bao nhiêu % hoàn thành **không trễ deadline**.
 
-Task chưa xong **không** vào mẫu số — chỉ tính task đã hoàn thành có ngày hoàn thành (`completedAt`).
+Task chưa xong **không** vào mẫu số. Chỉ tính task đã hoàn thành có ngày hoàn thành (`completedAt`).
 
 ## Công thức
 
@@ -43,10 +46,10 @@ Task thuộc Creative có thể có thêm field **Deadline phòng Creative** (CH
 
 Field này **không** tham gia tính on-time rate, **không** dùng cho Auto Urgency.
 
-| Field trên UI               | Vai trò                                                                              |
-| --------------------------- | ------------------------------------------------------------------------------------ |
-| **Deadline**                | Mốc chính — dùng cho on-time, urgency Auto, filter đúng hạn/trễ hạn                  |
-| **Deadline phòng Creative** | Mốc nội bộ phòng Creative — theo dõi tiến độ nội bộ, **không** ảnh hưởng KPI on-time |
+| Field trên UI               | Vai trò                                                                             |
+| --------------------------- | ----------------------------------------------------------------------------------- |
+| **Deadline**                | Mốc chính. Dùng cho on-time, urgency Auto, filter đúng hạn/trễ hạn                  |
+| **Deadline phòng Creative** | Mốc nội bộ phòng Creative. Theo dõi tiến độ nội bộ, **không** ảnh hưởng KPI on-time |
 
 **Ví dụ:** Deadline chính `20/08`, Deadline phòng Creative `15/08`, staff finish ngày `18/08` → vẫn **đúng hạn** theo on-time (vì ≤ `20/08`), dù đã qua mốc Creative.
 
@@ -100,7 +103,7 @@ Có thể lọc trên danh sách Project Tasks (`/tasks/project`) theo timelines
 
 - Ngưỡng cảnh báo thường dùng: **80%**.
 - Team / insight có thể báo khi nhiều người hoặc nhóm có on-time dưới 80% trong tháng đang xem.
-- Cảnh báo “sắp trễ” trên task đang mở (**deadline risk / urgency**) là khái niệm khác — **không** tính vào on-time rate (on-time chỉ tính sau khi task đã Finished).
+- Cảnh báo “sắp trễ” trên task đang mở (**deadline risk / urgency**) là khái niệm khác. **Không** tính vào on-time rate (on-time chỉ tính sau khi task đã Finished).
 
 ## Quan hệ với các chỉ số khác
 

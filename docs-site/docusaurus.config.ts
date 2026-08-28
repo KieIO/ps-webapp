@@ -68,15 +68,24 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Task',
           items: [
             {
-              label: 'Luồng Overtime',
-              to: '/',
+              label: 'Tạo task',
+              to: '/create-task-flow',
             },
             {
               label: 'On-time rate',
               to: '/on-time-rate',
+            },
+          ],
+        },
+        {
+          title: 'Overtime',
+          items: [
+            {
+              label: 'Luồng OT',
+              to: '/',
             },
           ],
         },

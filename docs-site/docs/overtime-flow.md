@@ -1,9 +1,10 @@
 ---
 sidebar_position: 1
+sidebar_label: Luồng OT
 slug: /
 ---
 
-# Luồng chức năng Overtime (OT)
+# Luồng Overtime (OT)
 
 ## Tổng quan luồng OT
 
@@ -35,7 +36,7 @@ Head xem xét & duyệt/từ chối
 
 ## Chi tiết từng bước
 
-### Bước 1 — PM tạo OT Request
+### Bước 1: PM tạo OT Request
 
 - **Người thực hiện:** PM
 - **Thông tin cần nhập:**
@@ -46,7 +47,7 @@ Head xem xét & duyệt/từ chối
 - **Gửi đến:** Head
 - **Trạng thái:** `Chờ duyệt`
 
-### Bước 2 — Head xem xét
+### Bước 2: Head xem xét
 
 - **Người thực hiện:** Head
 - **Hành động:**
@@ -66,7 +67,7 @@ Head xem xét & duyệt/từ chối
 - Trạng thái → `Từ chối`
 - Luồng kết thúc
 
-### Bước 3 — PM giao task OT
+### Bước 3: PM giao task OT
 
 - **Người thực hiện:** PM
 - **Điều kiện:** OT đã được Head duyệt
@@ -76,7 +77,7 @@ Head xem xét & duyệt/từ chối
   - Khung giờ OT thực hiện
 - **Gửi đến:** Staff được chỉ định
 
-### Bước 4 — Staff thực hiện OT
+### Bước 4: Staff thực hiện OT
 
 - **Người thực hiện:** Employee
 - **Hành động:**
@@ -86,7 +87,7 @@ Head xem xét & duyệt/từ chối
   - Ghi nhận số giờ thực tế
   - Viết ghi chú nếu có
 
-### Bước 5 — Staff báo cáo sau OT
+### Bước 5: Staff báo cáo sau OT
 
 - **Người thực hiện:** Employee
 - **Nội dung báo cáo:**
@@ -95,7 +96,7 @@ Head xem xét & duyệt/từ chối
   - Số giờ OT thực tế
 - **Gửi đến:** PM/CM
 
-### Bước 6 — PM/CM tổng hợp & báo cáo
+### Bước 6: PM/CM tổng hợp & báo cáo
 
 - **Người thực hiện:** PM / CM
 - **Hành động:**
@@ -105,7 +106,7 @@ Head xem xét & duyệt/từ chối
   - So sánh giờ thực tế vs kế hoạch được duyệt
   - Gửi báo cáo lên Head
 
-### Bước 7 — Hệ thống ghi nhận
+### Bước 7: Hệ thống ghi nhận
 
 - **Người thực hiện:** System (tự động)
 - **Ghi nhận:**
