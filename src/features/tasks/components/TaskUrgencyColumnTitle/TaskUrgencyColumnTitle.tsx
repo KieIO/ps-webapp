@@ -19,7 +19,7 @@ const URGENCY_HELP_ITEMS = [
   { key: 'purple' as const, note: ' — Freelancer (chọn thủ công)' },
   { key: 'yellow' as const, note: ' — Pending Feedback (chọn thủ công)' },
   { key: 'cyan' as const, note: ' — Pending brief (chọn thủ công)' },
-  { key: 'gray' as const, note: ' — Finished (task đã Finished hoặc chọn thủ công)' },
+  { key: 'gray' as const, note: ' — Kết thúc (task đã finished hoặc chọn thủ công)' },
 ] as const;
 
 function TaskUrgencyTooltipContent() {

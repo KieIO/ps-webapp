@@ -1,11 +1,28 @@
-import { Alert, Button, Descriptions, Drawer, Form, Input, Modal, Space, Spin } from 'antd';
+import {
+  Alert,
+  Button,
+  Descriptions,
+  Drawer,
+  Form,
+  Input,
+  Modal,
+  Space,
+  Spin,
+  Tooltip,
+} from 'antd';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DATE_FORMAT, DATETIME_SHORT_FORMAT, buildMyTaskDetailPath } from '@/config/constants';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { AssignOtTaskModal } from '../AssignOtTaskModal/AssignOtTaskModal';
+import { EditOvertimeModal } from '../EditOvertimeModal/EditOvertimeModal';
 import { OvertimeStatusBadge } from '../OvertimeStatusBadge/OvertimeStatusBadge';
+import {
+  canEditOvertimeRequest,
+  formatOtReasonCategories,
+  overtimeEditDisabledReason,
+} from '../../constants';
 import {
   useApproveOvertime,
   useOvertimeDetail,
@@ -24,6 +41,8 @@ export function OvertimeDetailDrawer({ overtimeId, open, onClose }: OvertimeDeta
   const { can } = usePermission();
   const canRequest = can('REQUEST_OT');
   const canApprove = can('APPROVE_OT');
+  // Final OT result confirmation is Head/Admin only.
+  const canReviewResult = canApprove;
 
   const { data: record, isLoading, isError, refetch } = useOvertimeDetail(overtimeId, open);
   const approveMutation = useApproveOvertime();
@@ -33,6 +52,7 @@ export function OvertimeDetailDrawer({ overtimeId, open, onClose }: OvertimeDeta
   const [rejectOpen, setRejectOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [rejectForm] = Form.useForm<{ reason: string }>();
   const [reviewForm] = Form.useForm<{ note: string }>();
 
@@ -40,10 +60,24 @@ export function OvertimeDetailDrawer({ overtimeId, open, onClose }: OvertimeDeta
     setRejectOpen(false);
     setAssignOpen(false);
     setReviewOpen(false);
+    setEditOpen(false);
     onClose();
   };
 
   const status = record?.status;
+  const reasonCategoriesLabel = formatOtReasonCategories(record?.reasonCategories);
+  const canEdit = Boolean(status && canEditOvertimeRequest(status));
+  const editDisabledReason = status ? overtimeEditDisabledReason(status) : null;
+
+  const editButton = canRequest ? (
+    <Tooltip title={editDisabledReason ?? undefined}>
+      <span className={styles.editTrigger}>
+        <Button disabled={!canEdit} onClick={() => setEditOpen(true)}>
+          Chỉnh sửa
+        </Button>
+      </span>
+    </Tooltip>
+  ) : null;
 
   return (
     <>
@@ -95,7 +129,8 @@ export function OvertimeDetailDrawer({ overtimeId, open, onClose }: OvertimeDeta
               <Descriptions.Item label="Thực tế">
                 {record.actualHours != null ? `${record.actualHours}h` : '—'}
               </Descriptions.Item>
-              <Descriptions.Item label="Lý do">{record.reason || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Lý do OT">{reasonCategoriesLabel || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Mô tả chi tiết">{record.reason || '—'}</Descriptions.Item>
               {record.task?.id || record.taskName ? (
                 <Descriptions.Item label="Task OT">
                   {record.task?.id ? (
@@ -127,6 +162,8 @@ export function OvertimeDetailDrawer({ overtimeId, open, onClose }: OvertimeDeta
             </Descriptions>
 
             <Space className={styles.actions} wrap>
+              {editButton}
+
               {canApprove && status === 'pending' ? (
                 <>
                   <Button
@@ -149,7 +186,7 @@ export function OvertimeDetailDrawer({ overtimeId, open, onClose }: OvertimeDeta
                 </Button>
               ) : null}
 
-              {canRequest && status === 'awaiting_review' ? (
+              {canReviewResult && status === 'awaiting_review' ? (
                 <Button type="primary" onClick={() => setReviewOpen(true)}>
                   Review kết quả
                 </Button>
@@ -198,6 +235,12 @@ export function OvertimeDetailDrawer({ overtimeId, open, onClose }: OvertimeDeta
           onAssigned={() => void refetch()}
         />
       ) : null}
+
+      <EditOvertimeModal
+        open={editOpen}
+        record={record ?? null}
+        onClose={() => setEditOpen(false)}
+      />
 
       <Modal
         title="Review kết quả OT"

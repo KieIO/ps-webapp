@@ -17,6 +17,7 @@ interface OvertimeFiltersProps {
   onReset: () => void;
   projectOptions?: SelectOption[];
   assigneeOptions?: SelectOption[];
+  projectOptionsLoading?: boolean;
 }
 
 export function OvertimeFilters({
@@ -25,9 +26,11 @@ export function OvertimeFilters({
   onReset,
   projectOptions = [],
   assigneeOptions = [],
+  projectOptionsLoading = false,
 }: OvertimeFiltersProps) {
   const rangeValue: [Dayjs, Dayjs] | null =
     filters.fromDate && filters.toDate ? [dayjs(filters.fromDate), dayjs(filters.toDate)] : null;
+  const hasDateRange = Boolean(filters.fromDate && filters.toDate);
 
   return (
     <div className={styles.wrapper}>
@@ -62,18 +65,45 @@ export function OvertimeFilters({
         </div>
 
         <div className={styles.field}>
+          <label className={styles.label} htmlFor="ot-date-range">
+            {OT_FILTER_LABELS.dateRange}
+          </label>
+          <DatePicker.RangePicker
+            id="ot-date-range"
+            format={DATE_FORMAT}
+            value={rangeValue}
+            onChange={(dates) => {
+              const fromDate = dates?.[0]?.format('YYYY-MM-DD');
+              const toDate = dates?.[1]?.format('YYYY-MM-DD');
+              onChange({
+                ...filters,
+                fromDate,
+                toDate,
+                // Project options depend on the date range; clear stale selection.
+                projectId: undefined,
+              });
+            }}
+            className={styles.range}
+          />
+        </div>
+
+        <div className={styles.field}>
           <label className={styles.label} htmlFor="ot-project">
             {OT_FILTER_LABELS.project}
           </label>
           <Select
             id="ot-project"
-            placeholder={OT_FILTER_LABELS.projectPlaceholder}
+            placeholder={
+              hasDateRange ? 'Dự án có OT trong khoảng ngày' : OT_FILTER_LABELS.projectPlaceholder
+            }
             allowClear
             showSearch
             optionFilterProp="label"
             value={filters.projectId}
             onChange={(value) => onChange({ ...filters, projectId: value })}
             options={projectOptions}
+            loading={projectOptionsLoading}
+            notFoundContent={hasDateRange ? 'Không có dự án OT trong khoảng ngày' : undefined}
             className={styles.select}
           />
         </div>
@@ -92,25 +122,6 @@ export function OvertimeFilters({
             onChange={(value) => onChange({ ...filters, assigneeId: value })}
             options={assigneeOptions}
             className={styles.select}
-          />
-        </div>
-
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="ot-date-range">
-            {OT_FILTER_LABELS.dateRange}
-          </label>
-          <DatePicker.RangePicker
-            id="ot-date-range"
-            format={DATE_FORMAT}
-            value={rangeValue}
-            onChange={(dates) => {
-              onChange({
-                ...filters,
-                fromDate: dates?.[0]?.format('YYYY-MM-DD'),
-                toDate: dates?.[1]?.format('YYYY-MM-DD'),
-              });
-            }}
-            className={styles.range}
           />
         </div>
       </FilterSection>

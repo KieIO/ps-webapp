@@ -17,6 +17,12 @@
   min-width: 0;
 }
 
+.tabLabelWithBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .side {
   position: sticky;
   top: 16px;

@@ -370,3 +370,23 @@ export const resetMockProjectsStore = (): void => {
 export const setMockProjectsStore = (projects: StoredProject[]): void => {
   mockProjectsStore = projects;
 };
+
+/** Mirror BE: only not_updated → in_progress when a task shows progress. */
+export const promoteMockProjectInProgressIfNeeded = (projectName: string | undefined): void => {
+  const name = projectName?.trim();
+  if (!name) return;
+
+  const index = mockProjectsStore.findIndex(
+    (project) => project.name === name && !project.archivedAt,
+  );
+  if (index === -1) return;
+  if (mockProjectsStore[index].status !== 'not_updated') return;
+
+  const next = [...mockProjectsStore];
+  next[index] = {
+    ...next[index],
+    status: 'in_progress',
+    updatedAt: new Date().toISOString(),
+  };
+  mockProjectsStore = next;
+};

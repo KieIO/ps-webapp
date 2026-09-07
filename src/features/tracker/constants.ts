@@ -1,9 +1,12 @@
 import dayjs from 'dayjs';
 import { URGENCY_STYLES } from '@/shared/constants/urgencyStyles';
-import { TRACKER_BLOCK_LEGEND } from '@/shared/constants/taskConfirmation';
+import {
+  TRACKER_BLOCK_LEGEND,
+  TRACKER_PROJECT_STATUS_LEGEND,
+} from '@/shared/constants/taskConfirmation';
 import type { TrackerUrgency } from './types';
 
-export { TRACKER_BLOCK_LEGEND };
+export { TRACKER_BLOCK_LEGEND, TRACKER_PROJECT_STATUS_LEGEND };
 
 export const TRACKER_DAY_WIDTH = 28;
 export const TRACKER_ROW_HEIGHT = 48;
@@ -11,7 +14,14 @@ export const TRACKER_BLOCK_HEIGHT = 18;
 export const TRACKER_BLOCK_GAP = 2;
 export const TRACKER_BLOCK_PADDING = 5;
 export const TRACKER_OFF_ROW_HEIGHT = 36;
-export const TRACKER_CAL_HEADER_HEIGHT = 108; // 28 + 22 + 22 + 36
+export const TRACKER_CAPACITY_ROW_HEIGHT = 40;
+/** Month + DOW + date + off-day rows (no remaining-output). */
+export const TRACKER_CAL_HEADER_HEIGHT_BASE = 108; // 28 + 22 + 22 + 36
+export const TRACKER_CAL_HEADER_HEIGHT =
+  TRACKER_CAL_HEADER_HEIGHT_BASE + TRACKER_CAPACITY_ROW_HEIGHT;
+
+export const getTrackerCalHeaderHeight = (showRemainingOutput: boolean): number =>
+  showRemainingOutput ? TRACKER_CAL_HEADER_HEIGHT : TRACKER_CAL_HEADER_HEIGHT_BASE;
 
 /** Calendar day zoom for all roles. `fit` fills the panel; others enforce a wider day column. */
 export const TRACKER_ADMIN_DAY_ZOOM = {
@@ -39,13 +49,12 @@ export const TRACKER_ADMIN_DAY_ZOOM_OPTIONS: ReadonlyArray<{
 ];
 
 /** Default zoom so task labels are readable without manual tuning. */
-export const TRACKER_ADMIN_DAY_ZOOM_DEFAULT: TrackerAdminDayZoom =
-  TRACKER_ADMIN_DAY_ZOOM.comfortable;
+export const TRACKER_ADMIN_DAY_ZOOM_DEFAULT: TrackerAdminDayZoom = TRACKER_ADMIN_DAY_ZOOM.wide;
 
 export const TRACKER_LEFT_COLS = {
   name: 192,
   team: 122,
-  slides: 66,
+  slides: 88,
 } as const;
 
 export const TRACKER_LEFT_WIDTH =

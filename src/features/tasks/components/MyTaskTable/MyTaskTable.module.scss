@@ -43,6 +43,7 @@
   font-weight: 500;
   text-decoration: none;
   min-width: 0;
+  max-width: 100%;
 
   &:hover {
     text-decoration: underline;
@@ -50,10 +51,27 @@
 }
 
 .taskNameCell {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   max-width: 100%;
+}
+
+.taskNameBadges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.revisionBadgeLink {
+  display: inline-flex;
+  line-height: 1;
+
+  &:hover .otBadge {
+    opacity: 0.88;
+  }
 }
 
 .otBadge {

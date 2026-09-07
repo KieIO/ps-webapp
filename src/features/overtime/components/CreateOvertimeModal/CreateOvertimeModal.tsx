@@ -5,8 +5,15 @@ import { DATE_FORMAT } from '@/config/constants';
 import { ROLES } from '@/config/permissions';
 import { useProjectList } from '@/features/projects/hooks/useProjectList';
 import { useUserList } from '@/features/users/hooks/useUserList';
+import { OT_REASON_CATEGORY_OPTIONS } from '../../constants';
 import { useCreateOvertime } from '../../hooks/useOvertime';
-import type { CreateOvertimeRequest } from '../../schemas/overtime.schema';
+import {
+  buildOvertimeWriteFields,
+  disabledTimeFromNow,
+  hoursFromTimeRange,
+  otTimeRangePastRule,
+  shouldClearPastTimeRange,
+} from '../../utils/otForm';
 import styles from './CreateOvertimeModal.module.scss';
 
 interface CreateOvertimeFormValues {
@@ -15,6 +22,7 @@ interface CreateOvertimeFormValues {
   otDate: Dayjs;
   timeRange: [Dayjs, Dayjs];
   estimatedHours: number;
+  reasonCategories: string[];
   reason: string;
 }
 
@@ -23,42 +31,6 @@ interface CreateOvertimeModalProps {
   onClose: () => void;
   defaultProjectId?: string;
 }
-
-const range = (start: number, end: number): number[] => {
-  const result: number[] = [];
-  for (let i = start; i < end; i += 1) result.push(i);
-  return result;
-};
-
-/** When OT date is today, block hours/minutes before the current clock time. */
-const disabledTimeFromNow = (otDate: Dayjs | undefined) => {
-  if (!otDate?.isSame(dayjs(), 'day')) {
-    return () => ({});
-  }
-
-  return () => {
-    const now = dayjs();
-    const hour = now.hour();
-    const minute = now.minute();
-    return {
-      disabledHours: () => range(0, hour),
-      disabledMinutes: (selectedHour: number) => {
-        if (selectedHour > hour) return [];
-        if (selectedHour < hour) return range(0, 60);
-        return range(0, minute);
-      },
-    };
-  };
-};
-
-/** Exact window length in hours, 2 decimals — never round up past the window. */
-const hoursFromTimeRange = (timeRange: [Dayjs, Dayjs] | null | undefined): number | undefined => {
-  if (!timeRange?.[0] || !timeRange?.[1]) return undefined;
-  const minutes = timeRange[1].diff(timeRange[0], 'minute');
-  if (minutes <= 0) return undefined;
-  // Floor to 2 decimals so 15m → 0.25 (not 0.3 from 1-decimal round-up).
-  return Math.floor((minutes / 60) * 100) / 100;
-};
 
 export function CreateOvertimeModal({ open, onClose, defaultProjectId }: CreateOvertimeModalProps) {
   const [form] = Form.useForm<CreateOvertimeFormValues>();
@@ -86,6 +58,7 @@ export function CreateOvertimeModal({ open, onClose, defaultProjectId }: CreateO
       form.setFieldsValue({
         projectId: defaultProjectId,
         otDate: dayjs(),
+        reasonCategories: undefined,
       });
     } else {
       form.resetFields();
@@ -97,29 +70,15 @@ export function CreateOvertimeModal({ open, onClose, defaultProjectId }: CreateO
   };
 
   const handleOtDateChange = (value: Dayjs | null) => {
-    if (!value?.isSame(dayjs(), 'day')) return;
     const timeRange = form.getFieldValue('timeRange') as [Dayjs, Dayjs] | undefined;
-    if (!timeRange?.[0]) return;
-    const now = dayjs();
-    const startToday = value.hour(timeRange[0].hour()).minute(timeRange[0].minute()).second(0);
-    if (startToday.isBefore(now, 'minute')) {
+    if (shouldClearPastTimeRange(value, timeRange)) {
       form.setFieldsValue({ timeRange: undefined, estimatedHours: undefined });
     }
   };
 
   const handleFinish = (values: CreateOvertimeFormValues) => {
-    const estimatedHours = hoursFromTimeRange(values.timeRange);
-    if (estimatedHours == null || estimatedHours <= 0) return;
-
-    const payload: CreateOvertimeRequest = {
-      projectId: values.projectId,
-      assigneeId: values.assigneeId,
-      otDate: values.otDate.format('YYYY-MM-DD'),
-      startTime: values.timeRange[0].format('HH:mm'),
-      endTime: values.timeRange[1].format('HH:mm'),
-      estimatedHours,
-      reason: values.reason.trim(),
-    };
+    const payload = buildOvertimeWriteFields(values);
+    if (!payload) return;
 
     mutate(payload, {
       onSuccess: () => {
@@ -189,18 +148,7 @@ export function CreateOvertimeModal({ open, onClose, defaultProjectId }: CreateO
           <Form.Item
             name="timeRange"
             label="Khung giờ"
-            rules={[
-              { required: true, message: 'Chọn khung giờ' },
-              {
-                validator: async (_, value: [Dayjs, Dayjs] | undefined) => {
-                  if (!value?.[0] || !otDate?.isSame(dayjs(), 'day')) return;
-                  const start = otDate.hour(value[0].hour()).minute(value[0].minute()).second(0);
-                  if (start.isBefore(dayjs(), 'minute')) {
-                    throw new Error('Khung giờ phải từ thời điểm hiện tại trở đi');
-                  }
-                },
-              },
-            ]}
+            rules={[{ required: true, message: 'Chọn khung giờ' }, otTimeRangePastRule(otDate)]}
             className={styles.half}
           >
             <TimePicker.RangePicker
@@ -223,11 +171,27 @@ export function CreateOvertimeModal({ open, onClose, defaultProjectId }: CreateO
         </Form.Item>
 
         <Form.Item
-          name="reason"
-          label="Lý do"
-          rules={[{ required: true, message: 'Nhập lý do OT' }]}
+          name="reasonCategories"
+          label="Lý do OT"
+          rules={[{ required: true, type: 'array', min: 1, message: 'Chọn ít nhất một lý do' }]}
         >
-          <Input.TextArea rows={3} placeholder="Lý do cần OT..." />
+          <Select
+            mode="multiple"
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Chọn lý do (có thể chọn nhiều)"
+            options={[...OT_REASON_CATEGORY_OPTIONS]}
+            maxTagCount="responsive"
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="reason"
+          label="Mô tả chi tiết"
+          rules={[{ required: true, message: 'Nhập mô tả chi tiết lý do OT' }]}
+        >
+          <Input.TextArea rows={3} placeholder="Mô tả chi tiết lý do cần OT..." />
         </Form.Item>
       </Form>
     </Modal>

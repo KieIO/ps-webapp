@@ -6,6 +6,11 @@ import { getJobTitleFamilyKey } from '../../constants';
 import { useUpdateJobTitleCapacity } from '../../hooks/useUpdateJobTitleCapacity';
 import { computeSpecialistTaskPoints } from '../../utils/capacityFormula';
 import type { JobTitleListItem } from '../../schemas/title.schema';
+import {
+  ConversionRatioColumnTitle,
+  DailyCapacityColumnTitle,
+  SpecialistTaskPointsColumnTitle,
+} from '@/features/capacity/components/CapacityHelpTooltip/CapacityHelpTooltip';
 import { CapacityEditableCell } from './CapacityEditableCell';
 import styles from './JobTitleTable.module.scss';
 
@@ -46,7 +51,7 @@ export function JobTitleTable({
   const capacityColumns: ColumnsType<JobTitleListItem> = showCapacityColumns
     ? [
         {
-          title: 'Capacity/ngày',
+          title: <DailyCapacityColumnTitle />,
           key: 'dailyCapacityPoints',
           width: '12%',
           align: 'right',
@@ -63,7 +68,7 @@ export function JobTitleTable({
             ),
         },
         {
-          title: 'Tỷ lệ CM/QL',
+          title: <ConversionRatioColumnTitle />,
           key: 'taskConversionRatio',
           width: '11%',
           align: 'right',
@@ -80,16 +85,13 @@ export function JobTitleTable({
             ),
         },
         {
-          title: 'Điểm task CM',
+          title: <SpecialistTaskPointsColumnTitle />,
           key: 'specialistTaskPoints',
           width: '12%',
           align: 'right',
           render: (_, record) =>
             formatPoints(
-              computeSpecialistTaskPoints(
-                record.dailyCapacityPoints,
-                record.taskConversionRatio,
-              ),
+              computeSpecialistTaskPoints(record.dailyCapacityPoints, record.taskConversionRatio),
             ),
         },
       ]

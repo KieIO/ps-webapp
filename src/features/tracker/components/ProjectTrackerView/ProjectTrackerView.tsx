@@ -1,16 +1,20 @@
-import { DatePicker, message, Popover } from 'antd';
+import { DatePicker, message, Popover, Tooltip } from 'antd';
 import { DownloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, type NavigateFunction } from 'react-router-dom';
+import { buildProjectDetailPath, buildProjectTasksPath } from '@/config/constants';
+import { useRemainingOutput } from '@/features/capacity/hooks/useRemainingOutput';
+import type { RemainingOutputDay } from '@/features/capacity/schemas/remainingOutput.schema';
 import { PROJECT_NAME_COLUMN_LABEL } from '@/features/projects/constants';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
 import {
   TRACKER_ADMIN_DAY_ZOOM_DEFAULT,
   TRACKER_ADMIN_DAY_ZOOM_OPTIONS,
   TRACKER_ADMIN_DAY_ZOOM_WIDTH,
   TRACKER_BLOCK_HEIGHT,
-  TRACKER_CAL_HEADER_HEIGHT,
   TRACKER_DOW_LABELS,
   TRACKER_INITIAL_LOOKBACK_DAYS,
   TRACKER_RANGE_END,
@@ -18,12 +22,18 @@ import {
   TRACKER_ROW_HEIGHT,
   TRACKER_TODAY,
   TRACKER_BLOCK_LEGEND,
+  TRACKER_PROJECT_STATUS_LEGEND,
   TRACKER_URGENCY_LEGEND,
   TRACKER_URGENCY_STYLES,
+  getTrackerCalHeaderHeight,
   type TrackerAdminDayZoom,
 } from '../../constants';
 import type { TrackerOffDay, TrackerProject } from '../../schemas/tracker.schema';
 import type { CalendarDay } from '../../types';
+import {
+  inferOutputMetricFromTaskName,
+  parseTrackerTaskBaseLabel,
+} from '../../utils/aggregateAdminBlocks';
 import { getBlockTop, layoutProjectBlocks, type LaidOutBlock } from '../../utils/blockLanes';
 import { mergeProjectRowLayout } from '../../utils/rowContentHeight';
 import {
@@ -38,6 +48,10 @@ import {
   getMonthScrollLeft,
 } from '../../utils/calendar';
 import { exportTrackerToCsv } from '../../utils/exportTracker';
+import {
+  isProjectTimelineBar,
+  withMonthScopedTrackerMetrics,
+} from '../../utils/monthScopedTracker';
 import { TrackerUrgencyDot } from '../TrackerUrgencyDot/TrackerUrgencyDot';
 import styles from './ProjectTrackerView.module.scss';
 
@@ -50,7 +64,7 @@ function TrackerLegendContent() {
   return (
     <div className={styles.legendPopover}>
       <div className={styles.legendPopoverGroup}>
-        <p className={styles.legendPopoverTitle}>Dự án</p>
+        <p className={styles.legendPopoverTitle}>Độ ưu tiên</p>
         <ul className={styles.legendPopoverList}>
           {TRACKER_URGENCY_LEGEND.map((item) => (
             <li key={item.label} className={styles.legendPopoverItem}>
@@ -62,10 +76,22 @@ function TrackerLegendContent() {
       </div>
 
       <div className={styles.legendPopoverGroup}>
-        <p className={styles.legendPopoverTitle}>Task</p>
+        <p className={styles.legendPopoverTitle}>Trạng thái project</p>
+        <ul className={styles.legendPopoverList}>
+          {TRACKER_PROJECT_STATUS_LEGEND.map((item) => (
+            <li key={`project-${item.key}`} className={styles.legendPopoverItem}>
+              <span className={classNames(styles.legendBar, styles[`legendBar_${item.key}`])} />
+              {item.label}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className={styles.legendPopoverGroup}>
+        <p className={styles.legendPopoverTitle}>Trạng thái task</p>
         <ul className={styles.legendPopoverList}>
           {TRACKER_BLOCK_LEGEND.map((item) => (
-            <li key={item.label} className={styles.legendPopoverItem}>
+            <li key={`task-${item.key}`} className={styles.legendPopoverItem}>
               <span className={classNames(styles.legendBar, styles[`legendBar_${item.key}`])} />
               {item.label}
             </li>
@@ -77,6 +103,9 @@ function TrackerLegendContent() {
 }
 
 export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProps) {
+  const { can } = usePermission();
+  const canViewRemainingOutput = can('VIEW_CAPACITY_FULL');
+  const calHeaderHeight = getTrackerCalHeaderHeight(canViewRemainingOutput);
   const calendarScrollRef = useRef<HTMLDivElement>(null);
   const mainBodyRef = useRef<HTMLDivElement>(null);
   const prevMonthKeyRef = useRef('');
@@ -97,6 +126,18 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
       ),
     [selectedMonth],
   );
+  const monthStart = useMemo(
+    () => selectedMonth.startOf('month').format('YYYY-MM-DD'),
+    [selectedMonth],
+  );
+  const monthEnd = useMemo(
+    () => selectedMonth.endOf('month').format('YYYY-MM-DD'),
+    [selectedMonth],
+  );
+  const monthScopedProjects = useMemo(
+    () => projects.map((project) => withMonthScopedTrackerMetrics(project, monthStart, monthEnd)),
+    [projects, monthStart, monthEnd],
+  );
   const months = useMemo(() => buildCalendarMonths(days), [days]);
   const dayWidth = useMemo(
     () => getAdminZoomDayWidth(days.length, panelWidth, TRACKER_ADMIN_DAY_ZOOM_WIDTH[dayZoom]),
@@ -108,10 +149,10 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   );
   const projectLayouts = useMemo(
     () =>
-      projects.map((project) =>
-        mergeProjectRowLayout(layoutProjectBlocks(project.blocks), project),
+      monthScopedProjects.map((project) =>
+        mergeProjectRowLayout(layoutProjectBlocks(project.blocks, project.name), project),
       ),
-    [projects],
+    [monthScopedProjects],
   );
   const totalProjectsHeight = useMemo(
     () => projectLayouts.reduce((sum, layout) => sum + layout.rowHeight, 0),
@@ -126,7 +167,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     }
     return offsets;
   }, [projectLayouts]);
-  const emptyRowCount = Math.max(0, rowLayout.visibleRowCount - projects.length);
+  const emptyRowCount = Math.max(0, rowLayout.visibleRowCount - monthScopedProjects.length);
   const canvasHeight = rowLayout.canvasHeight;
   const weekendDays = useMemo(() => days.filter((day) => day.isWeekend), [days]);
   const offDayMarkers = useMemo(
@@ -146,6 +187,21 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   const isOutOfDataRange =
     selectedMonthEnd.isBefore(trackerRangeStart, 'day') ||
     selectedMonthStart.isAfter(trackerRangeEnd, 'day');
+
+  const { data: remainingOutput } = useRemainingOutput(
+    { startDate: monthStart, endDate: monthEnd },
+    { enabled: canViewRemainingOutput && !isOutOfDataRange },
+  );
+  const remainingByDate = useMemo(() => {
+    const map = new Map<string, RemainingOutputDay>();
+    for (const day of remainingOutput?.days ?? []) {
+      map.set(day.date, day);
+    }
+    return map;
+  }, [remainingOutput?.days]);
+  const remainingAssumptionNote =
+    remainingOutput?.assumption.note ??
+    'Ước lượng capacity còn lại. Ví dụ: Project ÷ 30đ (Slides L2), Creative ÷ 480đ (DA L2).';
 
   useEffect(() => {
     const calendarNode = calendarScrollRef.current;
@@ -199,7 +255,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     if (!node) return;
 
     const measureVisibleRows = () => {
-      const rowsAreaHeight = Math.max(0, node.clientHeight - TRACKER_CAL_HEADER_HEIGHT);
+      const rowsAreaHeight = Math.max(0, node.clientHeight - calHeaderHeight);
       const minCanvasHeight = totalProjectsHeight;
       const fillRowCount = Math.ceil(
         Math.max(0, rowsAreaHeight - minCanvasHeight) / TRACKER_ROW_HEIGHT,
@@ -217,7 +273,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     observer.observe(node);
 
     return () => observer.disconnect();
-  }, [projects.length, totalProjectsHeight]);
+  }, [calHeaderHeight, projects.length, totalProjectsHeight]);
 
   const todayIndex = getDayIndex(days, TRACKER_TODAY);
 
@@ -235,7 +291,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   };
 
   const handleExport = () => {
-    exportTrackerToCsv(projects);
+    exportTrackerToCsv(monthScopedProjects, selectedMonth.format('YYYY-MM'));
     message.success('Export downloaded.');
   };
 
@@ -334,19 +390,33 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
           <div className={styles.leftPanel}>
             <div
               className={styles.leftPanelContent}
-              style={{ height: TRACKER_CAL_HEADER_HEIGHT + canvasHeight }}
+              style={{ height: calHeaderHeight + canvasHeight }}
             >
-              <div className={styles.leftHeader}>
+              <div
+                className={styles.leftHeader}
+                style={{ height: calHeaderHeight, minHeight: calHeaderHeight }}
+              >
                 <div className={styles.leftHeaderTop}>
                   <div className={styles.leftHeaderName}>{PROJECT_NAME_COLUMN_LABEL}</div>
                   <div className={styles.leftHeaderTeam}>PM/CM</div>
-                  <div className={styles.leftHeaderSlides}>Slides</div>
+                  <div className={styles.leftHeaderSlides}>Total / tháng</div>
                 </div>
-                <div className={styles.offRowLabel}>Nghỉ hôm nay</div>
+                <div
+                  className={classNames(styles.offRowLabel, {
+                    [styles.offRowLast]: !canViewRemainingOutput,
+                  })}
+                >
+                  Nghỉ hôm nay
+                </div>
+                {canViewRemainingOutput ? (
+                  <Tooltip title={remainingAssumptionNote} placement="right">
+                    <div className={styles.capacityRowLabel}>Còn lại / ngày</div>
+                  </Tooltip>
+                ) : null}
               </div>
 
               <div className={styles.leftRows}>
-                {projects.map((project, rowIndex) => {
+                {monthScopedProjects.map((project, rowIndex) => {
                   const urgencyStyle = TRACKER_URGENCY_STYLES[project.urgency];
                   const rowHeight = projectLayouts[rowIndex]?.rowHeight ?? TRACKER_ROW_HEIGHT;
 
@@ -390,7 +460,10 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                   );
                 })}
                 {Array.from({ length: emptyRowCount }, (_, index) => (
-                  <EmptyProjectRow key={`empty-row-${index}`} rowIndex={projects.length + index} />
+                  <EmptyProjectRow
+                    key={`empty-row-${index}`}
+                    rowIndex={monthScopedProjects.length + index}
+                  />
                 ))}
               </div>
             </div>
@@ -441,7 +514,12 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                   ))}
                 </div>
 
-                <div className={styles.offRow} style={{ width: calendarWidth }}>
+                <div
+                  className={classNames(styles.offRow, {
+                    [styles.offRowLast]: !canViewRemainingOutput,
+                  })}
+                  style={{ width: calendarWidth }}
+                >
                   {offDayMarkers.map((offDay) => (
                     <div
                       key={offDay.date}
@@ -456,6 +534,45 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                     </div>
                   ))}
                 </div>
+
+                {canViewRemainingOutput ? (
+                  <div className={styles.capacityRow} style={{ width: calendarWidth }}>
+                    {days.map((day) => {
+                      const remaining = remainingByDate.get(day.date);
+                      return (
+                        <div
+                          key={`capacity-${day.key}`}
+                          className={classNames(styles.capacityDayCell, {
+                            [styles.capacityDayWeekend]: day.isWeekend,
+                          })}
+                          style={{ width: dayWidth }}
+                          title={remainingAssumptionNote}
+                        >
+                          {remaining ? (
+                            <>
+                              <span
+                                className={classNames(styles.capacitySlides, {
+                                  [styles.capacityNegative]: remaining.projectRemainingSlides < 0,
+                                })}
+                              >
+                                {remaining.projectRemainingSlides} S
+                              </span>
+                              <span
+                                className={classNames(styles.capacityDa, {
+                                  [styles.capacityNegative]: remaining.creativeRemainingDA < 0,
+                                })}
+                              >
+                                {remaining.creativeRemainingDA} DA
+                              </span>
+                            </>
+                          ) : (
+                            <span className={styles.capacityEmpty}>—</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
 
               <div className={styles.calendarBody} style={{ height: canvasHeight }}>
@@ -484,7 +601,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                       );
                     })}
 
-                    {projects.map((project, rowIndex) => (
+                    {monthScopedProjects.map((project, rowIndex) => (
                       <TimelineRow
                         key={project.id}
                         project={project}
@@ -500,7 +617,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                     ))}
 
                     {Array.from({ length: emptyRowCount }, (_, index) => {
-                      const rowIndex = projects.length + index;
+                      const rowIndex = monthScopedProjects.length + index;
                       return (
                         <EmptyTimelineRow
                           key={`empty-timeline-${index}`}
@@ -613,6 +730,7 @@ function TimelineRow({
   top,
   rowHeight,
 }: TimelineRowProps) {
+  const navigate = useNavigate();
   return (
     <div
       className={classNames(
@@ -642,9 +760,11 @@ function TimelineRow({
       {blocks.map((block, index) => (
         <TimelineBlock
           key={`${project.id}-${index}`}
+          project={project}
           block={block}
           days={days}
           dayWidth={dayWidth}
+          navigate={navigate}
         />
       ))}
     </div>
@@ -652,27 +772,88 @@ function TimelineRow({
 }
 
 interface TimelineBlockProps {
+  project: TrackerProject;
   block: LaidOutBlock;
   days: CalendarDay[];
   dayWidth: number;
+  navigate: NavigateFunction;
 }
 
-function TimelineBlock({ block, days, dayWidth }: TimelineBlockProps) {
+function TimelineBlock({ project, block, days, dayWidth, navigate }: TimelineBlockProps) {
   const position = getBlockPosition(days, block.start, block.end, dayWidth);
   if (!position) return null;
 
+  const isProjectBar = isProjectTimelineBar(block, project.name);
+  const taskName = isProjectBar
+    ? undefined
+    : parseTrackerTaskBaseLabel(block.label, block.quantity);
+  const ariaLabel = isProjectBar
+    ? `Open project ${project.name}`
+    : `View ${taskName ?? block.label} tasks for ${project.name}`;
+
+  const handleOpen = () => {
+    if (isProjectBar) {
+      navigate(buildProjectDetailPath(project.id));
+      return;
+    }
+    const taskMonth = dayjs(block.start).isValid()
+      ? dayjs(block.start).format('YYYY-MM')
+      : undefined;
+    navigate(
+      buildProjectTasksPath({
+        projectName: project.name,
+        search: taskName,
+        outputMetric: taskName ? inferOutputMetricFromTaskName(taskName) : undefined,
+        outputMonth: taskMonth,
+      }),
+    );
+  };
+
   return (
-    <div
-      className={classNames(styles.block, styles[block.type])}
-      style={{
-        left: position.left,
-        width: Math.max(position.width, 18),
-        top: getBlockTop(block.lane),
-        height: TRACKER_BLOCK_HEIGHT,
-      }}
+    <Tooltip
       title={block.label}
+      mouseEnterDelay={0}
+      mouseLeaveDelay={0.04}
+      placement="right"
+      arrow={false}
+      destroyOnHidden
+      classNames={{ root: styles.blockTooltip }}
+      styles={{
+        container: {
+          padding: '5px 9px',
+          fontSize: 11,
+          lineHeight: 1.3,
+          fontWeight: 500,
+          letterSpacing: '0.01em',
+          color: '#0f172a',
+          background: 'rgb(255 255 255 / 96%)',
+          border: '1px solid #e2e8f0',
+          borderRadius: 6,
+          boxShadow: '0 2px 10px rgb(15 23 42 / 10%)',
+        },
+      }}
     >
-      <span>{block.label}</span>
-    </div>
+      <div
+        role="link"
+        tabIndex={0}
+        aria-label={ariaLabel}
+        className={classNames(styles.block, styles.blockClickable, styles[block.type])}
+        style={{
+          left: position.left,
+          width: Math.max(position.width, 18),
+          top: getBlockTop(block.lane),
+          height: TRACKER_BLOCK_HEIGHT,
+        }}
+        onClick={handleOpen}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleOpen();
+          }
+        }}
+      >
+        <span>{block.label}</span>
+      </div>
+    </Tooltip>
   );
 }

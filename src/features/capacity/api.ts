@@ -2,6 +2,7 @@ import api from '@/shared/api/base.api';
 import { env } from '@/config/env';
 import { mockGetCapacityList } from './mock/capacity.mock';
 import { mockGetCapacityMonthly } from './mock/capacityMonthly.mock';
+import { mockGetRemainingOutput } from './mock/remainingOutput.mock';
 import {
   CapacityListFiltersSchema,
   CapacityListResponseSchema,
@@ -14,6 +15,12 @@ import {
   type CapacityMonthlyFilters,
   type CapacityMonthlyResponse,
 } from './schemas/capacityMonthly.schema';
+import {
+  RemainingOutputFiltersSchema,
+  RemainingOutputResponseSchema,
+  type RemainingOutputFilters,
+  type RemainingOutputResponse,
+} from './schemas/remainingOutput.schema';
 import { buildCapacityMonthlyApiParams } from './utils/capacityMonthlyPeriod';
 import { buildCapacityListApiParams } from './utils/capacityListPeriod';
 
@@ -40,5 +47,21 @@ export const capacityApi = {
 
     const response = await api.get('/capacity/monthly', { params });
     return CapacityMonthlyResponseSchema.parse(response.data);
+  },
+
+  getRemainingOutput: async (filters: RemainingOutputFilters): Promise<RemainingOutputResponse> => {
+    const parsed = RemainingOutputFiltersSchema.parse(filters);
+
+    if (env.useCapacityMock) {
+      return RemainingOutputResponseSchema.parse(await mockGetRemainingOutput(parsed));
+    }
+
+    const response = await api.get('/capacity/remaining-output', {
+      params: {
+        startDate: parsed.startDate,
+        endDate: parsed.endDate,
+      },
+    });
+    return RemainingOutputResponseSchema.parse(response.data);
   },
 };

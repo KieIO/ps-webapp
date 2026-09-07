@@ -7,3 +7,55 @@
 .clickable {
   cursor: pointer;
 }
+
+.editTrigger {
+  display: inline-flex;
+}
+
+.muted {
+  color: var(--color-text-muted, #9ca3af);
+}
+
+.reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  max-width: 100%;
+}
+
+.reasonTag,
+.reasonMore {
+  margin-inline-end: 0;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.reasonMore {
+  color: var(--color-text-muted, #64748b);
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.reasonTooltip {
+  max-width: 280px;
+}
+
+.reasonTooltipTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.reasonTooltipDesc {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  opacity: 0.92;
+}

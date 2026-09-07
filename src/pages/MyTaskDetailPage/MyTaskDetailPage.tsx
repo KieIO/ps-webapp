@@ -26,7 +26,9 @@ export default function MyTaskDetailPage() {
   const listPath = getTaskListPath(listCategory);
   const backLabel = getTaskListBackLabel(listCategory);
 
-  const title = task ? `Task Detail — ${formatTaskDisplayId(task)}` : 'Task Detail';
+  const title = task
+    ? `Task Detail — ${task.taskCode || formatTaskDisplayId(task)}`
+    : 'Task Detail';
 
   if (!id) {
     return null;

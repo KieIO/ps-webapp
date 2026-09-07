@@ -1,11 +1,18 @@
 import { describe, expect, it, afterEach } from 'vitest';
 import type { CreateMyTaskRequest, MyTask } from '../schemas/task.schema';
-import { INITIAL_MOCK_TASKS, getMockTasksStore, resetMockTasksStore } from './tasks.data';
+import {
+  INITIAL_MOCK_TASKS,
+  getMockTasksStore,
+  resetMockTasksStore,
+  setMockTasksStore,
+} from './tasks.data';
 import {
   filterMockTasks,
   mockAssignCreativeHead,
   mockAssignCreativeManager,
   mockCreateMyTask,
+  mockCreateRevisionTask,
+  mockListRevisionTasks,
 } from './tasks.mock';
 
 const baseTask = INITIAL_MOCK_TASKS[0];
@@ -96,6 +103,23 @@ describe('filterMockTasks dashboard drill-down filters', () => {
         outputMonth: '2026-07',
       }).map((item) => item.id),
     ).toEqual(['creative-output', 'project-creative-da']);
+  });
+
+  it('filters tasks whose work window includes workDate', () => {
+    const spanning = task({
+      id: 'spanning',
+      date: '2026-09-04T00:00:00.000Z',
+      deadline: '2026-09-06T21:19:00.000Z',
+    });
+    const otherDay = task({
+      id: 'other-day',
+      date: '2026-09-01T00:00:00.000Z',
+      deadline: '2026-09-01T23:59:59.000Z',
+    });
+
+    expect(
+      filterMockTasks([spanning, otherDay], { workDate: '2026-09-06' }).map((item) => item.id),
+    ).toEqual(['spanning']);
   });
 });
 
@@ -332,5 +356,144 @@ describe('creative CH/CM pipeline', () => {
         'dev-creative_manager',
       ),
     ).rejects.toThrow(/Overloaded/);
+  });
+});
+
+describe('mockCreateRevisionTask', () => {
+  afterEach(() => {
+    resetMockTasksStore();
+  });
+
+  it('creates a linked revision subtask with locked assignee and capacity date', async () => {
+    const created = await mockCreateRevisionTask(
+      'task-005',
+      {
+        revisionReason: 'Client đổi màu chart',
+        quantity: 10,
+        level: 2,
+        date: '2026-09-10',
+        deadline: '2026-09-12T17:00:00Z',
+      },
+      'dev-pm',
+    );
+
+    expect(created.taskKind).toBe('revision');
+    expect(created.parentTaskId).toBe('task-005');
+    expect(created.revisionRound).toBe(1);
+    expect(created.revisionReason).toBe('Client đổi màu chart');
+    expect(created.quantity).toBe(10);
+    expect(created.staff[0]?.userId).toBe('dev-pm');
+    expect(created.staffConfirmation).toBe('not_updated');
+    expect(created.pipelineStage).toBe('assigned_staff');
+    expect(created.taskCode).toContain('-R1');
+
+    const listed = await mockListRevisionTasks('task-005', 'dev-pm');
+    expect(listed.total).toBeGreaterThanOrEqual(1);
+    expect(listed.items.some((item) => item.id === created.id)).toBe(true);
+  });
+
+  it('allows quantity larger than parent (expanded scope)', async () => {
+    const parent = getMockTasksStore().find((item) => item.id === 'task-005');
+    expect(parent).toBeTruthy();
+    expect(parent!.quantity).toBe(99);
+
+    const created = await mockCreateRevisionTask(
+      'task-005',
+      {
+        revisionReason: 'Client thêm nhiều slide',
+        quantity: 140,
+        level: 3,
+        date: '2026-09-10',
+        deadline: '2026-09-12T17:00:00Z',
+      },
+      'dev-pm',
+    );
+
+    expect(created.quantity).toBe(140);
+    expect(created.quantity).toBeGreaterThan(parent!.quantity);
+  });
+
+  it('blocks a second active revision on the same parent', async () => {
+    await mockCreateRevisionTask(
+      'task-006',
+      {
+        revisionReason: 'First rework',
+        quantity: 5,
+        level: 2,
+        date: '2026-09-10',
+        deadline: '2026-09-11T17:00:00Z',
+      },
+      'dev-pm',
+    );
+
+    await expect(
+      mockCreateRevisionTask(
+        'task-006',
+        {
+          revisionReason: 'Second rework',
+          quantity: 5,
+          level: 2,
+          date: '2026-09-12',
+          deadline: '2026-09-13T17:00:00Z',
+        },
+        'dev-pm',
+      ),
+    ).rejects.toThrow(/revision chưa hoàn tất/);
+  });
+
+  it('blocks revision when parent is finished', async () => {
+    await expect(
+      mockCreateRevisionTask(
+        'npt-004',
+        {
+          revisionReason: 'Too late',
+          quantity: 1,
+          level: 1,
+          date: '2026-09-10',
+          deadline: '2026-09-11T17:00:00Z',
+        },
+        'dev-pm',
+      ),
+    ).rejects.toThrow(/finished/);
+  });
+
+  it('blocks revision when parent is cancelled', async () => {
+    const parent = getMockTasksStore().find((item) => item.id === 'task-005');
+    expect(parent).toBeTruthy();
+    setMockTasksStore(
+      getMockTasksStore().map((item) =>
+        item.id === 'task-005' ? { ...item, staffConfirmation: 'cancelled' as const } : item,
+      ),
+    );
+
+    await expect(
+      mockCreateRevisionTask(
+        'task-005',
+        {
+          revisionReason: 'Cancelled parent',
+          quantity: 1,
+          level: 1,
+          date: '2026-09-10',
+          deadline: '2026-09-11T17:00:00Z',
+        },
+        'dev-pm',
+      ),
+    ).rejects.toThrow(/hủy/);
+  });
+
+  it('blocks deadline before the work date', async () => {
+    await expect(
+      mockCreateRevisionTask(
+        'task-005',
+        {
+          revisionReason: 'Deadline too early',
+          quantity: 1,
+          level: 1,
+          date: '2026-09-12',
+          deadline: '2026-09-11T17:00:00Z',
+        },
+        'dev-pm',
+      ),
+    ).rejects.toThrow(/Deadline phải vào ngày tính workload/);
   });
 });

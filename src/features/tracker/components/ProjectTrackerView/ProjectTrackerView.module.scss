@@ -223,9 +223,9 @@ $row-alt: #f9fafb;
 
 .legendPopover {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
   gap: 16px;
-  min-width: 280px;
+  min-width: 400px;
   padding: 2px;
 }
 
@@ -321,6 +321,10 @@ $row-alt: #f9fafb;
   background: $status-overdue-text;
 }
 
+.legendBar_cancelled {
+  background: $status-on-leave-text;
+}
+
 .exportBtn {
   height: 30px;
   padding: 0 14px;
@@ -366,8 +370,6 @@ $row-alt: #f9fafb;
 .leftHeader {
   display: flex;
   flex-direction: column;
-  height: 108px;
-  min-height: 108px;
   flex-shrink: 0;
 }
 
@@ -418,10 +420,25 @@ $row-alt: #f9fafb;
   padding-left: 18px;
   background: $yellow;
   border-top: 1px solid $yellow-border;
-  border-bottom: 2px solid $navy;
+  border-bottom: 1px solid $yellow-border;
   font-size: 10px;
   font-weight: 700;
   color: $navy;
+}
+
+.capacityRowLabel {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  min-height: 40px;
+  padding-left: 18px;
+  background: #ecfdf5;
+  border-top: 1px solid #a7f3d0;
+  border-bottom: 2px solid $navy;
+  font-size: 10px;
+  font-weight: 700;
+  color: #065f46;
+  cursor: help;
 }
 
 .leftRows {
@@ -643,6 +660,10 @@ $row-alt: #f9fafb;
   height: 36px;
   background: $yellow;
   border-top: 1px solid $yellow-border;
+  border-bottom: 1px solid $yellow-border;
+}
+
+.offRowLast {
   border-bottom: 2px solid $navy;
 }
 
@@ -667,6 +688,55 @@ $row-alt: #f9fafb;
   font-weight: 600;
   line-height: 1.3;
   white-space: nowrap;
+}
+
+.capacityRow {
+  display: flex;
+  height: 40px;
+  background: #ecfdf5;
+  border-top: 1px solid #a7f3d0;
+  border-bottom: 2px solid $navy;
+}
+
+.capacityDayCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  flex-shrink: 0;
+  height: 40px;
+  padding: 2px 1px;
+  border-right: 1px solid rgb(6 95 70 / 8%);
+}
+
+.capacityDayWeekend {
+  background: rgb(6 95 70 / 4%);
+}
+
+.capacitySlides {
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0f766e;
+  white-space: nowrap;
+}
+
+.capacityDa {
+  font-size: 8.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #047857;
+  white-space: nowrap;
+}
+
+.capacityNegative {
+  color: #dc2626;
+}
+
+.capacityEmpty {
+  font-size: 9px;
+  color: #94a3b8;
 }
 
 .dateCell {
@@ -765,6 +835,7 @@ $row-alt: #f9fafb;
   border-radius: 3px;
   overflow: hidden;
   z-index: 2;
+  cursor: default;
 
   span {
     font-size: 9px;
@@ -774,6 +845,20 @@ $row-alt: #f9fafb;
     text-overflow: ellipsis;
     max-width: 100%;
   }
+}
+
+.blockClickable {
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+  }
+}
+
+/* Light, quick tracker block tooltip (antd portal root). */
+.blockTooltip {
+  pointer-events: none;
 }
 
 .active {
@@ -807,5 +892,14 @@ $row-alt: #f9fafb;
 
   span {
     color: #fff;
+  }
+}
+
+.cancelled {
+  background: $status-on-leave-text;
+
+  span {
+    color: #fff;
+    text-decoration: line-through;
   }
 }

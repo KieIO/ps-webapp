@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import type { Project } from '@/features/projects/schemas/project.schema';
 import type { MyTask } from '@/features/tasks/schemas/task.schema';
-import { getTaskDeadline, getTaskStartDate } from '@/features/tasks/utils/taskDetail';
+import { isTaskActiveOnWorkDate } from '@/features/tasks/utils/taskWorkDate';
 import { DEADLINE_RISK_DAYS } from '../constants';
 
 /** UTC calendar date key (YYYY-MM-DD) — aligned with task API day boundaries. */
@@ -18,12 +18,8 @@ export const calendarDaysUntil = (fromKey: string, toKey: string): number => {
 };
 
 /** True when the task is in progress today: startDate ≤ today ≤ endDate (inclusive). */
-export const isTaskActiveToday = (task: MyTask, today = dayjs()): boolean => {
-  const todayKey = getTodayCalendarKey(today);
-  const startKey = toCalendarDateKey(getTaskStartDate(task));
-  const endKey = toCalendarDateKey(getTaskDeadline(task));
-  return todayKey >= startKey && todayKey <= endKey;
-};
+export const isTaskActiveToday = (task: MyTask, today = dayjs()): boolean =>
+  isTaskActiveOnWorkDate(task, getTodayCalendarKey(today));
 
 export interface DeadlineRiskProject {
   id: string;

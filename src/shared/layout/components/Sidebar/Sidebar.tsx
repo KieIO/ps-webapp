@@ -6,6 +6,7 @@ import { APP_NAME } from '@/config/constants';
 import {
   SIDEBAR_ITEMS,
   collectSidebarShortcutTargets,
+  resolveClientManagementSelectedPath,
   resolveSidebarChildPath,
   resolveTaskManagementSelectedPath,
 } from '@/config/sidebar';
@@ -62,8 +63,10 @@ export function Sidebar() {
     [role, permissionConfig],
   );
 
-  const taskManagementSelectedPath = useMemo(
-    () => resolveTaskManagementSelectedPath(location.pathname, location.state),
+  const aliasedSelectedPath = useMemo(
+    () =>
+      resolveTaskManagementSelectedPath(location.pathname, location.state) ??
+      resolveClientManagementSelectedPath(location.pathname),
     [location.pathname, location.state],
   );
 
@@ -71,18 +74,16 @@ export function Sidebar() {
     for (const item of visibleItems) {
       if (!item.children) continue;
       const matchedChild = resolveSidebarChildPath(location.pathname, item.children);
-      const matchesTaskDetail = item.children.some(
-        (child) => child.path === taskManagementSelectedPath,
-      );
-      if (matchedChild || matchesTaskDetail) {
+      const matchesAlias = item.children.some((child) => child.path === aliasedSelectedPath);
+      if (matchedChild || matchesAlias) {
         return item.key;
       }
     }
     return undefined;
-  }, [location.pathname, taskManagementSelectedPath, visibleItems]);
+  }, [aliasedSelectedPath, location.pathname, visibleItems]);
 
   const selectedKey = useMemo(() => {
-    if (taskManagementSelectedPath) return taskManagementSelectedPath;
+    if (aliasedSelectedPath) return aliasedSelectedPath;
 
     for (const item of visibleItems) {
       if (item.children) {
@@ -94,7 +95,7 @@ export function Sidebar() {
       }
     }
     return location.pathname === '/' ? '/' : location.pathname;
-  }, [location.pathname, taskManagementSelectedPath, visibleItems]);
+  }, [aliasedSelectedPath, location.pathname, visibleItems]);
 
   useEffect(() => {
     if (activeParentKey) {

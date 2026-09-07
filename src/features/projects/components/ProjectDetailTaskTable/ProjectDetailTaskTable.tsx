@@ -1,9 +1,10 @@
 import { Button, Table, Tooltip } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
+import { EyeOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
+import { Link } from 'react-router-dom';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
-import { DATE_FORMAT, DATETIME_SHORT_FORMAT } from '@/config/constants';
+import { buildMyTaskDetailPath, DATE_FORMAT, DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { canViewCreativeDeadline } from '@/features/tasks/utils/creativeVisibility';
 import { ClassificationLevelBadge } from '@/features/tasks/components/ClassificationLevelBadge/ClassificationLevelBadge';
 import { TaskConfirmationBadge } from '@/features/tasks/components/TaskConfirmationBadge/TaskConfirmationBadge';
@@ -18,19 +19,53 @@ import { getMyTaskColumnSorter } from '@/features/tasks/utils/myTaskColumns';
 import type { ClassificationLevel, MyTask } from '@/features/tasks/schemas/task.schema';
 import styles from './ProjectDetailTaskTable.module.scss';
 
+const COMPLETION_COLUMN_HINT = 'Phần trăm hoàn thành do PM đánh giá khi review';
+const COMPLETION_EMPTY_HINT = 'PM chưa nhập % hoàn thành cho task này.';
+const CREATIVE_DEADLINE_HINT =
+  'Deadline nội bộ của phòng Creative. Để trống nếu task không đi qua Creative.';
+
+function ColumnTitleWithHint({
+  label,
+  hint,
+  ariaLabel,
+  stacked,
+  lines,
+}: {
+  label: string;
+  hint: string;
+  ariaLabel: string;
+  stacked?: boolean;
+  lines?: string[];
+}) {
+  const stackedLines = lines ?? (stacked ? label.split(' ') : null);
+
+  return (
+    <span className={stackedLines ? styles.columnHeaderStacked : styles.columnHeader}>
+      {stackedLines ? (
+        <span className={styles.columnLabelStacked}>
+          {stackedLines.map((line) => (
+            <span key={line} className={styles.columnLine}>
+              {line}
+            </span>
+          ))}
+        </span>
+      ) : (
+        label
+      )}
+      <Tooltip title={hint} placement="topLeft">
+        <InfoCircleOutlined className={styles.infoIcon} aria-label={ariaLabel} />
+      </Tooltip>
+    </span>
+  );
+}
+
 interface ProjectDetailTaskTableProps {
   tasks: MyTask[];
   loading: boolean;
   total: number;
-  onView?: (task: MyTask) => void;
 }
 
-export function ProjectDetailTaskTable({
-  tasks,
-  loading,
-  total,
-  onView,
-}: ProjectDetailTaskTableProps) {
+export function ProjectDetailTaskTable({ tasks, loading, total }: ProjectDetailTaskTableProps) {
   const currentUser = useAppSelector((state) => state.auth.user);
   const canViewCreativeDeadlineColumn = canViewCreativeDeadline(
     currentUser?.role,
@@ -65,15 +100,21 @@ export function ProjectDetailTaskTable({
       width: 180,
       ellipsis: true,
       sorter: getMyTaskColumnSorter('taskName'),
-      render: (name: string) => {
+      render: (name: string, record) => {
         if (!name) {
           return <span className={styles.empty}>—</span>;
         }
 
         return (
-          <Tooltip title={name}>
-            <span className={styles.truncate}>{name}</span>
-          </Tooltip>
+          <Link
+            to={buildMyTaskDetailPath(record.id)}
+            state={{ from: record.taskCategory }}
+            className={styles.taskNameLink}
+          >
+            <Tooltip title={name}>
+              <span className={styles.truncate}>{name}</span>
+            </Tooltip>
+          </Link>
         );
       },
     },
@@ -110,10 +151,19 @@ export function ProjectDetailTaskTable({
     ...(canViewCreativeDeadlineColumn
       ? [
           {
-            title: 'Deadline phòng Creative',
+            title: (
+              <ColumnTitleWithHint
+                label={MY_TASK_COLUMN_HEADERS.creativeDeadline}
+                hint={CREATIVE_DEADLINE_HINT}
+                ariaLabel="Giải thích Deadline Creative"
+                stacked
+              />
+            ),
             dataIndex: 'creativeDeadline',
             key: 'creativeDeadline',
-            width: 155,
+            width: 128,
+            showSorterTooltip: false,
+            onHeaderCell: () => ({ className: styles.stackedHeaderCell }),
             sorter: (a: MyTask, b: MyTask) => {
               const aValue = a.creativeDeadline;
               const bValue = b.creativeDeadline;
@@ -123,19 +173,38 @@ export function ProjectDetailTaskTable({
               return dayjs(aValue).unix() - dayjs(bValue).unix();
             },
             render: (value?: string | null) =>
-              value ? dayjs(value).format(DATE_FORMAT) : <span className={styles.empty}>—</span>,
+              value ? (
+                dayjs(value).format(DATE_FORMAT)
+              ) : (
+                <span className={styles.empty}>Chưa có</span>
+              ),
           },
         ]
       : []),
     {
-      title: MY_TASK_COLUMN_HEADERS.completion,
+      title: (
+        <ColumnTitleWithHint
+          label={MY_TASK_COLUMN_HEADERS.completion}
+          hint={COMPLETION_COLUMN_HINT}
+          ariaLabel="Giải thích % hoàn thành"
+          lines={['%', 'Hoàn thành']}
+        />
+      ),
       dataIndex: 'completionPercent',
       key: 'completionPercent',
-      width: 100,
-      align: 'right',
+      width: 128,
+      align: 'right' as const,
+      showSorterTooltip: false,
+      onHeaderCell: () => ({ className: styles.stackedHeaderCell }),
       sorter: getMyTaskColumnSorter('completion'),
       render: (value?: number) =>
-        value != null ? `${value}%` : <span className={styles.empty}>—</span>,
+        value != null ? (
+          `${value}%`
+        ) : (
+          <Tooltip title={COMPLETION_EMPTY_HINT} placement="topRight">
+            <span className={styles.emptyHint}>Chưa đánh giá</span>
+          </Tooltip>
+        ),
     },
     {
       title: 'Qty',
@@ -160,12 +229,15 @@ export function ProjectDetailTaskTable({
       align: 'center',
       fixed: 'right',
       render: (_, record) => (
-        <Button
-          type="text"
-          icon={<EyeOutlined />}
-          aria-label={`View task ${record.taskName}`}
-          onClick={() => onView?.(record)}
-        />
+        <Tooltip title="Xem chi tiết task">
+          <Link
+            to={buildMyTaskDetailPath(record.id)}
+            state={{ from: record.taskCategory }}
+            aria-label={`View task ${record.taskName}`}
+          >
+            <Button type="text" icon={<EyeOutlined />} />
+          </Link>
+        </Tooltip>
       ),
     },
   ];
@@ -181,9 +253,9 @@ export function ProjectDetailTaskTable({
         rowKey="id"
         columns={columns}
         dataSource={tasks}
-        scroll={{ x: canViewCreativeDeadlineColumn ? 1315 : 1160 }}
+        scroll={{ x: canViewCreativeDeadlineColumn ? 1320 : 1188 }}
         pagination={{
-          pageSize: PROJECT_TASKS_PAGE_SIZE,
+          defaultPageSize: PROJECT_TASKS_PAGE_SIZE,
           total,
           showSizeChanger: true,
           pageSizeOptions: [...PROJECT_TASKS_PAGE_SIZE_OPTIONS],

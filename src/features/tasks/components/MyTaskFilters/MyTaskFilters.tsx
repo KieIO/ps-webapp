@@ -1,10 +1,12 @@
-import { Button, DatePicker, Input, Select } from 'antd';
+import { Button, DatePicker, Input, Select, Tooltip } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { DATE_FORMAT } from '@/config/constants';
 import { FilterSection } from '@/shared/ui/FilterSection/FilterSection';
 import { CONFIRMATION_OPTIONS } from '../../constants';
 import { useMyTaskProjectOptions, useMyTaskStaffNameOptions } from '../../hooks/useMyTaskList';
 import type { MyTaskListFilters, TaskCategory } from '../../schemas/task.schema';
+import { todayWorkDate } from '../../utils/taskWorkDate';
 import styles from './MyTaskFilters.module.scss';
 
 interface MyTaskFiltersProps {
@@ -26,10 +28,46 @@ export function MyTaskFilters({
 }: MyTaskFiltersProps) {
   const { data: projectOptions = [] } = useMyTaskProjectOptions(taskCategory);
   const { data: staffNameOptions = [] } = useMyTaskStaffNameOptions(taskCategory);
+  const today = todayWorkDate();
+  const isTodaySelected = filters.workDate === today;
 
   return (
     <div className={styles.wrapper}>
       <FilterSection onReset={onReset} className={styles.filterSection}>
+        {taskCategory === 'project' ? (
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="my-task-work-date-filter">
+              Ngày làm việc
+            </label>
+            <div className={styles.workDateControls}>
+              <Tooltip title="Task có khoảng date → deadline trùng hôm nay">
+                <Button
+                  type={isTodaySelected ? 'primary' : 'default'}
+                  onClick={() => onChange({ ...filters, workDate: today })}
+                >
+                  Hôm nay
+                </Button>
+              </Tooltip>
+              <DatePicker
+                id="my-task-work-date-filter"
+                picker="date"
+                allowClear
+                format={DATE_FORMAT}
+                placeholder="Tất cả ngày"
+                presets={[{ label: 'Hôm nay', value: dayjs() }]}
+                value={filters.workDate ? dayjs(filters.workDate, 'YYYY-MM-DD') : null}
+                onChange={(value) =>
+                  onChange({
+                    ...filters,
+                    workDate: value?.format('YYYY-MM-DD'),
+                  })
+                }
+                className={styles.datePicker}
+              />
+            </div>
+          </div>
+        ) : null}
+
         <div className={styles.field}>
           <label className={styles.label} htmlFor="my-task-search">
             Search
@@ -123,19 +161,20 @@ export function MyTaskFilters({
             </div>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="my-task-completed-month-filter">
-                Tháng hoàn thành
+                Hoàn thành trong tháng
               </label>
               <DatePicker
                 id="my-task-completed-month-filter"
                 picker="month"
                 format="MM/YYYY"
                 allowClear
-                disabled={!filters.timeliness}
+                placeholder="Chọn tháng"
                 value={filters.completedMonth ? dayjs(filters.completedMonth, 'YYYY-MM') : null}
                 onChange={(value) =>
                   onChange({
                     ...filters,
-                    timeliness: value ? filters.timeliness : undefined,
+                    // Month filter requires a completion result; default to all finished tasks.
+                    timeliness: value ? (filters.timeliness ?? 'completed') : undefined,
                     completedMonth: value?.format('YYYY-MM'),
                   })
                 }
@@ -169,19 +208,20 @@ export function MyTaskFilters({
             </div>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="my-task-output-month-filter">
-                Tháng task
+                Ngày task trong tháng
               </label>
               <DatePicker
                 id="my-task-output-month-filter"
                 picker="month"
                 format="MM/YYYY"
                 allowClear
-                disabled={!filters.outputMetric}
+                placeholder="Chọn tháng"
                 value={filters.outputMonth ? dayjs(filters.outputMonth, 'YYYY-MM') : null}
                 onChange={(value) =>
                   onChange({
                     ...filters,
-                    outputMetric: value ? filters.outputMetric : undefined,
+                    // Month filter requires an output type; default to project slides.
+                    outputMetric: value ? (filters.outputMetric ?? 'project_slides') : undefined,
                     outputMonth: value?.format('YYYY-MM'),
                   })
                 }

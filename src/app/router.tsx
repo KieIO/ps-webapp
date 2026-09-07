@@ -119,6 +119,7 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute
             allowedRoles={[
+              ROLES.EMPLOYEE,
               ROLES.PM,
               ROLES.CREATIVE_MANAGER,
               ROLES.CREATIVE_HEAD,
@@ -132,6 +133,21 @@ const router = createBrowserRouter([
           { path: ROUTES.PROJECTS_ARCHIVED.slice(1), element: <ArchivedProjectsPage /> },
           { path: 'projects/:id', element: <ProjectDetailPage /> },
           { path: 'clients/:id', element: <ClientDetailPage /> },
+        ],
+      },
+      {
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              ROLES.PM,
+              ROLES.CREATIVE_MANAGER,
+              ROLES.CREATIVE_HEAD,
+              ROLES.HEAD,
+              ROLES.ADMIN,
+            ]}
+          />
+        ),
+        children: [
           { path: 'tasks/manage', element: <TaskManagePage /> },
           { path: 'tasks/new', element: <TaskFormPage /> },
           { path: 'tasks/:id/edit', element: <TaskFormPage /> },

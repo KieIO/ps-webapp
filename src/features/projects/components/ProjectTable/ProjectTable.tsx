@@ -473,7 +473,7 @@ export function ProjectTable({
         dataSource={projects}
         scroll={{ x: scrollX }}
         pagination={{
-          pageSize: PROJECTS_PAGE_SIZE,
+          defaultPageSize: PROJECTS_PAGE_SIZE,
           total,
           showSizeChanger: true,
           pageSizeOptions: [...PROJECTS_PAGE_SIZE_OPTIONS],

@@ -7,6 +7,7 @@ import type {
   MyTask,
   TaskAssignee,
 } from '../schemas/task.schema';
+import { isRevisionTask } from './taskRevision';
 import {
   canSelectAssigneeWithCapacity,
   displayCapacityPercentFromSnapshot,
@@ -128,7 +129,7 @@ export const resolveCreativeAssignMode = (task: MyTask): CreativeAssignMode | nu
 
 export const getCreativeSplitSubtasks = (parent: MyTask, allTasks: MyTask[]): MyTask[] =>
   allTasks
-    .filter((entry) => entry.parentTaskId === parent.id)
+    .filter((entry) => entry.parentTaskId === parent.id && !isRevisionTask(entry))
     .sort((a, b) => a.taskCode.localeCompare(b.taskCode));
 
 /** Staff on whole-assigned parent (excludes CM parked on assignees). */
@@ -169,7 +170,7 @@ export const pipelineAssigneeLabel = (task: MyTask, allTasks?: MyTask[]): string
   let names = namesFromStaff(task.staff);
   if (stage === 'split' && names.length === 0 && allTasks?.length) {
     const childStaff = allTasks
-      .filter((entry) => entry.parentTaskId === task.id)
+      .filter((entry) => entry.parentTaskId === task.id && !isRevisionTask(entry))
       .flatMap((entry) => entry.staff);
     names = namesFromStaff(childStaff);
   }

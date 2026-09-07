@@ -20,7 +20,10 @@ import {
   compareSpecialistTaskPoints,
   compareWorkStatus,
 } from '../../utils/capacityTableSort';
-import { CapacityColumnTitle } from '../CapacityHelpTooltip/CapacityHelpTooltip';
+import {
+  CapacityColumnTitle,
+  SpecialistTaskPointsColumnTitle,
+} from '../CapacityHelpTooltip/CapacityHelpTooltip';
 import { JobLevelBadge } from '../JobLevelBadge/JobLevelBadge';
 import styles from './CapacityTable.module.scss';
 
@@ -83,7 +86,7 @@ export function CapacityTable({
       sortDirections: ['ascend', 'descend'],
     },
     {
-      title: 'Điểm task CM',
+      title: <SpecialistTaskPointsColumnTitle />,
       dataIndex: 'specialistTaskPoints',
       key: 'specialistTaskPoints',
       width: 130,

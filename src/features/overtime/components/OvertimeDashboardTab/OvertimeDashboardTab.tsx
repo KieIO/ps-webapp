@@ -1,9 +1,11 @@
-import { Alert, Button, DatePicker, Empty, Skeleton, Table } from 'antd';
+import { Alert, Button, DatePicker, Empty, Skeleton, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs, { type Dayjs } from 'dayjs';
+import { CircleHelp } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
+import { OT_STATUS_LABELS } from '../../constants';
 import { useOvertimeDashboard } from '../../hooks/useOvertime';
 import type {
   OvertimeDashboardAlert,
@@ -12,6 +14,28 @@ import type {
 } from '../../schemas/overtime.schema';
 import styles from './OvertimeDashboardTab.module.scss';
 
+const thresholdAlertsHelp = (
+  <div className={styles.tooltipContent}>
+    <p className={styles.tooltipLead}>
+      Liệt kê nhân sự có tổng OT ước tính trong 1 tuần vượt ngưỡng (mặc định 20h/tuần, chỉnh ở
+      Settings).
+    </p>
+    <p className={styles.tooltipLead}>Cách tính:</p>
+    <ul className={styles.tooltipList}>
+      <li>Lấy OT request trong tháng đang lọc.</li>
+      <li>
+        Chỉ tính trạng thái {OT_STATUS_LABELS.approved}, {OT_STATUS_LABELS.in_progress},{' '}
+        {OT_STATUS_LABELS.awaiting_review}, {OT_STATUS_LABELS.completed}. Không tính{' '}
+        {OT_STATUS_LABELS.pending} và {OT_STATUS_LABELS.rejected}.
+      </li>
+      <li>Gom theo nhân sự và tuần (Thứ 2 đến Chủ nhật), cộng giờ ước tính.</li>
+      <li>Tuần nào vượt ngưỡng thì hiện một dòng.</li>
+    </ul>
+    <p className={styles.tooltipNote}>
+      Chỉ mang tính cảnh báo trên dashboard, không chặn tạo hoặc duyệt OT.
+    </p>
+  </div>
+);
 function exportByPersonCsv(year: number, month: number, rows: OvertimeDashboardPerson[]) {
   const header = ['Assignee', 'Estimated hours', 'Actual hours', 'Request count'];
   const lines = rows.map((row) =>
@@ -206,7 +230,20 @@ export function OvertimeDashboardTab() {
             </CardWrapper>
           </div>
 
-          <CardWrapper title="Cảnh báo vượt ngưỡng">
+          <CardWrapper
+            title="Cảnh báo vượt ngưỡng"
+            actions={
+              <Tooltip title={thresholdAlertsHelp} placement="topLeft" mouseEnterDelay={0.15}>
+                <button
+                  type="button"
+                  className={styles.helpButton}
+                  aria-label="Giải thích cảnh báo vượt ngưỡng"
+                >
+                  <CircleHelp size={16} aria-hidden />
+                </button>
+              </Tooltip>
+            }
+          >
             <Table
               rowKey={(row) => `${row.assignee.userId}-${row.weekStart}`}
               columns={alertColumns}

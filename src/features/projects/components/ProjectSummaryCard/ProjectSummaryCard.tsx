@@ -1,4 +1,5 @@
-import { Button, Popconfirm, Tag } from 'antd';
+import { useMemo } from 'react';
+import { Button, Popconfirm, Tag, Tooltip } from 'antd';
 import {
   ArrowRightOutlined,
   DeleteOutlined,
@@ -10,8 +11,12 @@ import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { UserNameLink } from '@/shared/ui/UserNameLink/UserNameLink';
+import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/CompletionProgressCell';
 import { EvaluationLevelBadge } from '../EvaluationLevelBadge/EvaluationLevelBadge';
 import { ProjectStatusBadge } from '../ProjectStatusBadge/ProjectStatusBadge';
+import { useProjectTasks } from '../../hooks/useProjectTasks';
+import { PROJECT_TABLE_COLUMN_HEADERS, STATUS_VARIANT } from '../../constants';
+import { resolveProjectDetailStats } from '../../utils/projectProgress';
 import type { EvaluationLevel, Project } from '../../schemas/project.schema';
 import styles from './ProjectSummaryCard.module.scss';
 
@@ -40,7 +45,16 @@ export function ProjectSummaryCard({
   const canEdit = can('EDIT_PROJECT');
   const canArchive = can('ARCHIVE_PROJECT');
   const canDelete = can('DELETE_PROJECT');
+  const canViewAllTasks = can('VIEW_ALL_TASKS');
   const isArchived = Boolean(project.archivedAt);
+  const { data: taskList } = useProjectTasks(project.name);
+  const stats = useMemo(
+    () => resolveProjectDetailStats(project, canViewAllTasks ? taskList?.items : undefined),
+    [canViewAllTasks, project, taskList?.items],
+  );
+  const slidesLabel = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(
+    stats.totalSlides,
+  );
 
   return (
     <section className={styles.card}>
@@ -169,6 +183,38 @@ export function ProjectSummaryCard({
           </Button>
         </div>
       </div>
+
+      <dl className={styles.stats}>
+        <div className={styles.stat}>
+          <dt className={styles.statLabel}>{PROJECT_TABLE_COLUMN_HEADERS.tasks}</dt>
+          <dd className={styles.statValue}>
+            <Tooltip title="Tổng số task của project">
+              <span>{stats.taskCount}</span>
+            </Tooltip>
+          </dd>
+        </div>
+        <div className={styles.stat}>
+          <dt className={styles.statLabel}>{PROJECT_TABLE_COLUMN_HEADERS.slides}</dt>
+          <dd className={styles.statValue}>
+            <Tooltip title="Tổng quantity của task loại slides (không gồm DA)">
+              <span>{slidesLabel}</span>
+            </Tooltip>
+          </dd>
+        </div>
+        <div className={styles.stat}>
+          <dt className={styles.statLabel}>{PROJECT_TABLE_COLUMN_HEADERS.completion}</dt>
+          <dd className={styles.statProgress}>
+            <Tooltip title="Trung bình % hoàn thành của các task đã có đánh giá">
+              <div>
+                <CompletionProgressCell
+                  percent={stats.averageCompletionPercent}
+                  variant={STATUS_VARIANT[project.status]}
+                />
+              </div>
+            </Tooltip>
+          </dd>
+        </div>
+      </dl>
     </section>
   );
 }

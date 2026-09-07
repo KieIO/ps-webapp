@@ -5,10 +5,13 @@ import { Link } from 'react-router-dom';
 import { ROUTES } from '@/config/constants';
 import { CreateProjectModal } from '@/features/projects/components/CreateProjectModal/CreateProjectModal';
 import { ProjectsList } from '@/features/projects/components/ProjectsList/ProjectsList';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 
 export default function ProjectsPage() {
   const [createOpen, setCreateOpen] = useState(false);
+  const { can } = usePermission();
+  const canCreate = can('CREATE_PROJECT');
 
   return (
     <div>
@@ -20,14 +23,18 @@ export default function ProjectsPage() {
             <Link to={ROUTES.PROJECTS_ARCHIVED}>
               <Button icon={<InboxOutlined />}>Đã lưu trữ</Button>
             </Link>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-              Tạo dự án
-            </Button>
+            {canCreate ? (
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+                Tạo dự án
+              </Button>
+            ) : null}
           </Space>
         }
       />
       <ProjectsList />
-      <CreateProjectModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      {canCreate ? (
+        <CreateProjectModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      ) : null}
     </div>
   );
 }

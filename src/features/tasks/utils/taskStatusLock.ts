@@ -15,13 +15,14 @@ export const isCancelledTask = (task: Pick<MyTask, 'staffConfirmation'>): boolea
 export const canCancelTask = (role: Role | undefined): boolean =>
   role != null && role !== ROLES.EMPLOYEE;
 
-/** Employees cannot edit task meta; PM+ (and Head/Admin) can. Status update stays separate. */
+/** Employees and Creative Managers cannot edit task meta via the general edit flow.
+ * CM uses Creative pipeline assign/edit endpoints for owned creative tasks instead. */
 export const canEditTask = (role: Role | undefined): boolean =>
-  role != null && role !== ROLES.EMPLOYEE;
+  role != null && role !== ROLES.EMPLOYEE && role !== ROLES.CREATIVE_MANAGER;
 
-/** Employees cannot delete tasks; PM+ (and Head/Admin) can. */
+/** Employees cannot delete tasks; PM+ (and Head/Admin) can. CM uses pipeline flows only. */
 export const canDeleteTask = (role: Role | undefined): boolean =>
-  role != null && role !== ROLES.EMPLOYEE;
+  role != null && role !== ROLES.EMPLOYEE && role !== ROLES.CREATIVE_MANAGER;
 
 /**
  * Cancelled tasks remain visible, but only admins may leave the cancelled status.

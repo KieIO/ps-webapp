@@ -1,0 +1,18 @@
+.alert {
+  margin-bottom: 16px;
+}
+
+.briefItem {
+  grid-column: 1 / -1;
+}
+
+.briefValue {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}

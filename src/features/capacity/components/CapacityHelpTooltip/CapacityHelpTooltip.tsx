@@ -97,10 +97,108 @@ export function CapacityColumnTitle({
     <span className={styles.columnHeader}>
       Capacity
       <CapacityHelpTooltip
-        title={<EmployeeCapacityTooltipContent periodLabel={periodLabel} isPeriodView={isPeriodView} />}
+        title={
+          <EmployeeCapacityTooltipContent periodLabel={periodLabel} isPeriodView={isPeriodView} />
+        }
         ariaLabel="Cách tính Capacity"
         placement="top"
       />
     </span>
+  );
+}
+
+function ColumnTitleWithHelp({
+  label,
+  ariaLabel,
+  children,
+}: {
+  label: string;
+  ariaLabel: string;
+  children: ReactNode;
+}) {
+  return (
+    <span className={styles.columnHeader}>
+      {label}
+      <CapacityHelpTooltip title={children} ariaLabel={ariaLabel} placement="top" />
+    </span>
+  );
+}
+
+function TooltipBlock({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className={styles.tooltipContent}>
+      <p className={styles.tooltipTitle}>{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function DailyCapacityTooltipContent() {
+  return (
+    <TooltipBlock title="Capacity/ngày">
+      <p className={styles.tooltipBody}>Giới hạn điểm làm việc tối đa mỗi ngày theo chức danh.</p>
+      <p className={styles.tooltipBody}>Dùng làm mẫu số khi tính % capacity trên trang Capacity.</p>
+    </TooltipBlock>
+  );
+}
+
+function ConversionRatioTooltipContent() {
+  return (
+    <TooltipBlock title="Tỷ lệ CM/QL">
+      <p className={styles.tooltipBody}>
+        <strong>CM</strong> — Creative Manager (quản lý sáng tạo)
+        <br />
+        <strong>QL</strong> — Quản lý (PM, trưởng nhóm…)
+      </p>
+      <p className={styles.tooltipBody}>
+        Phần trăm capacity/ngày dành cho công việc task. Phần còn lại là điều phối, họp, review…
+      </p>
+      <ul className={styles.tooltipList}>
+        <li>
+          <strong>Staff</strong> (làm task trực tiếp): thường <strong>100%</strong>
+        </li>
+        <li>
+          <strong>PM / CM</strong>: thường <strong>30–75%</strong>
+        </li>
+      </ul>
+    </TooltipBlock>
+  );
+}
+
+function SpecialistTaskPointsTooltipContent() {
+  return (
+    <TooltipBlock title="Điểm task CM">
+      <p className={styles.tooltipBody}>
+        <strong>CM</strong> — Creative Manager. Cột này cũng áp dụng cho các chức danh quản lý khác.
+      </p>
+      <p className={styles.tooltipFormula}>Capacity/ngày × Tỷ lệ CM/QL ÷ 100</p>
+      <p className={styles.tooltipBody}>
+        Tự tính từ cấu hình chức danh (Settings → Employee capacity formula).
+      </p>
+    </TooltipBlock>
+  );
+}
+
+export function DailyCapacityColumnTitle() {
+  return (
+    <ColumnTitleWithHelp label="Capacity/ngày" ariaLabel="Giải thích Capacity/ngày">
+      <DailyCapacityTooltipContent />
+    </ColumnTitleWithHelp>
+  );
+}
+
+export function ConversionRatioColumnTitle() {
+  return (
+    <ColumnTitleWithHelp label="Tỷ lệ CM/QL" ariaLabel="Giải thích Tỷ lệ CM/QL">
+      <ConversionRatioTooltipContent />
+    </ColumnTitleWithHelp>
+  );
+}
+
+export function SpecialistTaskPointsColumnTitle() {
+  return (
+    <ColumnTitleWithHelp label="Điểm task CM" ariaLabel="Giải thích Điểm task CM">
+      <SpecialistTaskPointsTooltipContent />
+    </ColumnTitleWithHelp>
   );
 }

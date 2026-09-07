@@ -8,11 +8,13 @@ import type {
   AssignMyTaskRequest,
   CreateMyTaskRequest,
   CreateQualityReviewRequest,
+  CreateRevisionRequest,
   MyTask,
   MyTaskListFilters,
   MyTaskListResponse,
   QualityReview,
   QualityReviewListResponse,
+  RevisionListResponse,
   TaskAssignee,
   UpdateCreativePipelineRequest,
   UpdateHeadMyTaskRequest,
@@ -24,6 +26,7 @@ import type {
 import { UNASSIGNED_STAFF_LABEL } from '../constants';
 import { buildFallbackTaskHistory } from '../utils/taskDetail';
 import { normalizeTaskDateEnd, normalizeTaskDateStart } from '../utils/taskDates';
+import { isTaskActiveOnWorkDate } from '../utils/taskWorkDate';
 import { computeTaskLevel } from '../utils/taskLevel';
 import { isStaffAssignable } from '../utils/staffAvailability';
 import { resolveStaffFromUserId } from '../utils/staff';
@@ -43,8 +46,20 @@ import {
   resolveCreatePipelineStage,
   resolveEffectivePipelineStage,
 } from '../utils/creativePipeline';
+import {
+  ACTIVE_REVISION_CONFIRMATIONS,
+  getDirectRevisionChildren,
+  getNextRevisionRound,
+  getRequestRevisionBlockReason,
+  assertRevisionQuantity,
+  isRevisionDeadlineOnOrAfterWorkDate,
+  isRevisionTask,
+  REQUEST_REVISION_BLOCK_MESSAGES,
+  REVISION_DEADLINE_BEFORE_WORK_DATE_MESSAGE,
+} from '../utils/taskRevision';
 import { enrichMockTaskWithProjectContext } from './mockTaskProjectEnrichment';
 import { computeProjectLevel } from '@/features/projects/utils/projectLevel';
+import { promoteMockProjectInProgressIfNeeded } from '@/features/projects/mock/projects.data';
 import {
   getMockTasksStore,
   MOCK_ASSIGNABLE_STAFF,
@@ -52,6 +67,9 @@ import {
   setMockTasksStore,
 } from './tasks.data';
 import { mockDelay } from '@/shared/mock/mockDelay';
+
+const shouldPromoteProjectFromConfirmation = (confirmation: MyTask['staffConfirmation']): boolean =>
+  confirmation === 'confirmed' || confirmation === 'finished';
 
 const roleHasDefaultPermission = (role: Role, permission: keyof typeof PERMISSIONS): boolean =>
   (PERMISSIONS[permission] as readonly Role[]).includes(role);
@@ -145,7 +163,8 @@ export const filterMockTasks = (
       const assigneeIds = task.staff.map((member) => member.userId).filter(Boolean);
       const isCreativeManager =
         task.creativeManager?.userId != null && task.creativeManager.userId === assigneeUserId;
-      if (assigneeIds.length > 0 && !assigneeIds.includes(assigneeUserId) && !isCreativeManager) {
+      const isAssignee = assigneeIds.includes(assigneeUserId);
+      if (!isAssignee && !isCreativeManager) {
         return false;
       }
     }
@@ -182,6 +201,7 @@ export const filterMockTasks = (
       if (filters.outputMetric === 'project_slides' && !isProjectOutputTask(task)) return false;
       if (filters.outputMetric === 'creative_da' && !isCreativeDATask(task)) return false;
     }
+    if (filters.workDate && !isTaskActiveOnWorkDate(task, filters.workDate)) return false;
     if (search) {
       const haystack =
         `${task.taskCode} ${task.projectName} ${task.taskName} ${task.description}`.toLowerCase();
@@ -201,7 +221,7 @@ export const mockGetMyTaskList = async (
     throw new Error('outputMetric and outputMonth must be provided together');
   }
   const items = filterMockTasks(getMockTasksStore(), filters, assigneeUserId, viewerRole).map(
-    enrichMockTaskWithProjectContext,
+    (task) => withRevisionChildCount(enrichMockTaskWithProjectContext(task)),
   );
   return { items, total: items.length };
 };
@@ -210,7 +230,7 @@ const canViewTask = (task: MyTask, viewerUserId?: string, viewerRole?: Role): bo
   if (!viewerUserId) return false;
   if (canViewAllTasks(viewerUserId, viewerRole)) return true;
   const assigneeIds = task.staff.map((member) => member.userId).filter(Boolean);
-  if (assigneeIds.length === 0) return true;
+  if (task.creativeManager?.userId === viewerUserId) return true;
   return assigneeIds.includes(viewerUserId);
 };
 
@@ -227,7 +247,21 @@ export const mockGetMyTaskById = async (
   if (!canViewTask(task, viewerUserId, viewerRole)) {
     throw new Error('You do not have permission to view this task');
   }
-  return enrichMockTaskWithProjectContext(task);
+  return withRevisionChildCount(enrichMockTaskWithProjectContext(task));
+};
+
+const withRevisionChildCount = (task: MyTask): MyTask => {
+  if (isRevisionTask(task)) {
+    return { ...task, revisionChildCount: 0, activeRevisionChildCount: 0 };
+  }
+  const children = getDirectRevisionChildren(task.id, getMockTasksStore());
+  return {
+    ...task,
+    revisionChildCount: children.length,
+    activeRevisionChildCount: children.filter((child) =>
+      ACTIVE_REVISION_CONFIRMATIONS.has(child.staffConfirmation),
+    ).length,
+  };
 };
 
 export const mockGetMyTaskHistory = async (
@@ -276,6 +310,84 @@ export const mockCreateQualityReview = async (
   const existing = mockQualityReviewsByTask.get(id) ?? [];
   mockQualityReviewsByTask.set(id, [item, ...existing]);
   return item;
+};
+
+export const mockListRevisionTasks = async (
+  parentId: string,
+  viewerUserId?: string,
+  viewerRole?: Role,
+): Promise<RevisionListResponse> => {
+  await mockDelay();
+  await mockGetMyTaskById(parentId, viewerUserId, viewerRole);
+  const items = getDirectRevisionChildren(parentId, getMockTasksStore()).map((task) =>
+    enrichMockTaskWithProjectContext(task),
+  );
+  return { items, total: items.length };
+};
+
+export const mockCreateRevisionTask = async (
+  parentId: string,
+  payload: CreateRevisionRequest,
+  editorUserId?: string,
+): Promise<MyTask> => {
+  await mockDelay();
+  const parent = await mockGetMyTaskById(parentId, editorUserId);
+  const canEvaluate = editorUserId ? canEvaluateTask(editorUserId) : false;
+  const store = getMockTasksStore();
+  const existingRevisions = getDirectRevisionChildren(parentId, store);
+
+  const blockReason = getRequestRevisionBlockReason(parent, existingRevisions, canEvaluate);
+  if (blockReason) {
+    throw new Error(REQUEST_REVISION_BLOCK_MESSAGES[blockReason]);
+  }
+
+  // Option A: no max vs parent quantity — only > 0 (expanded scope is allowed).
+  assertRevisionQuantity(payload.quantity);
+  if (!isRevisionDeadlineOnOrAfterWorkDate(payload.date, payload.deadline)) {
+    throw new Error(REVISION_DEADLINE_BEFORE_WORK_DATE_MESSAGE);
+  }
+
+  const round = getNextRevisionRound(parentId, store);
+  const now = new Date().toISOString();
+  const dateStart = normalizeTaskDateStart(payload.date);
+  const deadline = payload.deadline.includes('T')
+    ? payload.deadline
+    : normalizeTaskDateEnd(payload.deadline);
+
+  // Assignee locked to parent staff — reassignment not supported yet.
+  const staff = parent.staff.map((member) => ({ ...member }));
+
+  const revision: MyTask = enrichMockTaskWithProjectContext({
+    ...parent,
+    id: `task-rev-${Date.now()}`,
+    taskCode: `${parent.taskCode}-R${round}`,
+    taskName: parent.taskName,
+    description: payload.revisionReason.trim(),
+    quantity: payload.quantity,
+    level: payload.level,
+    date: dateStart,
+    deadline,
+    creativeDeadline: parent.creativeDeadline ?? deadline,
+    staff,
+    parentTaskId: parent.id,
+    taskKind: 'revision',
+    revisionRound: round,
+    revisionReason: payload.revisionReason.trim(),
+    pipelineStage: 'assigned_staff',
+    assignedAt: now,
+    staffConfirmation: 'not_updated',
+    staffNote: '',
+    completionPercent: null,
+    pmEvaluation: '',
+    pmNote: '',
+    overtimeRequestId: undefined,
+    actualHours: null,
+    updatedAt: now,
+    completedAt: undefined,
+  });
+
+  setMockTasksStore([revision, ...store]);
+  return revision;
 };
 
 export const mockGetMyTaskProjectOptions = async (
@@ -570,6 +682,9 @@ export const mockUpdateMyTask = async (
   const next = [...tasks];
   next[index] = updated;
   setMockTasksStore(next);
+  if (shouldPromoteProjectFromConfirmation(updated.staffConfirmation)) {
+    promoteMockProjectInProgressIfNeeded(updated.projectName);
+  }
   return enrichMockTaskWithProjectContext(updated);
 };
 
@@ -688,6 +803,9 @@ export const mockUpdateMyTaskStatus = async (
   const next = [...tasks];
   next[index] = updated;
   setMockTasksStore(next);
+  if (shouldPromoteProjectFromConfirmation(updated.staffConfirmation)) {
+    promoteMockProjectInProgressIfNeeded(updated.projectName);
+  }
   return updated;
 };
 
@@ -897,6 +1015,7 @@ export const mockAssignCreativeManager = async (
       quantity: subtask.quantity,
       staff,
       parentTaskId: current.id,
+      taskKind: 'split',
       pipelineStage: 'assigned_staff',
       assignedAt: now,
       staffConfirmation: 'not_updated',

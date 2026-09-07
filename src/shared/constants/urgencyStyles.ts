@@ -15,7 +15,9 @@ export const URGENCY_STYLES: Record<UrgencyKey, { dot: string; border: string; l
   yellow: { dot: '#EAB308', border: '#EAB308', label: 'Pending Feedback' },
   cyan: { dot: '#06B6D4', border: '#06B6D4', label: 'Pending brief' },
   // Off-white / very light grey — subtle border keeps the dot visible on light UI.
-  gray: { dot: '#E5E7EB', border: '#D1D5DB', label: 'Finished' },
+  // "Kết thúc" (not "Hoàn thành") — urgency marker for closed projects/tasks; task
+  // confirmation uses "Hoàn thành" separately on the tracker legend.
+  gray: { dot: '#E5E7EB', border: '#D1D5DB', label: 'Kết thúc' },
 };
 
 export const URGENCY_AUTO_STYLE = {

@@ -169,7 +169,7 @@ const COLUMN_WIDTHS: Record<MyTaskColumnKey, number> = {
   level: 90,
   quantity: 110,
   date: 145,
-  creativeDeadline: 155,
+  creativeDeadline: 118,
   urgency: 135,
   description: 240,
   staffName: 180,
@@ -475,6 +475,10 @@ export const buildMyTaskDataColumns = (
       case 'finishedDate':
         return {
           ...base,
+          onHeaderCell:
+            def.key === 'creativeDeadline'
+              ? () => ({ style: { whiteSpace: 'normal', lineHeight: 1.3 } })
+              : undefined,
           render: (_, record) => {
             const ctx = resolveProjectContextFromTask(record);
             const value =

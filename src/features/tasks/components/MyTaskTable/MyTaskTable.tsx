@@ -31,6 +31,15 @@ import {
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
 import { getMyTaskCompletionProgressStatus, isMyTaskDateAtRisk } from '../../utils/taskDeadline';
 import { getTaskDeadline } from '../../utils/taskDetail';
+import {
+  areParentActionsLockedByActiveRevision,
+  formatHasRevisionChildrenLabel,
+  formatRevisionLabel,
+  hasActiveRevisionChildren,
+  hasRevisionChildren,
+  isRevisionTask,
+  PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION,
+} from '../../utils/taskRevision';
 import { canChangeTaskStatus, TASK_STATUS_LOCKED_MESSAGE } from '../../utils/taskStatusLock';
 import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/CompletionProgressCell';
 import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
@@ -70,6 +79,11 @@ const renderText = (value: string) => {
 
 const renderTaskDetailLink = (label: string, record: MyTask) => {
   if (!label) return <span className={styles.empty}>—</span>;
+
+  const isRevision = isRevisionTask(record);
+  const parentHasRevisions = hasRevisionChildren(record);
+  const parentHasActiveRevision = hasActiveRevisionChildren(record);
+
   return (
     <span className={styles.taskNameCell}>
       <Link
@@ -81,11 +95,42 @@ const renderTaskDetailLink = (label: string, record: MyTask) => {
           <span className={styles.truncate}>{label}</span>
         </Tooltip>
       </Link>
-      {record.overtimeRequestId ? (
-        <Tag color="orange" className={styles.otBadge}>
-          OT
-        </Tag>
-      ) : null}
+      <span className={styles.taskNameBadges}>
+        {record.overtimeRequestId ? (
+          <Tag color="orange" className={styles.otBadge}>
+            OT
+          </Tag>
+        ) : null}
+        {isRevision ? (
+          <Tooltip title={`Đây là revision subtask · ${record.taskCode}`}>
+            <Tag color="purple" className={styles.otBadge}>
+              {formatRevisionLabel(record)}
+            </Tag>
+          </Tooltip>
+        ) : null}
+        {parentHasRevisions ? (
+          <Tooltip
+            title={
+              parentHasActiveRevision
+                ? PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION
+                : 'Mở task và xem tab Revision'
+            }
+          >
+            <Link
+              to={buildMyTaskDetailPath(record.id, { tab: 'revision' })}
+              state={{ from: record.taskCategory }}
+              className={styles.revisionBadgeLink}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <Tag color={parentHasActiveRevision ? 'gold' : 'cyan'} className={styles.otBadge}>
+                {formatHasRevisionChildrenLabel(record.revisionChildCount ?? 0, {
+                  activeCount: record.activeRevisionChildCount ?? 0,
+                })}
+              </Tag>
+            </Link>
+          </Tooltip>
+        ) : null}
+      </span>
     </span>
   );
 };
@@ -102,7 +147,7 @@ const renderCompletion = (value: number | undefined, record: MyTask) =>
   value != null ? (
     <CompletionProgressCell percent={value} status={getMyTaskCompletionProgressStatus(record)} />
   ) : (
-    <span className={styles.empty}>—</span>
+    <span className={styles.empty}>Chưa đánh giá</span>
   );
 
 const renderEvaluationLevel = (level: EvaluationLevel) => <EvaluationLevelBadge level={level} />;
@@ -169,11 +214,25 @@ export function MyTaskTable({
         width: actionsWidth,
         fixed: 'right',
         render: (_, record) => {
-          const canUpdateStatus = Boolean(onUpdateStatus) && canChangeTaskStatus(record, role);
+          const lockedByActiveRevision = areParentActionsLockedByActiveRevision(record);
+          const canUpdateStatus =
+            Boolean(onUpdateStatus) && canChangeTaskStatus(record, role) && !lockedByActiveRevision;
+          const statusTooltip = lockedByActiveRevision
+            ? PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION
+            : canUpdateStatus
+              ? 'Update status'
+              : TASK_STATUS_LOCKED_MESSAGE;
+          const editTooltip = lockedByActiveRevision
+            ? PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION
+            : 'Edit';
+          const evaluateTooltip = lockedByActiveRevision
+            ? PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION
+            : 'Evaluate';
+
           return (
             <div className={styles.actions}>
               {onUpdateStatus ? (
-                <Tooltip title={canUpdateStatus ? 'Update status' : TASK_STATUS_LOCKED_MESSAGE}>
+                <Tooltip title={statusTooltip}>
                   <Button
                     type="text"
                     icon={<SyncOutlined />}
@@ -196,22 +255,28 @@ export function MyTaskTable({
                 </Tooltip>
               ) : null}
               {onEdit ? (
-                <Tooltip title="Edit">
+                <Tooltip title={editTooltip}>
                   <Button
                     type="text"
                     icon={<EditOutlined />}
                     aria-label={`Edit ${record.taskName}`}
-                    onClick={() => onEdit(record)}
+                    disabled={lockedByActiveRevision}
+                    onClick={() => {
+                      if (!lockedByActiveRevision) onEdit(record);
+                    }}
                   />
                 </Tooltip>
               ) : null}
               {canEvaluate && onEvaluate ? (
-                <Tooltip title="Evaluate">
+                <Tooltip title={evaluateTooltip}>
                   <Button
                     type="text"
                     icon={<StarOutlined />}
                     aria-label={`Evaluate ${record.taskName}`}
-                    onClick={() => onEvaluate(record)}
+                    disabled={lockedByActiveRevision}
+                    onClick={() => {
+                      if (!lockedByActiveRevision) onEvaluate(record);
+                    }}
                   />
                 </Tooltip>
               ) : null}

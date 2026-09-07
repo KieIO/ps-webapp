@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
 import { CreateTaskModal } from '@/features/tasks/components/CreateTaskModal/CreateTaskModal';
 import type { TaskPerson } from '@/features/tasks/schemas/task.schema';
+import { formatOtReasonCategories } from '../../constants';
 import { useAssignableOtTasks, useAssignOtTask } from '../../hooks/useOvertime';
 import type { OvertimeRecord } from '../../schemas/overtime.schema';
 import styles from './AssignOtTaskModal.module.scss';
@@ -30,12 +31,20 @@ export function AssignOtTaskModal({ open, overtime, onClose, onAssigned }: Assig
         }
       : undefined;
 
+    const categoriesLabel = formatOtReasonCategories(overtime.reasonCategories);
+
     return {
       projectName: overtime.project.name,
       projectManager,
       staffUserId: overtime.assignee.userId,
       date: dayjs(overtime.otDate).hour(12).minute(0).second(0),
-      description: `OT ${dayjs(overtime.otDate).format(DATE_FORMAT)} · ${overtime.startTime}–${overtime.endTime}\nLý do: ${overtime.reason}`,
+      description: [
+        `OT ${dayjs(overtime.otDate).format(DATE_FORMAT)} · ${overtime.startTime}–${overtime.endTime}`,
+        categoriesLabel ? `Lý do: ${categoriesLabel}` : null,
+        overtime.reason ? `Mô tả: ${overtime.reason}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n'),
       lockProject: true,
       lockStaff: true,
     };

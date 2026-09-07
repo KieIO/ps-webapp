@@ -76,8 +76,35 @@ export const ROUTES = {
 
 // Dynamic route helpers
 export const buildProjectDetailPath = (id: string) => `/projects/${id}`;
+export const buildProjectTasksPath = (options?: {
+  projectName?: string;
+  search?: string;
+  outputMetric?: 'project_slides' | 'creative_da';
+  outputMonth?: string;
+}) => {
+  const params = new URLSearchParams();
+  const projectName = options?.projectName?.trim();
+  const search = options?.search?.trim();
+  const outputMetric = options?.outputMetric;
+  const outputMonth = options?.outputMonth?.trim();
+  if (projectName) params.set('projectName', projectName);
+  if (search) params.set('search', search);
+  if (outputMetric && outputMonth && /^\d{4}-\d{2}$/.test(outputMonth)) {
+    params.set('outputMetric', outputMetric);
+    params.set('outputMonth', outputMonth);
+  }
+  const query = params.toString();
+  return query ? `${ROUTES.PROJECT_TASKS}?${query}` : ROUTES.PROJECT_TASKS;
+};
 export const buildClientDetailPath = (id: string) => `/clients/${id}`;
-export const buildMyTaskDetailPath = (id: string) => `/tasks/detail/${id}`;
+export const buildMyTaskDetailPath = (
+  id: string,
+  options?: { tab?: 'revision' | 'evaluation' },
+) => {
+  const base = `/tasks/detail/${id}`;
+  if (!options?.tab) return base;
+  return `${base}?tab=${options.tab}`;
+};
 export const buildTaskEditPath = (id: string) => `/tasks/${id}/edit`;
 export const buildUserDetailPath = (id: string) => `/users/${id}`;
 export const buildEmployeePerformancePath = (userId: string) =>

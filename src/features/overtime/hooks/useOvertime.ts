@@ -9,6 +9,7 @@ import type {
   OvertimeSettings,
   RejectOvertimeRequest,
   ReviewOtResultRequest,
+  UpdateOvertimeRequest,
 } from '../schemas/overtime.schema';
 
 const invalidateOvertime = (queryClient: ReturnType<typeof useQueryClient>) => {
@@ -22,6 +23,17 @@ export const useOvertimeList = (filters: OvertimeListFilters = {}, enabled = tru
     queryKey: OT_QUERY_KEYS.list(filters),
     queryFn: () => overtimeApi.getList(filters),
     enabled,
+  });
+
+export const useOvertimeProjectOptions = (
+  fromDate: string | undefined,
+  toDate: string | undefined,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: OT_QUERY_KEYS.projectOptions(fromDate ?? '', toDate ?? ''),
+    queryFn: () => overtimeApi.getProjectOptions(fromDate!, toDate!),
+    enabled: Boolean(fromDate && toDate) && enabled,
   });
 
 export const usePendingOvertime = (enabled = true) =>
@@ -62,6 +74,22 @@ export const useCreateOvertime = () => {
     },
     onError: (error: Error) => {
       message.error(error.message || 'Không tạo được OT request');
+    },
+  });
+};
+
+export const useUpdateOvertime = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateOvertimeRequest }) =>
+      overtimeApi.update(id, payload),
+    onSuccess: (_data, variables) => {
+      invalidateOvertime(queryClient);
+      void queryClient.invalidateQueries({ queryKey: OT_QUERY_KEYS.detail(variables.id) });
+      message.success('Đã cập nhật OT request');
+    },
+    onError: (error: Error) => {
+      message.error(error.message || 'Không cập nhật được OT request');
     },
   });
 };

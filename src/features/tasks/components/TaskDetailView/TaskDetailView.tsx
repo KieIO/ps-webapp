@@ -1,5 +1,7 @@
-import { Alert, Tabs } from 'antd';
+import { useCallback, useState } from 'react';
+import { Alert, Badge, Tabs } from 'antd';
 import dayjs from 'dayjs';
+import { useSearchParams } from 'react-router-dom';
 import { DATE_FORMAT } from '@/config/constants';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
 import { useOvertimeDetail } from '@/features/overtime/hooks/useOvertime';
@@ -7,11 +9,17 @@ import { TaskDetailHistoryPanel } from '../TaskDetailHistoryPanel/TaskDetailHist
 import { TaskDetailSummaryCard } from '../TaskDetailSummaryCard/TaskDetailSummaryCard';
 import { TaskRevisionHistoryTab } from '../TaskRevisionHistoryTab/TaskRevisionHistoryTab';
 import { useMyTask } from '../../hooks/useMyTask';
+import { formatHasRevisionChildrenLabel, hasRevisionChildren } from '../../utils/taskRevision';
 import styles from './TaskDetailView.module.scss';
 
 interface TaskDetailViewProps {
   taskId: string;
 }
+
+type DetailTabKey = 'details' | 'revision' | 'evaluation';
+
+const isDetailTabKey = (value: string | null): value is DetailTabKey =>
+  value === 'details' || value === 'revision' || value === 'evaluation';
 
 export function TaskDetailView({ taskId }: TaskDetailViewProps) {
   const { data: task, isLoading, isError } = useMyTask(taskId);
@@ -19,6 +27,40 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
     task?.overtimeRequestId ?? null,
     Boolean(task?.overtimeRequestId),
   );
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<DetailTabKey>(
+    isDetailTabKey(tabFromUrl) ? tabFromUrl : 'details',
+  );
+
+  const openRevisionTab = useCallback(() => {
+    setActiveTab('revision');
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', 'revision');
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams]);
+
+  const handleTabChange = (key: string) => {
+    const nextTab = isDetailTabKey(key) ? key : 'details';
+    setActiveTab(nextTab);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (nextTab === 'details') {
+          next.delete('tab');
+        } else {
+          next.set('tab', nextTab);
+        }
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   if (isLoading) {
     return <GlobalLoadingSpinner />;
@@ -36,11 +78,13 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
   }
 
   const ot = otQuery.data;
+  const revisionCount = task.revisionChildCount ?? 0;
+  const showParentRevisionCue = hasRevisionChildren(task);
 
   return (
     <>
       <div className={styles.summary}>
-        <TaskDetailSummaryCard task={task} />
+        <TaskDetailSummaryCard task={task} onOpenRevisionTab={openRevisionTab} />
       </div>
 
       {task.overtimeRequestId ? (
@@ -62,7 +106,8 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
       <div className={styles.body}>
         <div className={styles.main}>
           <Tabs
-            defaultActiveKey="details"
+            activeKey={activeTab}
+            onChange={handleTabChange}
             items={[
               {
                 key: 'details',
@@ -96,8 +141,20 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
               },
               {
                 key: 'revision',
-                label: 'Revision history',
-                children: <TaskRevisionHistoryTab taskId={task.id} />,
+                label: showParentRevisionCue ? (
+                  <span className={styles.tabLabelWithBadge}>
+                    Revision
+                    <Badge
+                      count={revisionCount}
+                      overflowCount={99}
+                      color="cyan"
+                      title={formatHasRevisionChildrenLabel(revisionCount)}
+                    />
+                  </span>
+                ) : (
+                  'Revision'
+                ),
+                children: <TaskRevisionHistoryTab task={task} />,
               },
               {
                 key: 'evaluation',

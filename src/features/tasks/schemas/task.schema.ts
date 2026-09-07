@@ -9,6 +9,10 @@ import {
   PROJECT_URGENCIES,
 } from '@/features/projects/schemas/project.schema';
 import { TASK_CONFIRMATION_STATUSES } from '@/shared/constants/taskConfirmation';
+import {
+  isRevisionDeadlineOnOrAfterWorkDate,
+  REVISION_DEADLINE_BEFORE_WORK_DATE_MESSAGE,
+} from '../utils/taskRevision';
 
 export {
   TASK_CONFIRMATION_STATUSES,
@@ -51,6 +55,14 @@ export type BriefOwner = (typeof BRIEF_OWNERS)[number];
 export const CREATIVE_ASSIGN_MODES = ['whole', 'split'] as const;
 
 export type CreativeAssignMode = (typeof CREATIVE_ASSIGN_MODES)[number];
+
+/**
+ * Distinguishes original work, CM split children, and revision rework subtasks.
+ * Legacy rows without `taskKind`: treat `parentTaskId` as split.
+ */
+export const TASK_KINDS = ['original', 'split', 'revision'] as const;
+
+export type TaskKind = (typeof TASK_KINDS)[number];
 
 export const TASK_DEPARTMENTS = PROJECT_DEPARTMENTS;
 
@@ -102,6 +114,22 @@ export const MyTaskSchema = z.object({
   briefOwner: z.enum(BRIEF_OWNERS).optional(),
   cmNote: z.string().optional(),
   parentTaskId: z.string().nullish(),
+  /** original | split | revision — optional for backward-compatible API payloads. */
+  taskKind: z.enum(TASK_KINDS).optional(),
+  /** 1-based round when taskKind is revision. */
+  revisionRound: z.number().int().min(1).nullish(),
+  /** Feedback / reason captured when the revision subtask was created. */
+  revisionReason: z.string().nullish(),
+  /**
+   * How many revision children this task has.
+   * Present on original/split parents; 0 / omitted on revision rows.
+   */
+  revisionChildCount: z.number().int().min(0).optional(),
+  /**
+   * Open revisions (not_updated | confirmed | decline) that block parent
+   * update status / edit / evaluate.
+   */
+  activeRevisionChildCount: z.number().int().min(0).optional(),
   creativeManager: TaskPersonSchema.optional(),
   /** Set when the task is handed to a staff member (15-minute confirm SLA). */
   assignedAt: z.string().nullish(),
@@ -151,6 +179,14 @@ export const MyTaskListFiltersSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}$/)
     .optional(),
+  /**
+   * Calendar day (YYYY-MM-DD). Keeps tasks whose work window includes this day:
+   * `date` ≤ workDate ≤ deadline.
+   */
+  workDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   /** Client-side filter: only tasks linked to an overtime request. */
   otOnly: z.boolean().optional(),
 });
@@ -191,6 +227,34 @@ export const QualityReviewListResponseSchema = z.object({
 export const CreateQualityReviewRequestSchema = z.object({
   revisionCount: z.number().int().min(0, 'Revision count must be >= 0'),
   comment: z.string().optional().default(''),
+});
+
+/**
+ * Create a revision subtask under the task being revised.
+ * Assignee is always the parent task’s current staff (locked — not in payload).
+ *
+ * Quantity policy (Option A): may be lower, equal, or higher than the parent task.
+ * Only constraint is quantity > 0. Higher quantity intentionally increases revision workload/capacity.
+ */
+export const CreateRevisionRequestSchema = z
+  .object({
+    revisionReason: z.string().trim().min(1, 'Nhập lý do / nội dung revision'),
+    /** Rework scope units — independent of parent quantity (can be partial or expanded). */
+    quantity: z.number().positive('Số lượng phải lớn hơn 0'),
+    level: z.number().int().min(1).max(4),
+    /** Calendar day used for capacity workload (YYYY-MM-DD or ISO). */
+    date: z.string().min(1, 'Chọn ngày tính capacity'),
+    /** Resubmission deadline (ISO datetime). */
+    deadline: z.string().min(1, 'Chọn deadline nộp lại'),
+  })
+  .refine((data) => isRevisionDeadlineOnOrAfterWorkDate(data.date, data.deadline), {
+    message: REVISION_DEADLINE_BEFORE_WORK_DATE_MESSAGE,
+    path: ['deadline'],
+  });
+
+export const RevisionListResponseSchema = z.object({
+  items: z.array(MyTaskSchema),
+  total: z.number(),
 });
 
 export const CreateMyTaskRequestSchema = z.object({
@@ -348,6 +412,8 @@ export type TaskHistoryListResponse = z.infer<typeof TaskHistoryListResponseSche
 export type QualityReview = z.infer<typeof QualityReviewSchema>;
 export type QualityReviewListResponse = z.infer<typeof QualityReviewListResponseSchema>;
 export type CreateQualityReviewRequest = z.infer<typeof CreateQualityReviewRequestSchema>;
+export type CreateRevisionRequest = z.infer<typeof CreateRevisionRequestSchema>;
+export type RevisionListResponse = z.infer<typeof RevisionListResponseSchema>;
 export type CreateMyTaskRequest = z.infer<typeof CreateMyTaskRequestSchema>;
 export type UpdateMyTaskStatusRequest = z.infer<typeof UpdateMyTaskStatusRequestSchema>;
 export type UpdateMyTaskPmEvaluationRequest = z.infer<typeof UpdateMyTaskPmEvaluationRequestSchema>;

@@ -19,7 +19,7 @@ export interface PermissionAuditEntry {
 }
 
 export interface StoredRbacData {
-  version: 1;
+  version: 2;
   config: PermissionConfigMap;
   updatedAt: string;
   auditLog: PermissionAuditEntry[];

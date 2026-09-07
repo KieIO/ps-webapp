@@ -7,19 +7,23 @@ import {
   CreateOvertimeRequestSchema,
   OvertimeDashboardSchema,
   OvertimeListFiltersSchema,
+  OvertimeProjectSchema,
   OvertimeRecordSchema,
   OvertimeSettingsSchema,
   RejectOvertimeRequestSchema,
   ReviewOtResultRequestSchema,
+  UpdateOvertimeRequestSchema,
   type AssignableOtTask,
   type AssignOtTaskRequest,
   type CreateOvertimeRequest,
   type OvertimeDashboard,
   type OvertimeListFilters,
+  type OvertimeProject,
   type OvertimeRecord,
   type OvertimeSettings,
   type RejectOvertimeRequest,
   type ReviewOtResultRequest,
+  type UpdateOvertimeRequest,
 } from './schemas/overtime.schema';
 
 export const overtimeApi = {
@@ -29,6 +33,15 @@ export const overtimeApi = {
       throw new Error(getApiErrorMessage(error, 'Không tải được danh sách OT'));
     });
     return z.array(OvertimeRecordSchema).parse(response.data);
+  },
+
+  getProjectOptions: async (fromDate: string, toDate: string): Promise<OvertimeProject[]> => {
+    const response = await api
+      .get('/overtime/project-options', { params: { fromDate, toDate } })
+      .catch((error: unknown) => {
+        throw new Error(getApiErrorMessage(error, 'Không tải được danh sách dự án OT'));
+      });
+    return z.array(OvertimeProjectSchema).parse(response.data);
   },
 
   getPending: async (): Promise<OvertimeRecord[]> => {
@@ -49,6 +62,14 @@ export const overtimeApi = {
     const data = CreateOvertimeRequestSchema.parse(payload);
     const response = await api.post('/overtime', data).catch((error: unknown) => {
       throw new Error(getApiErrorMessage(error, 'Không tạo được OT request'));
+    });
+    return OvertimeRecordSchema.parse(response.data);
+  },
+
+  update: async (id: string, payload: UpdateOvertimeRequest): Promise<OvertimeRecord> => {
+    const data = UpdateOvertimeRequestSchema.parse(payload);
+    const response = await api.patch(`/overtime/${id}`, data).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Không cập nhật được OT request'));
     });
     return OvertimeRecordSchema.parse(response.data);
   },

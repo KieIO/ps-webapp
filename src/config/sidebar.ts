@@ -252,6 +252,9 @@ export function collectSidebarShortcutTargets(
 /** Prefix for my-task detail pages — nested under task management in the sidebar. */
 export const MY_TASK_DETAIL_PATH_PREFIX = '/tasks/detail/';
 
+/** Prefix for client detail pages — nested under Settings → Client management. */
+export const CLIENT_DETAIL_PATH_PREFIX = '/clients/';
+
 /** Pick the most specific sidebar child path for the current URL. */
 export const resolveSidebarChildPath = (
   pathname: string,
@@ -281,4 +284,10 @@ export const resolveTaskManagementSelectedPath = (
 
   const from = (locationState as { from?: 'project' | 'non_project' } | null)?.from;
   return from === 'non_project' ? ROUTES.NON_PROJECT_TASKS : ROUTES.PROJECT_TASKS;
+};
+
+/** Map client detail URL to the active sidebar child path (Client management). */
+export const resolveClientManagementSelectedPath = (pathname: string): string | undefined => {
+  if (!pathname.startsWith(CLIENT_DETAIL_PATH_PREFIX)) return undefined;
+  return ROUTES.CLIENT_MANAGEMENT;
 };

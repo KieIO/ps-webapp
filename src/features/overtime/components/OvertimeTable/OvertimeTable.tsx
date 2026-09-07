@@ -1,9 +1,17 @@
-import { Table } from 'antd';
+import { Button, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { OvertimeStatusBadge } from '../OvertimeStatusBadge/OvertimeStatusBadge';
+import {
+  canEditOvertimeRequest,
+  formatOtReasonCategories,
+  OT_REASON_CATEGORY_LABELS,
+  overtimeEditDisabledReason,
+  type OtReasonCategory,
+} from '../../constants';
 import type { OvertimeRecord } from '../../schemas/overtime.schema';
 import styles from './OvertimeTable.module.scss';
 
@@ -11,9 +19,50 @@ interface OvertimeTableProps {
   records: OvertimeRecord[];
   loading?: boolean;
   onRowClick?: (record: OvertimeRecord) => void;
+  onEdit?: (record: OvertimeRecord) => void;
 }
 
-export function OvertimeTable({ records, loading, onRowClick }: OvertimeTableProps) {
+const VISIBLE_REASON_TAGS = 2;
+
+function reasonLabel(key: string): string {
+  return key in OT_REASON_CATEGORY_LABELS
+    ? OT_REASON_CATEGORY_LABELS[key as OtReasonCategory]
+    : key;
+}
+
+function OtReasonsCell({ record }: { record: OvertimeRecord }) {
+  const categories = record.reasonCategories ?? [];
+  if (categories.length === 0) {
+    return <span className={styles.muted}>—</span>;
+  }
+
+  const visible = categories.slice(0, VISIBLE_REASON_TAGS);
+  const hiddenCount = categories.length - visible.length;
+  const tooltipTitle = (
+    <div className={styles.reasonTooltip}>
+      <p className={styles.reasonTooltipTitle}>{formatOtReasonCategories(categories)}</p>
+      {record.reason ? <p className={styles.reasonTooltipDesc}>{record.reason}</p> : null}
+    </div>
+  );
+
+  return (
+    <Tooltip title={tooltipTitle} placement="topLeft">
+      <div className={styles.reasons}>
+        {visible.map((key) => (
+          <Tag key={key} className={styles.reasonTag}>
+            {reasonLabel(key)}
+          </Tag>
+        ))}
+        {hiddenCount > 0 ? <Tag className={styles.reasonMore}>+{hiddenCount}</Tag> : null}
+      </div>
+    </Tooltip>
+  );
+}
+
+export function OvertimeTable({ records, loading, onRowClick, onEdit }: OvertimeTableProps) {
+  const { can } = usePermission();
+  const canRequest = can('REQUEST_OT');
+
   const columns: ColumnsType<OvertimeRecord> = [
     {
       title: 'Ngày OT',
@@ -34,6 +83,12 @@ export function OvertimeTable({ records, loading, onRowClick }: OvertimeTablePro
       key: 'assignee',
       width: 160,
       render: (_, record) => record.assignee.name || record.assignee.code || '—',
+    },
+    {
+      title: 'Lý do OT',
+      key: 'reasonCategories',
+      width: 220,
+      render: (_, record) => <OtReasonsCell record={record} />,
     },
     {
       title: 'Khung giờ',
@@ -72,6 +127,39 @@ export function OvertimeTable({ records, loading, onRowClick }: OvertimeTablePro
     },
   ];
 
+  if (canRequest && onEdit) {
+    columns.push({
+      title: '',
+      key: 'actions',
+      width: 100,
+      fixed: 'right',
+      render: (_, record) => {
+        const editable = canEditOvertimeRequest(record.status);
+        const disabledReason = overtimeEditDisabledReason(record.status);
+        return (
+          <Tooltip title={disabledReason ?? undefined}>
+            <span
+              className={styles.editTrigger}
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <Button
+                size="small"
+                disabled={!editable}
+                onClick={() => {
+                  if (!editable) return;
+                  onEdit(record);
+                }}
+              >
+                Sửa
+              </Button>
+            </span>
+          </Tooltip>
+        );
+      },
+    });
+  }
+
   return (
     <TableWrapper
       loading={loading}
@@ -85,7 +173,7 @@ export function OvertimeTable({ records, loading, onRowClick }: OvertimeTablePro
         columns={columns}
         dataSource={records}
         pagination={{ pageSize: 20, showSizeChanger: true }}
-        scroll={{ x: 960 }}
+        scroll={{ x: 1280 }}
         onRow={(record) => ({
           onClick: () => onRowClick?.(record),
           className: onRowClick ? styles.clickable : undefined,

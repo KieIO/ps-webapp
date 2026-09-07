@@ -12,11 +12,13 @@ import {
   AssignMyTaskRequestSchema,
   CreateMyTaskRequestSchema,
   CreateQualityReviewRequestSchema,
+  CreateRevisionRequestSchema,
   MyTaskListFiltersSchema,
   MyTaskListResponseSchema,
   MyTaskSchema,
   QualityReviewListResponseSchema,
   QualityReviewSchema,
+  RevisionListResponseSchema,
   TaskHistoryListResponseSchema,
   UpdateCreativePipelineRequestSchema,
   UpdateHeadMyTaskRequestSchema,
@@ -28,11 +30,13 @@ import {
   type AssignMyTaskRequest,
   type CreateMyTaskRequest,
   type CreateQualityReviewRequest,
+  type CreateRevisionRequest,
   type MyTask,
   type MyTaskListFilters,
   type MyTaskListResponse,
   type QualityReview,
   type QualityReviewListResponse,
+  type RevisionListResponse,
   type TaskAssignee,
   type TaskHistoryListResponse,
   type TaskPerson,
@@ -48,6 +52,7 @@ import {
   mockAssignMyTask,
   mockCreateMyTask,
   mockCreateQualityReview,
+  mockCreateRevisionTask,
   mockDeleteMyTask,
   mockGetAllTaskProjectOptions,
   mockGetMyTaskById,
@@ -59,6 +64,7 @@ import {
   mockGetProjectStaffOptions,
   mockGetStaffOptions,
   mockListQualityReviews,
+  mockListRevisionTasks,
   mockUpdateCreativePipeline,
   mockUpdateHeadMyTask,
   mockUpdateMyTask,
@@ -92,6 +98,9 @@ export const myTaskApi = {
   ): Promise<MyTaskListResponse> => {
     const params = { ...MyTaskListFiltersSchema.parse(filters) };
     delete params.otOnly;
+    if (!params.workDate) {
+      delete params.workDate;
+    }
 
     if (env.useTasksMock) {
       return MyTaskListResponseSchema.parse(
@@ -156,6 +165,34 @@ export const myTaskApi = {
         throw new Error(getApiErrorMessage(error, 'Failed to save revision'));
       });
     return QualityReviewSchema.parse(response.data);
+  },
+
+  listRevisions: async (id: string): Promise<RevisionListResponse> => {
+    if (env.useTasksMock) {
+      return RevisionListResponseSchema.parse(await mockListRevisionTasks(id));
+    }
+
+    const response = await api.get(`/tasks/my/${id}/revisions`).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Failed to load revision subtasks'));
+    });
+    return RevisionListResponseSchema.parse(response.data);
+  },
+
+  createRevision: async (
+    id: string,
+    payload: CreateRevisionRequest,
+    editorUserId?: string,
+  ): Promise<MyTask> => {
+    const data = CreateRevisionRequestSchema.parse(payload);
+
+    if (env.useTasksMock) {
+      return parseMyTaskResponse(await mockCreateRevisionTask(id, data, editorUserId));
+    }
+
+    const response = await api.post(`/tasks/my/${id}/revisions`, data).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Failed to create revision subtask'));
+    });
+    return parseMyTaskResponse(response.data);
   },
 
   getProjectOptions: async ({

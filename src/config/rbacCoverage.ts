@@ -81,6 +81,7 @@ export const assertRbacMatrixCoverage = (
  */
 export const MATRIX_PERMISSION_COVERAGE = [
   'MANAGE_PROJECTS',
+  'CREATE_PROJECT',
   'EDIT_PROJECT',
   'ARCHIVE_PROJECT',
   'DELETE_PROJECT',

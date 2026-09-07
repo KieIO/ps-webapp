@@ -39,6 +39,7 @@ export const OvertimeRecordSchema = z.object({
   endTime: z.string(),
   estimatedHours: z.number(),
   actualHours: z.number().nullish(),
+  reasonCategories: z.array(z.string()).optional().default([]),
   reason: z.string(),
   taskName: z.string().optional().default(''),
   staffNote: z.string().optional().default(''),
@@ -69,9 +70,11 @@ export const CreateOvertimeRequestSchema = z.object({
   startTime: z.string().min(1),
   endTime: z.string().min(1),
   estimatedHours: z.number().positive(),
+  reasonCategories: z.array(z.string().min(1)).min(1),
   reason: z.string().min(1),
 });
 
+export const UpdateOvertimeRequestSchema = CreateOvertimeRequestSchema;
 export const RejectOvertimeRequestSchema = z.object({
   reason: z.string().min(1),
 });
@@ -143,6 +146,7 @@ export type OvertimeProject = z.infer<typeof OvertimeProjectSchema>;
 export type OvertimeRecord = z.infer<typeof OvertimeRecordSchema>;
 export type OvertimeListFilters = z.infer<typeof OvertimeListFiltersSchema>;
 export type CreateOvertimeRequest = z.infer<typeof CreateOvertimeRequestSchema>;
+export type UpdateOvertimeRequest = z.infer<typeof UpdateOvertimeRequestSchema>;
 export type RejectOvertimeRequest = z.infer<typeof RejectOvertimeRequestSchema>;
 export type AssignOtTaskRequest = z.infer<typeof AssignOtTaskRequestSchema>;
 export type AssignableOtTask = z.infer<typeof AssignableOtTaskSchema>;

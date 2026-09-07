@@ -37,6 +37,7 @@ export const PERMISSION_MODULES: PermissionModuleDef[] = [
     accessType: 'permission',
     actions: [
       { permission: 'MANAGE_PROJECTS', label: 'View project list' },
+      { permission: 'CREATE_PROJECT', label: 'Create projects' },
       { permission: 'EDIT_PROJECT', label: 'Edit project records' },
       { permission: 'ARCHIVE_PROJECT', label: 'Archive / unarchive projects' },
       { permission: 'DELETE_PROJECT', label: 'Delete projects' },

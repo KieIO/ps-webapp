@@ -2,8 +2,9 @@ import dayjs from 'dayjs';
 import { downloadCsv } from '@/shared/utils/exportCsv';
 import type { TrackerProject } from '../schemas/tracker.schema';
 
-export const exportTrackerToCsv = (projects: TrackerProject[]): void => {
-  const headers = ['Project', 'PM/CM', 'Team', 'Total Slides'];
+export const exportTrackerToCsv = (projects: TrackerProject[], monthKey?: string): void => {
+  const monthSuffix = monthKey ? ` (${monthKey})` : '';
+  const headers = ['Project', 'PM/CM', 'Team', `Total / tháng${monthSuffix}`];
   const rows = projects.map((project) => [
     project.name,
     [project.pm, ...(project.cm ?? [])].filter(Boolean).join(' / '),
@@ -11,5 +12,6 @@ export const exportTrackerToCsv = (projects: TrackerProject[]): void => {
     project.totalSlides,
   ]);
 
-  downloadCsv(`project-tracker-${dayjs().format('YYYY-MM-DD')}.csv`, headers, rows);
+  const fileMonth = monthKey ?? dayjs().format('YYYY-MM');
+  downloadCsv(`project-tracker-${fileMonth}.csv`, headers, rows);
 };
