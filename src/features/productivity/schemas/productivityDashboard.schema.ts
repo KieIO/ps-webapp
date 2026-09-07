@@ -16,6 +16,9 @@ const weeklyOutputSchema = z.object({
   projectSlides: z.number().min(0),
   creativeDa: z.number().min(0),
   editFeedback: z.number().min(0),
+  slidesProject: z.number().min(0),
+  slidesCreative: z.number().min(0),
+  slideMasterProject: z.number().min(0),
 });
 
 const weeklyOnTimeSchema = z.object({
@@ -66,11 +69,20 @@ const rankingRowSchema = z.object({
   capacityDelta: z.number().nullable(),
 });
 
+const mixMetricSchema = z.object({
+  available: z.boolean(),
+  percent: z.number().min(0).max(100).nullable(),
+  matched: z.number().int().min(0),
+  total: z.number().int().min(0),
+  message: z.string().optional(),
+});
+
 export const ProductivityDashboardSchema = z.object({
   period: dashboardPeriodSchema,
   capacity: dashboardCapacityBlockSchema,
   output: dashboardOutputSchema,
   editFeedback: z.number().min(0),
+  projectCount: z.number().int().min(0),
   onTimeRate: dashboardOnTimeRateSchema,
   revisionRate: z.object({
     available: z.boolean(),
@@ -91,6 +103,14 @@ export const ProductivityDashboardSchema = z.object({
   weeklyOutput: z.array(weeklyOutputSchema),
   weeklyOnTime: z.array(weeklyOnTimeSchema),
   productivity: z.array(dashboardProductivityPointSchema),
+  projectMix: z.object({
+    implement: mixMetricSchema,
+    rework: mixMetricSchema,
+  }),
+  creativeMix: z.object({
+    qualityControl: mixMetricSchema,
+    rework: mixMetricSchema,
+  }),
 });
 
 export const ProductivityRankingSchema = z.object({
@@ -102,3 +122,4 @@ export type ProductivityRanking = z.infer<typeof ProductivityRankingSchema>;
 export type ProductivityRankingRow = z.infer<typeof rankingRowSchema>;
 export type ProductivityWeeklyOutput = z.infer<typeof weeklyOutputSchema>;
 export type ProductivityWeeklyOnTime = z.infer<typeof weeklyOnTimeSchema>;
+export type ProductivityMixMetric = z.infer<typeof mixMetricSchema>;

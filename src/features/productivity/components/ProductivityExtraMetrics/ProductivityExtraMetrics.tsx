@@ -4,8 +4,8 @@ import type { KeyboardEvent, ReactNode } from 'react';
 import {
   CircleHelp,
   Clock3,
+  FolderKanban,
   Image,
-  MessageSquareText,
   Presentation,
   RotateCcw,
   Star,
@@ -205,11 +205,11 @@ export function ProductivityExtraMetrics({ data }: ProductivityExtraMetricsProps
       />
       <StatCard
         layout="primary"
-        label="Edit Feedback"
-        value={formatNumber.format(data.editFeedback)}
-        hint="Tổng output task Edit Feedback trong tháng"
-        explanation="Cộng quantity của các Project Task có tên Edit Feedback trong tháng được chọn."
-        icon={<MessageSquareText size={18} aria-hidden />}
+        label="Projects"
+        value={formatNumber.format(data.projectCount)}
+        hint="Số project có task trong tháng"
+        explanation="Đếm các project khác nhau có ít nhất 1 Project Task chưa hủy, với ngày task nằm trong tháng báo cáo. Không gồm task hủy và task không gắn project."
+        icon={<FolderKanban size={18} aria-hidden />}
       />
       <StatCard
         layout="primary"

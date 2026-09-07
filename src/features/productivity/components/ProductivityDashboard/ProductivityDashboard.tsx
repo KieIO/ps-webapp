@@ -1,14 +1,37 @@
 import { useState } from 'react';
 import { Alert, Button, DatePicker, Skeleton } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
-import { OverallMetricGrid } from '@/features/home/components/OverallMetricGrid/OverallMetricGrid';
+import {
+  OverallMetricGrid,
+  type CapacityMixItem,
+} from '@/features/home/components/OverallMetricGrid/OverallMetricGrid';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { useProductivityDashboard } from '../../hooks/useProductivityDashboard';
 import { useProductivityRanking } from '../../hooks/useProductivityRanking';
+import type { ProductivityMixMetric } from '../../schemas/productivityDashboard.schema';
 import { ProductivityChartsSection } from '../ProductivityChartsSection/ProductivityChartsSection';
 import { ProductivityExtraMetrics } from '../ProductivityExtraMetrics/ProductivityExtraMetrics';
 import { ProductivityRankingTable } from '../ProductivityRankingTable/ProductivityRankingTable';
 import styles from './ProductivityDashboard.module.scss';
+
+const formatCount = new Intl.NumberFormat('vi-VN');
+
+function mixItem(
+  label: string,
+  metric: ProductivityMixMetric,
+  explanation: string,
+  hintWhenAvailable: (metric: ProductivityMixMetric) => string,
+): CapacityMixItem {
+  return {
+    label,
+    metric,
+    explanation,
+    hint:
+      metric.available && metric.total > 0
+        ? hintWhenAvailable(metric)
+        : (metric.message ?? 'Chưa có dữ liệu'),
+  };
+}
 
 export function ProductivityDashboard() {
   const [selectedMonth, setSelectedMonth] = useState<Dayjs>(() => dayjs().startOf('month'));
@@ -66,7 +89,43 @@ export function ProductivityDashboard() {
       ) : data ? (
         <>
           <div className={styles.metricsSection}>
-            <OverallMetricGrid data={data} showCompanyCapacity={false} hideStatGrid />
+            <OverallMetricGrid
+              data={data}
+              showCompanyCapacity={false}
+              hideStatGrid
+              projectMix={[
+                mixItem(
+                  '% Implement',
+                  data.projectMix.implement,
+                  'Tỷ lệ task phòng Project có group Implementation trên catalog task score. Công thức: số task Implementation ÷ tổng task Project trong tháng × 100. Task hủy không tính.',
+                  (metric) =>
+                    `${formatCount.format(metric.matched)}/${formatCount.format(metric.total)} task Implementation`,
+                ),
+                mixItem(
+                  '% Rework',
+                  data.projectMix.rework,
+                  'Tỷ lệ task phòng Project được quality review và có ít nhất 1 revision trong tháng. Mỗi task lấy review mới nhất. Cùng logic với Revision rate, lọc theo phòng Project.',
+                  (metric) =>
+                    `${formatCount.format(metric.matched)}/${formatCount.format(metric.total)} task có revision`,
+                ),
+              ]}
+              creativeMix={[
+                mixItem(
+                  '% Quality control',
+                  data.creativeMix.qualityControl,
+                  'Tỷ lệ task phòng Creative có group Quality control trên catalog task score. Công thức: số task Quality control ÷ tổng task Creative trong tháng × 100. Task hủy không tính.',
+                  (metric) =>
+                    `${formatCount.format(metric.matched)}/${formatCount.format(metric.total)} task Quality control`,
+                ),
+                mixItem(
+                  '% Rework',
+                  data.creativeMix.rework,
+                  'Tỷ lệ task phòng Creative được quality review và có ít nhất 1 revision trong tháng. Mỗi task lấy review mới nhất. Cùng logic với Revision rate, lọc theo phòng Creative.',
+                  (metric) =>
+                    `${formatCount.format(metric.matched)}/${formatCount.format(metric.total)} task có revision`,
+                ),
+              ]}
+            />
             <ProductivityExtraMetrics data={data} />
           </div>
           <ProductivityChartsSection data={data} />

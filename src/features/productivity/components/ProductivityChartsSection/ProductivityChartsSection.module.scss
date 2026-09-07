@@ -13,6 +13,66 @@
   min-height: 290px;
 }
 
+.seriesToggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.seriesToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    opacity: 1;
+  }
+
+  &:hover,
+  &:focus-visible {
+    border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+  }
+}
+
+.seriesToggleActive {
+  color: var(--color-text);
+  border-color: color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 6%, white);
+}
+
+.seriesToggle:not(.seriesToggleActive) {
+  color: var(--color-text-disabled);
+  text-decoration: line-through;
+}
+
+.seriesToggle:not(.seriesToggleActive) .seriesSwatch {
+  opacity: 0.35;
+}
+
+.seriesSwatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
 .emptyState {
   display: grid;
   min-height: 290px;

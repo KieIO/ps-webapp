@@ -11,10 +11,27 @@ import type { CapacityBreakdownScope } from '../../schemas/capacityBreakdown.sch
 import { CapacityBreakdownModal } from '../CapacityBreakdownModal/CapacityBreakdownModal';
 import styles from './OverallMetricGrid.module.scss';
 
+export type CapacityMixMetric = {
+  available: boolean;
+  percent: number | null;
+  matched: number;
+  total: number;
+  message?: string;
+};
+
+export type CapacityMixItem = {
+  label: string;
+  hint: string;
+  explanation: string;
+  metric: CapacityMixMetric;
+};
+
 interface OverallMetricGridProps {
   data: OverallDashboard;
   showCompanyCapacity?: boolean;
   hideStatGrid?: boolean;
+  projectMix?: CapacityMixItem[];
+  creativeMix?: CapacityMixItem[];
 }
 
 const formatNumber = new Intl.NumberFormat('vi-VN');
@@ -213,6 +230,42 @@ function MetricLabel({
   );
 }
 
+function CapacityMixRow({ items, cardLabel }: { items: CapacityMixItem[]; cardLabel: string }) {
+  if (items.length === 0) return null;
+
+  return (
+    <div className={styles.mixRow} aria-label={`Tỷ lệ mix task của ${cardLabel}`}>
+      {items.map((item) => {
+        const value =
+          item.metric.available && item.metric.percent != null
+            ? formatPercent(item.metric.percent)
+            : '—';
+
+        return (
+          <div key={item.label} className={styles.mixItem}>
+            <div className={styles.mixLabelRow}>
+              <p className={styles.mixLabel}>{item.label}</p>
+              <Tooltip title={item.explanation} placement="top" mouseEnterDelay={0.15}>
+                <button
+                  type="button"
+                  className={styles.helpButton}
+                  aria-label={`Cách tính ${item.label}`}
+                >
+                  <CircleHelp size={12} aria-hidden />
+                </button>
+              </Tooltip>
+            </div>
+            <p className={item.metric.available ? styles.mixValue : styles.mixUnavailable}>
+              {value}
+            </p>
+            <p className={styles.mixHint}>{item.hint}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function CapacityCard({
   label,
   value,
@@ -220,6 +273,7 @@ function CapacityCard({
   tone,
   explanation,
   forceCloseHelp,
+  mixItems,
 }: {
   label: string;
   value: number | null;
@@ -227,6 +281,7 @@ function CapacityCard({
   tone: CapacityTone;
   explanation: ReactNode;
   forceCloseHelp?: boolean;
+  mixItems?: CapacityMixItem[];
 }) {
   return (
     <article className={`${styles.capacityCard} ${styles[tone]}`}>
@@ -246,6 +301,7 @@ function CapacityCard({
           ? 'Chưa có năng lực khả dụng để tính Capacity'
           : 'Capacity trung bình trong tháng'}
       </p>
+      {mixItems && mixItems.length > 0 && <CapacityMixRow items={mixItems} cardLabel={label} />}
       {weeks.length > 0 && (
         <div className={styles.miniBars} aria-label={`Capacity theo tuần của ${label}`}>
           {weeks.map((week) => (
@@ -305,6 +361,8 @@ export function OverallMetricGrid({
   data,
   showCompanyCapacity = true,
   hideStatGrid = false,
+  projectMix,
+  creativeMix,
 }: OverallMetricGridProps) {
   const navigate = useNavigate();
   const weekly = data.capacity.weekly;
@@ -356,6 +414,7 @@ export function OverallMetricGrid({
           )}
           weeks={buildCapacityWeeks(weekly, 'project')}
           tone="project"
+          mixItems={projectMix}
           forceCloseHelp={breakdownScope != null}
           explanation={
             <CapacityExplanation
@@ -374,6 +433,7 @@ export function OverallMetricGrid({
           )}
           weeks={buildCapacityWeeks(weekly, 'creative')}
           tone="creative"
+          mixItems={creativeMix}
           forceCloseHelp={breakdownScope != null}
           explanation={
             <CapacityExplanation

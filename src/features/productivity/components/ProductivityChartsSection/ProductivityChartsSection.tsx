@@ -1,8 +1,8 @@
+import { useEffect, useState } from 'react';
 import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
   ReferenceLine,
@@ -29,7 +29,30 @@ const numberFormatter = (value: number | string) =>
 
 const percentFormatter = (value: number | string) => `${Number(value)}%`;
 
+const OUTPUT_SERIES = [
+  { key: 'slidesProject', name: 'Slide · Project', color: '#2563eb' },
+  { key: 'slidesCreative', name: 'Slide · Creative', color: '#6366f1' },
+  { key: 'slideMasterProject', name: 'Slide master · Project', color: '#0284c7' },
+  { key: 'creativeDa', name: 'DA · Creative', color: '#7c3aed' },
+] as const;
+
+type OutputSeriesKey = (typeof OUTPUT_SERIES)[number]['key'];
+
+const ALL_SERIES_VISIBLE: Record<OutputSeriesKey, boolean> = {
+  slidesProject: true,
+  slidesCreative: true,
+  slideMasterProject: true,
+  creativeDa: true,
+};
+
 export function ProductivityChartsSection({ data }: ProductivityChartsSectionProps) {
+  const [visibleSeries, setVisibleSeries] =
+    useState<Record<OutputSeriesKey, boolean>>(ALL_SERIES_VISIBLE);
+
+  useEffect(() => {
+    setVisibleSeries(ALL_SERIES_VISIBLE);
+  }, [data.period.year, data.period.month]);
+
   const outputData = data.weeklyOutput.map((week) => ({
     ...week,
     label: week.label.replace('Tuần ', 'W'),
@@ -41,41 +64,71 @@ export function ProductivityChartsSection({ data }: ProductivityChartsSectionPro
     hasData: week.finishedCount > 0,
   }));
 
-  const hasOutput = outputData.some(
-    (week) => week.projectSlides > 0 || week.creativeDa > 0 || week.editFeedback > 0,
-  );
+  const hasOutput = outputData.some((week) => OUTPUT_SERIES.some((series) => week[series.key] > 0));
   const hasOnTime = onTimeData.some((week) => week.hasData);
+
+  const visibleCount = OUTPUT_SERIES.filter((series) => visibleSeries[series.key]).length;
+
+  const toggleSeries = (key: OutputSeriesKey) => {
+    setVisibleSeries((current) => {
+      const nextVisible = !current[key];
+      const currentVisibleCount = OUTPUT_SERIES.filter((series) => current[series.key]).length;
+      if (!nextVisible && currentVisibleCount <= 1) {
+        return current;
+      }
+      return { ...current, [key]: nextVisible };
+    });
+  };
 
   return (
     <div className={styles.grid}>
       <CardWrapper
         title="Output theo tuần"
-        subtitle="Slides Project và DA Creative"
+        subtitle="Slide, Slide master và DA theo phòng ban. Bấm chú thích để ẩn hoặc hiện."
         className={styles.card}
       >
         {hasOutput ? (
           <div className={styles.chart} aria-label="Biểu đồ output theo tuần">
+            <div className={styles.seriesToggles} role="group" aria-label="Ẩn hiện chuỗi output">
+              {OUTPUT_SERIES.map((series) => {
+                const active = visibleSeries[series.key];
+                return (
+                  <button
+                    key={series.key}
+                    type="button"
+                    className={`${styles.seriesToggle} ${active ? styles.seriesToggleActive : ''}`}
+                    aria-pressed={active}
+                    aria-label={active ? `Ẩn ${series.name}` : `Hiện ${series.name}`}
+                    disabled={active && visibleCount <= 1}
+                    onClick={() => toggleSeries(series.key)}
+                  >
+                    <span className={styles.seriesSwatch} style={{ background: series.color }} />
+                    {series.name}
+                  </button>
+                );
+              })}
+            </div>
             <ResponsiveContainer width="100%" height={290}>
               <BarChart data={outputData} margin={{ top: 12, right: 8, left: -8, bottom: 0 }}>
                 <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="label" axisLine={{ stroke: '#e2e8f0' }} {...axisProps} />
                 <YAxis width={48} axisLine={false} tickFormatter={numberFormatter} {...axisProps} />
-                <ChartTooltip formatter={(value) => numberFormatter(value as number)} />
-                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
-                <Bar
-                  dataKey="projectSlides"
-                  name="Project slides"
-                  fill="#2563eb"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={28}
+                <ChartTooltip
+                  formatter={(value, name) => [numberFormatter(value as number), name]}
                 />
-                <Bar
-                  dataKey="creativeDa"
-                  name="Creative DA"
-                  fill="#7c3aed"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={28}
-                />
+                {OUTPUT_SERIES.map(
+                  (series) =>
+                    visibleSeries[series.key] && (
+                      <Bar
+                        key={series.key}
+                        dataKey={series.key}
+                        name={series.name}
+                        fill={series.color}
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={22}
+                      />
+                    ),
+                )}
               </BarChart>
             </ResponsiveContainer>
           </div>
