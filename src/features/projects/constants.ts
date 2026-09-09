@@ -86,6 +86,7 @@ export const PROJECT_EVALUATION_COLUMN_HEADERS = {
 } as const;
 
 export const PROJECT_TABLE_COLUMN_HEADERS = {
+  code: 'Project code',
   client: 'Khách hàng',
   department: 'Phòng ban',
   tasks: 'Tasks',

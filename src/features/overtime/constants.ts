@@ -97,4 +97,5 @@ export const OT_FILTER_LABELS = {
   assignee: 'Người OT',
   assigneePlaceholder: 'Tất cả nhân sự',
   dateRange: 'Khoảng ngày OT',
+  export: 'Xuất Excel',
 } as const;

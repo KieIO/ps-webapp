@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert } from 'antd';
+import { Alert, message } from 'antd';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import { getDefaultCapacityFilters } from '../../constants';
 import { useCapacityList } from '../../hooks/useCapacityList';
@@ -9,18 +9,35 @@ import {
   getCapacityListWorkStatusTitle,
   isCapacityListPeriodView,
 } from '../../utils/capacityListPeriod';
+import { exportCapacityListToCsv } from '../../utils/exportCapacityList';
 import { CapacityFilters } from '../CapacityFilters/CapacityFilters';
 import { CapacitySummaryBar } from '../CapacitySummaryBar/CapacitySummaryBar';
 import { CapacityTable } from '../CapacityTable/CapacityTable';
 
 export function CapacityList() {
   const [filters, setFilters] = useState(getDefaultCapacityFilters);
+  const [exporting, setExporting] = useState(false);
   const { data, isLoading, isError, error } = useCapacityList(filters);
   const periodLabel = formatCapacityListPeriodLabel(filters);
   const isPeriodView = isCapacityListPeriodView(filters);
   const workStatusTitle = getCapacityListWorkStatusTitle(filters, periodLabel);
-  const averagePercent =
-    data?.averageCapacityPercent ?? computeAverageCapacityPercent(data?.items ?? []);
+  const items = data?.items ?? [];
+  const averagePercent = data?.averageCapacityPercent ?? computeAverageCapacityPercent(items);
+
+  const handleExport = () => {
+    if (items.length === 0) {
+      message.warning('Không có dữ liệu capacity để xuất.');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      exportCapacityListToCsv(items, filters);
+      message.success('Đã tải file xuất.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <>
@@ -28,6 +45,9 @@ export function CapacityList() {
         filters={filters}
         onChange={setFilters}
         onReset={() => setFilters(getDefaultCapacityFilters())}
+        onExport={handleExport}
+        exporting={exporting}
+        exportDisabled={isLoading || isError}
       />
 
       <CardWrapper
@@ -49,7 +69,7 @@ export function CapacityList() {
           isPeriodView={isPeriodView}
         />
         <CapacityTable
-          items={data?.items ?? []}
+          items={items}
           loading={isLoading}
           periodLabel={periodLabel}
           isPeriodView={isPeriodView}

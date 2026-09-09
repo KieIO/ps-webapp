@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Alert, Button, Select, Skeleton, Table, Tooltip } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
+import { Alert, Button, Select, Skeleton, Table, Tooltip, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import type { ProductivityRankingRow } from '../../schemas/productivityDashboard.schema';
+import { exportProductivityRankingToCsv } from '../../utils/exportProductivityRanking';
 import { formatCapacityPercent } from '../../utils/formatCapacityPercent';
 import { DepartmentTag } from '../DepartmentTag/DepartmentTag';
 import styles from './ProductivityRankingTable.module.scss';
@@ -16,6 +18,8 @@ interface ProductivityRankingTableProps {
   onRetry?: () => void;
   /** Head/Admin view: show primary PM/CM derived from period work. */
   showManagers?: boolean;
+  /** Used in exported CSV filename (`YYYY-MM`). */
+  period?: { year: number; month: number };
   /** Team report: show avg capacity / overload in subtitle and flag overload rows. */
   teamSummary?: {
     avgCapacity: number | null;
@@ -119,15 +123,32 @@ export function ProductivityRankingTable({
   error = false,
   onRetry,
   showManagers = false,
+  period,
   teamSummary,
 }: ProductivityRankingTableProps) {
   const [departmentFilter, setDepartmentFilter] = useState<DepartmentFilter>('all');
+  const [exporting, setExporting] = useState(false);
   const overloadThreshold = teamSummary?.overloadThreshold ?? DEFAULT_OVERLOAD_THRESHOLD;
 
   const filteredRows = useMemo(() => {
     if (departmentFilter === 'all') return rows;
     return rows.filter((row) => row.displayDepartment === departmentFilter);
   }, [departmentFilter, rows]);
+
+  const handleExport = () => {
+    if (filteredRows.length === 0) {
+      message.warning('Không có dữ liệu nhân sự để xuất.');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      exportProductivityRankingToCsv(filteredRows, period);
+      message.success('Đã tải file xuất.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const managerFilters = useMemo(() => {
     if (!showManagers) return [];
@@ -335,17 +356,27 @@ export function ProductivityRankingTable({
       subtitle={subtitle}
       className={styles.card}
       actions={
-        <Select<DepartmentFilter>
-          value={departmentFilter}
-          onChange={setDepartmentFilter}
-          options={[
-            { value: 'all', label: 'Tất cả phòng ban' },
-            { value: 'Project', label: 'Project' },
-            { value: 'Creative', label: 'Creative' },
-          ]}
-          className={styles.filter}
-          aria-label="Lọc phòng ban"
-        />
+        <div className={styles.actions}>
+          <Select<DepartmentFilter>
+            value={departmentFilter}
+            onChange={setDepartmentFilter}
+            options={[
+              { value: 'all', label: 'Tất cả phòng ban' },
+              { value: 'Project', label: 'Project' },
+              { value: 'Creative', label: 'Creative' },
+            ]}
+            className={styles.filter}
+            aria-label="Lọc phòng ban"
+          />
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={handleExport}
+            loading={exporting}
+            disabled={loading || error}
+          >
+            Xuất Excel
+          </Button>
+        </div>
       }
     >
       {error ? (

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, DatePicker, Select, Skeleton, Switch } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
+import { Alert, Button, DatePicker, Select, Skeleton, Switch, message } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import { buildEmployeePerformancePath } from '@/config/constants';
@@ -7,6 +8,7 @@ import type { Role } from '@/config/permissions';
 import { useProductivityRanking } from '@/features/productivity/hooks/useProductivityRanking';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { buildTeamComparisonInsights } from '../../utils/buildInsights';
+import { exportTeamComparisonToCsv } from '../../utils/exportTeamComparison';
 import {
   canSelectDepartment,
   defaultDepartmentScope,
@@ -36,6 +38,7 @@ export function TeamComparisonDashboard({ role }: TeamComparisonDashboardProps) 
   const [mainMetric, setMainMetric] = useState<MainMetricKey>('onTime');
   const [hideNames, setHideNames] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const period = { year: selectedMonth.year(), month: selectedMonth.month() + 1 };
   const rankingQuery = useProductivityRanking(period, {
@@ -97,6 +100,21 @@ export function TeamComparisonDashboard({ role }: TeamComparisonDashboardProps) 
     [sortedRows, monthLabel, hideNames],
   );
 
+  const handleExport = () => {
+    if (rankedRows.length === 0) {
+      message.warning('Không có dữ liệu nhân sự để xuất.');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      exportTeamComparisonToCsv(rankedRows, { period, mainMetric });
+      message.success('Đã tải file xuất.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className={styles.root}>
       <PageHeader
@@ -104,16 +122,26 @@ export function TeamComparisonDashboard({ role }: TeamComparisonDashboardProps) 
         title="So sánh nhóm"
         subtitle="Capacity, tiến độ và chất lượng — nhóm vs cá nhân"
         actions={
-          <DatePicker
-            picker="month"
-            allowClear={false}
-            value={selectedMonth}
-            format="[Tháng] M/YYYY"
-            onChange={(value) => {
-              if (value) setSelectedMonth(value.startOf('month'));
-            }}
-            aria-label="Chọn tháng báo cáo"
-          />
+          <>
+            <DatePicker
+              picker="month"
+              allowClear={false}
+              value={selectedMonth}
+              format="[Tháng] M/YYYY"
+              onChange={(value) => {
+                if (value) setSelectedMonth(value.startOf('month'));
+              }}
+              aria-label="Chọn tháng báo cáo"
+            />
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={handleExport}
+              loading={exporting}
+              disabled={rankingQuery.isLoading || rankingQuery.isError}
+            >
+              Xuất Excel
+            </Button>
+          </>
         }
       />
 

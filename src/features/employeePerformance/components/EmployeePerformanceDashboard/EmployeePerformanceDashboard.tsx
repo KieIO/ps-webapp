@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
-import { Alert, Button, DatePicker, Skeleton } from 'antd';
+import { useMemo, useState } from 'react';
+import { DownloadOutlined } from '@ant-design/icons';
+import { Alert, Button, DatePicker, Skeleton, message } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useSearchParams } from 'react-router-dom';
 import { ROUTES } from '@/config/constants';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { useEmployeePerformanceDetail } from '../../hooks/useEmployeePerformanceDetail';
+import { exportEmployeePerformanceToCsv } from '../../utils/exportEmployeePerformance';
 import { EmployeeDetailsSection } from '../EmployeeDetailsSection/EmployeeDetailsSection';
 import { EmployeeMetricGrid } from '../EmployeeMetricGrid/EmployeeMetricGrid';
 import { EmployeeProfileCard } from '../EmployeeProfileCard/EmployeeProfileCard';
@@ -26,6 +28,7 @@ const initialMonth = (params: URLSearchParams): Dayjs => {
 
 export function EmployeePerformanceDashboard({ userId }: EmployeePerformanceDashboardProps) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [exporting, setExporting] = useState(false);
   const selectedMonth = useMemo(() => initialMonth(searchParams), [searchParams]);
   const period = { year: selectedMonth.year(), month: selectedMonth.month() + 1 };
   const detailQuery = useEmployeePerformanceDetail(userId, period);
@@ -39,6 +42,22 @@ export function EmployeePerformanceDashboard({ userId }: EmployeePerformanceDash
     setSearchParams(next);
   };
 
+  const handleExport = () => {
+    if (!data) return;
+    if (data.recentTasks.length === 0) {
+      message.warning('Không có task gần đây để xuất.');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      exportEmployeePerformanceToCsv(data);
+      message.success('Đã tải file xuất.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className={styles.root}>
       <PageHeader
@@ -50,14 +69,24 @@ export function EmployeePerformanceDashboard({ userId }: EmployeePerformanceDash
         title={data ? `Hiệu suất cá nhân — ${data.profile.name}` : 'Hiệu suất cá nhân'}
         subtitle="Tổng quan năng suất, chất lượng và xu hướng làm việc theo tháng"
         actions={
-          <DatePicker
-            picker="month"
-            allowClear={false}
-            value={selectedMonth}
-            format="[Tháng] M/YYYY"
-            onChange={handleMonthChange}
-            aria-label="Chọn tháng báo cáo"
-          />
+          <>
+            <DatePicker
+              picker="month"
+              allowClear={false}
+              value={selectedMonth}
+              format="[Tháng] M/YYYY"
+              onChange={handleMonthChange}
+              aria-label="Chọn tháng báo cáo"
+            />
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={handleExport}
+              loading={exporting}
+              disabled={!data || detailQuery.isLoading}
+            >
+              Xuất Excel
+            </Button>
+          </>
         }
       />
 

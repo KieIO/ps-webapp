@@ -15,6 +15,7 @@ import { getDepartmentLabel } from '@/features/departments/hooks/useDepartmentOp
 
 export const exportProjectsToCsv = (projects: Project[]): void => {
   const headers = [
+    PROJECT_TABLE_COLUMN_HEADERS.code,
     PROJECT_TABLE_COLUMN_HEADERS.client,
     PROJECT_NAME_COLUMN_LABEL,
     PROJECT_TABLE_COLUMN_HEADERS.department,
@@ -37,6 +38,7 @@ export const exportProjectsToCsv = (projects: Project[]): void => {
   ];
 
   const rows = projects.map((project) => [
+    project.code,
     project.client.name,
     project.name,
     getDepartmentLabel(project.department),

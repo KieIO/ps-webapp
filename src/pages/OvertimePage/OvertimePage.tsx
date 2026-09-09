@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Tabs } from 'antd';
+import { Alert, Button, Tabs, message } from 'antd';
 import { useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { usePermission } from '@/shared/hooks/usePermission';
@@ -14,6 +14,7 @@ import { OvertimeDetailDrawer } from '@/features/overtime/components/OvertimeDet
 import { OvertimeFilters } from '@/features/overtime/components/OvertimeFilters/OvertimeFilters';
 import { OvertimeTable } from '@/features/overtime/components/OvertimeTable/OvertimeTable';
 import { useOvertimeList, useOvertimeProjectOptions } from '@/features/overtime/hooks/useOvertime';
+import { exportOvertimeToCsv } from '@/features/overtime/utils/exportOvertime';
 import type {
   OvertimeListFilters,
   OvertimeRecord,
@@ -31,6 +32,7 @@ export default function OvertimePage() {
   const [filters, setFilters] = useState<OvertimeListFilters>({});
   const [createOpen, setCreateOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<OvertimeRecord | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [debouncedSearch] = useDebounce(filters.search, 300);
 
   const hasDateRange = Boolean(filters.fromDate && filters.toDate);
@@ -97,12 +99,30 @@ export default function OvertimePage() {
     });
   };
 
+  const handleExport = () => {
+    const records = listQuery.data ?? [];
+    if (records.length === 0) {
+      message.warning('Không có OT request để xuất.');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      exportOvertimeToCsv(records);
+      message.success('Đã tải file xuất.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const requestsTab = (
     <div className={styles.requests}>
       <OvertimeFilters
         filters={filters}
         onChange={setFilters}
         onReset={() => setFilters({})}
+        onExport={handleExport}
+        exporting={exporting}
         projectOptions={projectOptions}
         projectOptionsLoading={hasDateRange && scopedProjectsQuery.isFetching}
         assigneeOptions={assigneeOptions}

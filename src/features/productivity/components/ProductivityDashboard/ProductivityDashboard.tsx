@@ -134,6 +134,7 @@ export function ProductivityDashboard() {
             loading={rankingQuery.isLoading}
             error={rankingQuery.isError}
             onRetry={() => void rankingQuery.refetch()}
+            period={period}
             showManagers
           />
         </>

@@ -69,6 +69,7 @@ export function TeamProductivityDashboard({ role }: TeamProductivityDashboardPro
           <TeamMetricGrid data={data} groupLabel={groupLabel} role={role} />
           <ProductivityRankingTable
             rows={data.ranking}
+            period={period}
             teamSummary={{
               avgCapacity: data.capacityPercent,
               overloadedCount: data.overloadedCount,

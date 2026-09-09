@@ -1,4 +1,5 @@
-import { DatePicker, Input, Select } from 'antd';
+import { Button, DatePicker, Input, Select } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import { FilterSection } from '@/shared/ui/FilterSection/FilterSection';
 import { DATE_FORMAT } from '@/config/constants';
@@ -15,6 +16,8 @@ interface OvertimeFiltersProps {
   filters: OvertimeListFilters;
   onChange: (filters: OvertimeListFilters) => void;
   onReset: () => void;
+  onExport: () => void;
+  exporting?: boolean;
   projectOptions?: SelectOption[];
   assigneeOptions?: SelectOption[];
   projectOptionsLoading?: boolean;
@@ -24,6 +27,8 @@ export function OvertimeFilters({
   filters,
   onChange,
   onReset,
+  onExport,
+  exporting,
   projectOptions = [],
   assigneeOptions = [],
   projectOptionsLoading = false,
@@ -125,6 +130,15 @@ export function OvertimeFilters({
           />
         </div>
       </FilterSection>
+
+      <Button
+        icon={<DownloadOutlined />}
+        onClick={onExport}
+        loading={exporting}
+        className={styles.export}
+      >
+        {OT_FILTER_LABELS.export}
+      </Button>
     </div>
   );
 }

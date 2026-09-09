@@ -31,10 +31,11 @@ const formatExportCell = (task: MyTask, key: MyTaskColumnKey): string | number =
 };
 
 export const exportMyTasksToCsv = (tasks: MyTask[], columnDefs: MyTaskColumnDef[]): void => {
-  const headers = columnDefs.map((def) => def.title);
-  const rows = tasks.map((task) =>
-    columnDefs.map((def) => formatExportCell(task, def.key)),
-  );
+  const headers = ['Task code', ...columnDefs.map((def) => def.title)];
+  const rows = tasks.map((task) => [
+    task.taskCode,
+    ...columnDefs.map((def) => formatExportCell(task, def.key)),
+  ]);
   const category = tasks[0]?.taskCategory ?? 'tasks';
 
   downloadCsv(`${category}-tasks-${dayjs().format('YYYY-MM-DD')}.csv`, headers, rows);

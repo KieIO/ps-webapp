@@ -1,3 +1,20 @@
+.wrapper {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.filterSection {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.export {
+  flex-shrink: 0;
+}
+
 .field {
   display: flex;
   flex-direction: column;
