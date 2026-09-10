@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Button, Card, InputNumber, Space, Typography } from 'antd';
+import { env } from '@/config/env';
 import { ROLES } from '@/config/permissions';
 import { usePermission } from '@/shared/hooks/usePermission';
 import {
@@ -12,7 +13,7 @@ import styles from './GeneralSettingsPanel.module.scss';
 export const GeneralSettingsPanel = () => {
   const { role, can } = usePermission();
   const resetDatabase = useResetDatabase();
-  const canResetDatabase = role === ROLES.ADMIN;
+  const canResetDatabase = role === ROLES.ADMIN && env.enableDatabaseReset;
   const canManageOtSettings =
     role === ROLES.ADMIN ||
     role === ROLES.HEAD ||
@@ -89,7 +90,7 @@ export const GeneralSettingsPanel = () => {
             type="warning"
             showIcon
             message="Destructive action"
-            description="Resetting the database removes all data created after the initial seed and restores the default dev dataset (users, titles, projects, tasks, and reference data)."
+            description="Resetting the database wipes all application tables and restores the default dev dataset (users, titles, departments, clients, projects, tasks, leave, and reference data)."
             style={{ marginBottom: 24 }}
           />
 
@@ -102,7 +103,7 @@ export const GeneralSettingsPanel = () => {
             danger
             type="primary"
             loading={resetDatabase.isPending}
-            onClick={() => resetDatabase.mutate()}
+            onClick={resetDatabase.confirmAndReset}
           >
             Reset database to seed data
           </Button>

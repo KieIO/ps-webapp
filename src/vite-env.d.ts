@@ -15,6 +15,7 @@ interface ImportMetaEnv {
   readonly VITE_USE_TITLES_MOCK?: string;
   readonly VITE_USE_TASK_SCORES_MOCK?: string;
   readonly VITE_USE_CAPACITY_MOCK?: string;
+  readonly VITE_ENABLE_DATABASE_RESET?: string;
 }
 
 interface ImportMeta {

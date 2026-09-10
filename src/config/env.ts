@@ -21,4 +21,9 @@ export const env = {
   useTaskScoresMock: import.meta.env.VITE_USE_TASK_SCORES_MOCK === 'true',
   /** Opt-in only: set `VITE_USE_CAPACITY_MOCK=true` to use in-memory capacity data. */
   useCapacityMock: import.meta.env.VITE_USE_CAPACITY_MOCK === 'true',
+  /**
+   * Destructive Settings → reset database. Shown for admin by default,
+   * including production. Set `false` to hide the button.
+   */
+  enableDatabaseReset: import.meta.env.VITE_ENABLE_DATABASE_RESET !== 'false',
 } as const;
