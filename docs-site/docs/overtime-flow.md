@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
 sidebar_label: Luồng OT
-slug: /
+slug: /overtime
 ---
 
 # Luồng Overtime (OT)

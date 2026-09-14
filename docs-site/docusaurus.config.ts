@@ -11,7 +11,7 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://docs.pokeslide.local',
+  url: 'https://pokeslide-docs.vercel.app',
   baseUrl: '/',
 
   organizationName: 'pokeslide',
@@ -72,11 +72,11 @@ const config: Config = {
           items: [
             {
               label: 'Tạo task',
-              to: '/create-task-flow',
+              to: '/',
             },
             {
               label: 'On-time rate',
-              to: '/on-time-rate',
+              to: '/on-time',
             },
           ],
         },
@@ -85,7 +85,7 @@ const config: Config = {
           items: [
             {
               label: 'Luồng OT',
-              to: '/',
+              to: '/overtime',
             },
           ],
         },

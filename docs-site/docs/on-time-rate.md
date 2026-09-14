@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 sidebar_label: On-time rate
+slug: /on-time
 ---
 
 # On-time rate

@@ -2,5 +2,22 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "installCommand": "npm install",
-  "framework": null
+  "framework": null,
+  "redirects": [
+    {
+      "source": "/create-task-flow",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/on-time-rate",
+      "destination": "/on-time",
+      "permanent": true
+    },
+    {
+      "source": "/overtime-flow",
+      "destination": "/overtime",
+      "permanent": true
+    }
+  ]
 }
