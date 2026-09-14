@@ -28,17 +28,18 @@ Hướng dẫn này mô tả cách **PM tạo task mới** trên Pokeslide: nh�
      │                      │
      ▼                      ▼
  Project Staff         Creative Head
- (confirm 15')         (brief/Level nếu cần)
+ (confirm)             (brief/Level nếu cần)
      │                      │
      ▼                      ▼
    Làm việc            Creative Manager
      │                 (giao / chia nhỏ)
      ▼                      │
- PM review                  ▼
-                      Creative Staff
+ Đánh giá                   ▼
+ (PM / quản lý)       Creative Staff
                             │
                             ▼
-                      Creative Head review
+                      Đánh giá
+                      (CH / CM / PM…)
 ```
 
 ---
@@ -64,7 +65,7 @@ Mọi task trong hệ thống đều **bắt đầu từ PM**, kể cả task sa
 
 ## 4. Vào đâu để tạo task?
 
-PM mở **Task management → Project Tasks** (hoặc tab Tasks trong chi tiết dự án), bấm **Tạo task**.
+PM mở **Task management → Project Tasks** (hoặc tab **Tasks** trong chi tiết dự án), bấm **Tạo task**.
 
 Hệ thống mở drawer **“Tạo task mới”** bên phải màn hình.
 
@@ -123,7 +124,7 @@ PM chọn một trong hai hướng:
 - Giao trực tiếp cho **Project Staff**.
 - Chọn người nhận (có hiển thị trạng thái workload).
 - Brief và Level đã nhập ở bước 1 đi kèm task.
-- Staff có **15 phút** để xác nhận (confirm) task sau khi nhận.
+- Staff được nhắc **confirm** sau khi nhận (UI hiện thông báo khung thời gian 15 phút; chưa có timer tự khóa).
 
 **Hướng 2: Phòng Creative**
 
@@ -131,6 +132,7 @@ PM chọn một trong hai hướng:
 - **Không** chọn Staff lúc này.
 - Mọi **Creative Head** nhận thông báo.
 - CH vào **Creative queue** để giao CM (không cần viết lại brief).
+- Ai giao CM trước sẽ khóa task cho CM đó.
 
 #### Bước 3: Xác nhận
 
@@ -141,7 +143,9 @@ PM xem lại tóm tắt: loại task, dự án, PM, tên task, brief, Level, s�
 
 ---
 
-### 6.2. Creative Task: 2 bước
+### 6.2. Creative Task: 3 bước trên UI
+
+UI drawer hiện **3 bước**: **Tạo task** → thông tin chuyển Creative → **Hoàn tất**.
 
 #### Bước 1: Tạo task
 
@@ -150,11 +154,15 @@ PM nhập:
 - Tên dự án, PM, tên task (catalog)
 - Deadline, Urgency
 
-**Không** nhập brief và **không** phân loại Level.
+**Không** nhập brief, **không** nhập số lượng và **không** phân loại Level.
 
-#### Bước 2: Xác nhận
+#### Bước 2: Thông tin chuyển Creative
 
-PM xem lại và bấm **“Gửi Creative”**.
+Hệ thống nhắc: chưa cần brief; CH sẽ bổ sung brief, phân loại Level và giao CM. Mọi CH nhận thông báo.
+
+#### Bước 3: Hoàn tất
+
+PM xem lại tóm tắt và bấm **“Gửi Creative”**.
 
 Task vào hàng chờ Creative; CH nhận thông báo và xử lý tiếp.
 
@@ -165,7 +173,7 @@ Task vào hàng chờ Creative; CH nhận thông báo và xử lý tiếp.
 ### Trường hợp giao Project Staff
 
 ```text
-PM tạo task → Project Staff nhận → Confirm (15 phút) → Làm việc → Hoàn thành → PM review
+PM tạo task → Project Staff nhận → Confirm → Làm việc → Hoàn thành → Đánh giá (PM / quản lý)
 ```
 
 ### Trường hợp chuyển Creative (từ Project Task hoặc Creative Task)
@@ -173,42 +181,51 @@ PM tạo task → Project Staff nhận → Confirm (15 phút) → Làm việc �
 **Nếu PM đã viết brief (Project Task chuyển Creative):**
 
 ```text
-PM → Creative Head (brief sẵn) → giao CM → CM giao Staff → Staff làm → CH review
+PM → Creative Head (brief sẵn) → giao CM → CM giao Staff → Staff làm → Đánh giá
 ```
 
 **Nếu PM chưa viết brief (Creative Task):**
 
 ```text
-PM → Creative Head (bổ sung brief + Level) → giao CM → CM giao Staff → Staff làm → CH review
+PM → Creative Head (bổ sung brief + Level) → giao CM → CM giao Staff → Staff làm → Đánh giá
 ```
 
 ### Creative Head: Creative queue
 
 - Vào **Task management → Creative queue**
-- Task thiếu brief: **“Bổ sung brief & giao CM”**
-- Task đủ brief: **“Giao CM”**
-- Có thể chỉnh deadline Creative, urgency (khi cần), ghi chú cho CM
+- Task thiếu brief: **“Bổ sung brief & giao CM”** (nút lưu: **“Lưu & giao CM”**)
+- Task đủ brief: **“Giao cho CM”**
+- **Chỉ khi task thiếu brief**, CH được chỉnh **deadline Creative** và **urgency**
+- Có thể thêm ghi chú cho CM
 
 ### Creative Manager: Creative queue
 
 - Nhận task từ CH
 - **Giao nguyên** cho một Staff, hoặc **chia nhỏ** thành nhiều task con (mỗi phần có brief riêng)
-- **Không** phân loại lại Level (CH đã phân loại)
+- **Không** phân loại lại Level (chỉ Admin / CH được đổi Level, và trước khi Staff confirm)
 
-PM cũng có thể vào **Creative queue** để theo dõi tiến độ (không thay CH/CM assign).
+### PM / Admin trên Creative queue
+
+PM và Admin cũng vào được **Creative queue**, có thể **theo dõi và xử lý assign** như CH/CM (không chỉ xem).
+
+### Đánh giá sau khi hoàn thành
+
+Người có quyền đánh giá task gồm **PM, Creative Head, Creative Manager, Head, Admin** — không chỉ riêng CH.
 
 ---
 
 ## 8. So sánh nhanh hai loại task
 
-|                          | Project Task                | Creative Task      |
-| ------------------------ | --------------------------- | ------------------ |
-| PM viết brief?           | Có                          | Không              |
-| PM phân loại Level?      | Có                          | Không              |
-| Hướng giao sau khi tạo   | Project Staff hoặc Creative | Luôn sang Creative |
-| CH cần viết brief?       | Không (nếu PM đã viết)      | Có                 |
-| CH phân loại Level?      | Không (PM đã phân loại)     | Có                 |
-| CM có thể chia task nhỏ? | Có                          | Có                 |
+|                                                   | Project Task                | Creative Task       |
+| ------------------------------------------------- | --------------------------- | ------------------- |
+| PM viết brief?                                    | Có                          | Không               |
+| PM phân loại Level?                               | Có                          | Không               |
+| PM nhập số lượng?                                 | Có                          | Không               |
+| Hướng giao sau khi tạo                            | Project Staff hoặc Creative | Luôn sang Creative  |
+| CH cần viết brief?                                | Không (nếu PM đã viết)      | Có                  |
+| CH phân loại Level?                               | Không (PM đã phân loại)     | Có                  |
+| CH chỉnh deadline Creative / urgency khi giao CM? | Không (brief đã sẵn)        | Có (vì thiếu brief) |
+| CM có thể chia task nhỏ?                          | Có                          | Có                  |
 
 ---
 
@@ -218,7 +235,7 @@ PM cũng có thể vào **Creative queue** để theo dõi tiến độ (không 
 
 - Không chọn Staff **Overloaded** hoặc **đang nghỉ phép**
 - Hệ thống hiển thị trạng thái workload khi chọn người
-- Với Creative: không giao khi capacity ≥ **80%**
+- Capacity ≥ **80%** được coi là Overloaded và không chọn được (áp dụng khi giao Project Staff lẫn Creative)
 
 ### Thông báo
 
@@ -228,8 +245,9 @@ PM cũng có thể vào **Creative queue** để theo dõi tiến độ (không 
 
 ### Xác nhận task
 
-- Project Staff / Creative Staff: **15 phút** để confirm
-- Chưa confirm → hệ thống cảnh báo PM (và CM nếu là task Creative)
+- Sau khi được giao, Staff cần **confirm** (UI nhắc khung 15 phút; hiện chưa có timer tự động khóa task)
+- Task còn **chưa cập nhật (not_updated)** xuất hiện trên hàng chờ hành động của quản lý (Home); quản lý có thể **remind** thủ công
+- Chưa có cảnh báo tự động riêng theo đúng mốc 15 phút cho PM/CM
 
 ### Đóng form giữa chừng
 
