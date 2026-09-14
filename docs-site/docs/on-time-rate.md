@@ -25,12 +25,13 @@ On-time rate (%) =
   × 100
 ```
 
-- Không có task hoàn thành trong tháng → chưa có số liệu (UI: “Chưa có task”).
-- Trên hầu hết dashboard quản lý (Home Head, Productivity org/team), KPI chỉ lấy **Project Task**.
+- Không có task hoàn thành trong tháng → chưa có số liệu (UI: **“Chưa có task hoàn thành trong tháng”**).
+- **Card KPI** trên Home Head và Productivity (org/team) chỉ lấy **Project Task**.
+- **Ranking / Team comparison / alert theo người** tính on-time trên task finished của người đó **không lọc riêng Project Task** (có thể gồm non-project nếu người đó có task finished loại đó).
 
 ## Thế nào là “đúng hạn”?
 
-Hệ thống so sánh **theo ngày** (không theo giờ) với field **Deadline** trên task (cột bảng / form tạo·sửa / Task detail):
+Hệ thống so sánh **theo ngày** (không theo giờ) với **Deadline** hiệu lực trên task (cột bảng / form tạo·sửa / Task detail — thường map sang deadline nội bộ của task):
 
 ```text
 Ngày hoàn thành  ≤  Ngày Deadline trên task
@@ -40,18 +41,18 @@ Ngày hoàn thành  ≤  Ngày Deadline trên task
 - Cùng ngày với Deadline vẫn tính **đúng hạn**.
 - Không có Deadline → task finished vẫn vào mẫu số, nhưng **không** được tính đúng hạn → làm giảm on-time rate.
 
-## Deadline phòng Creative thì sao?
+## Deadline Creative thì sao?
 
-Task thuộc Creative có thể có thêm field **Deadline phòng Creative** (CH/CM nhập; staff Creative xem được).
+Task thuộc Creative có thể có thêm field **Deadline Creative** trên UI (CH/CM nhập; staff Creative xem được).
 
 Field này **không** tham gia tính on-time rate, **không** dùng cho Auto Urgency.
 
-| Field trên UI               | Vai trò                                                                             |
-| --------------------------- | ----------------------------------------------------------------------------------- |
-| **Deadline**                | Mốc chính. Dùng cho on-time, urgency Auto, filter đúng hạn/trễ hạn                  |
-| **Deadline phòng Creative** | Mốc nội bộ phòng Creative. Theo dõi tiến độ nội bộ, **không** ảnh hưởng KPI on-time |
+| Field trên UI         | Vai trò                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| **Deadline**          | Mốc chính. Dùng cho on-time, urgency Auto, filter đúng hạn/trễ hạn                  |
+| **Deadline Creative** | Mốc nội bộ phòng Creative. Theo dõi tiến độ nội bộ, **không** ảnh hưởng KPI on-time |
 
-**Ví dụ:** Deadline chính `20/08`, Deadline phòng Creative `15/08`, staff finish ngày `18/08` → vẫn **đúng hạn** theo on-time (vì ≤ `20/08`), dù đã qua mốc Creative.
+**Ví dụ:** Deadline chính `20/08`, Deadline Creative `15/08`, staff finish ngày `18/08` → vẫn **đúng hạn** theo on-time (vì ≤ `20/08`), dù đã qua mốc Creative.
 
 ## Luồng liên quan
 
@@ -81,27 +82,27 @@ Hiển thị trên Home / Productivity / Team comparison
 
 ## Các trạng thái liên quan khi lọc task
 
-| Filter                             | Ý nghĩa                                                    |
-| ---------------------------------- | ---------------------------------------------------------- |
-| **Đúng hạn** (`on_time`)           | Finished trong tháng và ngày hoàn thành ≤ deadline         |
-| **Không đúng hạn** (`not_on_time`) | Finished trong tháng nhưng trễ, hoặc không có deadline     |
-| **Đã hoàn thành** (`completed`)    | Finished có `completedAt` trong tháng (không xét đúng/trễ) |
+| Filter trên UI           | Giá trị filter | Ý nghĩa                                                    |
+| ------------------------ | -------------- | ---------------------------------------------------------- |
+| **Đúng hạn**             | `on_time`      | Finished trong tháng và ngày hoàn thành ≤ deadline         |
+| **Không đúng hạn**       | `not_on_time`  | Finished trong tháng nhưng trễ, hoặc không có deadline     |
+| **Tất cả đã hoàn thành** | `completed`    | Finished có `completedAt` trong tháng (không xét đúng/trễ) |
 
 Có thể lọc trên danh sách Project Tasks (`/tasks/project`) theo timeliness + tháng hoàn thành.
 
 ## Xuất hiện ở đâu trong sản phẩm?
 
-| Màn hình                 | Ai xem                                  | Hiển thị                                                |
-| ------------------------ | --------------------------------------- | ------------------------------------------------------- |
-| **Home**                 | Head / Creative Head / Admin            | Card On-time rate (org), drill-down sang task đúng hạn  |
-| **Productivity**         | Head / CH / Admin (org); PM / CM (team) | Metric On-time, chart theo tuần, cột ranking            |
-| **Team comparison**      | Role có quyền báo cáo                   | Cột On-time, radar, metric sort mặc định, insight       |
-| **Employee performance** | Quản lý xem chi tiết NV                 | On-time rate cá nhân + tag Đúng hạn / Trễ hạn từng task |
-| **Project Tasks**        | Theo quyền task                         | Filter Đúng hạn / Không đúng hạn                        |
+| Màn hình                 | Ai xem                                                           | Hiển thị                                                             |
+| ------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **Home**                 | Head / Creative Head / Admin                                     | Card On-time rate (org, Project Task), drill-down sang task đúng hạn |
+| **Productivity**         | Head / Creative Head / Admin (org); PM / CM (team)               | Metric On-time (Project Task), chart theo tuần, cột ranking          |
+| **Team comparison**      | Role có quyền báo cáo (`EXPORT_REPORT`: PM, CM, CH, Head, Admin) | Cột On-time, radar, metric sort mặc định, insight                    |
+| **Employee performance** | Quản lý xem chi tiết NV                                          | On-time rate cá nhân + tag Đúng hạn / Trễ hạn khi có ngày hoàn thành |
+| **Project Tasks**        | Theo quyền task                                                  | Filter Đúng hạn / Không đúng hạn / Tất cả đã hoàn thành              |
 
 ## Alert & ngưỡng
 
-- Ngưỡng cảnh báo thường dùng: **80%**.
+- Ngưỡng cảnh báo thường dùng: **80%** (ví dụ đường tham chiếu trên chart Productivity).
 - Team / insight có thể báo khi nhiều người hoặc nhóm có on-time dưới 80% trong tháng đang xem.
 - Cảnh báo “sắp trễ” trên task đang mở (**deadline risk / urgency**) là khái niệm khác. **Không** tính vào on-time rate (on-time chỉ tính sau khi task đã Finished).
 
@@ -111,7 +112,7 @@ Có thể lọc trên danh sách Project Tasks (`/tasks/project`) theo timelines
 | --------------------------------- | ------------------------------------------------------------------ |
 | **Task completion**               | Chỉ Finished + `completedAt` mới vào on-time                       |
 | **Deadline**                      | Field Deadline chính trên task quyết định đúng/trễ                 |
-| **Deadline phòng Creative**       | Không dùng để tính on-time                                         |
+| **Deadline Creative**             | Không dùng để tính on-time                                         |
 | **Overtime (OT)**                 | Cùng hệ thống báo cáo nhưng **không** đổi công thức on-time        |
 | **Revision / Quality / Capacity** | Metric cạnh nhau trên dashboard, tính độc lập                      |
 | **Productivity ranking**          | Có cột `onTimePercent`; Team comparison mặc định sort theo On-time |
@@ -120,7 +121,7 @@ Có thể lọc trên danh sách Project Tasks (`/tasks/project`) theo timelines
 
 1. Chỉ tính task **đã hoàn thành** trong tháng.
 2. Đúng hạn = ngày hoàn thành ≤ ngày **Deadline** trên task.
-3. **Deadline phòng Creative** không ảnh hưởng on-time.
+3. **Deadline Creative** không ảnh hưởng on-time.
 4. Rate = đúng hạn ÷ tổng finished × 100.
-5. Dashboard quản lý chủ yếu dùng **Project Task**.
+5. Card KPI Home / Productivity dùng **Project Task**; ranking / Team comparison có thể gồm thêm non-project finished.
 6. Dưới **80%** thường được coi là cần chú ý trên alert/insight.
