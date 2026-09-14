@@ -1,8 +1,9 @@
-import { Menu } from 'antd';
+import { Menu, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
+import { BookOutlined, ExportOutlined } from '@ant-design/icons';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { APP_NAME } from '@/config/constants';
+import { APP_NAME, DOCS_URL } from '@/config/constants';
 import {
   SIDEBAR_ITEMS,
   collectSidebarShortcutTargets,
@@ -147,6 +148,24 @@ export function Sidebar() {
     [collapsed, visibleItems],
   );
 
+  const docsLink = (
+    <a
+      className={styles.docsLink}
+      href={DOCS_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Open PokeSlide Docs in a new tab"
+    >
+      <BookOutlined className={styles.docsIcon} aria-hidden />
+      {!collapsed ? (
+        <>
+          <span className={styles.docsLabel}>Docs</span>
+          <ExportOutlined className={styles.docsExternal} aria-hidden />
+        </>
+      ) : null}
+    </a>
+  );
+
   return (
     <aside className={[styles.sidebar, collapsed ? styles.collapsed : ''].join(' ')}>
       <div className={styles.logo}>
@@ -168,6 +187,16 @@ export function Sidebar() {
           }
         }}
       />
+
+      <div className={styles.footer}>
+        {collapsed ? (
+          <Tooltip title="Docs" placement="right">
+            {docsLink}
+          </Tooltip>
+        ) : (
+          docsLink
+        )}
+      </div>
     </aside>
   );
 }

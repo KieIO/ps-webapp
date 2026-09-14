@@ -114,6 +114,9 @@ export const buildOvertimeDetailPath = (id: string) =>
 
 export const APP_NAME = 'Pokeslide Internal Platform';
 
+/** Public docs site (Docusaurus on Vercel). Opens in a new tab from the app sidebar. */
+export const DOCS_URL = 'https://pokeslide-docs.vercel.app';
+
 export const PAGINATION = {
   DEFAULT_PAGE_SIZE: 20,
   PAGE_SIZE_OPTIONS: [10, 20, 50, 100],
