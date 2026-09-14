@@ -90,23 +90,36 @@ export const GeneralSettingsPanel = () => {
             type="warning"
             showIcon
             message="Destructive action"
-            description="Resetting the database wipes all application tables and restores the default dev dataset (users, titles, departments, clients, projects, tasks, leave, and reference data)."
+            description="Both options wipe current data and sign everyone out. Empty keeps catalogs and one account per core role. Seed restores the full demo dataset."
             style={{ marginBottom: 24 }}
           />
 
           <Typography.Paragraph type="secondary" style={{ marginBottom: 16 }}>
-            Use this when you want a clean environment. You will need to sign in again with a seed
-            account after the reset completes.
+            After reset, sign in again with a seed account (password{' '}
+            <Typography.Text code>ps123</Typography.Text>
+            ), e.g. <Typography.Text code>admin@pokeslide.com</Typography.Text> or a{' '}
+            <Typography.Text code>@pokeslide.dev</Typography.Text> role account.
           </Typography.Paragraph>
 
-          <Button
-            danger
-            type="primary"
-            loading={resetDatabase.isPending}
-            onClick={resetDatabase.confirmAndReset}
-          >
-            Reset database to seed data
-          </Button>
+          <Space wrap>
+            <Button
+              danger
+              type="primary"
+              loading={resetDatabase.isPending && resetDatabase.variables === 'empty'}
+              disabled={resetDatabase.isPending}
+              onClick={() => resetDatabase.confirmAndReset('empty')}
+            >
+              Reset to empty
+            </Button>
+            <Button
+              danger
+              loading={resetDatabase.isPending && resetDatabase.variables === 'seed'}
+              disabled={resetDatabase.isPending}
+              onClick={() => resetDatabase.confirmAndReset('seed')}
+            >
+              Reset to seed data
+            </Button>
+          </Space>
         </Card>
       ) : null}
     </div>
