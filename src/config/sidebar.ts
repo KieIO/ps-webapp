@@ -48,9 +48,6 @@ export interface SidebarItem {
   children?: readonly SidebarChildItem[];
 }
 
-/** Settings pages gated by role (no dedicated permission, or MANAGE_USERS is too broad). */
-const SETTINGS_HEAD_ROLES = [ROLES.HEAD, ROLES.CREATIVE_HEAD, ROLES.ADMIN] as const;
-
 export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
   {
     key: 'home',
@@ -175,26 +172,7 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
     icon: SettingOutlined,
     permission: null,
     children: [
-      {
-        label: 'General',
-        path: ROUTES.SETTINGS_GENERAL,
-        permission: null,
-        roles: SETTINGS_HEAD_ROLES,
-        shortcut: navShortcut('b'),
-      },
-      {
-        label: 'Roles & Permissions',
-        path: ROUTES.ROLES,
-        permission: null,
-        roles: SETTINGS_HEAD_ROLES,
-        shortcut: navShortcut('e'),
-      },
-      {
-        label: 'Audit Log',
-        path: ROUTES.AUDIT_LOG,
-        permission: 'VIEW_AUDIT_LOG',
-        shortcut: navShortcut('l'),
-      },
+      // Temporarily hidden on designer preview: General, Roles & Permissions, Audit Log.
       {
         label: 'Title management',
         path: ROUTES.TITLE_MANAGEMENT,

@@ -3,10 +3,8 @@ import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DATE_FORMAT, ROUTES } from '@/config/constants';
-import type { Role } from '@/config/permissions';
 import { LeaveScheduleModal } from '@/features/leave/components/LeaveScheduleModal/LeaveScheduleModal';
 import { UserLeaveSection } from '@/features/leave/components/UserLeaveSection/UserLeaveSection';
-import { RoleAccessPreview } from '@/features/rbac/components/RoleAccessPreview/RoleAccessPreview';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
@@ -63,7 +61,6 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
   const { mutate, isPending } = useUpdateUser();
   const { data: jobTitlesData, isLoading: jobTitlesLoading } = useJobTitleList({});
   const { data: jobLevelsData, isLoading: jobLevelsLoading } = useJobLevelList();
-  const selectedRole = Form.useWatch('role', form) as Role | undefined;
   const selectedJobLevelId = Form.useWatch('jobLevelId', form);
   const selectedJobTitleId = Form.useWatch('jobTitleId', form);
   const jobTitles = jobTitlesData?.items ?? [];
@@ -170,12 +167,11 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
     label: title.name,
   }));
 
-  const previewRole = selectedRole ?? user.role;
   const jobTitleLabel = user.jobTitleName ?? user.jobTitleCode ?? 'Unassigned';
   const levelBadge = mapJobLevelCode(user.jobLevelCode);
 
   return (
-    <div className={canEdit ? styles.layout : styles.layoutReadOnly}>
+    <div className={styles.layoutReadOnly}>
       <div className={styles.formColumn}>
         <CardWrapper
           title={user.name}
@@ -351,12 +347,6 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
           />
         )}
       </div>
-
-      {canFullyManage ? (
-        <div className={styles.previewColumn}>
-          <RoleAccessPreview role={previewRole} />
-        </div>
-      ) : null}
 
       <LeaveScheduleModal
         open={leaveModalOpen}

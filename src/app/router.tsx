@@ -39,8 +39,6 @@ const KPISettingsPage = lazy(() => import('@/pages/KPISettingsPage/KPISettingsPa
 const OvertimePage = lazy(() => import('@/pages/OvertimePage/OvertimePage'));
 const UsersPage = lazy(() => import('@/pages/UsersPage/UsersPage'));
 const UserDetailPage = lazy(() => import('@/pages/UserDetailPage/UserDetailPage'));
-const RolesPage = lazy(() => import('@/pages/RolesPage/RolesPage'));
-const AuditLogPage = lazy(() => import('@/pages/AuditLogPage/AuditLogPage'));
 const TitleManagementPage = lazy(() => import('@/pages/TitleManagementPage/TitleManagementPage'));
 const DepartmentManagementPage = lazy(
   () => import('@/pages/DepartmentManagementPage/DepartmentManagementPage'),
@@ -53,7 +51,6 @@ const EmployeeCapacityFormulaPage = lazy(
   () => import('@/pages/EmployeeCapacityFormulaPage/EmployeeCapacityFormulaPage'),
 );
 const TaskScorePage = lazy(() => import('@/pages/TaskScorePage/TaskScorePage'));
-const GeneralSettingsPage = lazy(() => import('@/pages/GeneralSettingsPage/GeneralSettingsPage'));
 const ForbiddenPage = lazy(() => import('@/pages/ForbiddenPage/ForbiddenPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage/NotFoundPage'));
 
@@ -216,9 +213,13 @@ const router = createBrowserRouter([
       {
         element: <ProtectedRoute allowedRoles={[ROLES.HEAD, ROLES.CREATIVE_HEAD, ROLES.ADMIN]} />,
         children: [
-          { path: ROUTES.SETTINGS_GENERAL.slice(1), element: <GeneralSettingsPage /> },
-          { path: ROUTES.ROLES.slice(1), element: <RolesPage /> },
-          { path: ROUTES.AUDIT_LOG.slice(1), element: <AuditLogPage /> },
+          // Temporarily hidden on designer preview (UI + direct access).
+          {
+            path: ROUTES.SETTINGS_GENERAL.slice(1),
+            element: <Navigate to={ROUTES.NOT_FOUND} replace />,
+          },
+          { path: ROUTES.ROLES.slice(1), element: <Navigate to={ROUTES.NOT_FOUND} replace /> },
+          { path: ROUTES.AUDIT_LOG.slice(1), element: <Navigate to={ROUTES.NOT_FOUND} replace /> },
           { path: ROUTES.TITLE_MANAGEMENT.slice(1), element: <TitleManagementPage /> },
           {
             path: ROUTES.DEPARTMENT_MANAGEMENT.slice(1),
