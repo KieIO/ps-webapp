@@ -33,7 +33,7 @@ export const mockGetRemainingOutput = async (
       slidesPointsPerUnit: 30,
       daTaskLevel: 2,
       daPointsPerUnit: 480,
-      note: 'Ước lượng capacity còn lại. Ví dụ: Project ÷ 30đ (Slides L2), Creative ÷ 480đ (DA L2).',
+      note: 'Ước lượng capacity còn lại để biết ngày đó còn làm được bao nhiêu. Ví dụ: Project ÷ 30đ (Slides L2), Creative ÷ 480đ (DA L2).',
     },
     days,
   };

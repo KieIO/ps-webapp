@@ -201,7 +201,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   }, [remainingOutput?.days]);
   const remainingAssumptionNote =
     remainingOutput?.assumption.note ??
-    'Ước lượng capacity còn lại. Ví dụ: Project ÷ 30đ (Slides L2), Creative ÷ 480đ (DA L2).';
+    'Ước lượng capacity còn lại để biết ngày đó còn làm được bao nhiêu. Ví dụ: Project ÷ 30đ (Slides L2), Creative ÷ 480đ (DA L2).';
 
   useEffect(() => {
     const calendarNode = calendarScrollRef.current;

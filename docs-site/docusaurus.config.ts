@@ -78,6 +78,10 @@ const config: Config = {
               label: 'On-time rate',
               to: '/on-time',
             },
+            {
+              label: 'Luồng tạo revision',
+              to: '/revision',
+            },
           ],
         },
         {
@@ -86,6 +90,15 @@ const config: Config = {
             {
               label: 'Luồng OT',
               to: '/overtime',
+            },
+          ],
+        },
+        {
+          title: 'Leave',
+          items: [
+            {
+              label: 'Luồng nghỉ phép',
+              to: '/leave',
             },
           ],
         },

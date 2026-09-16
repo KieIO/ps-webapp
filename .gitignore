@@ -37,3 +37,4 @@ stats.html
 docs-site/build
 docs-site/.docusaurus
 docs-site/node_modules
+.env*

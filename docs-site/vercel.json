@@ -18,6 +18,16 @@
       "source": "/overtime-flow",
       "destination": "/overtime",
       "permanent": true
+    },
+    {
+      "source": "/leave-flow",
+      "destination": "/leave",
+      "permanent": true
+    },
+    {
+      "source": "/revision-flow",
+      "destination": "/revision",
+      "permanent": true
     }
   ]
 }
