@@ -3,6 +3,12 @@ import type { TaskScore } from '../schemas/taskScore.schema';
 
 const SEED_DATE = '2024-01-01T00:00:00.000Z';
 
+const GROUP_DEPARTMENT: Record<string, string | null> = {
+  implementation: 'project',
+  quality_control: 'creative',
+  edit_others: null,
+};
+
 const buildLeveledTasks = (
   baseName: string,
   scoresByLevel: readonly number[],
@@ -10,6 +16,7 @@ const buildLeveledTasks = (
   startSortOrder: number,
   slug: string,
 ): { items: TaskScore[]; nextSortOrder: number } => {
+  const department = GROUP_DEPARTMENT[group] ?? null;
   const items = scoresByLevel.map((score, index) => {
     const level = index + 1;
     return {
@@ -18,6 +25,7 @@ const buildLeveledTasks = (
       taskType: baseName,
       score,
       group,
+      department,
       sortOrder: startSortOrder + index,
       createdAt: SEED_DATE,
     };

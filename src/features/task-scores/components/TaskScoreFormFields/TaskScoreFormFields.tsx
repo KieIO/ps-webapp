@@ -9,7 +9,7 @@ export type TaskScoreFormValues = {
   name: string;
   score: number;
   group: string;
-  /** Department of the selected group (updated via group PATCH on save). */
+  /** Per-task department; independent of group. */
   department?: string | null;
 };
 
@@ -23,27 +23,28 @@ export function TaskScoreFormFields() {
   const lastDerivedTypeRef = useRef('');
   const taskTypeManualRef = useRef(false);
 
-  // Sync department when the selected group changes, or when group data arrives later.
+  // When the user switches group, suggest that group's default department.
+  // Skip the first paint so create/edit can seed department from parent values.
   useEffect(() => {
     if (!selectedGroup) {
       lastSyncedGroupRef.current = undefined;
-      form.setFieldValue('department', undefined);
       return;
     }
 
     const group = groupByCode[selectedGroup];
     if (!group) return;
 
-    const groupChanged = lastSyncedGroupRef.current !== selectedGroup;
-    const waitingForDept =
-      lastSyncedGroupRef.current === selectedGroup &&
-      form.getFieldValue('department') == null &&
-      group.department != null;
-
-    if (!groupChanged && !waitingForDept) return;
-
+    const previousGroup = lastSyncedGroupRef.current;
     lastSyncedGroupRef.current = selectedGroup;
-    form.setFieldValue('department', group.department ?? undefined);
+
+    if (previousGroup === undefined || previousGroup === selectedGroup) return;
+
+    // Suggest group default only when department is unset — never overwrite a
+    // value already chosen for this task.
+    const current = form.getFieldValue('department');
+    if (current != null && current !== '') return;
+
+    form.setFieldValue('department', group.department ?? null);
   }, [selectedGroup, groupByCode, form]);
 
   // Auto-fill task type from task name unless the user edited task type manually.
@@ -112,7 +113,6 @@ export function TaskScoreFormFields() {
           placeholder="No department"
           options={departmentOptions}
           loading={departmentLoading}
-          disabled={!selectedGroup}
         />
       </Form.Item>
     </>

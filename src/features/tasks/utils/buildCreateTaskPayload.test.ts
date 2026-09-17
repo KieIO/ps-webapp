@@ -12,6 +12,7 @@ const scores: TaskScore[] = [
     group: 'g-project',
     taskType: 'Slides',
     score: 10,
+    department: 'project',
     sortOrder: 0,
     createdAt: '2026-01-01T00:00:00.000Z',
   },

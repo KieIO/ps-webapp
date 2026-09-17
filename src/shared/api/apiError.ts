@@ -35,6 +35,9 @@ const cleanApiValidationMessage = (message: string): string => {
     'department is required for project tasks': 'Project task cần chọn phòng ban.',
     'projectManager is required': 'Cần chọn Project Manager.',
     'taskName is required': 'Cần nhập tên task.',
+    'A task with this name already exists':
+      'Tên task này đã có trong danh sách. Đổi Task name rồi thử lại.',
+    'A group with this name already exists': 'Tên group này đã tồn tại. Đổi tên group rồi thử lại.',
     'task is not awaiting Creative Head assignment':
       'Task này đã được Creative Head khác xử lý hoặc không còn trong hàng chờ.',
     'task is not awaiting Creative Manager assignment':

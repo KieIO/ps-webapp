@@ -53,7 +53,7 @@ export function TaskScoreTable({ items, groupByCode, loading, onEdit }: TaskScor
       key: 'department',
       width: 130,
       render: (_, record) => {
-        const department = groupByCode[record.group]?.department;
+        const department = record.department;
         return department ? getDepartmentLabel(department) : '—';
       },
     },

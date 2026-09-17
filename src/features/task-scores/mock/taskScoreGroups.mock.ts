@@ -4,7 +4,6 @@ import type {
   CreateTaskScoreGroupRequest,
   TaskScoreGroupListResponse,
   TaskScoreGroupRecord,
-  UpdateTaskScoreGroupRequest,
 } from '../schemas/taskScoreGroup.schema';
 import { getMockTaskScoresStore } from './taskScores.data';
 import { getMockTaskScoreGroupsStore, setMockTaskScoreGroupsStore } from './taskScoreGroups.data';
@@ -44,28 +43,6 @@ export const mockCreateTaskScoreGroup = async (
 
   setMockTaskScoreGroupsStore([...groups, created]);
   return created;
-};
-
-export const mockUpdateTaskScoreGroup = async (
-  id: string,
-  payload: UpdateTaskScoreGroupRequest,
-): Promise<TaskScoreGroupRecord> => {
-  await mockDelay();
-
-  const groups = getMockTaskScoreGroupsStore();
-  const index = groups.findIndex((entry) => entry.id === id);
-  if (index < 0) {
-    throw new Error('Group not found');
-  }
-
-  const updated: TaskScoreGroupRecord = {
-    ...groups[index],
-    department: payload.department,
-  };
-  const next = [...groups];
-  next[index] = updated;
-  setMockTaskScoreGroupsStore(next);
-  return updated;
 };
 
 export const getTaskScoreGroupByCode = (code: string): TaskScoreGroupRecord | undefined =>

@@ -1,9 +1,5 @@
-import { Button, Form, Input, Modal, Popconfirm, Select } from 'antd';
+import { Button, Form, Input, Modal, Popconfirm } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
-import {
-  getDepartmentLabel,
-  useDepartmentOptions,
-} from '@/features/departments/hooks/useDepartmentOptions';
 import { useCreateTaskScoreGroup } from '../../hooks/useCreateTaskScoreGroup';
 import { useDeleteTaskScoreGroup } from '../../hooks/useDeleteTaskScoreGroup';
 import { useTaskScoreGroupList } from '../../hooks/useTaskScoreGroupList';
@@ -22,11 +18,6 @@ interface ManageTaskScoreGroupsModalProps {
 export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGroupsModalProps) {
   const [form] = Form.useForm<CreateTaskScoreGroupRequest>();
   const { data, isLoading } = useTaskScoreGroupList();
-  const {
-    options: departmentOptions,
-    labelByCode,
-    isLoading: departmentLoading,
-  } = useDepartmentOptions({ enabled: open });
   const { mutate: createGroup, isPending: isCreating } = useCreateTaskScoreGroup();
   const {
     mutate: deleteGroup,
@@ -43,7 +34,6 @@ export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGro
     createGroup(
       {
         label: values.label,
-        department: values.department ?? null,
       },
       {
         onSuccess: () => {
@@ -67,8 +57,8 @@ export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGro
       destroyOnHidden
     >
       <p className={styles.intro}>
-        Groups classify task scores and may optionally belong to a department. Remove unused groups
-        with the × button.
+        Groups classify task scores. Department is set on each task, not on the group. Remove unused
+        groups with the × button.
       </p>
 
       <div className={styles.groupPanel}>
@@ -79,11 +69,6 @@ export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGro
             <div key={group.id} className={styles.groupItem}>
               <div className={styles.groupMeta}>
                 <TaskScoreGroupPill label={group.label} colorKey={group.colorKey} />
-                <span className={styles.department}>
-                  {group.department
-                    ? getDepartmentLabel(group.department, labelByCode)
-                    : 'No department'}
-                </span>
               </div>
               <Popconfirm
                 title={`Delete "${group.label}"?`}
@@ -122,15 +107,6 @@ export function ManageTaskScoreGroupsModal({ open, onClose }: ManageTaskScoreGro
           rules={[{ required: true, message: 'Enter a group name' }]}
         >
           <Input placeholder="e.g. Research" disabled={isCreating || isDeleting} />
-        </Form.Item>
-        <Form.Item name="department" label="Department">
-          <Select
-            allowClear
-            placeholder="No department"
-            options={departmentOptions}
-            loading={departmentLoading}
-            disabled={isCreating || isDeleting}
-          />
         </Form.Item>
         <Button type="primary" htmlType="submit" loading={isCreating} disabled={isDeleting}>
           Add group

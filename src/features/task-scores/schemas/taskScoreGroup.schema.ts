@@ -22,11 +22,6 @@ export const CreateTaskScoreGroupRequestSchema = z.object({
   department: TaskScoreGroupDepartmentSchema.optional(),
 });
 
-export const UpdateTaskScoreGroupRequestSchema = z.object({
-  department: TaskScoreGroupDepartmentSchema,
-});
-
 export type TaskScoreGroupRecord = z.infer<typeof TaskScoreGroupRecordSchema>;
 export type TaskScoreGroupListResponse = z.infer<typeof TaskScoreGroupListResponseSchema>;
 export type CreateTaskScoreGroupRequest = z.infer<typeof CreateTaskScoreGroupRequestSchema>;
-export type UpdateTaskScoreGroupRequest = z.infer<typeof UpdateTaskScoreGroupRequestSchema>;

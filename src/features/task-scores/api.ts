@@ -2,12 +2,12 @@
  * Backend contract: docs/TASK_SCORES_BACKEND_TODO.md (index: docs/BACKEND_API.md)
  */
 import api from '@/shared/api/base.api';
+import { getApiErrorMessage } from '@/shared/api/apiError';
 import { env } from '@/config/env';
 import {
   mockCreateTaskScoreGroup,
   mockDeleteTaskScoreGroup,
   mockGetTaskScoreGroupList,
-  mockUpdateTaskScoreGroup,
 } from './mock/taskScoreGroups.mock';
 import {
   mockCreateTaskScore,
@@ -30,11 +30,9 @@ import {
   CreateTaskScoreGroupRequestSchema,
   TaskScoreGroupListResponseSchema,
   TaskScoreGroupRecordSchema,
-  UpdateTaskScoreGroupRequestSchema,
   type CreateTaskScoreGroupRequest,
   type TaskScoreGroupListResponse,
   type TaskScoreGroupRecord,
-  type UpdateTaskScoreGroupRequest,
 } from './schemas/taskScoreGroup.schema';
 
 export const taskScoreApi = {
@@ -54,22 +52,12 @@ export const taskScoreApi = {
       return TaskScoreGroupRecordSchema.parse(await mockCreateTaskScoreGroup(data));
     }
 
-    const response = await api.post('/task-score-groups', data);
-    return TaskScoreGroupRecordSchema.parse(response.data);
-  },
-
-  updateGroup: async (
-    id: string,
-    payload: UpdateTaskScoreGroupRequest,
-  ): Promise<TaskScoreGroupRecord> => {
-    const data = UpdateTaskScoreGroupRequestSchema.parse(payload);
-
-    if (env.useTaskScoresMock) {
-      return TaskScoreGroupRecordSchema.parse(await mockUpdateTaskScoreGroup(id, data));
+    try {
+      const response = await api.post('/task-score-groups', data);
+      return TaskScoreGroupRecordSchema.parse(response.data);
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, 'Failed to create group'));
     }
-
-    const response = await api.patch(`/task-score-groups/${id}`, data);
-    return TaskScoreGroupRecordSchema.parse(response.data);
   },
 
   deleteGroup: async (id: string): Promise<void> => {
@@ -78,7 +66,11 @@ export const taskScoreApi = {
       return;
     }
 
-    await api.delete(`/task-score-groups/${id}`);
+    try {
+      await api.delete(`/task-score-groups/${id}`);
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, 'Failed to delete group'));
+    }
   },
 
   getList: async (filters: TaskScoreListFilters): Promise<TaskScoreListResponse> => {
@@ -99,8 +91,12 @@ export const taskScoreApi = {
       return TaskScoreSchema.parse(await mockCreateTaskScore(data));
     }
 
-    const response = await api.post('/task-scores', data);
-    return TaskScoreSchema.parse(response.data);
+    try {
+      const response = await api.post('/task-scores', data);
+      return TaskScoreSchema.parse(response.data);
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, 'Failed to create task'));
+    }
   },
 
   update: async (id: string, payload: UpdateTaskScoreRequest): Promise<TaskScore> => {
@@ -110,7 +106,11 @@ export const taskScoreApi = {
       return TaskScoreSchema.parse(await mockUpdateTaskScore(id, data));
     }
 
-    const response = await api.patch(`/task-scores/${id}`, data);
-    return TaskScoreSchema.parse(response.data);
+    try {
+      const response = await api.patch(`/task-scores/${id}`, data);
+      return TaskScoreSchema.parse(response.data);
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, 'Failed to update task'));
+    }
   },
 };

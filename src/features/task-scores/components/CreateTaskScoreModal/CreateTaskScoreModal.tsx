@@ -2,9 +2,7 @@ import { Form, Modal } from 'antd';
 import { useEffect } from 'react';
 import { useCreateTaskScore } from '../../hooks/useCreateTaskScore';
 import { useTaskScoreGroupOptions } from '../../hooks/useTaskScoreGroupOptions';
-import { useUpdateTaskScoreGroup } from '../../hooks/useUpdateTaskScoreGroup';
 import { resolveTaskType } from '../../utils/resolveTaskType';
-import { sameDepartment } from '../../utils/sameDepartment';
 import {
   TaskScoreFormFields,
   type TaskScoreFormValues,
@@ -18,7 +16,6 @@ interface CreateTaskScoreModalProps {
 export function CreateTaskScoreModal({ open, onClose }: CreateTaskScoreModalProps) {
   const [form] = Form.useForm<TaskScoreFormValues>();
   const { mutateAsync: createScore, isPending } = useCreateTaskScore();
-  const { mutateAsync: updateGroup, isPending: isUpdatingGroup } = useUpdateTaskScoreGroup();
   const { defaultGroupCode, groupByCode } = useTaskScoreGroupOptions();
 
   useEffect(() => {
@@ -39,30 +36,19 @@ export function CreateTaskScoreModal({ open, onClose }: CreateTaskScoreModalProp
   };
 
   const handleFinish = async (values: TaskScoreFormValues) => {
-    const { department, taskType, name, score, group: groupCode } = values;
-    const group = groupByCode[groupCode];
-    const nextDepartment = department ?? null;
-    const shouldUpdateGroup = Boolean(group) && !sameDepartment(group?.department, nextDepartment);
+    const { taskType, name, score, group: groupCode, department } = values;
 
     try {
-      // Score first so a failed create cannot leave a half-applied group change.
       await createScore({
         taskType: resolveTaskType(taskType, name),
         name,
         score,
         group: groupCode,
+        department: department ?? null,
       });
     } catch {
       // Error toast handled by mutation hook.
       return;
-    }
-
-    try {
-      if (shouldUpdateGroup && group) {
-        await updateGroup({ id: group.id, payload: { department: nextDepartment } });
-      }
-    } catch {
-      // Score already saved; department toast handled by mutation hook.
     }
 
     form.resetFields();
@@ -76,7 +62,7 @@ export function CreateTaskScoreModal({ open, onClose }: CreateTaskScoreModalProp
       onCancel={handleClose}
       onOk={() => form.submit()}
       okText="Create"
-      confirmLoading={isPending || isUpdatingGroup}
+      confirmLoading={isPending}
       destroyOnHidden
     >
       <Form form={form} layout="vertical" onFinish={handleFinish} requiredMark={false}>
