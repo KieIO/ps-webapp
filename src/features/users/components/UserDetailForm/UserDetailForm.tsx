@@ -7,6 +7,7 @@ import type { Role } from '@/config/permissions';
 import { LeaveScheduleModal } from '@/features/leave/components/LeaveScheduleModal/LeaveScheduleModal';
 import { UserLeaveSection } from '@/features/leave/components/UserLeaveSection/UserLeaveSection';
 import { RoleAccessPreview } from '@/features/rbac/components/RoleAccessPreview/RoleAccessPreview';
+import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
@@ -14,6 +15,8 @@ import { StatusPill } from '@/shared/ui/StatusPill/StatusPill';
 import { JobLevelBadge } from '@/features/capacity/components/JobLevelBadge/JobLevelBadge';
 import { useJobLevelList } from '@/features/titles/hooks/useJobLevelList';
 import { useJobTitleList } from '@/features/titles/hooks/useJobTitleList';
+import { queryClient } from '@/shared/api/queryClient';
+import { logout } from '@/store/slices/authSlice';
 import {
   DEPARTMENT_LABELS,
   DEPARTMENT_OPTIONS,
@@ -40,7 +43,8 @@ const STATUS_VARIANT = {
   invited: 'pending',
 } as const;
 
-type UserDetailFormValues = UpdateUserRequest & {
+type UserDetailFormValues = Omit<UpdateUserRequest, 'jobTitleId'> & {
+  jobTitleId?: string;
   jobLevelId?: string;
 };
 
@@ -50,6 +54,7 @@ interface UserDetailFormProps {
 
 export function UserDetailForm({ userId }: UserDetailFormProps) {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const { can, role } = usePermission();
   const actorId = useAppSelector((state) => state.auth.user?.id);
   const canManageUsers = can('MANAGE_USERS');
@@ -60,12 +65,11 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const [form] = Form.useForm<UserDetailFormValues>();
   const { data: user, isLoading, error } = useUser(userId);
-  const { mutate, isPending } = useUpdateUser();
+  const { mutate, isPending } = useUpdateUser({ silentSuccess: true });
   const { data: jobTitlesData, isLoading: jobTitlesLoading } = useJobTitleList({});
   const { data: jobLevelsData, isLoading: jobLevelsLoading } = useJobLevelList();
   const selectedRole = Form.useWatch('role', form) as Role | undefined;
   const selectedJobLevelId = Form.useWatch('jobLevelId', form);
-  const selectedJobTitleId = Form.useWatch('jobTitleId', form);
   const jobTitles = jobTitlesData?.items ?? [];
   const jobLevels = jobLevelsData?.items ?? [];
   const filteredJobTitles = jobTitles.filter(
@@ -82,7 +86,7 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
       role: user.role,
       status: user.status,
       department: user.department,
-      jobTitleId: user.jobTitleId,
+      jobTitleId: user.jobTitleId ?? undefined,
       jobLevelId: title?.jobLevelId,
     });
   }, [user, form, jobTitles]);
@@ -129,29 +133,111 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
       return;
     }
 
-    const { jobLevelId, ...payload } = values;
-    void jobLevelId;
-    mutate({ id: userId, payload });
+    if (canEditOrg) {
+      if (!values.jobLevelId) {
+        form.setFields([{ name: 'jobLevelId', errors: ['Select a level'] }]);
+        message.error('Select a level before saving.');
+        return;
+      }
+      if (!values.jobTitleId) {
+        form.setFields([{ name: 'jobTitleId', errors: ['Select a position code and job title'] }]);
+        message.error('Select a position code and job title before saving.');
+        return;
+      }
+      const selectedTitle = jobTitles.find((entry) => entry.id === values.jobTitleId);
+      if (!selectedTitle) {
+        form.setFields([{ name: 'jobTitleId', errors: ['Select a valid job title'] }]);
+        message.error('Select a valid job title before saving.');
+        return;
+      }
+      if (selectedTitle.jobLevelId !== values.jobLevelId) {
+        form.setFields([
+          {
+            name: 'jobTitleId',
+            errors: ['Position/job title must match the selected level'],
+          },
+        ]);
+        message.error('Position and job title must match the selected level.');
+        return;
+      }
+    }
+
+    const { jobLevelId: _jobLevelId, ...rest } = values;
+    void _jobLevelId;
+
+    const jobTitleId = rest.jobTitleId || user.jobTitleId;
+    if (!jobTitleId) {
+      message.error('This user needs a job title assigned before saving.');
+      return;
+    }
+
+    const payload: UpdateUserRequest = {
+      name: rest.name,
+      email: rest.email,
+      role: rest.role,
+      status: rest.status,
+      department: rest.department,
+      jobTitleId,
+    };
+
+    const roleChanged = payload.role !== user.role;
+    const departmentChanged = payload.department !== user.department;
+    const sessionAffected = roleChanged || departmentChanged;
+
+    mutate(
+      { id: userId, payload },
+      {
+        onSuccess: () => {
+          if (sessionAffected && actorId === userId) {
+            message.success(
+              'Profile updated. Sign in again so your new role and department take effect.',
+            );
+            dispatch(logout());
+            queryClient.clear();
+            navigate(ROUTES.LOGIN, { replace: true });
+            return;
+          }
+
+          if (sessionAffected) {
+            message.success(
+              'User updated. They must sign out and sign in again for the new role/department to apply.',
+            );
+            return;
+          }
+
+          message.success('User updated successfully');
+        },
+      },
+    );
   };
 
-  const handleLevelChange = (levelId: string | undefined) => {
+  const handleLevelChange = (levelId: string) => {
     form.setFieldValue('jobLevelId', levelId);
+    form.setFields([{ name: 'jobLevelId', errors: [] }]);
+
     const currentTitleId = form.getFieldValue('jobTitleId');
-    if (!currentTitleId || !levelId) return;
+    if (!currentTitleId) return;
 
     const currentTitle = jobTitles.find((entry) => entry.id === currentTitleId);
     if (currentTitle && currentTitle.jobLevelId !== levelId) {
-      form.setFieldValue('jobTitleId', null);
+      form.setFieldsValue({ jobTitleId: undefined });
+      form.setFields([
+        {
+          name: 'jobTitleId',
+          errors: ['Select a position code and job title for this level'],
+        },
+      ]);
     }
   };
 
-  const handleJobTitleSelection = (titleId: string | null) => {
+  const handleJobTitleSelection = (titleId: string) => {
     form.setFieldValue('jobTitleId', titleId);
-    if (!titleId) return;
+    form.setFields([{ name: 'jobTitleId', errors: [] }]);
 
     const title = jobTitles.find((entry) => entry.id === titleId);
     if (title) {
       form.setFieldValue('jobLevelId', title.jobLevelId);
+      form.setFields([{ name: 'jobLevelId', errors: [] }]);
     }
   };
 
@@ -251,9 +337,12 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
                 <Select options={DEPARTMENT_OPTIONS} disabled={!canEditOrg} />
               </Form.Item>
 
-              <Form.Item name="jobLevelId" label="Level">
+              <Form.Item
+                name="jobLevelId"
+                label="Level"
+                rules={canEditOrg ? [{ required: true, message: 'Select a level' }] : undefined}
+              >
                 <Select
-                  allowClear
                   placeholder="Select level"
                   options={levelOptions}
                   loading={jobLevelsLoading}
@@ -263,11 +352,16 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
               </Form.Item>
 
               <div className={styles.row}>
-                <Form.Item label="Position code" className={styles.field}>
+                <Form.Item
+                  name="jobTitleId"
+                  label="Position code"
+                  className={styles.field}
+                  rules={
+                    canEditOrg ? [{ required: true, message: 'Select a position code' }] : undefined
+                  }
+                >
                   <Select
-                    allowClear
                     placeholder="Select position code"
-                    value={selectedJobTitleId ?? undefined}
                     options={positionCodeOptions}
                     loading={jobTitlesLoading}
                     disabled={!canEditOrg}
@@ -277,11 +371,16 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
                   />
                 </Form.Item>
 
-                <Form.Item label="Job title" className={styles.field}>
+                <Form.Item
+                  name="jobTitleId"
+                  label="Job title"
+                  className={styles.field}
+                  rules={
+                    canEditOrg ? [{ required: true, message: 'Select a job title' }] : undefined
+                  }
+                >
                   <Select
-                    allowClear
                     placeholder="Select job title"
-                    value={selectedJobTitleId ?? undefined}
                     options={jobTitleOptions}
                     loading={jobTitlesLoading}
                     disabled={!canEditOrg}
@@ -291,10 +390,6 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
                   />
                 </Form.Item>
               </div>
-
-              <Form.Item name="jobTitleId" hidden>
-                <Input />
-              </Form.Item>
 
               <div className={styles.actions}>
                 <Button onClick={() => (canManageUsers ? navigate(ROUTES.USERS) : navigate(-1))}>

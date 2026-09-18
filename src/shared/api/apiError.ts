@@ -29,6 +29,7 @@ export const getApiErrorMessage = (error: unknown, fallback = 'Request failed'):
 const cleanApiValidationMessage = (message: string): string => {
   const trimmed = message.replace(/^validation error:\s*/i, '').trim();
   const known: Record<string, string> = {
+    'select a job title before saving': 'Chọn Position code / Job title trước khi lưu.',
     'staff is required for project tasks':
       'Project task cần chọn nhân viên — trừ khi chuyển sang Creative Department.',
     'department is invalid': 'Phòng ban không hợp lệ.',

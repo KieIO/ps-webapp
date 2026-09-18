@@ -81,7 +81,7 @@ export const UpdateUserRequestSchema = z.object({
   ]),
   status: z.enum(USER_STATUSES),
   department: z.enum(USER_DEPARTMENTS),
-  jobTitleId: z.string().nullable(),
+  jobTitleId: z.string().min(1, 'Select a job title'),
 });
 
 export type User = z.infer<typeof UserSchema>;

@@ -28,9 +28,7 @@ const enrichUser = (user: UserRecord): User => {
   };
 };
 
-const assertJobTitleExists = (jobTitleId: string | null) => {
-  if (jobTitleId === null) return;
-
+const assertJobTitleExists = (jobTitleId: string) => {
   const title = getMockJobTitlesStore().find((entry) => entry.id === jobTitleId);
   if (!title) {
     throw new Error('Selected job title does not exist');
