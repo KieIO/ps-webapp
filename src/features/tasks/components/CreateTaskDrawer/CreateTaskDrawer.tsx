@@ -18,7 +18,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { ROLES, type Role } from '@/config/permissions';
 import type { ProjectUrgency } from '@/features/projects/schemas/project.schema';
-import { useTaskScoreGroupOptions } from '@/features/task-scores/hooks/useTaskScoreGroupOptions';
 import { useTaskScoreList } from '@/features/task-scores/hooks/useTaskScoreList';
 import { resolveTaskType } from '@/features/task-scores/utils/resolveTaskType';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
@@ -215,7 +214,6 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
   const { data: projectOptions = [] } = useCreateTaskProjectOptions('project', open);
   const { data: pmOptions = [] } = useCreateTaskPmOptions(open);
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
-  const { groupByCode } = useTaskScoreGroupOptions({ enabled: open });
   const { data: scoreList, isLoading: scoresLoading } = useTaskScoreList(EMPTY_SCORE_FILTERS, {
     enabled: open,
   });
@@ -236,12 +234,9 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
   const scoreDepartment = workflowKind === 'creative' ? 'creative' : 'project';
 
   const taskScoreOptions = useMemo(() => {
-    const filtered = scoreItems.filter((score) => {
-      const department = groupByCode[score.group]?.department;
-      return !department || department === scoreDepartment;
-    });
+    const filtered = scoreItems.filter((score) => score.department === scoreDepartment);
     return filtered.map((score) => ({ value: score.name, label: score.name }));
-  }, [scoreItems, groupByCode, scoreDepartment]);
+  }, [scoreItems, scoreDepartment]);
 
   const selectedScore = useMemo(
     () => resolveMatchedScore(taskScoreName, scoreItems),

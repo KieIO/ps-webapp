@@ -4,7 +4,6 @@ import { useEffect, useMemo } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { ROLES, type Role } from '@/config/permissions';
 import { useDepartmentOptions } from '@/features/departments/hooks/useDepartmentOptions';
-import { useTaskScoreGroupOptions } from '@/features/task-scores/hooks/useTaskScoreGroupOptions';
 import { useTaskScoreList } from '@/features/task-scores/hooks/useTaskScoreList';
 import { resolveTaskType } from '@/features/task-scores/utils/resolveTaskType';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
@@ -116,7 +115,6 @@ export function CreateTaskModal({
   const { data: projectOptions = [] } = useCreateTaskProjectOptions(taskCategory, open);
   const { data: pmOptions = [] } = useCreateTaskPmOptions(open);
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
-  const { groupByCode } = useTaskScoreGroupOptions({ enabled: open });
   const { options: departmentOptions, isLoading: departmentLoading } = useDepartmentOptions({
     enabled: open,
   });
@@ -148,16 +146,13 @@ export function CreateTaskModal({
   const taskScoreOptions = useMemo(() => {
     const filtered = !formDepartment
       ? scoreItems
-      : scoreItems.filter((score) => {
-          const department = groupByCode[score.group]?.department;
-          return department === formDepartment;
-        });
+      : scoreItems.filter((score) => score.department === formDepartment);
 
     return filtered.map((score) => ({
       value: score.name,
       label: score.name,
     }));
-  }, [scoreItems, formDepartment, groupByCode]);
+  }, [scoreItems, formDepartment]);
 
   const defaultProjectManager = useMemo((): TaskPerson | undefined => {
     if (!currentUser?.id || !currentUser.role) return undefined;
@@ -290,7 +285,7 @@ export function CreateTaskModal({
       return;
     }
 
-    const department = groupByCode[score.group]?.department ?? undefined;
+    const department = score.department ?? undefined;
     form.setFieldsValue({
       taskType: resolveTaskType(score.taskType, score.name),
       ...(department ? { department } : {}),
@@ -308,9 +303,7 @@ export function CreateTaskModal({
     const score = scoreItems.find(
       (entry) => entry.name.trim().toLowerCase() === currentName.toLowerCase(),
     );
-    const scoreDepartmentValue = score
-      ? (groupByCode[score.group]?.department ?? undefined)
-      : undefined;
+    const scoreDepartmentValue = score?.department ?? undefined;
     if (scoreDepartmentValue && scoreDepartmentValue !== nextDepartment) {
       form.setFieldsValue({ taskScoreName: undefined, taskType: '' });
     }
@@ -369,7 +362,7 @@ export function CreateTaskModal({
     }
 
     const taskName = resolveTaskType(matchedScore.taskType, matchedScore.name);
-    const department = values.department ?? groupByCode[matchedScore.group]?.department;
+    const department = values.department ?? matchedScore.department ?? undefined;
 
     const payload: CreateMyTaskRequest = {
       taskCategory,
