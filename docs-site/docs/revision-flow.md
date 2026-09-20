@@ -8,8 +8,10 @@ slug: /revision
 
 Hướng dẫn này mô tả cách yêu cầu làm lại một task trên Pokeslide: tạo revision, theo dõi, cập nhật trạng thái và đánh giá trên bản làm lại.
 
-:::tip Revision là gì?
+:::tip[Revision là gì?]
+
 Revision **không** đổi trạng thái task gốc thành “cần sửa”. Hệ thống tạo một **task con riêng** (ví dụ mã `…-R1`) gắn dưới task gốc. Người nhận giữ nguyên. Staff làm và nộp trên task revision.
+
 :::
 
 ---
@@ -107,8 +109,10 @@ Form hiện sẵn thông tin task gốc (mã, project, người nhận, số lư
 | **Ngày tính workload** | Ngày capacity tính cho lần làm lại (độc lập với ngày task gốc) |
 | **Deadline nộp lại**   | Hạn nộp revision. Phải từ ngày tính workload trở đi            |
 
-:::note Số lượng nhiều hơn gốc
+:::note[Số lượng nhiều hơn gốc]
+
 Nếu số lượng revision lớn hơn task gốc, workload và capacity của lần làm lại sẽ cao hơn. Hệ thống cảnh báo trên form.
+
 :::
 
 **Chưa hỗ trợ:** giao revision cho người khác. Người nhận luôn giữ nguyên như task gốc.
@@ -139,8 +143,10 @@ Khi còn revision đang mở:
 - Revision **Finished** hoặc **Cancelled** → task gốc mở lại Update / Edit / Evaluate
 - Có thể bấm **Yêu cầu revision** lần nữa để tạo `…-R2`, `…-R3`, …
 
-:::warning Chỉ một revision mở tại một thời điểm
+:::warning[Chỉ một revision mở tại một thời điểm]
+
 Mỗi task gốc chỉ được mở **một** revision chưa hoàn tất. Xong round hiện tại rồi mới tạo round kế tiếp.
+
 :::
 
 ---

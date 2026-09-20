@@ -23,8 +23,10 @@ Có **hai cách** đưa nhân viên về làm việc (**Active**):
 | Cần đi làm **trước** ngày kết thúc đã lên lịch | **Hủy nghỉ sớm** (Cancel leave) | Người có quyền lên lịch nghỉ |
 | Kỳ nghỉ **đã hết đúng hạn**                    | **Activate employee**           | **Chỉ Admin**                |
 
-:::tip Hay nhầm nhất
+:::tip[Hay nhầm nhất]
+
 Hết ngày nghỉ **không** tự Active. Admin phải bấm **Activate**, nếu không nhân viên vẫn On leave và không nhận task mới.
+
 :::
 
 ---
@@ -115,9 +117,11 @@ Hai lối vào, cùng một wizard:
 1. **Users** → chọn nhân viên đang **Active** → nút **Leave**
 2. **User detail** → phần **Leave** → **Schedule leave**
 
-:::note Đừng đổi Status tay thành On leave
+:::note[Đừng đổi Status tay thành On leave]
+
 Dropdown **Status → On leave** trên User detail **không** lưu thẳng. Hệ thống sẽ mở wizard lên lịch nghỉ.  
 Muốn đưa người đang On leave về Active: dùng **Cancel leave** (còn trong kỳ) hoặc **Activate employee** (Admin, sau khi hết hạn) — không Save Status tay.
+
 :::
 
 ---
@@ -185,9 +189,11 @@ Dùng khi nhân viên **đang trong kỳ nghỉ** nhưng cần đi làm lại **
 2. Kỳ nghỉ đánh dấu đã hủy (**Cancelled**)
 3. Task đã chuyển cho người khác lúc lên lịch **không đổi lại tự động**. Muốn người cũ nhận lại → chỉnh tay từng task
 
-:::tip Hủy sớm ≠ hết ngày nghỉ
+:::tip[Hủy sớm ≠ hết ngày nghỉ]
+
 Hủy sớm → Active **ngay**, không cần Admin.  
 Hết hạn đúng lịch → vẫn On leave đến khi Admin **Activate** (mục 8).
+
 :::
 
 ---
@@ -209,9 +215,11 @@ Khi kỳ nghỉ **kết thúc đúng hạn**, nhân viên **không** tự về A
 
 Sau Activate: nhân viên **Active**, nhận task trở lại.
 
-:::warning Chỉ Admin được Activate
+:::warning[Chỉ Admin được Activate]
+
 PM / Creative Manager / Creative Head **không** Activate sau khi hết nghỉ.  
 Họ chỉ **hủy sớm** khi kỳ nghỉ còn đang diễn ra (mục 7).
+
 :::
 
 ---
