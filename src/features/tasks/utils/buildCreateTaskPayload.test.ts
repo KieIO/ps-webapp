@@ -130,4 +130,15 @@ describe('buildCreateTaskPayload', () => {
 
     expect(payload.urgency).toBe('auto');
   });
+
+  it('resolves catalog selection by taskType (e.g. Slides)', () => {
+    const payload = buildCreateTaskPayload({
+      workflowKind: 'project',
+      values: { ...baseValues(), taskScoreName: 'Slides' },
+      scores,
+      staffOptions: staff,
+    });
+
+    expect(payload.taskName).toBe('Slides');
+  });
 });

@@ -235,7 +235,16 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
 
   const taskScoreOptions = useMemo(() => {
     const filtered = scoreItems.filter((score) => score.department === scoreDepartment);
-    return filtered.map((score) => ({ value: score.name, label: score.name }));
+    const seen = new Set<string>();
+    const options: { value: string; label: string }[] = [];
+    for (const score of filtered) {
+      const taskType = resolveTaskType(score.taskType, score.name).trim();
+      const key = taskType.toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      options.push({ value: taskType, label: taskType });
+    }
+    return options;
   }, [scoreItems, scoreDepartment]);
 
   const selectedScore = useMemo(

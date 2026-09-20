@@ -45,7 +45,12 @@ export const resolveMatchedScore = (
 ): TaskScore | undefined => {
   const normalized = taskScoreName?.trim().toLowerCase();
   if (!normalized) return undefined;
-  return scores.find((score) => score.name.trim().toLowerCase() === normalized);
+  const byName = scores.find((score) => score.name.trim().toLowerCase() === normalized);
+  if (byName) return byName;
+  // Create-task UI may select catalog taskType (e.g. "Slides") instead of leveled name.
+  return scores.find(
+    (score) => resolveTaskType(score.taskType, score.name).trim().toLowerCase() === normalized,
+  );
 };
 
 export const buildCreateTaskPayload = ({
