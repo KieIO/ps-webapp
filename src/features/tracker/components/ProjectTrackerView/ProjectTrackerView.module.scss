@@ -698,6 +698,15 @@ $row-alt: #f9fafb;
   display: inline-block;
   text-decoration: none;
   cursor: pointer;
+  color: #991b1b;
+
+  &:link,
+  &:visited,
+  &:hover,
+  &:active {
+    color: #991b1b;
+    text-decoration: none;
+  }
 
   &:focus-visible {
     outline: 2px solid #dc2626;
