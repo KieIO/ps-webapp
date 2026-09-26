@@ -3,8 +3,12 @@ import { DownloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, type NavigateFunction } from 'react-router-dom';
-import { buildProjectDetailPath, buildProjectTasksPath } from '@/config/constants';
+import { Link, useNavigate, type NavigateFunction } from 'react-router-dom';
+import {
+  buildProjectDetailPath,
+  buildProjectTasksPath,
+  buildUserDetailPath,
+} from '@/config/constants';
 import { useRemainingOutput } from '@/features/capacity/hooks/useRemainingOutput';
 import type { RemainingOutputDay } from '@/features/capacity/schemas/remainingOutput.schema';
 import { PROJECT_NAME_COLUMN_LABEL } from '@/features/projects/constants';
@@ -520,19 +524,36 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                   })}
                   style={{ width: calendarWidth }}
                 >
-                  {offDayMarkers.map((offDay) => (
-                    <div
-                      key={offDay.date}
-                      className={styles.offDayCell}
-                      style={{ left: offDay.index * dayWidth, width: dayWidth }}
-                    >
-                      {offDay.names.map((name) => (
-                        <span key={name} className={styles.offName}>
-                          {name}
-                        </span>
-                      ))}
-                    </div>
-                  ))}
+                  {offDayMarkers.map((offDay) => {
+                    const people =
+                      offDay.people.length > 0
+                        ? offDay.people
+                        : offDay.names.map((name) => ({ id: '', name }));
+                    return (
+                      <div
+                        key={offDay.date}
+                        className={styles.offDayCell}
+                        style={{ left: offDay.index * dayWidth, width: dayWidth }}
+                      >
+                        {people.map((person) =>
+                          person.id ? (
+                            <Link
+                              key={person.id}
+                              to={buildUserDetailPath(person.id)}
+                              className={styles.offNameLink}
+                              title={`Open ${person.name}`}
+                            >
+                              {person.name}
+                            </Link>
+                          ) : (
+                            <span key={person.name} className={styles.offName}>
+                              {person.name}
+                            </span>
+                          ),
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {canViewRemainingOutput ? (

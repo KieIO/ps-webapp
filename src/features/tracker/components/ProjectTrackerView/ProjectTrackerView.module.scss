@@ -688,6 +688,29 @@ $row-alt: #f9fafb;
   font-weight: 600;
   line-height: 1.3;
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.offNameLink {
+  composes: offName;
+  display: inline-block;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    background: #fecaca;
+    box-shadow: 0 0 0 1px #f87171;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #dc2626;
+    outline-offset: 1px;
+  }
 }
 
 .capacityRow {

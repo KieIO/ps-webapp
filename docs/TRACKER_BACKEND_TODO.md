@@ -78,20 +78,21 @@ interface TrackerBlock {
 
 interface TrackerOffDay {
   date: string; // YYYY-MM-DD — each leave day in start..end inclusive
-  names: string[]; // staff with leave_requests on that date (not inactive users)
+  people: { id: string; name: string }[]; // preferred — clickable to /users/:id
+  names: string[]; // legacy / fallback display names
 }
 ```
 
 ### UI mapping
 
-| UI element                        | Source                                                                                                                    |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Project rows                      | `projects[]`                                                                                                              |
-| PM / team / slides columns        | `pm`, `team`, `totalSlides`                                                                                               |
-| Urgency dot color                 | `urgency`                                                                                                                 |
-| Timeline bars                     | `blocks[]`                                                                                                                |
-| Off-day / leave row (“Nghỉ phép”) | `offDays[]` from `leave_requests` (`active` + `ended`), expanded per day; excludes `inactive` users and `cancelled` leave |
-| CSV export                        | Client-side from loaded `projects`                                                                                        |
+| UI element                        | Source                                                                            |
+| --------------------------------- | --------------------------------------------------------------------------------- |
+| Project rows                      | `projects[]`                                                                      |
+| PM / team / slides columns        | `pm`, `team`, `totalSlides`                                                       |
+| Urgency dot color                 | `urgency`                                                                         |
+| Timeline bars                     | `blocks[]`                                                                        |
+| Off-day / leave row (“Nghỉ phép”) | `offDays[].people` (click → user detail); excludes `inactive` / `cancelled` leave |
+| CSV export                        | Client-side from loaded `projects`                                                |
 
 ---
 

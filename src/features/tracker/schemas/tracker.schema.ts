@@ -42,11 +42,18 @@ export const TrackerProjectSchema = z.object({
   blocks: z.array(TrackerBlockSchema),
 });
 
+export const TrackerOffPersonSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
 export const TrackerOffDaySchema = z.object({
   /** Calendar day (YYYY-MM-DD) within a leave start..end span. */
   date: z.string(),
-  /** Display names of staff on leave that day (from leave_requests; excludes inactive). */
-  names: z.array(z.string()),
+  /** Staff on leave that day (preferred — includes user id for profile links). */
+  people: z.array(TrackerOffPersonSchema).optional().default([]),
+  /** Display names — kept for older payloads; prefer `people` when present. */
+  names: z.array(z.string()).optional().default([]),
 });
 
 export const TrackerResponseSchema = z.object({
