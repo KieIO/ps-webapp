@@ -406,7 +406,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                     [styles.offRowLast]: !canViewRemainingOutput,
                   })}
                 >
-                  Nghỉ hôm nay
+                  Nghỉ phép
                 </div>
                 {canViewRemainingOutput ? (
                   <Tooltip title={remainingAssumptionNote} placement="right">

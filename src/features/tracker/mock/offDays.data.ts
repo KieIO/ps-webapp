@@ -1,11 +1,14 @@
 import type { TrackerOffDay } from '../types';
 
-/** Employee off-days keyed by calendar date (absIdx from May 1 in Figma reference) */
+/**
+ * Mock leave markers — one entry per calendar day (matches live GET /tracker).
+ * Spans come from leave_requests start/end, not "today" or inactive users.
+ */
 export const TRACKER_OFF_DAYS: TrackerOffDay[] = [
-  { date: '2026-05-06', names: ['Tri'] },
-  { date: '2026-05-07', names: ['Kiet'] },
-  { date: '2026-05-09', names: ['Thong', 'Van Anh'] },
-  { date: '2026-05-13', names: ['Tu'] },
-  { date: '2026-05-20', names: ['Loc'] },
-  { date: '2026-05-27', names: ['Tri', 'An'] },
+  { date: '2026-09-01', names: ['An'] },
+  { date: '2026-09-02', names: ['An'] },
+  { date: '2026-09-03', names: ['An', 'Tri'] },
+  { date: '2026-09-04', names: ['An', 'Tri'] },
+  { date: '2026-09-05', names: ['An'] },
+  { date: '2026-09-20', names: ['Loc'] },
 ];

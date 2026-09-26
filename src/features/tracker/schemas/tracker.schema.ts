@@ -43,7 +43,9 @@ export const TrackerProjectSchema = z.object({
 });
 
 export const TrackerOffDaySchema = z.object({
+  /** Calendar day (YYYY-MM-DD) within a leave start..end span. */
   date: z.string(),
+  /** Display names of staff on leave that day (from leave_requests; excludes inactive). */
   names: z.array(z.string()),
 });
 

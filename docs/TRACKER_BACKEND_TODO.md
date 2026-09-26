@@ -77,21 +77,21 @@ interface TrackerBlock {
 }
 
 interface TrackerOffDay {
-  date: string; // YYYY-MM-DD
-  names: string[]; // staff on leave
+  date: string; // YYYY-MM-DD — each leave day in start..end inclusive
+  names: string[]; // staff with leave_requests on that date (not inactive users)
 }
 ```
 
 ### UI mapping
 
-| UI element                 | Source                             |
-| -------------------------- | ---------------------------------- |
-| Project rows               | `projects[]`                       |
-| PM / team / slides columns | `pm`, `team`, `totalSlides`        |
-| Urgency dot color          | `urgency`                          |
-| Timeline bars              | `blocks[]`                         |
-| Off-day row                | `offDays[]`                        |
-| CSV export                 | Client-side from loaded `projects` |
+| UI element                        | Source                                                                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Project rows                      | `projects[]`                                                                                                              |
+| PM / team / slides columns        | `pm`, `team`, `totalSlides`                                                                                               |
+| Urgency dot color                 | `urgency`                                                                                                                 |
+| Timeline bars                     | `blocks[]`                                                                                                                |
+| Off-day / leave row (“Nghỉ phép”) | `offDays[]` from `leave_requests` (`active` + `ended`), expanded per day; excludes `inactive` users and `cancelled` leave |
+| CSV export                        | Client-side from loaded `projects`                                                                                        |
 
 ---
 

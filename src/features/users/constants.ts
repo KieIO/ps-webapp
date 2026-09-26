@@ -6,7 +6,7 @@ export { ROLE_LABELS };
 export const STATUS_LABELS = {
   active: 'Active',
   on_leave: 'On leave',
-  inactive: 'Inactive',
+  inactive: 'Deactivate',
   invited: 'Invited',
 } as const;
 
