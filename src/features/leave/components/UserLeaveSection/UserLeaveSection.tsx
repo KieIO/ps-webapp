@@ -5,7 +5,12 @@ import { DATE_FORMAT } from '@/config/constants';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import { StatusPill } from '@/shared/ui/StatusPill/StatusPill';
-import { useActiveLeave, useCancelLeave, useReactivateUser, useUserLeaveHistory } from '../../hooks/useLeave';
+import {
+  useActiveLeave,
+  useCancelLeave,
+  useReactivateUser,
+  useUserLeaveHistory,
+} from '../../hooks/useLeave';
 import styles from './UserLeaveSection.module.scss';
 
 interface UserLeaveSectionProps {
@@ -26,9 +31,14 @@ export function UserLeaveSection({ userId, userStatus, onScheduleLeave }: UserLe
 
   const leaveEnded =
     activeLeave?.status === 'ended' ||
-    (activeLeave && dayjs(activeLeave.endDate).isBefore(dayjs(), 'day'));
+    (activeLeave != null && dayjs(activeLeave.endDate).isBefore(dayjs(), 'day'));
 
+  // Leave row may already be marked ended (no active leave) while user.status is still on_leave.
+  const needsReactivation = userStatus === 'on_leave' && (!activeLeave || leaveEnded);
   const canCancelLeave = canManageLeave && activeLeave?.status === 'active' && !leaveEnded;
+
+  const latestEndedLeave = history.find((entry) => entry.status === 'ended');
+  const pendingLeaveDates = activeLeave ?? latestEndedLeave;
 
   const handleCancelLeave = () => {
     Modal.confirm({
@@ -42,7 +52,14 @@ export function UserLeaveSection({ userId, userStatus, onScheduleLeave }: UserLe
     });
   };
 
-  const pastHistory = history.filter((entry) => entry.id !== activeLeave?.id);
+  const pastHistory = history.filter((entry) => {
+    if (activeLeave && entry.id === activeLeave.id) return false;
+    // When showing ended leave in the pending-reactivation card, don't duplicate it below.
+    if (needsReactivation && !activeLeave && latestEndedLeave && entry.id === latestEndedLeave.id) {
+      return false;
+    }
+    return true;
+  });
 
   if (!canManageLeave && !canReactivate && !activeLeave && history.length === 0) {
     return null;
@@ -54,22 +71,22 @@ export function UserLeaveSection({ userId, userStatus, onScheduleLeave }: UserLe
         <div className={styles.loading}>
           <Spin size="small" />
         </div>
-      ) : activeLeave ? (
+      ) : activeLeave || needsReactivation ? (
         <div className={styles.currentLeave}>
           <div className={styles.currentHeader}>
             <CalendarOutlined className={styles.calendarIcon} />
             <div>
               <div className={styles.currentTitle}>
                 <StatusPill label="On leave" variant="on-leave" />
-                <span>
-                  {dayjs(activeLeave.startDate).format(DATE_FORMAT)} →{' '}
-                  {dayjs(activeLeave.endDate).format(DATE_FORMAT)}
-                </span>
+                {pendingLeaveDates ? (
+                  <span>
+                    {dayjs(pendingLeaveDates.startDate).format(DATE_FORMAT)} →{' '}
+                    {dayjs(pendingLeaveDates.endDate).format(DATE_FORMAT)}
+                  </span>
+                ) : null}
               </div>
-              {activeLeave.reason ? (
-                <p className={styles.reason}>{activeLeave.reason}</p>
-              ) : null}
-              {leaveEnded ? (
+              {activeLeave?.reason ? <p className={styles.reason}>{activeLeave.reason}</p> : null}
+              {needsReactivation ? (
                 <p className={styles.pendingNote}>
                   Leave period has ended. Reactivate this employee to restore access.
                 </p>
@@ -83,12 +100,8 @@ export function UserLeaveSection({ userId, userStatus, onScheduleLeave }: UserLe
                 Cancel leave
               </Button>
             ) : null}
-            {canReactivate && userStatus === 'on_leave' && leaveEnded ? (
-              <Button
-                type="primary"
-                loading={reactivating}
-                onClick={() => reactivate(userId)}
-              >
+            {canReactivate && needsReactivation ? (
+              <Button type="primary" loading={reactivating} onClick={() => reactivate(userId)}>
                 Activate employee
               </Button>
             ) : null}
@@ -116,7 +129,8 @@ export function UserLeaveSection({ userId, userStatus, onScheduleLeave }: UserLe
             {pastHistory.map((entry) => (
               <li key={entry.id} className={styles.historyItem}>
                 <span>
-                  {dayjs(entry.startDate).format(DATE_FORMAT)} → {dayjs(entry.endDate).format(DATE_FORMAT)}
+                  {dayjs(entry.startDate).format(DATE_FORMAT)} →{' '}
+                  {dayjs(entry.endDate).format(DATE_FORMAT)}
                 </span>
                 <StatusPill
                   label={entry.status === 'ended' ? 'Ended' : entry.status}
