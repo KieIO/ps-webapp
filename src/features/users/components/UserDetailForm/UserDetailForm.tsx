@@ -23,7 +23,7 @@ import {
   ROLE_LABELS,
   ROLE_OPTIONS,
   STATUS_LABELS,
-  STATUS_OPTIONS,
+  getEditableStatusOptions,
 } from '../../constants';
 import { useUpdateUser } from '../../hooks/useUpdateUser';
 import { useUser } from '../../hooks/useUser';
@@ -259,6 +259,7 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
   const previewRole = selectedRole ?? user.role;
   const jobTitleLabel = user.jobTitleName ?? user.jobTitleCode ?? 'Unassigned';
   const levelBadge = mapJobLevelCode(user.jobLevelCode);
+  const statusOptions = getEditableStatusOptions(user.status);
 
   return (
     <div className={canEdit ? styles.layout : styles.layoutReadOnly}>
@@ -325,7 +326,7 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
                   rules={[{ required: true, message: 'Status is required' }]}
                   className={styles.field}
                 >
-                  <Select options={STATUS_OPTIONS} disabled={!canFullyManage} />
+                  <Select options={statusOptions} disabled={!canFullyManage} />
                 </Form.Item>
               </div>
 

@@ -1,4 +1,16 @@
-import { Alert, Button, DatePicker, Form, Input, Modal, Select, Spin, Steps, Table, Typography } from 'antd';
+import {
+  Alert,
+  Button,
+  DatePicker,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Spin,
+  Steps,
+  Table,
+  Typography,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
@@ -43,11 +55,11 @@ export function LeaveScheduleModal({
   const [reason, setReason] = useState('');
   const [replacements, setReplacements] = useState<Record<string, string | null>>({});
 
-  const { data: preview, isLoading: previewLoading, isFetching: previewFetching } = useLeavePreview(
-    open ? userId : null,
-    startDate,
-    endDate,
-  );
+  const {
+    data: preview,
+    isLoading: previewLoading,
+    isFetching: previewFetching,
+  } = useLeavePreview(open ? userId : null, startDate, endDate);
   const { mutate: createLeave, isPending } = useCreateLeave();
 
   useEffect(() => {
@@ -105,6 +117,8 @@ export function LeaveScheduleModal({
     );
   };
 
+  const isPastLeave = Boolean(endDate && dayjs(endDate).isBefore(dayjs(), 'day'));
+
   const stepIndex = step === 'dates' ? 0 : step === 'tasks' ? 1 : 2;
 
   const taskColumns: ColumnsType<LeaveAffectedTask> = [
@@ -137,7 +151,10 @@ export function LeaveScheduleModal({
       dataIndex: 'staffConfirmation',
       width: 130,
       render: (status: TaskConfirmationStatus) => (
-        <StatusPill label={CONFIRMATION_LABELS[status]} variant={status === 'confirmed' ? 'in-progress' : 'pending'} />
+        <StatusPill
+          label={CONFIRMATION_LABELS[status]}
+          variant={status === 'confirmed' ? 'in-progress' : 'pending'}
+        />
       ),
     },
     {
@@ -171,7 +188,9 @@ export function LeaveScheduleModal({
             return candidate.name;
           }}
           optionRender={(option) => {
-            const candidate = record.replacementCandidates.find((item) => item.userId === option.value);
+            const candidate = record.replacementCandidates.find(
+              (item) => item.userId === option.value,
+            );
             if (!candidate) return option.label;
             return <ReplacementOption candidate={candidate} />;
           }}
@@ -194,11 +213,7 @@ export function LeaveScheduleModal({
         current={stepIndex}
         size="small"
         className={styles.steps}
-        items={[
-          { title: 'Leave period' },
-          { title: 'Review tasks' },
-          { title: 'Confirm' },
-        ]}
+        items={[{ title: 'Leave period' }, { title: 'Review tasks' }, { title: 'Confirm' }]}
       />
 
       {step === 'dates' && (
@@ -210,8 +225,8 @@ export function LeaveScheduleModal({
           className={styles.form}
         >
           <Typography.Paragraph type="secondary" className={styles.intro}>
-            Set the leave period for {userName}. The employee will be marked as on leave immediately after
-            confirmation.
+            Set the leave period for {userName}. The employee will be marked as on leave immediately
+            after confirmation.
           </Typography.Paragraph>
 
           <Form.Item
@@ -323,12 +338,21 @@ export function LeaveScheduleModal({
             />
           ) : null}
 
-          <Alert
-            type="info"
-            showIcon
-            message="Employee will be marked On leave immediately"
-            description="When the leave period ends, an admin must manually reactivate the employee to restore task assignment."
-          />
+          {isPastLeave ? (
+            <Alert
+              type="info"
+              showIcon
+              message="Leave will be recorded as history"
+              description="The leave period has already ended, so the employee stays Active and will not be marked On leave."
+            />
+          ) : (
+            <Alert
+              type="info"
+              showIcon
+              message="Employee will be marked On leave immediately"
+              description="When the leave period ends, an admin must manually reactivate the employee to restore task assignment."
+            />
+          )}
 
           <div className={styles.footer}>
             <Button onClick={() => setStep('tasks')}>Back</Button>

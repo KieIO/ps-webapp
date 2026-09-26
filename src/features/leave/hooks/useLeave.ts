@@ -1,9 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
+import dayjs from 'dayjs';
 import { leaveApi } from '../api';
 import type { CreateLeaveRequest } from '../schemas/leave.schema';
 
-export const useLeavePreview = (userId: string | null, startDate: string | null, endDate: string | null) =>
+export const useLeavePreview = (
+  userId: string | null,
+  startDate: string | null,
+  endDate: string | null,
+) =>
   useQuery({
     queryKey: ['leave', 'preview', userId, startDate, endDate],
     queryFn: () => leaveApi.preview(userId!, startDate!, endDate!),
@@ -16,12 +21,18 @@ export const useCreateLeave = () => {
   return useMutation({
     mutationFn: ({ userId, payload }: { userId: string; payload: CreateLeaveRequest }) =>
       leaveApi.create(userId, payload),
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['users', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['leave'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      message.success('Leave scheduled successfully');
+      const recordedAsHistory =
+        data.status === 'ended' || dayjs(variables.payload.endDate).isBefore(dayjs(), 'day');
+      message.success(
+        recordedAsHistory
+          ? 'Leave recorded in history. Employee stays Active.'
+          : 'Leave scheduled successfully',
+      );
     },
     onError: (error: Error) => {
       message.error(error.message || 'Failed to schedule leave');

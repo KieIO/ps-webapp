@@ -12,7 +12,8 @@ Trang này hướng dẫn quản lý **lên lịch nghỉ phép** cho nhân viê
 
 Trên hệ thống, nghỉ phép **không** chỉ là “đánh dấu lịch”. Khi bạn **xác nhận nghỉ**:
 
-1. Nhân viên chuyển **On leave ngay** — kể cả ngày bắt đầu còn ở tương lai
+1. Nhân viên chuyển **On leave ngay** — kể cả ngày bắt đầu còn ở tương lai  
+   (**Ngoại lệ:** nếu cả kỳ nghỉ đã qua `endDate < hôm nay`, chỉ ghi lịch sử, **giữ Active**)
 2. Task trong kỳ nghỉ được bàn giao theo lựa chọn của bạn
 3. Hệ thống **không** giao task mới cho người đang On leave
 
@@ -45,7 +46,8 @@ Xem task trong kỳ nghỉ → chọn người thay (hoặc để trống)
       ▼
 Xác nhận (Confirm leave)
       │
-      ├── Nhân viên: On leave ngay
+      ├── Kỳ còn hiệu lực / chưa hết: On leave ngay
+      ├── Kỳ đã hết hoàn toàn (end < hôm nay): giữ Active, leave = Ended
       └── Task: bàn giao theo lựa chọn
       │
       ▼
@@ -158,20 +160,20 @@ Màn hình tóm tắt nhân viên, khoảng ngày, lý do, số task đã chọn
 
 Sau **Confirm leave**:
 
-- Nhân viên chuyển **On leave ngay**
+- Nếu kỳ nghỉ **còn hiệu lực hoặc chưa hết** (`endDate >= hôm nay`): nhân viên chuyển **On leave ngay**, kỳ nghỉ `active`
+- Nếu kỳ nghỉ **đã hết hoàn toàn** (`endDate < hôm nay`): chỉ ghi lịch sử (`ended`), nhân viên **giữ Active** (không cần Activate)
 - Task được bàn giao theo lựa chọn ở bước 2
-- Kỳ nghỉ được lưu với trạng thái đang hiệu lực
 
 ---
 
 ## 6. Trong thời gian On leave
 
-| Việc bạn thử làm                | Hệ thống xử lý                                               |
-| ------------------------------- | ------------------------------------------------------------ |
-| Giao / đổi staff trên task      | **Không** chọn được người đang On leave                      |
-| Capacity / Create task          | Hiện đang nghỉ phép; không assign                            |
-| Project Tracker                 | Tên người On leave / Inactive có thể nằm trong danh sách Off |
-| Đổi Status tay trên User detail | **Không** thoát được On leave bằng cách này                  |
+| Việc bạn thử làm                | Hệ thống xử lý                                                           |
+| ------------------------------- | ------------------------------------------------------------------------ |
+| Giao / đổi staff trên task      | **Không** chọn được người đang On leave                                  |
+| Capacity / Create task          | Hiện đang nghỉ phép; không assign                                        |
+| Project Tracker                 | Tên hiện theo ngày trong kỳ leave (`active`/`ended`); không gồm Inactive |
+| Đổi Status tay trên User detail | **Không** thoát được On leave bằng cách này                              |
 
 ---
 
@@ -226,8 +228,9 @@ Họ chỉ **hủy sớm** khi kỳ nghỉ còn đang diễn ra (mục 7).
 
 ## 9. Quy tắc cần nhớ
 
-1. **Confirm = On leave ngay** — không đợi tới ngày bắt đầu trên lịch.
-2. **Hết ngày nghỉ ≠ tự đi làm lại** — cần Admin **Activate**.
+1. **Confirm = On leave ngay** khi kỳ nghỉ chưa hết — không đợi tới ngày bắt đầu trên lịch.  
+   Nếu cả kỳ đã qua (`endDate < hôm nay`): ghi lịch sử, **giữ Active**.
+2. **Hết ngày nghỉ ≠ tự đi làm lại** — cần Admin **Activate** (chỉ khi trước đó đã On leave).
 3. **Hủy sớm ≠ hết hạn** — hủy sớm Active ngay; hết hạn cần Admin.
 4. **Không giao task** cho người On leave hoặc Overloaded (khi tạo / gán task).
 5. **Hủy nghỉ không trả task về người cũ** — trừ khi chỉnh tay.
@@ -238,11 +241,11 @@ Họ chỉ **hủy sớm** khi kỳ nghỉ còn đang diễn ra (mục 7).
 
 ## 10. Tóm tắt nhanh
 
-| Bước | Việc cần làm                                           | Kết quả                                            |
-| ---- | ------------------------------------------------------ | -------------------------------------------------- |
-| 1    | Mở **Leave** / **Schedule leave**, chọn ngày (+ lý do) | —                                                  |
-| 2    | Xem task trong kỳ nghỉ, chọn người thay hoặc để trống  | —                                                  |
-| 3    | **Confirm leave**                                      | **On leave ngay**; task bàn giao theo lựa chọn     |
-| 4a   | Còn trong kỳ → **Cancel leave**                        | **Active ngay**; task đã bàn giao không tự đổi lại |
-| 4b   | Đã hết ngày nghỉ                                       | Kỳ nghỉ **Ended**; nhân viên vẫn On leave          |
-| 5    | Admin **Activate employee**                            | **Active**, nhận task trở lại                      |
+| Bước | Việc cần làm                                           | Kết quả                                                          |
+| ---- | ------------------------------------------------------ | ---------------------------------------------------------------- |
+| 1    | Mở **Leave** / **Schedule leave**, chọn ngày (+ lý do) | —                                                                |
+| 2    | Xem task trong kỳ nghỉ, chọn người thay hoặc để trống  | —                                                                |
+| 3    | **Confirm leave**                                      | Kỳ chưa hết → **On leave**; kỳ đã qua → **Active** + leave Ended |
+| 4a   | Còn trong kỳ → **Cancel leave**                        | **Active ngay**; task đã bàn giao không tự đổi lại               |
+| 4b   | Đã hết ngày nghỉ (sau khi từng On leave)               | Kỳ nghỉ **Ended**; nhân viên vẫn On leave                        |
+| 5    | Admin **Activate employee**                            | **Active**, nhận task trở lại                                    |

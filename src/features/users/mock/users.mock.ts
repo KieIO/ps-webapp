@@ -110,6 +110,10 @@ export const mockUpdateUser = async (id: string, payload: UpdateUserRequest): Pr
     throw new Error('A user with this email already exists');
   }
 
+  if (payload.status === 'invited' && users[index].status !== 'invited') {
+    throw new Error('Cannot set status back to invited');
+  }
+
   const updated: UserRecord = {
     ...users[index],
     name: payload.name,

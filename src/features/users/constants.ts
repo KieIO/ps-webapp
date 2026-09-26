@@ -38,6 +38,13 @@ export const STATUS_OPTIONS = Object.entries(STATUS_LABELS).map(([value, label])
   label,
 }));
 
+/**
+ * Status choices for the user edit form.
+ * Invited is only for newly created accounts — cannot move back to invited.
+ */
+export const getEditableStatusOptions = (currentStatus: UserStatus) =>
+  STATUS_OPTIONS.filter((option) => option.value !== 'invited' || currentStatus === 'invited');
+
 export const DEPARTMENT_OPTIONS = Object.entries(DEPARTMENT_LABELS).map(([value, label]) => ({
   value: value as keyof typeof DEPARTMENT_LABELS,
   label,
