@@ -29,11 +29,11 @@ export const mockGetRemainingOutput = async (
     startDate: filters.startDate,
     endDate: filters.endDate,
     assumption: {
-      slidesTaskLevel: 2,
-      slidesPointsPerUnit: 30,
+      slidesTaskLevel: 3,
+      slidesPointsPerUnit: 45,
       daTaskLevel: 2,
       daPointsPerUnit: 480,
-      note: 'Ước lượng capacity còn lại để biết ngày đó còn làm được bao nhiêu. Ví dụ: Project ÷ 30đ (Slides L2), Creative ÷ 480đ (DA L2).',
+      note: 'Ước lượng capacity còn lại để biết ngày đó còn làm được bao nhiêu. Ví dụ: Project ÷ 45đ (Slides L3), Creative ÷ 480đ (DA L2).',
     },
     days,
   };
