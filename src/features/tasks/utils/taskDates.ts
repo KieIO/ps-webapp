@@ -32,3 +32,12 @@ export const normalizeTaskDateEnd = (value: string): string =>
 /** Format a task UTC timestamp without shifting to local time. */
 export const formatTaskDateTime = (value: string): string =>
   dayjs.utc(value).format(DATETIME_FORMAT);
+
+/**
+ * Calendar day (YYYY-MM-DD) from a stored UTC wall-clock deadline.
+ * Must use UTC so e.g. `…T17:08:00Z` stays on the same day as UI (not local +7 → next day).
+ */
+export const calendarDateFromTaskDeadline = (value: string): string | null => {
+  const parsed = dayjs.utc(value);
+  return parsed.isValid() ? parsed.format('YYYY-MM-DD') : null;
+};

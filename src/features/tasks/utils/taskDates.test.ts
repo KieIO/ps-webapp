@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  calendarDateFromTaskDeadline,
   defaultTaskDeadline,
   formatTaskDateTime,
   fromTaskDeadline,
@@ -42,5 +43,11 @@ describe('taskDates', () => {
   it('formats UTC day boundaries without local timezone shift', () => {
     expect(formatTaskDateTime('2026-06-13T00:00:00.000Z')).toBe('13/06/2026 00:00:00');
     expect(formatTaskDateTime('2026-06-13T23:59:59.000Z')).toBe('13/06/2026 23:59:59');
+  });
+
+  it('extracts calendar date from UTC wall-clock deadlines without local shift', () => {
+    expect(calendarDateFromTaskDeadline('2026-09-25T17:08:00Z')).toBe('2026-09-25');
+    expect(calendarDateFromTaskDeadline('2026-09-25T00:00:00.000Z')).toBe('2026-09-25');
+    expect(calendarDateFromTaskDeadline('not-a-date')).toBeNull();
   });
 });

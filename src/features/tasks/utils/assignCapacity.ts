@@ -7,6 +7,7 @@ import {
   isCapacityAssignable,
   isStaffAssignable,
 } from './staffAvailability';
+import { calendarDateFromTaskDeadline } from './taskDates';
 
 export type AssignCapacityDateSource = 'creative_deadline' | 'deadline' | 'today';
 
@@ -25,13 +26,15 @@ export interface AssignCapacitySnapshot {
 export const resolveAssignCapacityDate = (
   task: Pick<MyTask, 'creativeDeadline' | 'deadline'> | null | undefined,
 ): AssignCapacityDate => {
-  const creative = task?.creativeDeadline ? dayjs(task.creativeDeadline) : null;
-  if (creative?.isValid()) {
-    return { date: creative.format('YYYY-MM-DD'), source: 'creative_deadline' };
+  const creativeDate = task?.creativeDeadline
+    ? calendarDateFromTaskDeadline(task.creativeDeadline)
+    : null;
+  if (creativeDate) {
+    return { date: creativeDate, source: 'creative_deadline' };
   }
-  const deadline = task?.deadline ? dayjs(task.deadline) : null;
-  if (deadline?.isValid()) {
-    return { date: deadline.format('YYYY-MM-DD'), source: 'deadline' };
+  const deadlineDate = task?.deadline ? calendarDateFromTaskDeadline(task.deadline) : null;
+  if (deadlineDate) {
+    return { date: deadlineDate, source: 'deadline' };
   }
   return { date: dayjs().format('YYYY-MM-DD'), source: 'today' };
 };

@@ -24,20 +24,35 @@ describe('assignCapacity', () => {
       creativeDeadline: '2026-09-01T17:00:00.000Z',
       deadline: '2026-08-28T17:00:00.000Z',
     });
-    expect(withCreative.source).toBe('creative_deadline');
-    expect(withCreative.date).toBe(dayjs('2026-09-01T17:00:00.000Z').format('YYYY-MM-DD'));
+    expect(withCreative).toEqual({ date: '2026-09-01', source: 'creative_deadline' });
 
     const withDeadline = resolveAssignCapacityDate({
       creativeDeadline: null,
       deadline: '2026-08-28T17:00:00.000Z',
     });
-    expect(withDeadline.source).toBe('deadline');
-    expect(withDeadline.date).toBe(dayjs('2026-08-28T17:00:00.000Z').format('YYYY-MM-DD'));
+    expect(withDeadline).toEqual({ date: '2026-08-28', source: 'deadline' });
 
     expect(resolveAssignCapacityDate({ creativeDeadline: null, deadline: null })).toEqual({
       date: dayjs().format('YYYY-MM-DD'),
       source: 'today',
     });
+  });
+
+  it('keeps afternoon UTC wall-clock deadlines on the same calendar day as the UI', () => {
+    // Regression: local VN (+7) used to roll 25/09 17:08Z → capacity date 26/09.
+    expect(
+      resolveAssignCapacityDate({
+        creativeDeadline: '2026-09-25T17:08:00Z',
+        deadline: '2026-09-25T17:08:00Z',
+      }),
+    ).toEqual({ date: '2026-09-25', source: 'creative_deadline' });
+
+    expect(
+      resolveAssignCapacityDate({
+        creativeDeadline: null,
+        deadline: '2026-09-25T17:08:00Z',
+      }),
+    ).toEqual({ date: '2026-09-25', source: 'deadline' });
   });
 
   it('formats period notes for UX', () => {
