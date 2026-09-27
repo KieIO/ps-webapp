@@ -18,11 +18,15 @@ export const useUpdateMyTaskStatus = () => {
   return useMutation({
     mutationFn: ({ id, staffConfirmation, staffNote, actualHours }: UpdateMyTaskStatusVariables) =>
       myTaskApi.updateStatus(id, { staffConfirmation, staffNote, actualHours }, userId),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'my'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'my', 'history'] });
       queryClient.invalidateQueries({ queryKey: ['home', 'employee', 'productivity'] });
       queryClient.invalidateQueries({ queryKey: ['overtime'] });
+      if (variables.staffConfirmation === 'decline') {
+        message.success('Đã từ chối task');
+        return;
+      }
       message.success('Task status updated');
     },
     onError: (error: Error) => {

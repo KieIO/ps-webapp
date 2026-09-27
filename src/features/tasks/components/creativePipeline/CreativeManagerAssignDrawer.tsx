@@ -6,8 +6,10 @@ import { useAssignCreativeManager } from '../../hooks/useAssignCreativeManager';
 import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
 import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
+import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
 import type { CreativeAssignMode, MyTask } from '../../schemas/task.schema';
 import {
+  canCmRefuseCreativeAssignment,
   canSelectAssignee,
   displayCapacityPercent,
   filterCreativeStaff,
@@ -38,13 +40,14 @@ type SubtaskForm = {
 
 type ManagerFormValues = {
   staffUserId?: string;
+  quantity?: number;
   subtasks?: SubtaskForm[];
 };
 
 const emptySubtask = (): SubtaskForm => ({
   name: '',
   staffUserId: undefined,
-  quantity: 1,
+  quantity: undefined,
   description: '',
 });
 
@@ -71,6 +74,7 @@ export function CreativeManagerAssignDrawer({
   const [mode, setMode] = useState<CreativeAssignMode>('whole');
   const currentUser = useAppSelector((state) => state.auth.user);
   const { mutate, isPending } = useAssignCreativeManager();
+  const { mutate: updateStatus, isPending: isRefusing } = useUpdateMyTaskStatus();
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
   const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
   const allTasks = useMemo(() => taskList?.items ?? [], [taskList?.items]);
@@ -81,6 +85,10 @@ export function CreativeManagerAssignDrawer({
     isError: capacityError,
   } = useAssignPickerCapacity(task, open);
   const canSubmit = Boolean(task && !readOnly && isAwaitingCm(task));
+  const canRefuse = Boolean(
+    task && !readOnly && canCmRefuseCreativeAssignment(task, currentUser?.id, currentUser?.role),
+  );
+  const busy = isPending || isRefusing;
   const chNote = task ? resolveChNote(task) : '';
   const creativeManagerName = currentUser?.name?.trim() || '—';
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
@@ -109,6 +117,8 @@ export function CreativeManagerAssignDrawer({
     setMode('whole');
     form.setFieldsValue({
       staffUserId: undefined,
+      // CM owns quantity — do not prefill placeholder from create-time default.
+      quantity: undefined,
       subtasks: [emptySubtask(), emptySubtask()],
     });
   }, [open, task, form]);
@@ -120,7 +130,7 @@ export function CreativeManagerAssignDrawer({
   };
 
   const handleCloseRequest = () => {
-    if (isPending) return;
+    if (busy) return;
     if (!readOnly && form.isFieldsTouched()) {
       Modal.confirm({
         title: 'Hủy giao task?',
@@ -135,21 +145,56 @@ export function CreativeManagerAssignDrawer({
     resetAndClose();
   };
 
+  const handleRefuse = () => {
+    if (!task) return;
+    Modal.confirm({
+      title: 'Từ chối nhận task này?',
+      content: 'Task sẽ trả về hàng chờ Creative Head để giao lại CM.',
+      okText: 'Từ chối',
+      okButtonProps: { danger: true },
+      cancelText: 'Quay lại',
+      centered: true,
+      onOk: () =>
+        new Promise<void>((resolve, reject) => {
+          updateStatus(
+            {
+              id: task.id,
+              staffConfirmation: 'decline',
+              staffNote: task.staffNote ?? '',
+            },
+            {
+              onSuccess: () => {
+                resetAndClose();
+                resolve();
+              },
+              onError: (error) => reject(error),
+            },
+          );
+        }),
+    });
+  };
+
   const handleSubmit = async () => {
     if (!task) return;
-    const values = await form.validateFields(mode === 'whole' ? ['staffUserId'] : ['subtasks']);
+    const values = await form.validateFields(
+      mode === 'whole' ? ['staffUserId', 'quantity'] : ['subtasks'],
+    );
     mutate(
       {
         id: task.id,
         payload:
           mode === 'whole'
-            ? { mode, staffUserId: values.staffUserId }
+            ? {
+                mode,
+                staffUserId: values.staffUserId,
+                quantity: values.quantity,
+              }
             : {
                 mode,
                 subtasks: (values.subtasks ?? []).map((subtask) => ({
                   name: (subtask.name ?? '').trim(),
                   staffUserId: subtask.staffUserId ?? '',
-                  quantity: subtask.quantity ?? 1,
+                  quantity: subtask.quantity ?? 0,
                   description: (subtask.description ?? '').trim(),
                 })),
               },
@@ -191,14 +236,24 @@ export function CreativeManagerAssignDrawer({
       onClose={handleCloseRequest}
       width={520}
       destroyOnHidden
-      maskClosable={!isPending}
+      maskClosable={!busy}
       footer={
         <div className={styles.footer}>
-          <Button onClick={handleCloseRequest} disabled={isPending}>
+          <Button onClick={handleCloseRequest} disabled={busy}>
             {canSubmit ? 'Hủy' : 'Đóng'}
           </Button>
+          {canRefuse ? (
+            <Button danger loading={isRefusing} disabled={busy} onClick={handleRefuse}>
+              Từ chối nhận
+            </Button>
+          ) : null}
           {canSubmit ? (
-            <Button type="primary" loading={isPending} onClick={() => void handleSubmit()}>
+            <Button
+              type="primary"
+              loading={isPending}
+              disabled={busy}
+              onClick={() => void handleSubmit()}
+            >
               {mode === 'split' ? 'Giao tất cả task nhỏ' : 'Giao nguyên task'}
             </Button>
           ) : null}
@@ -214,7 +269,6 @@ export function CreativeManagerAssignDrawer({
             <p className={styles.contextMeta}>
               {task.projectName}
               {task.projectManager.name ? ` · PM: ${task.projectManager.name}` : ''}
-              {` · SL ${task.quantity}`}
               {` · CM: ${creativeManagerName}`}
             </p>
             <p className={`${styles.contextMeta} ${styles.metaInline}`}>
@@ -257,13 +311,35 @@ export function CreativeManagerAssignDrawer({
 
               <Form form={form} layout="vertical" size="small">
                 {mode === 'whole' ? (
-                  <Form.Item
-                    name="staffUserId"
-                    label="Giao cho"
-                    rules={[{ required: true, message: 'Chọn Staff nhận task' }]}
-                  >
-                    {renderStaffSelect(false)}
-                  </Form.Item>
+                  <>
+                    <Form.Item
+                      name="quantity"
+                      label="Số lượng"
+                      rules={[
+                        { required: true, message: 'CM nhập số lượng trước khi giao' },
+                        {
+                          type: 'number',
+                          min: 0.01,
+                          message: 'Số lượng phải lớn hơn 0',
+                        },
+                      ]}
+                      extra="Task Creative: CM điền số lượng khi giao Staff."
+                    >
+                      <InputNumber
+                        min={0.01}
+                        step={1}
+                        style={{ width: '100%' }}
+                        placeholder="VD: 24"
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      name="staffUserId"
+                      label="Giao cho"
+                      rules={[{ required: true, message: 'Chọn Staff nhận task' }]}
+                    >
+                      {renderStaffSelect(false)}
+                    </Form.Item>
+                  </>
                 ) : (
                   <Form.List name="subtasks">
                     {(fields, { add, remove }) => (
@@ -305,10 +381,17 @@ export function CreativeManagerAssignDrawer({
                               </Form.Item>
                               <Form.Item
                                 name={[field.name, 'quantity']}
-                                label="SL"
-                                rules={[{ required: true, message: 'Nhập số lượng' }]}
+                                label="Số lượng"
+                                rules={[
+                                  { required: true, message: 'Nhập số lượng' },
+                                  {
+                                    type: 'number',
+                                    min: 0.01,
+                                    message: 'Số lượng phải lớn hơn 0',
+                                  },
+                                ]}
                               >
-                                <InputNumber min={0} style={{ width: '100%' }} />
+                                <InputNumber min={0.01} step={1} style={{ width: '100%' }} />
                               </Form.Item>
                             </div>
                           </div>

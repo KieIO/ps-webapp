@@ -244,6 +244,13 @@ export const canEditCreativePipelineTask = (
 export const canReassignCreativeStaff = (task: MyTask, role: Role | undefined): boolean =>
   resolveEffectivePipelineStage(task) === 'assigned_staff' && canEditCreativePipelineRole(role);
 
+/** CH / Admin may change CM only while the task is still awaiting CM (before Staff assign). */
+export const canReassignCreativeManager = (task: MyTask, role: Role | undefined): boolean => {
+  if (role !== ROLES.ADMIN && role !== ROLES.CREATIVE_HEAD) return false;
+  if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
+  return resolveEffectivePipelineStage(task) === 'awaiting_cm';
+};
+
 /** Roles that may see creative assign CTA on task detail. */
 export const canSeeCreativeDetailPipelineAction = (role: Role | undefined): boolean =>
   role === ROLES.ADMIN ||
@@ -370,7 +377,7 @@ export const filterCreativeStaff = (staffOptions: TaskAssignee[]): TaskAssignee[
       !isCreativeHeadAssignee(staff),
   );
 
-const ACTIVE_CONFIRMATIONS = new Set(['not_updated', 'confirmed', 'decline']);
+const ACTIVE_CONFIRMATIONS = new Set(['not_updated', 'confirmed']);
 
 export interface AssigneeWorkload {
   activeCount: number;
@@ -454,6 +461,88 @@ export const queueActionLabel = (
   if (isAwaitingCm(task)) return 'Giao Staff';
   if (canEditCreativePipelineTask(task, role, userId)) return 'Sửa';
   return 'Xem';
+};
+
+/**
+ * Staff (assignee) may Confirm / Từ chối after CM giao (assigned_staff / split child).
+ * Uses the same status PATCH; BE rolls declined creative work back to CM.
+ */
+export const canStaffConfirmOrDeclineCreative = (
+  task: MyTask,
+  userId: string | undefined,
+  role: Role | undefined,
+): boolean => {
+  if (!userId || role == null) return false;
+  if (!isCreativeDeptTask(task) || isRevisionTask(task)) return false;
+  if (task.staffConfirmation !== 'not_updated') return false;
+  if (resolveEffectivePipelineStage(task) !== 'assigned_staff') return false;
+  // CM parked on awaiting_cm uses refuse CTA instead.
+  if (isAwaitingCm(task)) return false;
+  return task.staff.some((member) => member.userId === userId);
+};
+
+/**
+ * CM (or Admin/PM on CM queue) may refuse an awaiting_cm handoff → returns to CH.
+ */
+export const canCmRefuseCreativeAssignment = (
+  task: MyTask,
+  userId: string | undefined,
+  role: Role | undefined,
+): boolean => {
+  if (!canProcessCmQueue(role)) return false;
+  if (!isAwaitingCm(task)) return false;
+  if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
+  if (task.staffConfirmation === 'decline') return false;
+  if (role === ROLES.CREATIVE_MANAGER) {
+    return Boolean(userId && isAssignedToUser(task, userId));
+  }
+  return role === ROLES.ADMIN || role === ROLES.PM;
+};
+
+/**
+ * Mirror BE creative decline rollback for mock mode.
+ * Pipeline creative decline resets to not_updated after returning to CH/CM.
+ * Revision / non-creative: keep decline status (flat).
+ * Throws when creative decline is not allowed for the current stage.
+ */
+export const applyCreativeDeclineRollback = (task: MyTask): MyTask => {
+  if (!isCreativeDeptTask(task) || isRevisionTask(task)) return task;
+
+  const stage = resolveEffectivePipelineStage(task);
+
+  if (stage === 'split') {
+    throw new Error(
+      'Không từ chối task Creative đã chia nhỏ (split parent). Hãy xử lý từng task nhỏ.',
+    );
+  }
+
+  if (stage === 'awaiting_cm') {
+    return {
+      ...task,
+      staffConfirmation: 'not_updated',
+      pipelineStage: 'awaiting_ch',
+      creativeManager: undefined,
+      staff: [],
+    };
+  }
+
+  if (stage === 'assigned_staff' && task.creativeManager?.userId) {
+    const cm = task.creativeManager;
+    const cmStaff: TaskAssignee = {
+      code: cm.code,
+      name: cm.name,
+      userId: cm.userId,
+      role: ROLES.CREATIVE_MANAGER,
+    };
+    return {
+      ...task,
+      staffConfirmation: 'not_updated',
+      pipelineStage: task.parentTaskId ? task.pipelineStage : 'awaiting_cm',
+      staff: [cmStaff],
+    };
+  }
+
+  throw new Error('Không từ chối được task Creative ở giai đoạn hiện tại.');
 };
 
 export const staffOptionKeyOf = staffOptionKey;

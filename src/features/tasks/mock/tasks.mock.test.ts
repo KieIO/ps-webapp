@@ -324,12 +324,13 @@ describe('creative CH/CM pipeline', () => {
     );
     const updated = await mockAssignCreativeManager(
       before.id,
-      { mode: 'whole', staffUserId: 'usr-creative-ha' },
+      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: 24 },
       'dev-creative_manager',
     );
     expect(updated.pipelineStage).toBe('assigned_staff');
     expect(updated.level).toBe(before.level);
     expect(updated.staff[0]?.userId).toBe('usr-creative-ha');
+    expect(updated.quantity).toBe(24);
     expect(updated.assignedAt).toBeTruthy();
   });
 
@@ -404,10 +405,10 @@ describe('creative CH/CM pipeline', () => {
     await expect(
       mockAssignCreativeManager(
         'task-cm-025',
-        { mode: 'whole', staffUserId: 'usr-creative-khoa' },
+        { mode: 'whole', staffUserId: 'usr-creative-khoa', quantity: 12 },
         'dev-creative_manager',
       ),
-    ).resolves.toMatchObject({ pipelineStage: 'assigned_staff' });
+    ).resolves.toMatchObject({ pipelineStage: 'assigned_staff', quantity: 12 });
   });
 });
 

@@ -22,9 +22,11 @@ export const useUpdateCreativePipeline = () => {
     onSuccess: (_task, variables) => {
       invalidateProjectAndTaskQueries(queryClient);
       message.success(
-        variables.payload.staffUserId
-          ? 'Đã cập nhật task và đổi Staff. Nhân viên mới có 15 phút để confirm.'
-          : 'Đã cập nhật task Creative.',
+        variables.payload.cmUserId
+          ? 'Đã đổi Creative Manager. CM mới sẽ nhận noti trên Creative queue.'
+          : variables.payload.staffUserId
+            ? 'Đã cập nhật task và đổi Staff. Nhân viên mới có 15 phút để confirm.'
+            : 'Đã cập nhật task Creative.',
       );
     },
     onError: (error: Error) => {

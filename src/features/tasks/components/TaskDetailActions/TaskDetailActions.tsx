@@ -1,5 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import {
+  CheckOutlined,
+  CloseOutlined,
   DeleteOutlined,
   EditOutlined,
   RetweetOutlined,
@@ -7,7 +9,7 @@ import {
   SyncOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
-import { Button, Divider, Popconfirm, Tooltip } from 'antd';
+import { Button, Divider, Modal, Popconfirm, Tooltip } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { ROLES } from '@/config/permissions';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
@@ -22,10 +24,13 @@ import { RequestRevisionDrawer } from '../RequestRevisionDrawer/RequestRevisionD
 import { UpdateTaskStatusModal } from '../UpdateTaskStatusModal/UpdateTaskStatusModal';
 import { useDeleteMyTask } from '../../hooks/useDeleteMyTask';
 import { useTaskRevisions } from '../../hooks/useTaskRevisions';
+import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
 import type { MyTask } from '../../schemas/task.schema';
 import {
+  canCmRefuseCreativeAssignment,
   canProcessChQueue,
   canProcessCmQueue,
+  canStaffConfirmOrDeclineCreative,
   resolveCreativeDetailPipelineAction,
 } from '../../utils/creativePipeline';
 import { getTaskListPath } from '../../utils/taskDetail';
@@ -52,10 +57,23 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
   const canEvaluate = can('EVALUATE_TASK');
   const canEdit = canEditTask(role);
   const canDelete = canDeleteTask(role);
+  const updateStatus = useUpdateMyTaskStatus();
 
   const pipelineAction = useMemo(
     () => resolveCreativeDetailPipelineAction(task, role, userId),
     [task, role, userId],
+  );
+  const showStaffConfirmDecline = useMemo(
+    () =>
+      canStaffConfirmOrDeclineCreative(task, userId, role) &&
+      !areParentActionsLockedByActiveRevision(task),
+    [task, userId, role],
+  );
+  const showCmRefuse = useMemo(
+    () =>
+      canCmRefuseCreativeAssignment(task, userId, role) &&
+      !areParentActionsLockedByActiveRevision(task),
+    [task, userId, role],
   );
 
   const revisionsQuery = useTaskRevisions(task.id, {
@@ -80,12 +98,46 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
   const [revisionOpen, setRevisionOpen] = useState(false);
 
   const { mutate: deleteTask, isPending: isDeleting } = useDeleteMyTask();
+  const statusPending = updateStatus.isPending && updateStatus.variables?.id === task.id;
 
   const handleDelete = () => {
     deleteTask(task.id, {
       onSuccess: () => {
         navigate(getTaskListPath(task.taskCategory));
       },
+    });
+  };
+
+  const runStaffStatus = (staffConfirmation: 'confirmed' | 'decline') => {
+    updateStatus.mutate({
+      id: task.id,
+      staffConfirmation,
+      staffNote: task.staffNote ?? '',
+    });
+  };
+
+  const confirmStaffDecline = () => {
+    Modal.confirm({
+      title: 'Từ chối task này?',
+      content:
+        'Task sẽ trả về Creative Manager để giao lại. Bạn vẫn có thể mở chi tiết task sau đó.',
+      okText: 'Từ chối',
+      okButtonProps: { danger: true },
+      cancelText: 'Quay lại',
+      centered: true,
+      onOk: () => runStaffStatus('decline'),
+    });
+  };
+
+  const confirmCmRefuse = () => {
+    Modal.confirm({
+      title: 'Từ chối nhận task này?',
+      content: 'Task sẽ trả về hàng chờ Creative Head để giao lại CM.',
+      okText: 'Từ chối',
+      okButtonProps: { danger: true },
+      cancelText: 'Quay lại',
+      centered: true,
+      onOk: () => runStaffStatus('decline'),
     });
   };
 
@@ -147,6 +199,42 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
               block
             >
               {pipelineAction.label}
+            </Button>
+          ) : null}
+          {showStaffConfirmDecline ? (
+            <>
+              <Button
+                type="primary"
+                icon={<CheckOutlined />}
+                loading={statusPending}
+                disabled={updateStatus.isPending}
+                onClick={() => runStaffStatus('confirmed')}
+                block
+              >
+                Confirm
+              </Button>
+              <Button
+                danger
+                icon={<CloseOutlined />}
+                loading={statusPending}
+                disabled={updateStatus.isPending}
+                onClick={confirmStaffDecline}
+                block
+              >
+                Từ chối
+              </Button>
+            </>
+          ) : null}
+          {showCmRefuse ? (
+            <Button
+              danger
+              icon={<CloseOutlined />}
+              loading={statusPending}
+              disabled={updateStatus.isPending}
+              onClick={confirmCmRefuse}
+              block
+            >
+              Từ chối nhận
             </Button>
           ) : null}
           {renderLockedAction('Update status', <SyncOutlined />, () => setStatusOpen(true))}

@@ -48,6 +48,9 @@ const cleanApiValidationMessage = (message: string): string => {
     'split requires at least 2 subtasks': 'Chia nhỏ cần ít nhất 2 task.',
     'mode must be whole or split': 'Chọn giao nguyên task hoặc chia nhỏ.',
     'cmUserId is required': 'Chọn Creative Manager.',
+    'chỉ đổi CM khi task đang chờ Creative Manager':
+      'Chỉ đổi CM khi task đang chờ Creative Manager xử lý.',
+    'chỉ Creative Head / Admin được đổi CM': 'Chỉ Creative Head / Admin được đổi CM.',
     'description is required before assigning CM': 'Cần fill brief trước khi assign CM.',
   };
   return known[trimmed] ?? trimmed;

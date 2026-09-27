@@ -13,9 +13,11 @@ import { computeTaskLevel } from '../../utils/taskLevel';
 import {
   canChangeCreativeLevelRole,
   canEditCreativePipelineTask,
+  canReassignCreativeManager,
   canReassignCreativeStaff,
   canSelectAssignee,
   displayCapacityPercent,
+  filterCreativeManagers,
   filterCreativeStaff,
   getAssigneeWorkload,
   isCreativeLevelLockedByStaffConfirm,
@@ -44,6 +46,7 @@ type EditFormValues = {
   technical?: number;
   contentProcessing?: number;
   staffUserId?: string;
+  cmUserId?: string;
   staffNote?: string;
 };
 
@@ -65,7 +68,9 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   const canEditLevel = Boolean(task && canChangeCreativeLevelRole(role));
   const levelLocked = Boolean(task && isCreativeLevelLockedByStaffConfirm(task));
   const canReassign = Boolean(task && canReassignCreativeStaff(task, role) && canEdit);
+  const canReassignCm = Boolean(task && canReassignCreativeManager(task, role) && canEdit);
   const stage = task ? resolveEffectivePipelineStage(task) : undefined;
+  const quantityRequired = stage === 'assigned_staff' || stage === 'split';
 
   const designThinking = Form.useWatch('designThinking', form);
   const technical = Form.useWatch('technical', form);
@@ -92,17 +97,35 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     [staffOptions, allTasks, capacityByUserId],
   );
 
+  const cmSelectOptions = useMemo(
+    () =>
+      filterCreativeManagers(staffOptions).map((staff) => {
+        const workload = getAssigneeWorkload(allTasks, staff.userId ?? undefined);
+        return {
+          value: staff.userId ?? staff.code,
+          label: staff.name,
+          disabled: !canSelectAssignee(staff, allTasks, capacityByUserId),
+          staff,
+          activeCount: workload.activeCount,
+          capacityPercent: displayCapacityPercent(staff, allTasks, capacityByUserId),
+          availability: resolveAssigneeAvailability(staff, capacityByUserId),
+        };
+      }),
+    [staffOptions, allTasks, capacityByUserId],
+  );
+
   useEffect(() => {
     if (!open || !task) return;
     form.setFieldsValue({
       description: task.description,
       additionalFactors: task.additionalFactors,
-      quantity: task.quantity,
+      quantity: task.quantity > 0 ? task.quantity : undefined,
       creativeDeadline: task.creativeDeadline ? dayjs(task.creativeDeadline) : null,
       designThinking: task.designThinking,
       technical: task.technical,
       contentProcessing: task.contentProcessing,
       staffUserId: resolveWholeAssignStaff(task)[0]?.userId ?? undefined,
+      cmUserId: task.creativeManager?.userId ?? task.staff[0]?.userId ?? undefined,
       staffNote: task.staffNote || task.cmNote || '',
     });
   }, [open, task, form]);
@@ -132,6 +155,9 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     if (!task || !canEdit) return;
     const values = await form.validateFields();
 
+    const currentCmId = task.creativeManager?.userId ?? task.staff[0]?.userId ?? undefined;
+    const cmChanged = canReassignCm && values.cmUserId && values.cmUserId !== currentCmId;
+
     const staffChanged =
       canReassign &&
       values.staffUserId &&
@@ -157,6 +183,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                 contentProcessing: values.contentProcessing,
               }
             : {}),
+          cmUserId: cmChanged ? values.cmUserId : undefined,
           staffUserId: staffChanged ? values.staffUserId : undefined,
           staffNote: values.staffNote,
         },
@@ -217,8 +244,24 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
             <Form.Item name="additionalFactors" label="Yếu tố bổ sung">
               <Input.TextArea rows={2} />
             </Form.Item>
-            <Form.Item name="quantity" label="Số lượng" rules={[{ required: true }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
+            <Form.Item
+              name="quantity"
+              label="Số lượng"
+              rules={
+                quantityRequired
+                  ? [
+                      { required: true, message: 'CM nhập số lượng' },
+                      { type: 'number', min: 0.01, message: 'Số lượng phải lớn hơn 0' },
+                    ]
+                  : undefined
+              }
+              extra={
+                quantityRequired
+                  ? 'Task Creative: CM điền / chỉnh số lượng.'
+                  : 'CM sẽ nhập số lượng khi giao Staff.'
+              }
+            >
+              <InputNumber min={0.01} step={1} style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="creativeDeadline" label="Creative deadline">
               <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} allowClear />
@@ -226,6 +269,40 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
             <Form.Item name="staffNote" label="Ghi chú">
               <Input.TextArea rows={2} />
             </Form.Item>
+
+            {canReassignCm ? (
+              <>
+                <p className={styles.sectionLabel}>Đổi Creative Manager</p>
+                <Form.Item
+                  name="cmUserId"
+                  label="Creative Manager"
+                  rules={[{ required: true, message: 'Chọn Creative Manager' }]}
+                  extra="Chỉ đổi được khi task còn chờ CM giao Staff."
+                >
+                  <Select
+                    showSearch
+                    optionFilterProp="label"
+                    options={cmSelectOptions}
+                    optionRender={(option) => {
+                      const data = option.data as {
+                        staff: (typeof cmSelectOptions)[number]['staff'];
+                        activeCount: number;
+                        capacityPercent: number;
+                        availability: (typeof cmSelectOptions)[number]['availability'];
+                      };
+                      return (
+                        <AssigneeOptionLabel
+                          staff={data.staff}
+                          activeCount={data.activeCount}
+                          capacityPercent={data.capacityPercent}
+                          availability={data.availability}
+                        />
+                      );
+                    }}
+                  />
+                </Form.Item>
+              </>
+            ) : null}
 
             <p className={styles.sectionLabel}>Phân loại độ khó / Level</p>
             {levelLocked ? (

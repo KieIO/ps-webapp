@@ -31,10 +31,12 @@ import { computeTaskLevel } from '../utils/taskLevel';
 import { isStaffAssignable } from '../utils/staffAvailability';
 import { resolveStaffFromUserId } from '../utils/staff';
 import {
+  applyCreativeDeclineRollback,
   canChangeCreativeLevelRole,
   canEditCreativePipelineTask,
   canProcessChQueue,
   canProcessCmQueue,
+  canReassignCreativeManager,
   canReassignCreativeStaff,
   filterCreativeManagers,
   filterCreativeStaff,
@@ -789,7 +791,18 @@ export const mockUpdateMyTaskStatus = async (
   }
   assertCanChangeCancelledStatus(current, payload.staffConfirmation, editorUserId);
 
-  const updated = {
+  if (
+    payload.staffConfirmation === 'decline' &&
+    current.staffConfirmation !== 'decline' &&
+    current.staffConfirmation !== 'not_updated' &&
+    current.taskKind !== 'revision' &&
+    typeof current.department === 'string' &&
+    (current.department === 'creative' || current.department.startsWith('creative_'))
+  ) {
+    throw new Error('Chỉ từ chối task Creative khi trạng thái còn Chưa cập nhật');
+  }
+
+  let updated: MyTask = {
     ...current,
     staffConfirmation: payload.staffConfirmation,
     staffNote: payload.staffNote,
@@ -799,6 +812,10 @@ export const mockUpdateMyTaskStatus = async (
         : current.urgency,
     updatedAt: new Date().toISOString(),
   };
+
+  if (payload.staffConfirmation === 'decline' && current.staffConfirmation !== 'decline') {
+    updated = applyCreativeDeclineRollback(updated);
+  }
 
   const next = [...tasks];
   next[index] = updated;
@@ -970,10 +987,14 @@ export const mockAssignCreativeManager = async (
     if (!isStaffAssignable(assignee.availability)) {
       throw new Error('Không thể giao cho nhân viên đang nghỉ phép');
     }
+    if (payload.quantity == null || payload.quantity <= 0) {
+      throw new Error('CM nhập số lượng trước khi giao');
+    }
 
     const updated: MyTask = {
       ...current,
       staff,
+      quantity: payload.quantity,
       pipelineStage: 'assigned_staff',
       assignedAt: now,
       staffConfirmation: 'not_updated',
@@ -1091,7 +1112,22 @@ export const mockUpdateCreativePipeline = async (
   let staff = current.staff;
   let staffConfirmation = current.staffConfirmation;
   let assignedAt = current.assignedAt;
-  if (payload.staffUserId) {
+  let creativeManager = current.creativeManager;
+
+  if (payload.cmUserId) {
+    if (!canReassignCreativeManager(current, editorRole)) {
+      throw new Error('Chỉ đổi CM khi task đang chờ Creative Manager (CH/Admin)');
+    }
+    if (payload.staffUserId) {
+      throw new Error('Không đổi CM và Staff trong cùng một lần lưu');
+    }
+    const nextCm = filterCreativeManagers(MOCK_ASSIGNABLE_STAFF).find(
+      (member) => member.userId === payload.cmUserId,
+    );
+    if (!nextCm) throw new Error('Creative Manager not found');
+    staff = [nextCm];
+    creativeManager = { code: nextCm.code, name: nextCm.name, userId: nextCm.userId };
+  } else if (payload.staffUserId) {
     if (!canReassignCreativeStaff(current, editorRole)) {
       throw new Error('Chỉ đổi Staff khi task đã giao Staff');
     }
@@ -1125,6 +1161,7 @@ export const mockUpdateCreativePipeline = async (
       ? computeTaskLevel(designThinking, technical, contentProcessing)
       : current.level,
     staff,
+    creativeManager,
     staffConfirmation,
     assignedAt,
     pipelineStage:

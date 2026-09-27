@@ -127,7 +127,7 @@ export const buildCreateTaskPayload = ({
     level: isCreativeWorkflow
       ? DEFAULT_CLASSIFICATION
       : computeTaskLevel(designThinking, technical, contentProcessing),
-    quantity: isCreativeWorkflow ? DEFAULT_CLASSIFICATION : (values.quantity ?? 1),
+    quantity: isCreativeWorkflow ? 0 : (values.quantity ?? 1),
     date: toTaskDeadline(values.date),
     description,
     department,

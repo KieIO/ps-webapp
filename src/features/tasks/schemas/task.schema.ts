@@ -317,7 +317,7 @@ export const AssignCreativeHeadRequestSchema = z.object({
 export const CreativeManagerSubtaskSchema = z.object({
   name: z.string().min(1, 'Tên task nhỏ is required'),
   staffUserId: z.string().min(1, 'Chọn Staff'),
-  quantity: z.number().min(0),
+  quantity: z.number().positive('Nhập số lượng > 0'),
   description: z.string().min(1, 'Nhập brief cho task nhỏ'),
 });
 
@@ -326,6 +326,8 @@ export const AssignCreativeManagerRequestSchema = z
     mode: z.enum(CREATIVE_ASSIGN_MODES),
     staffUserId: z.string().optional(),
     staffNote: z.string().optional(),
+    /** Required when mode=whole — CM fills quantity when assigning. */
+    quantity: z.number().positive('Nhập số lượng > 0').optional(),
     subtasks: z.array(CreativeManagerSubtaskSchema).optional(),
   })
   .superRefine((value, ctx) => {
@@ -334,6 +336,13 @@ export const AssignCreativeManagerRequestSchema = z
         code: z.ZodIssueCode.custom,
         path: ['staffUserId'],
         message: 'Chọn Staff nhận task',
+      });
+    }
+    if (value.mode === 'whole' && (value.quantity == null || value.quantity <= 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['quantity'],
+        message: 'CM nhập số lượng trước khi giao',
       });
     }
     if (value.mode === 'split' && (!value.subtasks || value.subtasks.length < 2)) {
@@ -356,6 +365,8 @@ export const UpdateCreativePipelineRequestSchema = z
     contentProcessing: z.number().int().min(1).max(4).optional(),
     staffUserId: z.string().optional(),
     staffNote: z.string().optional(),
+    /** CH/Admin: reassign CM while awaiting_cm. */
+    cmUserId: z.string().optional(),
   })
   .superRefine((value, ctx) => {
     const levelFields = [value.designThinking, value.technical, value.contentProcessing];
@@ -365,6 +376,13 @@ export const UpdateCreativePipelineRequestSchema = z
         code: z.ZodIssueCode.custom,
         path: ['designThinking'],
         message: 'Cần đủ 3 tiêu chí để đổi Level',
+      });
+    }
+    if (value.cmUserId && value.staffUserId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['cmUserId'],
+        message: 'Không đổi CM và Staff trong cùng một lần lưu',
       });
     }
   });

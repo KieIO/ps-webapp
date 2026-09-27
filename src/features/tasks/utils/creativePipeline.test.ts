@@ -2,13 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { ROLES } from '@/config/permissions';
 import type { CreateMyTaskRequest, MyTask, TaskAssignee } from '../schemas/task.schema';
 import {
+  applyCreativeDeclineRollback,
   canChangeCreativeLevelRole,
+  canCmRefuseCreativeAssignment,
   canEditCreativePipelineTask,
+  canReassignCreativeManager,
   canReassignCreativeStaff,
+  canStaffConfirmOrDeclineCreative,
   countActionableQueueItems,
   filterCreativeManagers,
   filterCreativeQueue,
   filterCreativeStaff,
+  getAssigneeWorkload,
   isCreativeLevelLockedByStaffConfirm,
   needsChBrief,
   pipelineAssigneeLabel,
@@ -391,6 +396,26 @@ describe('creativePipeline helpers', () => {
     expect(canReassignCreativeStaff(assigned, ROLES.CREATIVE_HEAD)).toBe(true);
   });
 
+  it('allows CH/Admin to reassign CM only while awaiting_cm', () => {
+    const awaitingCm = task({
+      pipelineStage: 'awaiting_cm',
+      creativeManager: assignee({ userId: 'cm-1', name: 'CM' }),
+      staff: [assignee({ userId: 'cm-1', name: 'CM' })],
+    });
+    expect(canReassignCreativeManager(awaitingCm, ROLES.CREATIVE_HEAD)).toBe(true);
+    expect(canReassignCreativeManager(awaitingCm, ROLES.ADMIN)).toBe(true);
+    expect(canReassignCreativeManager(awaitingCm, ROLES.CREATIVE_MANAGER)).toBe(false);
+    expect(canReassignCreativeManager(awaitingCm, ROLES.PM)).toBe(false);
+
+    const assigned = task({
+      pipelineStage: 'assigned_staff',
+      creativeManager: assignee({ userId: 'cm-1', name: 'CM' }),
+      staff: [assignee({ userId: 'staff-1', name: 'An' })],
+    });
+    expect(canReassignCreativeManager(assigned, ROLES.CREATIVE_HEAD)).toBe(false);
+    expect(canReassignCreativeManager(assigned, ROLES.ADMIN)).toBe(false);
+  });
+
   it('resolves assign mode and split subtasks for edit UI', () => {
     expect(resolveCreativeAssignMode(task({ pipelineStage: 'awaiting_cm' }))).toBeNull();
     expect(resolveCreativeAssignMode(task({ pipelineStage: 'assigned_staff' }))).toBe('whole');
@@ -472,5 +497,90 @@ describe('creativePipeline helpers', () => {
         'admin',
       ),
     ).toBeNull();
+  });
+});
+
+describe('creative decline helpers', () => {
+  it('allows staff confirm/decline only on assigned creative work', () => {
+    const assigned = task({
+      pipelineStage: 'assigned_staff',
+      creativeManager: assignee({ userId: 'cm-1', name: 'Yen' }),
+      staff: [assignee({ userId: 'staff-1', name: 'An' })],
+    });
+    expect(canStaffConfirmOrDeclineCreative(assigned, 'staff-1', ROLES.EMPLOYEE)).toBe(true);
+    expect(canStaffConfirmOrDeclineCreative(assigned, 'other', ROLES.EMPLOYEE)).toBe(false);
+    expect(
+      canStaffConfirmOrDeclineCreative(
+        { ...assigned, staffConfirmation: 'confirmed' },
+        'staff-1',
+        ROLES.EMPLOYEE,
+      ),
+    ).toBe(false);
+
+    const awaitingCm = task({
+      pipelineStage: 'awaiting_cm',
+      creativeManager: assignee({ userId: 'cm-1', name: 'Yen' }),
+      staff: [assignee({ userId: 'cm-1', name: 'Yen' })],
+    });
+    expect(canStaffConfirmOrDeclineCreative(awaitingCm, 'cm-1', ROLES.CREATIVE_MANAGER)).toBe(
+      false,
+    );
+  });
+
+  it('allows CM refuse on awaiting_cm and rolls decline back correctly', () => {
+    const awaitingCm = task({
+      pipelineStage: 'awaiting_cm',
+      creativeManager: assignee({ userId: 'cm-1', code: 'CM', name: 'Yen' }),
+      staff: [assignee({ userId: 'cm-1', code: 'CM', name: 'Yen' })],
+    });
+    expect(canCmRefuseCreativeAssignment(awaitingCm, 'cm-1', ROLES.CREATIVE_MANAGER)).toBe(true);
+    expect(canCmRefuseCreativeAssignment(awaitingCm, 'other', ROLES.CREATIVE_MANAGER)).toBe(false);
+
+    const refused = applyCreativeDeclineRollback({
+      ...awaitingCm,
+      staffConfirmation: 'decline',
+    });
+    expect(refused.pipelineStage).toBe('awaiting_ch');
+    expect(refused.staffConfirmation).toBe('not_updated');
+    expect(refused.staff).toEqual([]);
+    expect(refused.creativeManager).toBeUndefined();
+
+    const assigned = task({
+      pipelineStage: 'assigned_staff',
+      creativeManager: assignee({ userId: 'cm-1', code: 'CM', name: 'Yen' }),
+      staff: [assignee({ userId: 'staff-1', name: 'An' })],
+      staffConfirmation: 'decline',
+    });
+    const returned = applyCreativeDeclineRollback(assigned);
+    expect(returned.pipelineStage).toBe('awaiting_cm');
+    expect(returned.staffConfirmation).toBe('not_updated');
+    expect(returned.staff).toEqual([
+      expect.objectContaining({ userId: 'cm-1', name: 'Yen', role: ROLES.CREATIVE_MANAGER }),
+    ]);
+
+    expect(() =>
+      applyCreativeDeclineRollback(task({ pipelineStage: 'split', staffConfirmation: 'decline' })),
+    ).toThrow(/chia nhỏ/);
+  });
+
+  it('excludes decline from assign-picker workload', () => {
+    const tasks = [
+      task({
+        id: 'a',
+        pipelineStage: 'assigned_staff',
+        staffConfirmation: 'not_updated',
+        staff: [assignee({ userId: 'staff-1' })],
+      }),
+      task({
+        id: 'b',
+        pipelineStage: 'assigned_staff',
+        staffConfirmation: 'decline',
+        staff: [assignee({ userId: 'staff-1' })],
+      }),
+    ];
+    expect(getAssigneeWorkload(tasks, 'staff-1')).toEqual({
+      activeCount: 1,
+      capacityPercent: 15,
+    });
   });
 });
