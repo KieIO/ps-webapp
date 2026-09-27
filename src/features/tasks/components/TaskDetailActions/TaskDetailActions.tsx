@@ -58,7 +58,6 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
   const canEdit = canEditTask(role);
   const canDelete = canDeleteTask(role);
   const updateStatus = useUpdateMyTaskStatus();
-  const isOtTask = Boolean(task.overtimeRequestId);
   const isAssignee = Boolean(userId && task.staff.some((member) => member.userId === userId));
 
   const pipelineAction = useMemo(
@@ -103,6 +102,8 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
 
   const [editOpen, setEditOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
+  /** 'finish' = Hoàn thành CTA → modal with note, status locked to finished. */
+  const [statusModalMode, setStatusModalMode] = useState<'update' | 'finish'>('update');
   const [evaluateOpen, setEvaluateOpen] = useState(false);
   const [pipelineOpen, setPipelineOpen] = useState(false);
   const [revisionOpen, setRevisionOpen] = useState(false);
@@ -118,7 +119,7 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
     });
   };
 
-  const runStaffStatus = (staffConfirmation: 'confirmed' | 'decline' | 'finished') => {
+  const runStaffStatus = (staffConfirmation: 'confirmed' | 'decline') => {
     updateStatus.mutate({
       id: task.id,
       staffConfirmation,
@@ -126,12 +127,14 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
     });
   };
 
-  const handleStaffFinish = () => {
-    if (isOtTask) {
-      setStatusOpen(true);
-      return;
-    }
-    runStaffStatus('finished');
+  const openFinishModal = () => {
+    setStatusModalMode('finish');
+    setStatusOpen(true);
+  };
+
+  const openUpdateStatusModal = () => {
+    setStatusModalMode('update');
+    setStatusOpen(true);
   };
 
   const confirmStaffDecline = () => {
@@ -160,7 +163,10 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
   };
 
   const handleCloseEdit = () => setEditOpen(false);
-  const handleCloseStatus = () => setStatusOpen(false);
+  const handleCloseStatus = () => {
+    setStatusOpen(false);
+    setStatusModalMode('update');
+  };
   const handleCloseEvaluate = () => setEvaluateOpen(false);
   const handleClosePipeline = () => setPipelineOpen(false);
   const handleCloseRevision = () => setRevisionOpen(false);
@@ -249,7 +255,7 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
               icon={<CheckOutlined />}
               loading={statusPending}
               disabled={updateStatus.isPending}
-              onClick={handleStaffFinish}
+              onClick={openFinishModal}
               block
             >
               Hoàn thành
@@ -268,7 +274,7 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
             </Button>
           ) : null}
           {showUpdateStatus
-            ? renderLockedAction('Update status', <SyncOutlined />, () => setStatusOpen(true))
+            ? renderLockedAction('Update status', <SyncOutlined />, openUpdateStatusModal)
             : null}
           {canEdit
             ? renderLockedAction('Edit task', <EditOutlined />, () => setEditOpen(true))
@@ -335,7 +341,12 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
         />
       ) : null}
 
-      <UpdateTaskStatusModal open={statusOpen} task={task} onClose={handleCloseStatus} />
+      <UpdateTaskStatusModal
+        open={statusOpen}
+        task={task}
+        onClose={handleCloseStatus}
+        lockedStatus={statusModalMode === 'finish' ? 'finished' : undefined}
+      />
 
       {canEvaluate ? (
         <EvaluateTaskModal open={evaluateOpen} task={task} onClose={handleCloseEvaluate} />

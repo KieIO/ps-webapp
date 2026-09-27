@@ -1,10 +1,18 @@
 import { Alert, Form, Input, InputNumber, Modal, Select } from 'antd';
 import { useEffect, useMemo } from 'react';
 import { usePermission } from '@/shared/hooks/usePermission';
-import { MY_TASK_COLUMN_HEADERS, TASK_STATUS_CHANGE_NOTE_LABEL } from '../../constants';
+import {
+  MY_TASK_COLUMN_HEADERS,
+  TASK_STATUS_CHANGE_NOTE_LABEL,
+  CONFIRMATION_LABELS,
+} from '../../constants';
 import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
 import { TaskConfirmationBadge } from '../TaskConfirmationBadge/TaskConfirmationBadge';
-import type { MyTask, UpdateMyTaskStatusRequest } from '../../schemas/task.schema';
+import type {
+  MyTask,
+  TaskConfirmationStatus,
+  UpdateMyTaskStatusRequest,
+} from '../../schemas/task.schema';
 import {
   canCancelTask,
   canChangeTaskStatus,
@@ -19,9 +27,19 @@ interface UpdateTaskStatusModalProps {
   open: boolean;
   task: MyTask | null;
   onClose: () => void;
+  /**
+   * When set, status is fixed (no dropdown) — used for guided staff finish
+   * so users can still add an optional note / OT hours.
+   */
+  lockedStatus?: TaskConfirmationStatus;
 }
 
-export function UpdateTaskStatusModal({ open, task, onClose }: UpdateTaskStatusModalProps) {
+export function UpdateTaskStatusModal({
+  open,
+  task,
+  onClose,
+  lockedStatus,
+}: UpdateTaskStatusModalProps) {
   const [form] = Form.useForm<UpdateMyTaskStatusRequest>();
   const { mutate, isPending } = useUpdateMyTaskStatus();
   const { role } = usePermission();
@@ -32,17 +50,19 @@ export function UpdateTaskStatusModal({ open, task, onClose }: UpdateTaskStatusM
   );
   const isOtTask = Boolean(task?.overtimeRequestId);
   const selectedStatus = Form.useWatch('staffConfirmation', form);
-  const requiresActualHours = isOtTask && selectedStatus === 'finished';
+  const effectiveStatus = lockedStatus ?? selectedStatus;
+  const requiresActualHours = isOtTask && effectiveStatus === 'finished';
+  const isFinishFlow = lockedStatus === 'finished';
 
   useEffect(() => {
     if (open && task) {
       form.setFieldsValue({
-        staffConfirmation: task.staffConfirmation,
+        staffConfirmation: lockedStatus ?? task.staffConfirmation,
         staffNote: task.staffNote,
         actualHours: task.actualHours ?? undefined,
       });
     }
-  }, [open, task, form]);
+  }, [open, task, form, lockedStatus]);
 
   const handleClose = () => {
     form.resetFields();
@@ -51,11 +71,12 @@ export function UpdateTaskStatusModal({ open, task, onClose }: UpdateTaskStatusM
 
   const handleFinish = async (values: UpdateMyTaskStatusRequest) => {
     if (!task) return;
-    if (!canChangeTaskStatus(task, role) && values.staffConfirmation !== task.staffConfirmation) {
+    const nextStatus = lockedStatus ?? values.staffConfirmation;
+    if (!canChangeTaskStatus(task, role) && nextStatus !== task.staffConfirmation) {
       return;
     }
 
-    if (isTransitioningToCancelled(task.staffConfirmation, values.staffConfirmation)) {
+    if (isTransitioningToCancelled(task.staffConfirmation, nextStatus)) {
       if (!canCancelTask(role)) return;
       const confirmed = await confirmCancelTask();
       if (!confirmed) return;
@@ -64,7 +85,7 @@ export function UpdateTaskStatusModal({ open, task, onClose }: UpdateTaskStatusM
     mutate(
       {
         id: task.id,
-        staffConfirmation: values.staffConfirmation,
+        staffConfirmation: nextStatus,
         staffNote: values.staffNote ?? '',
         actualHours: values.actualHours,
       },
@@ -79,11 +100,11 @@ export function UpdateTaskStatusModal({ open, task, onClose }: UpdateTaskStatusM
 
   return (
     <Modal
-      title="Update status"
+      title={isFinishFlow ? 'Hoàn thành task' : 'Update status'}
       open={open}
       onCancel={handleClose}
       onOk={() => form.submit()}
-      okText="Save"
+      okText={isFinishFlow ? 'Hoàn thành' : 'Save'}
       confirmLoading={isPending}
       okButtonProps={{ disabled: !statusEditable }}
       destroyOnHidden
@@ -114,21 +135,36 @@ export function UpdateTaskStatusModal({ open, task, onClose }: UpdateTaskStatusM
       )}
 
       <Form form={form} layout="vertical" onFinish={handleFinish} requiredMark={false}>
-        <p className={styles.sectionTitle}>{MY_TASK_COLUMN_HEADERS.confirmation}</p>
-        {!statusEditable ? (
-          <Alert
-            type="info"
-            showIcon
-            message={TASK_STATUS_LOCKED_MESSAGE}
-            style={{ marginBottom: 12 }}
-          />
+        {isFinishFlow ? (
+          <Form.Item name="staffConfirmation" hidden>
+            <Input type="hidden" />
+          </Form.Item>
+        ) : (
+          <>
+            <p className={styles.sectionTitle}>{MY_TASK_COLUMN_HEADERS.confirmation}</p>
+            {!statusEditable ? (
+              <Alert
+                type="info"
+                showIcon
+                message={TASK_STATUS_LOCKED_MESSAGE}
+                style={{ marginBottom: 12 }}
+              />
+            ) : null}
+            <Form.Item
+              name="staffConfirmation"
+              rules={[{ required: true, message: 'Status is required' }]}
+            >
+              <Select
+                options={statusOptions}
+                placeholder="Select status"
+                disabled={!statusEditable}
+              />
+            </Form.Item>
+          </>
+        )}
+        {isFinishFlow ? (
+          <p className={styles.sectionTitle}>Trạng thái mới: {CONFIRMATION_LABELS.finished}</p>
         ) : null}
-        <Form.Item
-          name="staffConfirmation"
-          rules={[{ required: true, message: 'Status is required' }]}
-        >
-          <Select options={statusOptions} placeholder="Select status" disabled={!statusEditable} />
-        </Form.Item>
         {requiresActualHours ? (
           <Form.Item
             name="actualHours"
