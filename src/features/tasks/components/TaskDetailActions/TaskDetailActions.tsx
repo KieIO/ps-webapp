@@ -42,7 +42,7 @@ import {
   PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION,
   REQUEST_REVISION_BLOCK_MESSAGES,
 } from '../../utils/taskRevision';
-import { canDeleteTask, canEditTask } from '../../utils/taskStatusLock';
+import { canChangeTaskStatus, canDeleteTask, canEditTask } from '../../utils/taskStatusLock';
 import styles from './TaskDetailActions.module.scss';
 
 interface TaskDetailActionsProps {
@@ -58,23 +58,34 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
   const canEdit = canEditTask(role);
   const canDelete = canDeleteTask(role);
   const updateStatus = useUpdateMyTaskStatus();
+  const isOtTask = Boolean(task.overtimeRequestId);
+  const isAssignee = Boolean(userId && task.staff.some((member) => member.userId === userId));
 
   const pipelineAction = useMemo(
     () => resolveCreativeDetailPipelineAction(task, role, userId),
     [task, role, userId],
   );
+  const parentLockedByRevision = areParentActionsLockedByActiveRevision(task);
   const showStaffConfirmDecline = useMemo(
-    () =>
-      canStaffConfirmOrDeclineCreative(task, userId, role) &&
-      !areParentActionsLockedByActiveRevision(task),
-    [task, userId, role],
+    () => canStaffConfirmOrDeclineCreative(task, userId, role) && !parentLockedByRevision,
+    [task, userId, role, parentLockedByRevision],
   );
   const showCmRefuse = useMemo(
-    () =>
-      canCmRefuseCreativeAssignment(task, userId, role) &&
-      !areParentActionsLockedByActiveRevision(task),
-    [task, userId, role],
+    () => canCmRefuseCreativeAssignment(task, userId, role) && !parentLockedByRevision,
+    [task, userId, role, parentLockedByRevision],
   );
+  /** After Confirm — next step is Finish (OT still needs the status modal for hours). */
+  const showStaffFinish =
+    isAssignee && task.staffConfirmation === 'confirmed' && !parentLockedByRevision;
+  /**
+   * Guided CTAs replace the generic status picker so Confirm/Từ chối/Hoàn thành
+   * are not duplicated inside Update status.
+   */
+  const showUpdateStatus =
+    canChangeTaskStatus(task, role) &&
+    !showStaffConfirmDecline &&
+    !showCmRefuse &&
+    !showStaffFinish;
 
   const revisionsQuery = useTaskRevisions(task.id, {
     enabled: !isRevisionTask(task),
@@ -86,7 +97,6 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
     [task, revisionChildren, canEvaluate],
   );
   const revisionAllowed = canRequestRevision(task, revisionChildren, canEvaluate);
-  const parentLockedByRevision = areParentActionsLockedByActiveRevision(task);
   const parentLockReason = parentLockedByRevision
     ? PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION
     : undefined;
@@ -108,12 +118,20 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
     });
   };
 
-  const runStaffStatus = (staffConfirmation: 'confirmed' | 'decline') => {
+  const runStaffStatus = (staffConfirmation: 'confirmed' | 'decline' | 'finished') => {
     updateStatus.mutate({
       id: task.id,
       staffConfirmation,
       staffNote: task.staffNote ?? '',
     });
+  };
+
+  const handleStaffFinish = () => {
+    if (isOtTask) {
+      setStatusOpen(true);
+      return;
+    }
+    runStaffStatus('finished');
   };
 
   const confirmStaffDecline = () => {
@@ -225,6 +243,18 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
               </Button>
             </>
           ) : null}
+          {showStaffFinish ? (
+            <Button
+              type="primary"
+              icon={<CheckOutlined />}
+              loading={statusPending}
+              disabled={updateStatus.isPending}
+              onClick={handleStaffFinish}
+              block
+            >
+              Hoàn thành
+            </Button>
+          ) : null}
           {showCmRefuse ? (
             <Button
               danger
@@ -237,7 +267,9 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
               Từ chối nhận
             </Button>
           ) : null}
-          {renderLockedAction('Update status', <SyncOutlined />, () => setStatusOpen(true))}
+          {showUpdateStatus
+            ? renderLockedAction('Update status', <SyncOutlined />, () => setStatusOpen(true))
+            : null}
           {canEdit
             ? renderLockedAction('Edit task', <EditOutlined />, () => setEditOpen(true))
             : null}
