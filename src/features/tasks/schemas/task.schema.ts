@@ -359,7 +359,10 @@ export const UpdateCreativePipelineRequestSchema = z
     description: z.string().optional(),
     additionalFactors: z.string().optional(),
     quantity: z.number().min(0).optional(),
+    /** PM deadline (InternalDeadline) — Admin/PM only. */
+    deadline: z.string().nullish(),
     creativeDeadline: z.string().nullish(),
+    urgency: z.enum(PROJECT_URGENCIES).optional(),
     designThinking: z.number().int().min(1).max(4).optional(),
     technical: z.number().int().min(1).max(4).optional(),
     contentProcessing: z.number().int().min(1).max(4).optional(),

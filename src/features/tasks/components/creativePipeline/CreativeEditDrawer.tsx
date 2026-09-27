@@ -1,7 +1,9 @@
 import { Alert, Button, DatePicker, Drawer, Form, Input, InputNumber, Modal, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useMemo } from 'react';
-import { DATE_FORMAT } from '@/config/constants';
+import { DATETIME_SHORT_FORMAT } from '@/config/constants';
+import type { ProjectUrgency } from '@/features/projects/schemas/project.schema';
+import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { MY_TASK_COLUMN_HEADERS } from '../../constants';
 import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
@@ -9,6 +11,7 @@ import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateCreativePipeline } from '../../hooks/useUpdateCreativePipeline';
 import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
 import type { MyTask } from '../../schemas/task.schema';
+import { fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import {
   canChangeCreativeLevelRole,
@@ -26,7 +29,11 @@ import {
   resolveEffectivePipelineStage,
   resolveWholeAssignStaff,
 } from '../../utils/creativePipeline';
+import { canEditCreativeScheduleMeta } from '../../utils/creativeVisibility';
+import { getTaskDeadline } from '../../utils/taskDetail';
+import { normalizeTaskUrgencySetting, resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { ClassificationScale } from '../CreateTaskDrawer/ClassificationScale';
+import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
 import { CreativeAssignModeSection } from './CreativeAssignModeSection';
 import styles from './creativePipeline.module.scss';
@@ -41,7 +48,9 @@ type EditFormValues = {
   description?: string;
   additionalFactors?: string;
   quantity?: number;
+  deadline?: dayjs.Dayjs | null;
   creativeDeadline?: dayjs.Dayjs | null;
+  urgency?: ProjectUrgency;
   designThinking?: number;
   technical?: number;
   contentProcessing?: number;
@@ -65,12 +74,14 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   } = useAssignPickerCapacity(task, open);
 
   const canEdit = Boolean(task && canEditCreativePipelineTask(task, role, userId));
+  const canEditSchedule = canEdit && canEditCreativeScheduleMeta(role);
   const canEditLevel = Boolean(task && canChangeCreativeLevelRole(role));
   const levelLocked = Boolean(task && isCreativeLevelLockedByStaffConfirm(task));
   const canReassign = Boolean(task && canReassignCreativeStaff(task, role) && canEdit);
   const canReassignCm = Boolean(task && canReassignCreativeManager(task, role) && canEdit);
   const stage = task ? resolveEffectivePipelineStage(task) : undefined;
   const quantityRequired = stage === 'assigned_staff' || stage === 'split';
+  const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
 
   const designThinking = Form.useWatch('designThinking', form);
   const technical = Form.useWatch('technical', form);
@@ -120,7 +131,9 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       description: task.description,
       additionalFactors: task.additionalFactors,
       quantity: task.quantity > 0 ? task.quantity : undefined,
-      creativeDeadline: task.creativeDeadline ? dayjs(task.creativeDeadline) : null,
+      deadline: fromTaskDeadline(getTaskDeadline(task)),
+      creativeDeadline: task.creativeDeadline ? fromTaskDeadline(task.creativeDeadline) : null,
+      urgency: normalizeTaskUrgencySetting(task.urgency),
       designThinking: task.designThinking,
       technical: task.technical,
       contentProcessing: task.contentProcessing,
@@ -170,12 +183,17 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
           description: values.description,
           additionalFactors: values.additionalFactors,
           quantity: values.quantity,
-          creativeDeadline: values.creativeDeadline
-            ? values.creativeDeadline.endOf('day').toISOString()
-            : values.creativeDeadline === null
-              ? ''
-              : undefined,
-          // Level only when Admin/CH and staff chưa confirm/finished.
+          ...(canEditSchedule
+            ? {
+                deadline: values.deadline?.isValid() ? toTaskDeadline(values.deadline) : undefined,
+                creativeDeadline: values.creativeDeadline?.isValid()
+                  ? toTaskDeadline(values.creativeDeadline)
+                  : values.creativeDeadline === null
+                    ? ''
+                    : undefined,
+                urgency: values.urgency,
+              }
+            : {}),
           ...(canEditLevel && !levelLocked
             ? {
                 designThinking: values.designThinking,
@@ -219,11 +237,16 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
             <p className={styles.contextTitle}>
               {task.taskCode}: {task.taskName}
             </p>
-            <p className={styles.contextMeta}>
-              {task.projectName}
-              {task.projectManager.name ? ` · PM: ${task.projectManager.name}` : ''}
-              {stage ? ` · ${PIPELINE_STAGE_LABELS[stage]}` : ''}
-              {` · Status: ${task.staffConfirmation}`}
+            <p className={`${styles.contextMeta} ${styles.metaInline}`}>
+              <span>
+                {task.projectName}
+                {task.projectManager.name ? ` · PM: ${task.projectManager.name}` : ''}
+                {stage ? ` · ${PIPELINE_STAGE_LABELS[stage]}` : ''}
+                {` · Status: ${task.staffConfirmation}`}
+              </span>
+              {!canEditSchedule && urgencyDisplay ? (
+                <ProjectUrgencyBadge urgency={urgencyDisplay} />
+              ) : null}
             </p>
           </div>
 
@@ -263,9 +286,61 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
             >
               <InputNumber min={0.01} step={1} style={{ width: '100%' }} />
             </Form.Item>
-            <Form.Item name="creativeDeadline" label="Creative deadline">
-              <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} allowClear />
-            </Form.Item>
+
+            <div className={styles.deadlineRow}>
+              <Form.Item
+                name="deadline"
+                label="Deadline PM"
+                className={styles.deadlineField}
+                rules={
+                  canEditSchedule ? [{ required: true, message: 'Chọn deadline PM' }] : undefined
+                }
+                extra={!canEditSchedule ? 'Chỉ Admin / PM được sửa.' : undefined}
+              >
+                <DatePicker
+                  showTime={{
+                    format: 'HH:mm',
+                    defaultValue: dayjs().second(0).millisecond(0),
+                  }}
+                  format={DATETIME_SHORT_FORMAT}
+                  style={{ width: '100%' }}
+                  allowClear={false}
+                  disabled={!canEdit || !canEditSchedule}
+                  showNow={false}
+                />
+              </Form.Item>
+              <Form.Item
+                name="creativeDeadline"
+                label="Creative deadline"
+                className={styles.deadlineField}
+                extra={!canEditSchedule ? 'Chỉ Admin / PM được sửa.' : undefined}
+              >
+                <DatePicker
+                  showTime={{
+                    format: 'HH:mm',
+                    defaultValue: dayjs().second(0).millisecond(0),
+                  }}
+                  format={DATETIME_SHORT_FORMAT}
+                  style={{ width: '100%' }}
+                  allowClear={canEditSchedule}
+                  disabled={!canEdit || !canEditSchedule}
+                  placeholder="Nội bộ"
+                  showNow={false}
+                />
+              </Form.Item>
+            </div>
+
+            {canEditSchedule ? (
+              <Form.Item
+                name="urgency"
+                label="Urgency"
+                className={styles.urgencyField}
+                rules={[{ required: true, message: 'Chọn mức urgency' }]}
+              >
+                <TaskUrgencySelect />
+              </Form.Item>
+            ) : null}
+
             <Form.Item name="staffNote" label="Ghi chú">
               <Input.TextArea rows={2} />
             </Form.Item>

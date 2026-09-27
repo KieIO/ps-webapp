@@ -1,8 +1,10 @@
 import { Alert, Button, Segmented, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import { useEffect, useMemo, useState } from 'react';
 import { ROLES } from '@/config/permissions';
+import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
@@ -25,10 +27,21 @@ import {
   resolveEffectivePipelineStage,
   type CreativeQueueView,
 } from '../../utils/creativePipeline';
+import { getTaskDeadline } from '../../utils/taskDetail';
+import { resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { CreativeEditDrawer } from './CreativeEditDrawer';
 import { CreativeHeadAssignDrawer } from './CreativeHeadAssignDrawer';
 import { CreativeManagerAssignDrawer } from './CreativeManagerAssignDrawer';
 import styles from './creativePipeline.module.scss';
+
+dayjs.extend(utc);
+
+const QUEUE_DATETIME = 'DD/MM HH:mm';
+
+const formatQueueDeadline = (iso: string | null | undefined): string => {
+  if (!iso) return '—';
+  return dayjs.utc(iso).format(QUEUE_DATETIME);
+};
 
 export function CreativePipelineView() {
   const user = useAppSelector((state) => state.auth.user);
@@ -74,93 +87,157 @@ export function CreativePipelineView() {
       ? 'Nhận task từ Creative Head, rồi giao nguyên hoặc chia nhỏ cho Staff.'
       : 'Nhận task từ PM, bổ sung brief nếu cần, rồi giao cho Creative Manager.';
 
-  const columns: ColumnsType<MyTask> = [
-    {
-      title: 'Task',
-      key: 'identity',
-      render: (_, record) => {
-        const meta = [record.projectName, record.projectManager?.name].filter(Boolean).join(' · ');
-        return (
+  const columns: ColumnsType<MyTask> = useMemo(
+    () => [
+      {
+        title: 'Task',
+        key: 'identity',
+        width: 200,
+        render: (_, record) => (
           <div className={styles.identityCell}>
             <span className={styles.identityCode}>{record.taskCode}</span>
             <Tooltip title={record.taskName}>
               <span className={styles.identityName}>{record.taskName}</span>
             </Tooltip>
-            {meta ? (
-              <Tooltip title={meta}>
-                <span className={styles.identityMeta}>{meta}</span>
+            {record.projectName ? (
+              <Tooltip title={record.projectName}>
+                <span className={styles.identityMeta}>{record.projectName}</span>
               </Tooltip>
             ) : null}
           </div>
-        );
-      },
-    },
-    {
-      title: 'Brief',
-      width: 88,
-      render: (_, record) =>
-        needsChBrief(record) ? (
-          <span className={`${styles.pill} ${styles.pillNeed}`}>Thiếu</span>
-        ) : (
-          <span className={`${styles.pill} ${styles.pillReady}`}>Đủ</span>
         ),
-    },
-    {
-      title: 'Deadline',
-      dataIndex: 'date',
-      width: 72,
-      render: (value: string) => dayjs(value).format('DD/MM'),
-    },
-    {
-      title: 'Người nhận',
-      key: 'assignee',
-      width: 140,
-      ellipsis: true,
-      render: (_, record) => {
-        const label = pipelineAssigneeLabel(record, tasks);
-        return (
-          <Tooltip title={label}>
-            <span className={styles.assigneeCell}>{label}</span>
-          </Tooltip>
-        );
       },
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'pipelineStage',
-      width: 128,
-      render: (_, record) => {
-        const stage = resolveEffectivePipelineStage(record);
-        if (!stage) return '—';
-        const color =
-          stage === 'awaiting_ch'
-            ? 'orange'
-            : stage === 'awaiting_cm'
-              ? 'gold'
-              : stage === 'split'
-                ? 'blue'
-                : 'green';
-        return <Tag color={color}>{PIPELINE_STAGE_LABELS[stage]}</Tag>;
+      {
+        title: 'PM',
+        key: 'pm',
+        width: 100,
+        ellipsis: true,
+        render: (_, record) => {
+          const name = record.projectManager?.name?.trim() || '—';
+          return (
+            <Tooltip title={name === '—' ? undefined : name}>
+              <span className={styles.personCell}>{name}</span>
+            </Tooltip>
+          );
+        },
       },
-    },
-    {
-      title: '',
-      key: 'action',
-      width: 120,
-      render: (_, record) => (
-        <Button
-          type="link"
-          className={styles.actionLink}
-          onClick={(event) => {
-            event.stopPropagation();
-            openTask(record);
-          }}
-        >
-          {queueActionLabel(record, view, role, user?.id)}
-        </Button>
-      ),
-    },
-  ];
+      {
+        title: 'SL',
+        key: 'quantity',
+        width: 56,
+        align: 'right',
+        render: (_, record) => (
+          <span className={styles.qtyCell}>{record.quantity > 0 ? record.quantity : '—'}</span>
+        ),
+      },
+      {
+        title: 'Deadline',
+        key: 'deadlines',
+        width: 118,
+        render: (_, record) => {
+          const pmLabel = formatQueueDeadline(getTaskDeadline(record));
+          const creativeLabel = record.creativeDeadline
+            ? formatQueueDeadline(record.creativeDeadline)
+            : null;
+          return (
+            <div className={styles.deadlineCell}>
+              <Tooltip title={`Deadline PM: ${pmLabel}`}>
+                <span className={styles.deadlinePrimary}>{pmLabel}</span>
+              </Tooltip>
+              {creativeLabel ? (
+                <Tooltip title={`Creative deadline: ${creativeLabel}`}>
+                  <span className={styles.deadlineCreative}>CR {creativeLabel}</span>
+                </Tooltip>
+              ) : (
+                <span className={styles.deadlineCreativeMuted}>CR —</span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        title: 'Urgency',
+        key: 'urgency',
+        width: 88,
+        render: (_, record) => <ProjectUrgencyBadge urgency={resolveTaskUrgencyDisplay(record)} />,
+      },
+      {
+        title: 'CM',
+        key: 'cm',
+        width: 110,
+        ellipsis: true,
+        render: (_, record) => {
+          const name = record.creativeManager?.name?.trim() || '—';
+          return (
+            <Tooltip title={name === '—' ? undefined : name}>
+              <span className={styles.personCell}>{name}</span>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        title: 'Staff',
+        key: 'staff',
+        width: 110,
+        ellipsis: true,
+        render: (_, record) => {
+          const label = pipelineAssigneeLabel(record, tasks);
+          return (
+            <Tooltip title={label === '—' ? undefined : label}>
+              <span className={styles.personCell}>{label}</span>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        title: 'Brief',
+        width: 72,
+        render: (_, record) =>
+          needsChBrief(record) ? (
+            <span className={`${styles.pill} ${styles.pillNeed}`}>Thiếu</span>
+          ) : (
+            <span className={`${styles.pill} ${styles.pillReady}`}>Đủ</span>
+          ),
+      },
+      {
+        title: 'Trạng thái',
+        key: 'pipelineStage',
+        width: 120,
+        render: (_, record) => {
+          const stage = resolveEffectivePipelineStage(record);
+          if (!stage) return '—';
+          const color =
+            stage === 'awaiting_ch'
+              ? 'orange'
+              : stage === 'awaiting_cm'
+                ? 'gold'
+                : stage === 'split'
+                  ? 'blue'
+                  : 'green';
+          return <Tag color={color}>{PIPELINE_STAGE_LABELS[stage]}</Tag>;
+        },
+      },
+      {
+        title: '',
+        key: 'action',
+        width: 108,
+        fixed: 'right',
+        render: (_, record) => (
+          <Button
+            type="link"
+            className={styles.actionLink}
+            onClick={(event) => {
+              event.stopPropagation();
+              openTask(record);
+            }}
+          >
+            {queueActionLabel(record, view, role, user?.id)}
+          </Button>
+        ),
+      },
+    ],
+    [tasks, view, role, user?.id],
+  );
 
   const headReadOnly = !selected || !chEnabled || !isAwaitingCh(selected) || view !== 'ch';
   const managerReadOnly = !selected || !cmEnabled || !isAwaitingCm(selected) || view !== 'cm';
@@ -213,6 +290,7 @@ export function CreativePipelineView() {
             size="middle"
             pagination={false}
             tableLayout="fixed"
+            scroll={{ x: 1080 }}
             columns={columns}
             dataSource={queue}
             rowClassName={(record) => {

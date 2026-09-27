@@ -74,6 +74,55 @@
   white-space: nowrap;
 }
 
+.personCell {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgba(0, 0, 0, 0.78);
+}
+
+.qtyCell {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(0, 0, 0, 0.78);
+}
+
+.deadlineCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.deadlinePrimary {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(0, 0, 0, 0.82);
+  white-space: nowrap;
+}
+
+.deadlineCreative {
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: #b45309;
+  white-space: nowrap;
+}
+
+.deadlineCreativeMuted {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
 .root {
   display: flex;
   flex-direction: column;

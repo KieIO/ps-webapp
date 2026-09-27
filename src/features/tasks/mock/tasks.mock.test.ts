@@ -13,6 +13,7 @@ import {
   mockCreateMyTask,
   mockCreateRevisionTask,
   mockListRevisionTasks,
+  mockUpdateCreativePipeline,
 } from './tasks.mock';
 
 const baseTask = INITIAL_MOCK_TASKS[0];
@@ -264,6 +265,23 @@ describe('creative CH/CM pipeline', () => {
       'dev-creative_head',
     );
     expect(updated.creativeDeadline).toBe(updated.deadline ?? updated.date);
+  });
+
+  it('syncs calendar date when Admin changes PM deadline on creative edit', async () => {
+    await mockAssignCreativeHead(
+      'task-ch-031',
+      { cmUserId: 'dev-creative_manager' },
+      'dev-creative_head',
+    );
+    const deadline = '2026-09-30T17:08:00Z';
+    const updated = await mockUpdateCreativePipeline(
+      'task-ch-031',
+      { deadline },
+      'dev-admin',
+      'admin',
+    );
+    expect(updated.deadline).toBe(deadline);
+    expect(updated.date).toBe('2026-09-30T00:00:00.000Z');
   });
 
   it('requires CH to fill brief on a creative-origin task', async () => {

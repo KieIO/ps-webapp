@@ -48,6 +48,8 @@ import {
   resolveCreatePipelineStage,
   resolveEffectivePipelineStage,
 } from '../utils/creativePipeline';
+import { canEditCreativeScheduleMeta } from '../utils/creativeVisibility';
+import { normalizeTaskUrgencySetting } from '../utils/taskUrgency';
 import {
   ACTIVE_REVISION_CONFIRMATIONS,
   getDirectRevisionChildren,
@@ -1144,15 +1146,34 @@ export const mockUpdateCreativePipeline = async (
   const technical = wantsLevel ? payload.technical! : current.technical;
   const contentProcessing = wantsLevel ? payload.contentProcessing! : current.contentProcessing;
 
+  const wantsSchedule =
+    payload.deadline !== undefined ||
+    payload.creativeDeadline !== undefined ||
+    payload.urgency !== undefined;
+  if (wantsSchedule && !canEditCreativeScheduleMeta(editorRole)) {
+    throw new Error('Chỉ Admin / PM được sửa deadline, creative deadline và urgency');
+  }
+
+  // Mirror BE normalizeTaskDates: PM deadline change also moves calendar TaskDate.
+  const nextDeadline =
+    payload.deadline === undefined || payload.deadline === null || payload.deadline === ''
+      ? undefined
+      : payload.deadline;
+  const nextDate = nextDeadline ? normalizeTaskDateStart(nextDeadline) : current.date;
+
   const updated: MyTask = {
     ...current,
     description: payload.description ?? current.description,
     additionalFactors: payload.additionalFactors ?? current.additionalFactors,
     quantity: payload.quantity ?? current.quantity,
+    date: nextDate,
+    deadline: nextDeadline ?? current.deadline,
     creativeDeadline:
       payload.creativeDeadline === undefined
         ? current.creativeDeadline
         : payload.creativeDeadline || null,
+    urgency:
+      payload.urgency != null ? normalizeTaskUrgencySetting(payload.urgency) : current.urgency,
     staffNote: payload.staffNote ?? current.staffNote,
     designThinking,
     technical,

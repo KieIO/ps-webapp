@@ -1,7 +1,7 @@
 import { Alert, DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
-import { DATE_FORMAT, DATETIME_SHORT_FORMAT } from '@/config/constants';
+import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import type { Role } from '@/config/permissions';
 import { ROLES } from '@/config/permissions';
 import { getDepartmentLabel } from '@/features/departments/hooks/useDepartmentOptions';
@@ -25,7 +25,7 @@ import {
   type EditTaskField,
 } from '../../utils/editTaskFields';
 import { mergeStaffSelectOptions, resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
-import { fromTaskDeadline, toTaskDateOnly, toTaskDeadline } from '../../utils/taskDates';
+import { fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
 import { getTaskDeadline } from '../../utils/taskDetail';
 import {
   canCancelTask,
@@ -111,7 +111,9 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
         taskName: task.taskName,
         quantity: task.quantity,
         date: fromTaskDeadline(getTaskDeadline(task)),
-        creativeDeadline: task.creativeDeadline ? dayjs(task.creativeDeadline) : undefined,
+        creativeDeadline: task.creativeDeadline
+          ? fromTaskDeadline(task.creativeDeadline)
+          : undefined,
         description: task.description,
         designThinking: task.designThinking,
         technical: task.technical,
@@ -177,7 +179,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
       urgency: hasField(editableFields, 'urgency') ? values.urgency : task.urgency,
       creativeDeadline: canEditCreativeDeadline
         ? values.creativeDeadline
-          ? toTaskDateOnly(values.creativeDeadline)
+          ? toTaskDeadline(values.creativeDeadline)
           : undefined
         : (task.creativeDeadline ?? undefined),
     };
@@ -365,7 +367,15 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
                     name="creativeDeadline"
                     label={MY_TASK_COLUMN_HEADERS.creativeDeadline}
                   >
-                    <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+                    <DatePicker
+                      showTime={{
+                        format: 'HH:mm',
+                        defaultValue: dayjs().second(0).millisecond(0),
+                      }}
+                      format={DATETIME_SHORT_FORMAT}
+                      style={{ width: '100%' }}
+                      showNow={false}
+                    />
                   </Form.Item>
                 ) : null}
               </>
