@@ -348,6 +348,40 @@ describe('creative CH/CM pipeline', () => {
     );
   });
 
+  it('staffName filter matches displayed child staff on split parent, not parked CM', async () => {
+    const parent = await mockAssignCreativeManager(
+      'task-cm-025',
+      {
+        mode: 'split',
+        subtasks: [
+          {
+            name: 'Icon dashboard',
+            staffUserId: 'usr-creative-ha',
+            quantity: 12,
+            description: 'Brief icon dashboard',
+          },
+          {
+            name: 'Icon forms',
+            staffUserId: 'usr-creative-tran',
+            quantity: 12,
+            description: 'Brief icon forms',
+          },
+        ],
+      },
+      'dev-creative_manager',
+    );
+    const cmName = 'Truong Nhut Long';
+    const childName = parent.staff[0]?.name;
+    expect(childName).toBeTruthy();
+    expect(parent.staff.some((member) => member.name === cmName)).toBe(false);
+
+    const byCm = filterMockTasks([parent], { staffName: cmName });
+    expect(byCm.map((item) => item.id)).toEqual([]);
+
+    const byChild = filterMockTasks([parent], { staffName: childName });
+    expect(byChild.map((item) => item.id)).toEqual([parent.id]);
+  });
+
   it('blocks overloaded creative staff', async () => {
     await expect(
       mockAssignCreativeManager(
