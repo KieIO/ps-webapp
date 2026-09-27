@@ -9,26 +9,29 @@ import {
 } from './staffAvailability';
 
 describe('staffAvailability', () => {
-  it('treats missing availability as assignable (legacy rows)', () => {
+  it('treats free / normal / overloaded as assignable; only leave blocks', () => {
     expect(isStaffAssignable(undefined)).toBe(true);
     expect(isStaffAssignable('free')).toBe(true);
     expect(isStaffAssignable('normal')).toBe(true);
-    expect(isStaffAssignable('overloaded')).toBe(false);
+    expect(isStaffAssignable('overloaded')).toBe(true);
     expect(isStaffAssignable('on_leave')).toBe(false);
   });
 
-  it('maps capacity ≥ 80% to overloaded (assign lock)', () => {
+  it('maps capacity ≥ 80% to overloaded label but still allows assign', () => {
     expect(ASSIGN_OVERLOAD_CAPACITY_PERCENT).toBe(80);
     expect(availabilityFromCapacity(79)).toBe('normal');
     expect(availabilityFromCapacity(80)).toBe('overloaded');
     expect(availabilityFromCapacity(120)).toBe('overloaded');
-    expect(isCapacityAssignable(80)).toBe(false);
+    expect(isCapacityAssignable(80)).toBe(true);
+    expect(isCapacityAssignable(100)).toBe(true);
+    expect(isCapacityAssignable(150)).toBe(true);
     expect(isCapacityAssignable(79)).toBe(true);
   });
 
-  it('maps off / on_leave work status to on_leave', () => {
+  it('maps off / on_leave work status to on_leave and blocks assign', () => {
     expect(availabilityFromCapacity(10, 'off')).toBe('on_leave');
     expect(isCapacityAssignable(10, 'off')).toBe(false);
+    expect(isCapacityAssignable(120, 'on_leave')).toBe(false);
   });
 
   it('maps capacity bands for free / normal', () => {

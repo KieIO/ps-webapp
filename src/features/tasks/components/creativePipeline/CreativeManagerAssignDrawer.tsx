@@ -17,7 +17,6 @@ import {
 } from '../../utils/creativePipeline';
 import { getTaskDeadline } from '../../utils/taskDetail';
 import { formatTaskDateTime } from '../../utils/taskDates';
-import { ASSIGN_OVERLOAD_CAPACITY_PERCENT } from '../../utils/staffAvailability';
 import { resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
 import { CreativeAssignModeSection } from './CreativeAssignModeSection';
@@ -340,7 +339,7 @@ export function CreativeManagerAssignDrawer({
               </div>
             ))}
             <p className={styles.note}>
-              Không giao khi capacity ≥ {ASSIGN_OVERLOAD_CAPACITY_PERCENT}%.
+              Có thể giao khi Overloaded; capacity hiển thị theo thực tế (có thể &gt; 100%).
               {capacityLoading ? ' Đang tải…' : null}
               {capacityError ? ' Dùng ước lượng tạm.' : null}
             </p>

@@ -8,16 +8,20 @@ export const STAFF_AVAILABILITY_LABELS: Record<StaffAvailability, string> = {
 };
 
 /**
- * Assign picker: capacity ≥ this % is treated as Overloaded and cannot be selected.
- * Aligns with the Capacity chart 80% utilization target.
+ * Capacity ≥ this % is labeled Overloaded (informational).
+ * Assign is still allowed — display may exceed 100%.
  */
 export const ASSIGN_OVERLOAD_CAPACITY_PERCENT = 80;
 
 /** Soft band below overload — still selectable. */
 export const ASSIGN_NORMAL_CAPACITY_PERCENT = 50;
 
+/** Only leave blocks assign; Overloaded remains selectable. */
 export const isStaffAssignable = (availability: StaffAvailability | undefined): boolean =>
-  availability == null || availability === 'free' || availability === 'normal';
+  availability == null ||
+  availability === 'free' ||
+  availability === 'normal' ||
+  availability === 'overloaded';
 
 /** Map real capacity % (and optional work status) into assign-picker availability. */
 export const availabilityFromCapacity = (
@@ -31,10 +35,15 @@ export const availabilityFromCapacity = (
   return 'normal';
 };
 
+/** Capacity % never blocks assign; only off / on_leave does. */
 export const isCapacityAssignable = (
   capacityPercent: number | null | undefined,
   workStatus?: string | null,
-): boolean => isStaffAssignable(availabilityFromCapacity(capacityPercent, workStatus));
+): boolean => {
+  void capacityPercent;
+  if (workStatus === 'off' || workStatus === 'on_leave') return false;
+  return true;
+};
 
 export const normalizeTaskDepartment = (
   value: string | undefined,

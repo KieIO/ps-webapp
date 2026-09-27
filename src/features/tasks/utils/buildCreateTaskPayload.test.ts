@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import dayjs from 'dayjs';
 import type { TaskScore } from '@/features/task-scores/schemas/taskScore.schema';
-import { buildCreateTaskPayload, CreateTaskPayloadError } from './buildCreateTaskPayload';
+import { buildCreateTaskPayload } from './buildCreateTaskPayload';
 import type { CreateTaskFormSnapshot } from './buildCreateTaskPayload';
 import type { TaskAssignee } from '../schemas/task.schema';
 
@@ -98,7 +98,7 @@ describe('buildCreateTaskPayload', () => {
     expect(payload.department).toBe('creative');
   });
 
-  it('rejects overloaded staff', () => {
+  it('allows overloaded staff and rejects on-leave staff', () => {
     expect(() =>
       buildCreateTaskPayload({
         workflowKind: 'project',
@@ -106,7 +106,26 @@ describe('buildCreateTaskPayload', () => {
         scores,
         staffOptions: staff,
       }),
-    ).toThrow(CreateTaskPayloadError);
+    ).not.toThrow();
+
+    const leaveStaff: TaskAssignee[] = [
+      ...staff,
+      {
+        code: 'PO.099',
+        name: 'Leave User',
+        userId: 'usr-leave',
+        department: 'project',
+        availability: 'on_leave',
+      },
+    ];
+    expect(() =>
+      buildCreateTaskPayload({
+        workflowKind: 'project',
+        values: { ...baseValues(), staffUserId: 'usr-leave' },
+        scores,
+        staffOptions: leaveStaff,
+      }),
+    ).toThrow(/nghỉ phép/);
   });
 
   it('passes selected urgency into the create payload', () => {

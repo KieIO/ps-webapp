@@ -24,7 +24,6 @@ import {
   resolveEffectivePipelineStage,
   resolveWholeAssignStaff,
 } from '../../utils/creativePipeline';
-import { ASSIGN_OVERLOAD_CAPACITY_PERCENT } from '../../utils/staffAvailability';
 import { ClassificationScale } from '../CreateTaskDrawer/ClassificationScale';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
 import { CreativeAssignModeSection } from './CreativeAssignModeSection';
@@ -284,8 +283,8 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                   />
                 </Form.Item>
                 <p className={styles.note}>
-                  Đổi Staff sẽ reset confirm và gửi noti task mới. Không giao khi capacity ≥{' '}
-                  {ASSIGN_OVERLOAD_CAPACITY_PERCENT}%.
+                  Đổi Staff sẽ reset confirm và gửi noti task mới. Có thể giao khi Overloaded;
+                  capacity hiển thị theo thực tế (có thể &gt; 100%).
                   {capacityLoading ? ' Đang tải capacity…' : null}
                 </p>
               </>

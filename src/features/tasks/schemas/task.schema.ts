@@ -80,7 +80,7 @@ export const TaskAssigneeSchema = TaskPersonSchema.extend({
   userId: z.string().nullish(),
   /** Present on staff-options responses — used to filter assignees by task department. */
   department: z.string().nullish(),
-  /** Assign picker: overloaded / on leave cannot be selected. */
+  /** Assign picker: on leave cannot be selected; Overloaded is allowed (may show >100%). */
   availability: z.enum(STAFF_AVAILABILITIES).optional(),
   /** Optional role hint for CM vs Staff pickers. */
   role: z.string().optional(),

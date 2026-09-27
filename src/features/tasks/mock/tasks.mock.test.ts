@@ -190,7 +190,7 @@ describe('mockCreateMyTask assign pipeline', () => {
     );
   });
 
-  it('rejects overloaded staff', async () => {
+  it('allows overloaded staff and rejects on-leave staff', async () => {
     await expect(
       mockCreateMyTask(
         createPayload({
@@ -207,7 +207,25 @@ describe('mockCreateMyTask assign pipeline', () => {
         'dev-pm',
         'Dev PM',
       ),
-    ).rejects.toThrow(/overloaded or on-leave/);
+    ).resolves.toBeTruthy();
+
+    await expect(
+      mockCreateMyTask(
+        createPayload({
+          staff: [
+            {
+              code: 'PO.064',
+              name: 'Le Huong',
+              userId: 'usr-huong',
+              department: 'project',
+              availability: 'on_leave',
+            },
+          ],
+        }),
+        'dev-pm',
+        'Dev PM',
+      ),
+    ).rejects.toThrow(/on-leave/);
   });
 });
 
@@ -382,14 +400,14 @@ describe('creative CH/CM pipeline', () => {
     expect(byChild.map((item) => item.id)).toEqual([parent.id]);
   });
 
-  it('blocks overloaded creative staff', async () => {
+  it('allows overloaded creative staff', async () => {
     await expect(
       mockAssignCreativeManager(
         'task-cm-025',
         { mode: 'whole', staffUserId: 'usr-creative-khoa' },
         'dev-creative_manager',
       ),
-    ).rejects.toThrow(/Overloaded/);
+    ).resolves.toMatchObject({ pipelineStage: 'assigned_staff' });
   });
 });
 

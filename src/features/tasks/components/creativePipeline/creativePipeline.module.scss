@@ -11,6 +11,7 @@
 .assignDrawer {
   :global(.ant-drawer-body) {
     overflow-y: auto;
+    padding-block: 16px 20px;
   }
 
   :global(.ant-drawer-footer) {
@@ -18,6 +19,8 @@
     bottom: 0;
     z-index: 2;
     flex-shrink: 0;
+    padding-block: 12px 14px;
+    border-top: 1px solid var(--color-border, #f0f0f0);
     background: #fff;
   }
 }
@@ -75,7 +78,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  gap: 10px;
+  gap: 14px;
 }
 
 .banner {
@@ -103,38 +106,74 @@
 }
 
 .contextCard {
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 12px 14px;
+  border-radius: 10px;
   background: var(--color-bg-subtle, #f5f6f8);
   font-size: 13px;
   line-height: 1.45;
 }
 
 .contextTitle {
-  margin: 0 0 2px;
+  margin: 0 0 4px;
   font-size: 14px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+  color: rgba(0, 0, 0, 0.88);
 }
 
 .contextMeta {
   margin: 0;
   color: var(--color-text-muted);
   font-size: 12px;
+  line-height: 1.4;
 }
 
 .metaInline {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.briefCard {
+  padding: 12px 14px;
+  border: 1px solid var(--color-border, #ebebeb);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .briefBlock {
-  margin: 0 0 4px;
+  margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
+  color: rgba(0, 0, 0, 0.82);
+}
+
+.briefMetrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border, #f0f0f0);
+}
+
+.metricChip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--color-bg-subtle, #f5f6f8);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
 }
 
 .sectionLabel {
@@ -165,8 +204,9 @@
 .deadlineRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 10px;
   align-items: stretch;
+  margin-bottom: 4px;
 }
 
 .deadlineValue {
@@ -176,12 +216,12 @@
   width: 100%;
   height: 24px;
   padding: 0 11px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid transparent;
   border-radius: 6px;
-  background: #fafafa;
-  font-size: 14px;
+  background: var(--color-bg-subtle, #f5f6f8);
+  font-size: 13px;
   line-height: 1.5714;
-  color: rgba(0, 0, 0, 0.88);
+  color: rgba(0, 0, 0, 0.65);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -206,16 +246,19 @@
 
 .compactForm {
   :global(.ant-form-item) {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
 
   :global(.ant-form-item-extra) {
+    min-height: 0;
+    padding-top: 4px;
     font-size: 11px;
-    line-height: 1.35;
+    line-height: 1.4;
   }
 
   :global(.ant-form-item-label > label) {
     font-size: 12px;
+    color: rgba(0, 0, 0, 0.65);
   }
 }
 
@@ -271,14 +314,30 @@
 }
 
 .cmField {
-  margin-bottom: 0 !important;
+  margin-bottom: 4px !important;
 }
 
 .capacityHint {
-  margin: 3px 0 8px;
-  color: rgba(0, 0, 0, 0.58);
+  display: block;
+  margin: 0;
+  color: var(--color-text-muted, rgba(0, 0, 0, 0.45));
   font-size: 11px;
-  line-height: 1.4;
+  line-height: 1.45;
+}
+
+.capacityHintSep {
+  margin-inline: 0.35em;
+  opacity: 0.55;
+}
+
+.noteField {
+  margin-bottom: 0 !important;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 @media (max-width: 520px) {
@@ -327,12 +386,6 @@
 
 .dotLeave {
   background: #1f1f1f;
-}
-
-.footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
 }
 
 .rowNeedsBrief {

@@ -22,7 +22,6 @@ import {
 } from '../../utils/creativePipeline';
 import { getTaskDeadline } from '../../utils/taskDetail';
 import { normalizeTaskUrgencySetting, resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
-import { ASSIGN_OVERLOAD_CAPACITY_PERCENT } from '../../utils/staffAvailability';
 import { ClassificationScale } from '../CreateTaskDrawer/ClassificationScale';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
@@ -269,12 +268,14 @@ export function CreativeHeadAssignDrawer({
             ) : null}
 
             {lockedBrief ? (
-              <div className={styles.contextCard}>
+              <div className={styles.briefCard}>
                 <div className={styles.briefBlock}>{task.description || '—'}</div>
-                <p className={styles.contextMeta}>
-                  Level {task.level} · TD {task.designThinking} · KT {task.technical} · NL{' '}
-                  {task.contentProcessing}
-                </p>
+                <div className={styles.briefMetrics}>
+                  <span className={styles.metricChip}>Level {task.level}</span>
+                  <span className={styles.metricChip}>TD {task.designThinking}</span>
+                  <span className={styles.metricChip}>KT {task.technical}</span>
+                  <span className={styles.metricChip}>NL {task.contentProcessing}</span>
+                </div>
               </div>
             ) : (
               <>
@@ -329,6 +330,15 @@ export function CreativeHeadAssignDrawer({
               label="Creative Manager"
               rules={[{ required: canSubmit, message: 'Chọn Creative Manager' }]}
               className={styles.cmField}
+              extra={
+                <span className={styles.capacityHint}>
+                  {periodNote}
+                  <span className={styles.capacityHintSep}>·</span>
+                  Có thể giao khi Overloaded; capacity hiển thị theo thực tế (có thể &gt; 100%).
+                  {capacityLoading ? ' Đang tải…' : null}
+                  {capacityError ? ' Đang dùng số liệu ước tính.' : null}
+                </span>
+              }
             >
               <Select
                 showSearch
@@ -354,16 +364,11 @@ export function CreativeHeadAssignDrawer({
                 }}
               />
             </Form.Item>
-            <p className={styles.capacityHint}>
-              {periodNote} · Không thể giao khi capacity ≥ {ASSIGN_OVERLOAD_CAPACITY_PERCENT}%.
-              {capacityLoading ? ' Đang tải…' : null}
-              {capacityError ? ' Đang dùng số liệu ước tính.' : null}
-            </p>
             {cmOptions.length === 0 ? (
               <Alert type="warning" showIcon message="Chưa có Creative Manager khả dụng." />
             ) : null}
 
-            <Form.Item name="cmNote" label="Ghi chú CM">
+            <Form.Item name="cmNote" label="Ghi chú CM" className={styles.noteField}>
               <Input disabled={readOnly} placeholder="Tùy chọn" />
             </Form.Item>
           </Form>

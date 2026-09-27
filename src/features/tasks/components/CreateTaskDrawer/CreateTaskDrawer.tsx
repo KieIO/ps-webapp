@@ -729,7 +729,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                         name="staffUserId"
                         label="Giao cho"
                         rules={[{ required: true, message: 'Chọn nhân viên' }]}
-                        extra="Không chọn được khi Overloaded hoặc nghỉ phép."
+                        extra="Không chọn được khi nhân viên đang nghỉ phép. Overloaded vẫn giao được."
                       >
                         <Select
                           showSearch

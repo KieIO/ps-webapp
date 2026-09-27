@@ -14,12 +14,7 @@ import {
   availabilityFromSnapshot,
   type AssignCapacitySnapshot,
 } from './assignCapacity';
-import {
-  ASSIGN_OVERLOAD_CAPACITY_PERCENT,
-  availabilityFromCapacity,
-  isStaffAssignable,
-  staffMatchesDepartment,
-} from './staffAvailability';
+import { ASSIGN_OVERLOAD_CAPACITY_PERCENT, staffMatchesDepartment } from './staffAvailability';
 import { staffOptionKey } from './staff';
 
 export const PIPELINE_STAGE_LABELS: Record<CreativePipelineStage, string> = {
@@ -398,7 +393,8 @@ export const getAssigneeWorkload = (
   ).length;
   return {
     activeCount,
-    capacityPercent: Math.min(100, activeCount * ESTIMATED_CAPACITY_PER_ACTIVE_TASK),
+    // Do not cap at 100 — overload should surface as >100% when estimate exceeds daily band.
+    capacityPercent: activeCount * ESTIMATED_CAPACITY_PER_ACTIVE_TASK,
   };
 };
 
@@ -436,11 +432,10 @@ export const canSelectAssignee = (
   const fromCapacity = canSelectAssigneeWithCapacity(staff, capacityByUserId);
   if (fromCapacity != null) return fromCapacity;
 
-  if (!isStaffAssignable(staff.availability)) return false;
-  if (!tasks) return true;
-  const estimated = getAssigneeWorkload(tasks, staff.userId ?? undefined).capacityPercent;
-  if (estimated <= 0) return true;
-  return isStaffAssignable(availabilityFromCapacity(estimated));
+  // Capacity % / Overloaded no longer blocks; only leave does.
+  if (staff.availability === 'on_leave') return false;
+  void tasks;
+  return true;
 };
 
 export const queueActionLabel = (

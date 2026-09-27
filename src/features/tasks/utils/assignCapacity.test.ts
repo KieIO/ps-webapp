@@ -67,7 +67,7 @@ describe('assignCapacity', () => {
     );
   });
 
-  it('locks overloaded and on-leave from capacity snapshot', () => {
+  it('allows overloaded capacity but locks on-leave from capacity snapshot', () => {
     const staff = { code: 'S1', name: 'Staff', userId: 'u1' } as TaskAssignee;
     const map = buildCapacityByUserId([
       {
@@ -80,12 +80,12 @@ describe('assignCapacity', () => {
         workStatus: 'working',
         dailyCapacityPoints: 100,
         specialistTaskPoints: 0,
-        achievedTaskPoints: 90,
-        capacityPercent: 90,
+        achievedTaskPoints: 120,
+        capacityPercent: 120,
       },
     ]);
-    expect(canSelectAssigneeWithCapacity(staff, map)).toBe(false);
-    expect(displayCapacityPercentFromSnapshot(staff, map)).toBe(90);
+    expect(canSelectAssigneeWithCapacity(staff, map)).toBe(true);
+    expect(displayCapacityPercentFromSnapshot(staff, map)).toBe(120);
 
     const leaveMap = buildCapacityByUserId([
       {
@@ -105,9 +105,9 @@ describe('assignCapacity', () => {
     expect(canSelectAssigneeWithCapacity(staff, leaveMap)).toBe(false);
   });
 
-  it('allows selection at 79%', () => {
+  it('allows selection at 79% and 100%', () => {
     const staff = { code: 'S1', name: 'Staff', userId: 'u1' } as TaskAssignee;
-    const map = buildCapacityByUserId([
+    const map79 = buildCapacityByUserId([
       {
         id: 'u1',
         name: 'Staff',
@@ -122,6 +122,23 @@ describe('assignCapacity', () => {
         capacityPercent: 79,
       },
     ]);
-    expect(canSelectAssigneeWithCapacity(staff, map)).toBe(true);
+    expect(canSelectAssigneeWithCapacity(staff, map79)).toBe(true);
+
+    const map100 = buildCapacityByUserId([
+      {
+        id: 'u1',
+        name: 'Staff',
+        department: 'creative_hcm',
+        jobLevel: 'junior',
+        positionCode: 'JR',
+        jobTitleName: 'Junior',
+        workStatus: 'working',
+        dailyCapacityPoints: 100,
+        specialistTaskPoints: 0,
+        achievedTaskPoints: 100,
+        capacityPercent: 100,
+      },
+    ]);
+    expect(canSelectAssigneeWithCapacity(staff, map100)).toBe(true);
   });
 });

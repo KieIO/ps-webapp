@@ -97,9 +97,7 @@ export const buildCreateTaskPayload = ({
       throw new CreateTaskPayloadError('Chọn nhân viên nhận task');
     }
     if (!isStaffAssignable(assignee.availability)) {
-      throw new CreateTaskPayloadError(
-        'Không thể giao cho nhân viên Overloaded hoặc đang nghỉ phép',
-      );
+      throw new CreateTaskPayloadError('Không thể giao cho nhân viên đang nghỉ phép');
     }
   }
 

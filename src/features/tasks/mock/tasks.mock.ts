@@ -536,7 +536,7 @@ export const mockCreateMyTask = async (
     throw new Error('Select an assignable staff member');
   }
   if (payload.staff.some((member) => !isStaffAssignable(member.availability))) {
-    throw new Error('Cannot assign a task to an overloaded or on-leave staff member');
+    throw new Error('Cannot assign a task to an on-leave staff member');
   }
 
   const now = new Date().toISOString();
@@ -870,7 +870,7 @@ export const mockAssignCreativeHead = async (
     throw new Error('Chọn Creative Manager hợp lệ');
   }
   if (!isStaffAssignable(cm.availability)) {
-    throw new Error('Không thể giao cho CM Overloaded hoặc đang nghỉ phép');
+    throw new Error('Không thể giao cho CM đang nghỉ phép');
   }
 
   let description = current.description;
@@ -968,7 +968,7 @@ export const mockAssignCreativeManager = async (
       throw new Error('Chọn Staff nhận task');
     }
     if (!isStaffAssignable(assignee.availability)) {
-      throw new Error('Không thể giao cho nhân viên Overloaded hoặc đang nghỉ phép');
+      throw new Error('Không thể giao cho nhân viên đang nghỉ phép');
     }
 
     const updated: MyTask = {
@@ -1003,7 +1003,7 @@ export const mockAssignCreativeManager = async (
       throw new Error('Mỗi task nhỏ cần một Staff hợp lệ');
     }
     if (!isStaffAssignable(assignee.availability)) {
-      throw new Error('Không thể giao cho nhân viên Overloaded hoặc đang nghỉ phép');
+      throw new Error('Không thể giao cho nhân viên đang nghỉ phép');
     }
 
     return enrichMockTaskWithProjectContext({
