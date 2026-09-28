@@ -1,5 +1,18 @@
-import { Alert, Button, Drawer, Form, Input, InputNumber, Modal, Segmented, Select } from 'antd';
+import {
+  Alert,
+  Button,
+  DatePicker,
+  Drawer,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Segmented,
+  Select,
+} from 'antd';
+import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
+import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useAssignCreativeManager } from '../../hooks/useAssignCreativeManager';
@@ -12,13 +25,13 @@ import {
   canCmRefuseCreativeAssignment,
   canSelectAssignee,
   displayCapacityPercent,
-  filterCreativeStaff,
+  filterCreativeAssignableExecutors,
   getAssigneeWorkload,
   isAwaitingCm,
   resolveAssigneeAvailability,
 } from '../../utils/creativePipeline';
+import { fromTaskDeadline, formatTaskDateTime, toTaskDeadline } from '../../utils/taskDates';
 import { getTaskDeadline } from '../../utils/taskDetail';
-import { formatTaskDateTime } from '../../utils/taskDates';
 import { resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
 import { CreativeAssignModeSection } from './CreativeAssignModeSection';
@@ -36,11 +49,13 @@ type SubtaskForm = {
   staffUserId?: string;
   quantity?: number;
   description?: string;
+  creativeDeadline?: dayjs.Dayjs | null;
 };
 
 type ManagerFormValues = {
   staffUserId?: string;
   quantity?: number;
+  creativeDeadline?: dayjs.Dayjs | null;
   subtasks?: SubtaskForm[];
 };
 
@@ -49,6 +64,7 @@ const emptySubtask = (): SubtaskForm => ({
   staffUserId: undefined,
   quantity: undefined,
   description: '',
+  creativeDeadline: undefined,
 });
 
 const resolveCreativeDeadlineLabel = (task: MyTask): string => {
@@ -78,12 +94,24 @@ export function CreativeManagerAssignDrawer({
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
   const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
   const allTasks = useMemo(() => taskList?.items ?? [], [taskList?.items]);
+  const watchedCreativeDeadline = Form.useWatch('creativeDeadline', form);
+  const watchedSubtasks = Form.useWatch('subtasks', form) as SubtaskForm[] | undefined;
+  const capacityDeadlineOverride = useMemo(() => {
+    if (mode === 'whole') {
+      return watchedCreativeDeadline?.isValid() ? toTaskDeadline(watchedCreativeDeadline) : null;
+    }
+    const isos = (watchedSubtasks ?? [])
+      .map((row) => (row.creativeDeadline?.isValid() ? toTaskDeadline(row.creativeDeadline) : null))
+      .filter((value): value is string => Boolean(value));
+    if (isos.length === 0) return null;
+    return [...isos].sort()[0];
+  }, [mode, watchedCreativeDeadline, watchedSubtasks]);
   const {
     capacityByUserId,
     periodNote,
     isLoading: capacityLoading,
     isError: capacityError,
-  } = useAssignPickerCapacity(task, open);
+  } = useAssignPickerCapacity(task, open, capacityDeadlineOverride);
   const canSubmit = Boolean(task && !readOnly && isAwaitingCm(task));
   const canRefuse = Boolean(
     task && !readOnly && canCmRefuseCreativeAssignment(task, currentUser?.id, currentUser?.role),
@@ -94,7 +122,6 @@ export function CreativeManagerAssignDrawer({
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
   const pmDeadlineLabel = task ? formatTaskDateTime(getTaskDeadline(task)) : '—';
   const creativeDeadlineLabel = task ? resolveCreativeDeadlineLabel(task) : '—';
-  const watchedSubtasks = Form.useWatch('subtasks', form) as SubtaskForm[] | undefined;
   const splitLockedTotal = useMemo(
     () =>
       (watchedSubtasks ?? []).reduce((sum, row) => {
@@ -106,29 +133,38 @@ export function CreativeManagerAssignDrawer({
 
   const staffSelectOptions = useMemo(
     () =>
-      filterCreativeStaff(staffOptions).map((staff) => {
-        const workload = getAssigneeWorkload(allTasks, staff.userId ?? undefined);
-        return {
-          value: staff.userId ?? staff.code,
-          label: staff.name,
-          disabled: !canSelectAssignee(staff, allTasks, capacityByUserId),
-          staff,
-          activeCount: workload.activeCount,
-          capacityPercent: displayCapacityPercent(staff, allTasks, capacityByUserId),
-          availability: resolveAssigneeAvailability(staff, capacityByUserId),
-        };
-      }),
-    [staffOptions, allTasks, capacityByUserId],
+      filterCreativeAssignableExecutors(staffOptions, currentUser?.role, currentUser?.id).map(
+        (staff) => {
+          const workload = getAssigneeWorkload(allTasks, staff.userId ?? undefined);
+          return {
+            value: staff.userId ?? staff.code,
+            label: staff.name,
+            disabled: !canSelectAssignee(staff, allTasks, capacityByUserId),
+            staff,
+            activeCount: workload.activeCount,
+            capacityPercent: displayCapacityPercent(staff, allTasks, capacityByUserId),
+            availability: resolveAssigneeAvailability(staff, capacityByUserId),
+          };
+        },
+      ),
+    [staffOptions, allTasks, capacityByUserId, currentUser?.role, currentUser?.id],
   );
 
   useEffect(() => {
     if (!open || !task) return;
     setMode('whole');
+    const defaultCreative = task.creativeDeadline
+      ? fromTaskDeadline(task.creativeDeadline)
+      : undefined;
     form.setFieldsValue({
       staffUserId: undefined,
       // CM owns quantity — do not prefill placeholder from create-time default.
       quantity: undefined,
-      subtasks: [emptySubtask(), emptySubtask()],
+      creativeDeadline: defaultCreative,
+      subtasks: [emptySubtask(), emptySubtask()].map((row) => ({
+        ...row,
+        creativeDeadline: defaultCreative,
+      })),
     });
   }, [open, task, form]);
 
@@ -186,7 +222,7 @@ export function CreativeManagerAssignDrawer({
   const handleSubmit = async () => {
     if (!task) return;
     const values = await form.validateFields(
-      mode === 'whole' ? ['staffUserId', 'quantity'] : ['subtasks'],
+      mode === 'whole' ? ['staffUserId', 'quantity', 'creativeDeadline'] : ['subtasks'],
     );
     mutate(
       {
@@ -197,6 +233,9 @@ export function CreativeManagerAssignDrawer({
                 mode,
                 staffUserId: values.staffUserId,
                 quantity: values.quantity,
+                creativeDeadline: values.creativeDeadline?.isValid()
+                  ? toTaskDeadline(values.creativeDeadline)
+                  : undefined,
               }
             : {
                 mode,
@@ -205,6 +244,9 @@ export function CreativeManagerAssignDrawer({
                   staffUserId: subtask.staffUserId ?? '',
                   quantity: subtask.quantity ?? 0,
                   description: (subtask.description ?? '').trim(),
+                  creativeDeadline: subtask.creativeDeadline?.isValid()
+                    ? toTaskDeadline(subtask.creativeDeadline)
+                    : undefined,
                 })),
               },
       },
@@ -345,8 +387,25 @@ export function CreativeManagerAssignDrawer({
                       name="staffUserId"
                       label="Giao cho"
                       rules={[{ required: true, message: 'Chọn Staff nhận task' }]}
+                      extra="Có thể chọn chính mình nếu CM tự thực thi."
                     >
                       {renderStaffSelect(false)}
+                    </Form.Item>
+                    <Form.Item
+                      name="creativeDeadline"
+                      label="Creative deadline"
+                      extra="Deadline nội bộ do CM quyết. Bỏ trống = giữ / fallback deadline hiện có."
+                    >
+                      <DatePicker
+                        showTime={{
+                          format: 'HH:mm',
+                          defaultValue: dayjs().second(0).millisecond(0),
+                        }}
+                        format={DATETIME_SHORT_FORMAT}
+                        style={{ width: '100%' }}
+                        allowClear
+                        showNow={false}
+                      />
                     </Form.Item>
                   </>
                 ) : (
@@ -411,6 +470,22 @@ export function CreativeManagerAssignDrawer({
                                   <InputNumber min={0.01} step={1} style={{ width: '100%' }} />
                                 </Form.Item>
                               </div>
+                              <Form.Item
+                                name={[field.name, 'creativeDeadline']}
+                                label="Creative deadline"
+                                extra="Deadline nội bộ phần này (CM)."
+                              >
+                                <DatePicker
+                                  showTime={{
+                                    format: 'HH:mm',
+                                    defaultValue: dayjs().second(0).millisecond(0),
+                                  }}
+                                  format={DATETIME_SHORT_FORMAT}
+                                  style={{ width: '100%' }}
+                                  allowClear
+                                  showNow={false}
+                                />
+                              </Form.Item>
                             </div>
                           ))}
                           <Button className={styles.addSubtask} onClick={() => add(emptySubtask())}>

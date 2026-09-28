@@ -20,8 +20,8 @@ import {
   canReassignCreativeStaff,
   canSelectAssignee,
   displayCapacityPercent,
+  filterCreativeAssignableExecutors,
   filterCreativeManagers,
-  filterCreativeStaff,
   getAssigneeWorkload,
   getCreativeSplitSubtasks,
   isCreativeLevelLockedByStaffConfirm,
@@ -33,7 +33,10 @@ import {
   resolveEffectivePipelineStage,
   resolveWholeAssignStaff,
 } from '../../utils/creativePipeline';
-import { canEditCreativeScheduleMeta } from '../../utils/creativeVisibility';
+import {
+  canEditCreativeDeadline,
+  canEditCreativeScheduleMeta,
+} from '../../utils/creativeVisibility';
 import { getTaskDeadline } from '../../utils/taskDetail';
 import { normalizeTaskUrgencySetting, resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { ClassificationScale } from '../CreateTaskDrawer/ClassificationScale';
@@ -72,11 +75,16 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
   const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
   const allTasks = useMemo(() => taskList?.items ?? [], [taskList?.items]);
+  const watchedCreativeDeadline = Form.useWatch('creativeDeadline', form);
+  const capacityDeadlineOverride = useMemo(
+    () => (watchedCreativeDeadline?.isValid() ? toTaskDeadline(watchedCreativeDeadline) : null),
+    [watchedCreativeDeadline],
+  );
   const {
     capacityByUserId,
     periodNote,
     isLoading: capacityLoading,
-  } = useAssignPickerCapacity(task, open);
+  } = useAssignPickerCapacity(task, open, capacityDeadlineOverride);
 
   const canEdit = Boolean(task && canEditCreativePipelineTask(task, role, userId));
   const canEditSchedule = canEdit && canEditCreativeScheduleMeta(role);
@@ -87,6 +95,11 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   const stage = task ? resolveEffectivePipelineStage(task) : undefined;
   const splitParent = Boolean(task && isSplitParentTask(task));
   const splitChild = Boolean(task && isSplitChildTask(task));
+  // Match BE: Admin/PM anytime; CM only on assigned_staff / split child (not awaiting_cm / split parent).
+  const canEditCreativeDl =
+    canEdit &&
+    canEditCreativeDeadline(role) &&
+    (canEditCreativeScheduleMeta(role) || stage === 'assigned_staff' || splitChild);
   const splitSiblings = useMemo(() => {
     if (!task?.parentTaskId) return [];
     const parent = allTasks.find((entry) => entry.id === task.parentTaskId);
@@ -137,7 +150,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
 
   const staffSelectOptions = useMemo(
     () =>
-      filterCreativeStaff(staffOptions).map((staff) => {
+      filterCreativeAssignableExecutors(staffOptions, role, userId).map((staff) => {
         const workload = getAssigneeWorkload(allTasks, staff.userId ?? undefined);
         return {
           value: staff.userId ?? staff.code,
@@ -149,7 +162,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
           availability: resolveAssigneeAvailability(staff, capacityByUserId),
         };
       }),
-    [staffOptions, allTasks, capacityByUserId],
+    [staffOptions, allTasks, capacityByUserId, role, userId],
   );
 
   const cmSelectOptions = useMemo(
@@ -256,6 +269,21 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       values.staffUserId !==
         (resolveWholeAssignStaff(task)[0]?.userId ?? task.staff[0]?.userId ?? undefined);
 
+    let creativeDeadlinePayload: string | undefined;
+    if (canEditCreativeDl) {
+      if (values.creativeDeadline?.isValid()) {
+        const next = toTaskDeadline(values.creativeDeadline);
+        const prev = task.creativeDeadline;
+        const same =
+          prev != null &&
+          fromTaskDeadline(prev).format('YYYY-MM-DD HH:mm:ss') ===
+            values.creativeDeadline.format('YYYY-MM-DD HH:mm:ss');
+        if (!same) creativeDeadlinePayload = next;
+      } else if (values.creativeDeadline === null && task.creativeDeadline) {
+        creativeDeadlinePayload = '';
+      }
+    }
+
     mutate(
       {
         id: task.id,
@@ -267,13 +295,11 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
           ...(canEditSchedule
             ? {
                 deadline: values.deadline?.isValid() ? toTaskDeadline(values.deadline) : undefined,
-                creativeDeadline: values.creativeDeadline?.isValid()
-                  ? toTaskDeadline(values.creativeDeadline)
-                  : values.creativeDeadline === null
-                    ? ''
-                    : undefined,
                 urgency: values.urgency,
               }
+            : {}),
+          ...(creativeDeadlinePayload !== undefined
+            ? { creativeDeadline: creativeDeadlinePayload }
             : {}),
           ...(canEditLevel && !levelLocked
             ? {
@@ -473,7 +499,15 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                 name="creativeDeadline"
                 label="Creative deadline"
                 className={styles.deadlineField}
-                extra={!canEditSchedule ? 'Chỉ Admin / PM được sửa.' : undefined}
+                extra={
+                  !canEditCreativeDeadline(role)
+                    ? 'Không có quyền sửa.'
+                    : !canEditCreativeDl
+                      ? 'CM chỉ sửa creative deadline sau khi đã giao Staff.'
+                      : canEditSchedule
+                        ? undefined
+                        : 'CM quyết deadline nội bộ.'
+                }
               >
                 <DatePicker
                   showTime={{
@@ -482,8 +516,8 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                   }}
                   format={DATETIME_SHORT_FORMAT}
                   style={{ width: '100%' }}
-                  allowClear={canEditSchedule}
-                  disabled={!canEdit || !canEditSchedule}
+                  allowClear={canEditCreativeDl}
+                  disabled={!canEdit || !canEditCreativeDl}
                   placeholder="Nội bộ"
                   showNow={false}
                 />

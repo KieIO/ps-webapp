@@ -38,6 +38,7 @@ import {
   canProcessCmQueue,
   canReassignCreativeManager,
   canReassignCreativeStaff,
+  filterCreativeAssignableExecutors,
   filterCreativeManagers,
   filterCreativeStaff,
   isAwaitingCh,
@@ -48,7 +49,7 @@ import {
   resolveCreatePipelineStage,
   resolveEffectivePipelineStage,
 } from '../utils/creativePipeline';
-import { canEditCreativeScheduleMeta } from '../utils/creativeVisibility';
+import { canEditCreativeDeadline, canEditCreativeScheduleMeta } from '../utils/creativeVisibility';
 import { normalizeTaskUrgencySetting } from '../utils/taskUrgency';
 import {
   ACTIVE_REVISION_CONFIRMATIONS,
@@ -974,10 +975,11 @@ export const mockAssignCreativeManager = async (
     }
   }
 
-  const staffPool = filterCreativeStaff([
-    ...MOCK_ASSIGNABLE_STAFF,
-    ...tasks.flatMap((task) => task.staff),
-  ]);
+  const staffPool = filterCreativeAssignableExecutors(
+    [...MOCK_ASSIGNABLE_STAFF, ...tasks.flatMap((task) => task.staff)],
+    role,
+    editorUserId,
+  );
   const now = new Date().toISOString();
 
   if (payload.mode === 'whole') {
@@ -1001,6 +1003,8 @@ export const mockAssignCreativeManager = async (
       assignedAt: now,
       staffConfirmation: 'not_updated',
       staffNote: payload.staffNote ?? current.staffNote,
+      creativeDeadline:
+        payload.creativeDeadline || current.creativeDeadline || current.deadline || current.date,
       updatedAt: now,
     };
     const next = [...tasks];
@@ -1043,7 +1047,8 @@ export const mockAssignCreativeManager = async (
       assignedAt: now,
       staffConfirmation: 'not_updated',
       staffNote: payload.staffNote ?? '',
-      creativeDeadline: current.creativeDeadline ?? current.deadline ?? current.date,
+      creativeDeadline:
+        subtask.creativeDeadline || current.creativeDeadline || current.deadline || current.date,
       urgency: current.urgency,
       updatedAt: now,
     });
@@ -1147,12 +1152,13 @@ export const mockUpdateCreativePipeline = async (
   const technical = wantsLevel ? payload.technical! : current.technical;
   const contentProcessing = wantsLevel ? payload.contentProcessing! : current.contentProcessing;
 
-  const wantsSchedule =
-    payload.deadline !== undefined ||
-    payload.creativeDeadline !== undefined ||
-    payload.urgency !== undefined;
-  if (wantsSchedule && !canEditCreativeScheduleMeta(editorRole)) {
-    throw new Error('Chỉ Admin / PM được sửa deadline, creative deadline và urgency');
+  const wantsPMSchedule = payload.deadline !== undefined || payload.urgency !== undefined;
+  if (wantsPMSchedule && !canEditCreativeScheduleMeta(editorRole)) {
+    throw new Error('Chỉ Admin / PM được sửa deadline PM và urgency');
+  }
+  const wantsCreativeDeadline = payload.creativeDeadline !== undefined;
+  if (wantsCreativeDeadline && !canEditCreativeDeadline(editorRole)) {
+    throw new Error('Không có quyền sửa creative deadline');
   }
 
   const stage = resolveEffectivePipelineStage(current);

@@ -319,6 +319,8 @@ export const CreativeManagerSubtaskSchema = z.object({
   staffUserId: z.string().min(1, 'Chọn Staff'),
   quantity: z.number().positive('Nhập số lượng > 0'),
   description: z.string().min(1, 'Nhập brief cho task nhỏ'),
+  /** Optional CM creative deadline for this part. */
+  creativeDeadline: z.string().optional(),
 });
 
 export const AssignCreativeManagerRequestSchema = z
@@ -328,6 +330,8 @@ export const AssignCreativeManagerRequestSchema = z
     staffNote: z.string().optional(),
     /** Required when mode=whole — CM fills quantity when assigning. */
     quantity: z.number().positive('Nhập số lượng > 0').optional(),
+    /** Optional CM creative deadline for whole assign. */
+    creativeDeadline: z.string().optional(),
     subtasks: z.array(CreativeManagerSubtaskSchema).optional(),
   })
   .superRefine((value, ctx) => {

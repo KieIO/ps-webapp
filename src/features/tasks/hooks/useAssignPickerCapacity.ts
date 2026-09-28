@@ -7,13 +7,27 @@ import {
   resolveAssignCapacityDate,
   type AssignCapacityDate,
 } from '../utils/assignCapacity';
+import { calendarDateFromTaskDeadline } from '../utils/taskDates';
 
 /**
  * Loads real capacity for the assign picker on the task deadline day
- * (creativeDeadline → deadline → today).
+ * (optional form override → creativeDeadline → deadline → today).
  */
-export const useAssignPickerCapacity = (task: MyTask | null, enabled: boolean) => {
-  const period: AssignCapacityDate = useMemo(() => resolveAssignCapacityDate(task), [task]);
+export const useAssignPickerCapacity = (
+  task: MyTask | null,
+  enabled: boolean,
+  /** ISO creative/PM deadline from the open form — preferred over persisted task dates. */
+  deadlineOverrideIso?: string | null,
+) => {
+  const period: AssignCapacityDate = useMemo(() => {
+    if (deadlineOverrideIso) {
+      const date = calendarDateFromTaskDeadline(deadlineOverrideIso);
+      if (date) {
+        return { date, source: 'creative_deadline' };
+      }
+    }
+    return resolveAssignCapacityDate(task);
+  }, [task, deadlineOverrideIso]);
 
   const query = useCapacityList(
     { mode: 'date', date: period.date },

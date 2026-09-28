@@ -13,10 +13,13 @@ export const canViewCreativeDeadline = (
   return false;
 };
 
-/** PM deadline / creative deadline / urgency — Admin & PM only (not CH/CM). */
+/** PM deadline / urgency — Admin & PM only (not CH/CM). */
 export const canEditCreativeScheduleMeta = (role: Role | undefined): boolean =>
   role === ROLES.ADMIN || role === ROLES.PM;
 
-/** @deprecated Prefer canEditCreativeScheduleMeta — same Admin/PM rule. */
+/**
+ * Creative deadline: Admin/PM always; CM may set when assigning / editing execution tasks.
+ * CH fills initial deadline on handoff via assign-cm, not this helper.
+ */
 export const canEditCreativeDeadline = (role: Role | undefined): boolean =>
-  canEditCreativeScheduleMeta(role);
+  role === ROLES.ADMIN || role === ROLES.PM || role === ROLES.CREATIVE_MANAGER;

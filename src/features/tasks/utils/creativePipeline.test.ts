@@ -597,4 +597,25 @@ describe('creative decline helpers', () => {
       capacityPercent: 15,
     });
   });
+
+  it('excludes awaiting_cm and awaiting_ch from FE capacity workload estimate', () => {
+    const tasks = [
+      task({
+        id: 'parked',
+        pipelineStage: 'awaiting_cm',
+        staffConfirmation: 'not_updated',
+        staff: [assignee({ userId: 'cm-1', name: 'Yen' })],
+      }),
+      task({
+        id: 'exec',
+        pipelineStage: 'assigned_staff',
+        staffConfirmation: 'not_updated',
+        staff: [assignee({ userId: 'cm-1', name: 'Yen' })],
+      }),
+    ];
+    expect(getAssigneeWorkload(tasks, 'cm-1')).toEqual({
+      activeCount: 1,
+      capacityPercent: 15,
+    });
+  });
 });

@@ -1,5 +1,9 @@
 import { ROLES } from '@/config/permissions';
-import { canEditCreativeDeadline, canViewCreativeDeadline } from './creativeVisibility';
+import {
+  canEditCreativeDeadline,
+  canEditCreativeScheduleMeta,
+  canViewCreativeDeadline,
+} from './creativeVisibility';
 
 describe('creativeVisibility', () => {
   it('allows creative roles and Admin/PM to view creative deadline', () => {
@@ -15,11 +19,14 @@ describe('creativeVisibility', () => {
     expect(canViewCreativeDeadline(ROLES.EMPLOYEE, 'project')).toBe(false);
   });
 
-  it('allows only Admin/PM to edit creative schedule meta', () => {
+  it('allows Admin/PM schedule meta; CM may edit creative deadline only', () => {
+    expect(canEditCreativeScheduleMeta(ROLES.ADMIN)).toBe(true);
+    expect(canEditCreativeScheduleMeta(ROLES.PM)).toBe(true);
+    expect(canEditCreativeScheduleMeta(ROLES.CREATIVE_MANAGER)).toBe(false);
     expect(canEditCreativeDeadline(ROLES.ADMIN)).toBe(true);
     expect(canEditCreativeDeadline(ROLES.PM)).toBe(true);
+    expect(canEditCreativeDeadline(ROLES.CREATIVE_MANAGER)).toBe(true);
     expect(canEditCreativeDeadline(ROLES.CREATIVE_HEAD)).toBe(false);
-    expect(canEditCreativeDeadline(ROLES.CREATIVE_MANAGER)).toBe(false);
     expect(canEditCreativeDeadline(ROLES.EMPLOYEE)).toBe(false);
   });
 });

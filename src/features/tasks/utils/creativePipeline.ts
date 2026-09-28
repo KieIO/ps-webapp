@@ -405,6 +405,42 @@ export const filterCreativeStaff = (staffOptions: TaskAssignee[]): TaskAssignee[
       !isCreativeHeadAssignee(staff),
   );
 
+/**
+ * Assignable executors for CM giao Staff: Creative Staff + optional CM self (or Admin→CM).
+ */
+export const filterCreativeAssignableExecutors = (
+  staffOptions: TaskAssignee[],
+  actorRole: Role | undefined,
+  actorUserId: string | undefined,
+): TaskAssignee[] => {
+  const staff = filterCreativeStaff(staffOptions);
+  if (actorRole === ROLES.CREATIVE_MANAGER && actorUserId) {
+    const self = staffOptions.find(
+      (entry) =>
+        entry.userId === actorUserId &&
+        staffMatchesDepartment(entry, 'creative') &&
+        isCreativeManagerAssignee(entry),
+    );
+    if (self && !staff.some((entry) => entry.userId === self.userId)) {
+      return [self, ...staff];
+    }
+  }
+  if (actorRole === ROLES.ADMIN) {
+    const managers = filterCreativeManagers(staffOptions);
+    const seen = new Set(staff.map((entry) => entry.userId).filter(Boolean));
+    const extras = managers.filter((entry) => entry.userId && !seen.has(entry.userId));
+    return [...extras, ...staff];
+  }
+  return staff;
+};
+
+/** Routing / container stages — not execution load (mirrors BE capacity filter). */
+const CAPACITY_EXCLUDED_STAGES = new Set<CreativePipelineStage>([
+  'awaiting_ch',
+  'awaiting_cm',
+  'split',
+]);
+
 const ACTIVE_CONFIRMATIONS = new Set(['not_updated', 'confirmed']);
 
 export interface AssigneeWorkload {
@@ -420,12 +456,14 @@ export const getAssigneeWorkload = (
   userId: string | undefined,
 ): AssigneeWorkload => {
   if (!userId) return { activeCount: 0, capacityPercent: 0 };
-  const activeCount = tasks.filter(
-    (task) =>
+  const activeCount = tasks.filter((task) => {
+    const stage = resolveEffectivePipelineStage(task);
+    if (stage != null && CAPACITY_EXCLUDED_STAGES.has(stage)) return false;
+    return (
       task.staff.some((member) => member.userId === userId) &&
-      ACTIVE_CONFIRMATIONS.has(task.staffConfirmation) &&
-      resolveEffectivePipelineStage(task) !== 'split',
-  ).length;
+      ACTIVE_CONFIRMATIONS.has(task.staffConfirmation)
+    );
+  }).length;
   return {
     activeCount,
     // Do not cap at 100 — overload should surface as >100% when estimate exceeds daily band.
