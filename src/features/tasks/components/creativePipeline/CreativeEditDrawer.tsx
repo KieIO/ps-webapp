@@ -1,17 +1,29 @@
-import { Alert, Button, DatePicker, Drawer, Form, Input, InputNumber, Modal, Select } from 'antd';
+import {
+  Alert,
+  Button,
+  Collapse,
+  DatePicker,
+  Drawer,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Select,
+} from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useMemo } from 'react';
-import { DATETIME_SHORT_FORMAT } from '@/config/constants';
+import { Link } from 'react-router-dom';
+import { buildMyTaskDetailPath, DATETIME_SHORT_FORMAT } from '@/config/constants';
 import type { ProjectUrgency } from '@/features/projects/schemas/project.schema';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
-import { MY_TASK_COLUMN_HEADERS } from '../../constants';
+import { CONFIRMATION_LABELS, MY_TASK_COLUMN_HEADERS } from '../../constants';
 import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateCreativePipeline } from '../../hooks/useUpdateCreativePipeline';
 import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
 import type { MyTask } from '../../schemas/task.schema';
-import { fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
+import { formatTaskDateTime, fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import {
   canChangeCreativeLevelRole,
@@ -125,6 +137,18 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   const quantityRequired =
     !quantityLocked && (stage === 'assigned_staff' || stage === 'split' || splitChild);
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
+  const pmDeadlineIso = task ? getTaskDeadline(task) : null;
+  const pmDeadlineLabel = pmDeadlineIso ? formatTaskDateTime(pmDeadlineIso) : '—';
+  const creativeDeadlineLabel = task?.creativeDeadline
+    ? formatTaskDateTime(task.creativeDeadline)
+    : '—';
+  const statusLabel = task ? CONFIRMATION_LABELS[task.staffConfirmation] : '—';
+  const headerQuantity =
+    lockedParentTotal != null
+      ? lockedParentTotal
+      : task && task.quantity > 0
+        ? task.quantity
+        : null;
   const quantityFamily = useMemo(() => {
     if (splitParent) return splitChildren;
     if (splitChild) return splitSiblings;
@@ -139,48 +163,95 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       return sum + (Number.isFinite(qty) ? qty : 0);
     }, 0);
   }, [quantityFamily, watchedChildQuantities]);
-
+  const allocationConserved =
+    lockedParentTotal != null && quantityFamily.length > 0
+      ? isSplitQuantityConserved(
+          lockedParentTotal,
+          quantityFamily.map((child) => {
+            const fromForm = watchedChildQuantities?.[child.id];
+            const qty = fromForm != null ? Number(fromForm) : child.quantity;
+            return { ...child, quantity: Number.isFinite(qty) ? qty : 0 };
+          }),
+        )
+      : true;
   const designThinking = Form.useWatch('designThinking', form);
   const technical = Form.useWatch('technical', form);
   const contentProcessing = Form.useWatch('contentProcessing', form);
-  const computedLevel =
-    designThinking != null && technical != null && contentProcessing != null
-      ? computeTaskLevel(designThinking, technical, contentProcessing)
-      : task?.level;
+  // Prefer form watches, else task criteria — never fall back to stale task.level alone
+  // (header vs expanded box would disagree before Form.useWatch hydrates).
+  const computedLevel = useMemo(() => {
+    const design = designThinking ?? task?.designThinking;
+    const tech = technical ?? task?.technical;
+    const content = contentProcessing ?? task?.contentProcessing;
+    if (design != null && tech != null && content != null) {
+      return computeTaskLevel(design, tech, content);
+    }
+    return task?.level;
+  }, [
+    designThinking,
+    technical,
+    contentProcessing,
+    task?.designThinking,
+    task?.technical,
+    task?.contentProcessing,
+    task?.level,
+  ]);
 
-  const staffSelectOptions = useMemo(
-    () =>
-      filterCreativeAssignableExecutors(staffOptions, role, userId).map((staff) => {
-        const workload = getAssigneeWorkload(allTasks, staff.userId ?? undefined);
-        return {
-          value: staff.userId ?? staff.code,
-          label: staff.name,
-          disabled: !canSelectAssignee(staff, allTasks, capacityByUserId),
-          staff,
-          activeCount: workload.activeCount,
-          capacityPercent: displayCapacityPercent(staff, allTasks, capacityByUserId),
-          availability: resolveAssigneeAvailability(staff, capacityByUserId),
-        };
-      }),
-    [staffOptions, allTasks, capacityByUserId, role, userId],
-  );
+  const staffSelectOptions = useMemo(() => {
+    const base = filterCreativeAssignableExecutors(staffOptions, role, userId);
+    const currentStaff = task
+      ? (resolveWholeAssignStaff(task)[0] ?? task.staff[0] ?? undefined)
+      : undefined;
+    const withCurrent =
+      currentStaff?.userId && !base.some((entry) => entry.userId === currentStaff.userId)
+        ? [currentStaff, ...base]
+        : base;
 
-  const cmSelectOptions = useMemo(
-    () =>
-      filterCreativeManagers(staffOptions).map((staff) => {
-        const workload = getAssigneeWorkload(allTasks, staff.userId ?? undefined);
-        return {
-          value: staff.userId ?? staff.code,
-          label: staff.name,
-          disabled: !canSelectAssignee(staff, allTasks, capacityByUserId),
-          staff,
-          activeCount: workload.activeCount,
-          capacityPercent: displayCapacityPercent(staff, allTasks, capacityByUserId),
-          availability: resolveAssigneeAvailability(staff, capacityByUserId),
-        };
-      }),
-    [staffOptions, allTasks, capacityByUserId],
-  );
+    return withCurrent.map((staff) => {
+      const workload = getAssigneeWorkload(allTasks, staff.userId ?? undefined);
+      return {
+        value: staff.userId ?? staff.code,
+        label: staff.name,
+        disabled: !canSelectAssignee(staff, allTasks, capacityByUserId),
+        staff,
+        activeCount: workload.activeCount,
+        capacityPercent: displayCapacityPercent(staff, allTasks, capacityByUserId),
+        availability: resolveAssigneeAvailability(staff, capacityByUserId),
+      };
+    });
+  }, [staffOptions, allTasks, capacityByUserId, role, userId, task]);
+
+  const cmSelectOptions = useMemo(() => {
+    const base = filterCreativeManagers(staffOptions);
+    const currentCm = task?.creativeManager;
+    const withCurrent =
+      currentCm?.userId && !base.some((entry) => entry.userId === currentCm.userId)
+        ? [
+            {
+              code: currentCm.code,
+              name: currentCm.name,
+              userId: currentCm.userId,
+              department: 'creative_hcm',
+              availability: 'normal' as const,
+              role: 'creative_manager' as const,
+            },
+            ...base,
+          ]
+        : base;
+
+    return withCurrent.map((staff) => {
+      const workload = getAssigneeWorkload(allTasks, staff.userId ?? undefined);
+      return {
+        value: staff.userId ?? staff.code,
+        label: staff.name,
+        disabled: !canSelectAssignee(staff, allTasks, capacityByUserId),
+        staff,
+        activeCount: workload.activeCount,
+        capacityPercent: displayCapacityPercent(staff, allTasks, capacityByUserId),
+        availability: resolveAssigneeAvailability(staff, capacityByUserId),
+      };
+    });
+  }, [staffOptions, allTasks, capacityByUserId, task]);
 
   useEffect(() => {
     if (!open || !task) return;
@@ -325,6 +396,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       width={520}
       destroyOnHidden
       maskClosable={!isPending}
+      className={styles.assignDrawer}
       footer={
         <div className={styles.footer}>
           <Button onClick={handleCloseRequest} disabled={isPending}>
@@ -349,198 +421,211 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                 {task.projectName}
                 {task.projectManager.name ? ` · PM: ${task.projectManager.name}` : ''}
                 {stage ? ` · ${PIPELINE_STAGE_LABELS[stage]}` : ''}
-                {` · Status: ${task.staffConfirmation}`}
               </span>
               {!canEditSchedule && urgencyDisplay ? (
                 <ProjectUrgencyBadge urgency={urgencyDisplay} />
               ) : null}
             </p>
+            <div className={styles.factsRow}>
+              <div className={styles.fact}>
+                <span className={styles.factLabel}>SL tổng</span>
+                <span className={styles.factValue}>
+                  {headerQuantity != null ? headerQuantity : '—'}
+                  {splitParent || splitChild ? (
+                    <span className={styles.factValueMuted}> · khoá</span>
+                  ) : null}
+                </span>
+              </div>
+              <div className={styles.fact}>
+                <span className={styles.factLabel}>Deadline PM</span>
+                <span className={styles.factValue}>{pmDeadlineLabel}</span>
+              </div>
+              <div className={styles.fact}>
+                <span className={styles.factLabel}>Creative DL</span>
+                <span className={styles.factValue}>{creativeDeadlineLabel}</span>
+              </div>
+              <div className={styles.fact}>
+                <span className={styles.factLabel}>Status</span>
+                <span className={styles.statusChip}>{statusLabel}</span>
+              </div>
+            </div>
           </div>
 
           {!canEdit ? (
             <Alert type="warning" showIcon message="Bạn chỉ có thể xem task này." />
           ) : null}
 
-          {!splitChild ? (
-            <CreativeAssignModeSection
-              task={task}
-              allTasks={allTasks}
-              showReassignHint={canReassign && !splitParent}
-            />
-          ) : null}
-
-          {splitParent ? (
-            <Alert
-              type="info"
-              showIcon
-              message={`SL tổng đã khoá: ${task.quantity}`}
-              description="Chỉnh Staff / SL trên từng task nhỏ (link Mở hoặc từ My Tasks). Tổng các phần phải luôn bằng SL tổng."
-            />
-          ) : null}
-
-          {splitChild && lockedParentTotal != null ? (
-            <Alert
-              type="info"
-              showIcon
-              message={`Task nhỏ · SL tổng gốc ${lockedParentTotal}`}
-              description="Đổi Staff / SL tại đây. Tổng SL mọi phần phải luôn bằng SL tổng."
-            />
-          ) : null}
-
-          <Form form={form} layout="vertical" disabled={!canEdit || isPending}>
-            <Form.Item name="description" label="Brief / mô tả">
-              <Input.TextArea rows={3} />
-            </Form.Item>
-            <Form.Item name="additionalFactors" label="Yếu tố bổ sung">
-              <Input.TextArea rows={2} />
-            </Form.Item>
-            {quantityFamily.length > 0 ? (
-              <div className={styles.subtaskCard}>
-                <p className={styles.sectionLabel}>
-                  SL các phần · {allocatedFromForm}
-                  {lockedParentTotal != null ? ` / ${lockedParentTotal}` : ''}
-                </p>
-                {quantityFamily.map((child) => {
-                  const qtyLocked =
-                    child.staffConfirmation === 'confirmed' ||
-                    child.staffConfirmation === 'finished' ||
-                    child.staffConfirmation === 'cancelled';
-                  return (
-                    <Form.Item
-                      key={child.id}
-                      name={['childQuantities', child.id]}
-                      label={`${child.taskCode}: ${child.taskName}`}
-                      rules={[
-                        { required: true, message: 'Nhập SL' },
-                        { type: 'number', min: 0.01, message: 'SL > 0' },
-                      ]}
-                      extra={
-                        qtyLocked
-                          ? 'Đã confirm/finish — không đổi SL'
-                          : child.staff[0]?.name
-                            ? `Staff: ${child.staff[0].name}`
-                            : undefined
-                      }
-                    >
-                      <InputNumber
-                        min={0.01}
-                        step={1}
-                        style={{ width: '100%' }}
-                        disabled={!canEdit || qtyLocked || isPending}
-                      />
-                    </Form.Item>
-                  );
-                })}
-              </div>
-            ) : splitParent || splitChild ? (
-              <>
-                {splitParent ? (
-                  <Form.Item label="SL tổng (đã khoá)">
-                    <InputNumber value={task.quantity} style={{ width: '100%' }} disabled />
+          <Form
+            form={form}
+            layout="vertical"
+            disabled={!canEdit || isPending}
+            className={styles.editForm}
+          >
+            <div className={styles.formSection}>
+              {splitParent || splitChild ? (
+                <div className={styles.allocationBlock}>
+                  <div className={styles.allocationHeader}>
+                    <span className={styles.allocationChip}>
+                      {splitParent ? 'Đã chia nhỏ' : 'Task nhỏ'}
+                    </span>
+                    {lockedParentTotal != null ? (
+                      <span
+                        className={`${styles.allocationSum} ${
+                          allocationConserved ? '' : styles.allocationSumWarn
+                        }`}
+                      >
+                        {allocatedFromForm} / {lockedParentTotal}
+                        {allocationConserved ? ' · khớp' : ' · lệch'}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className={styles.allocationHint}>
+                    {splitParent
+                      ? 'SL tổng đã khoá. Chỉnh SL từng phần bên dưới — tổng phải luôn bằng SL tổng. Chi tiết để xem/đổi Staff.'
+                      : 'Đổi SL tại đây. Tổng mọi phần phải bằng SL tổng gốc.'}
+                  </p>
+                  {!allocationConserved ? (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      className={styles.banner}
+                      message="Tổng SL các phần lệch so với SL tổng"
+                    />
+                  ) : null}
+                  {quantityFamily.length > 0 ? (
+                    quantityFamily.map((child, index) => {
+                      const qtyLocked =
+                        child.staffConfirmation === 'confirmed' ||
+                        child.staffConfirmation === 'finished' ||
+                        child.staffConfirmation === 'cancelled';
+                      return (
+                        <div className={styles.allocationRow} key={child.id}>
+                          <div className={styles.allocationMeta}>
+                            <p className={styles.allocationTitle}>
+                              {index + 1}. {child.taskName}
+                            </p>
+                            <p className={styles.allocationSub}>
+                              {child.taskCode}
+                              {child.staff[0]?.name ? ` · ${child.staff[0].name}` : ''}
+                              {qtyLocked
+                                ? ` · ${CONFIRMATION_LABELS[child.staffConfirmation]}`
+                                : ''}
+                            </p>
+                          </div>
+                          <div className={styles.allocationQty}>
+                            <Form.Item
+                              name={['childQuantities', child.id]}
+                              rules={[
+                                { required: true, message: 'Nhập SL' },
+                                { type: 'number', min: 0.01, message: 'SL > 0' },
+                              ]}
+                            >
+                              <InputNumber
+                                min={0.01}
+                                step={1}
+                                style={{ width: '100%' }}
+                                disabled={!canEdit || qtyLocked || isPending}
+                                aria-label={`SL ${child.taskCode}`}
+                              />
+                            </Form.Item>
+                          </div>
+                          <Link
+                            className={styles.allocationLink}
+                            to={buildMyTaskDetailPath(child.id)}
+                          >
+                            Chi tiết
+                          </Link>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      className={styles.banner}
+                      message="Chưa tải được danh sách task nhỏ"
+                      description="Đóng drawer rồi mở lại, hoặc mở từng task nhỏ từ My Tasks."
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className={styles.formSectionStack}>
+                  <CreativeAssignModeSection
+                    task={task}
+                    allTasks={allTasks}
+                    showReassignHint={canReassign}
+                  />
+                  <Form.Item
+                    name="quantity"
+                    label="Số lượng"
+                    rules={
+                      quantityRequired
+                        ? [
+                            { required: true, message: 'CM nhập số lượng' },
+                            { type: 'number', min: 0.01, message: 'Số lượng phải lớn hơn 0' },
+                          ]
+                        : undefined
+                    }
+                    extra={
+                      quantityRequired
+                        ? 'Task Creative: CM điền / chỉnh số lượng.'
+                        : 'CM sẽ nhập số lượng khi giao Staff.'
+                    }
+                  >
+                    <InputNumber
+                      min={0.01}
+                      step={1}
+                      style={{ width: '100%' }}
+                      disabled={!canEdit || isPending}
+                    />
                   </Form.Item>
-                ) : null}
-                <Alert
-                  type="warning"
-                  showIcon
-                  message="Chưa tải được danh sách task nhỏ"
-                  description="Không chỉnh SL khi thiếu danh sách phần. Đóng drawer rồi mở lại, hoặc mở từng task nhỏ từ My Tasks khi đã có đủ dữ liệu."
-                />
-              </>
-            ) : (
-              <Form.Item
-                name="quantity"
-                label="Số lượng"
-                rules={
-                  quantityRequired
-                    ? [
-                        { required: true, message: 'CM nhập số lượng' },
-                        { type: 'number', min: 0.01, message: 'Số lượng phải lớn hơn 0' },
-                      ]
-                    : undefined
-                }
-                extra={
-                  quantityRequired
-                    ? 'Task Creative: CM điền / chỉnh số lượng.'
-                    : 'CM sẽ nhập số lượng khi giao Staff.'
-                }
-              >
-                <InputNumber
-                  min={0.01}
-                  step={1}
-                  style={{ width: '100%' }}
-                  disabled={!canEdit || isPending}
-                />
-              </Form.Item>
-            )}
-
-            <div className={styles.deadlineRow}>
-              <Form.Item
-                name="deadline"
-                label="Deadline PM"
-                className={styles.deadlineField}
-                rules={
-                  canEditSchedule ? [{ required: true, message: 'Chọn deadline PM' }] : undefined
-                }
-                extra={!canEditSchedule ? 'Chỉ Admin / PM được sửa.' : undefined}
-              >
-                <DatePicker
-                  showTime={{
-                    format: 'HH:mm',
-                    defaultValue: dayjs().second(0).millisecond(0),
-                  }}
-                  format={DATETIME_SHORT_FORMAT}
-                  style={{ width: '100%' }}
-                  allowClear={false}
-                  disabled={!canEdit || !canEditSchedule}
-                  showNow={false}
-                />
-              </Form.Item>
-              <Form.Item
-                name="creativeDeadline"
-                label="Creative deadline"
-                className={styles.deadlineField}
-                extra={
-                  !canEditCreativeDeadline(role)
-                    ? 'Không có quyền sửa.'
-                    : !canEditCreativeDl
-                      ? 'CM chỉ sửa creative deadline sau khi đã giao Staff.'
-                      : canEditSchedule
-                        ? undefined
-                        : 'CM quyết deadline nội bộ.'
-                }
-              >
-                <DatePicker
-                  showTime={{
-                    format: 'HH:mm',
-                    defaultValue: dayjs().second(0).millisecond(0),
-                  }}
-                  format={DATETIME_SHORT_FORMAT}
-                  style={{ width: '100%' }}
-                  allowClear={canEditCreativeDl}
-                  disabled={!canEdit || !canEditCreativeDl}
-                  placeholder="Nội bộ"
-                  showNow={false}
-                />
-              </Form.Item>
+                </div>
+              )}
             </div>
 
-            {canEditSchedule ? (
-              <Form.Item
-                name="urgency"
-                label="Urgency"
-                className={styles.urgencyField}
-                rules={[{ required: true, message: 'Chọn mức urgency' }]}
-              >
-                <TaskUrgencySelect />
-              </Form.Item>
+            {canReassign ? (
+              <div className={styles.formSection}>
+                <p className={styles.sectionLabel}>Đổi Staff nhận task</p>
+                <Form.Item
+                  name="staffUserId"
+                  label="Creative Staff"
+                  extra={
+                    <>
+                      {periodNote}
+                      <br />
+                      Đổi Staff sẽ reset confirm và gửi noti task mới. Có thể giao khi Overloaded;
+                      capacity hiển thị theo thực tế (có thể &gt; 100%).
+                      {capacityLoading ? ' Đang tải capacity…' : null}
+                    </>
+                  }
+                >
+                  <Select
+                    showSearch
+                    optionFilterProp="label"
+                    options={staffSelectOptions}
+                    optionRender={(option) => {
+                      const data = option.data as {
+                        staff: (typeof staffSelectOptions)[number]['staff'];
+                        activeCount: number;
+                        capacityPercent: number;
+                        availability: (typeof staffSelectOptions)[number]['availability'];
+                      };
+                      return (
+                        <AssigneeOptionLabel
+                          staff={data.staff}
+                          activeCount={data.activeCount}
+                          capacityPercent={data.capacityPercent}
+                          availability={data.availability}
+                        />
+                      );
+                    }}
+                  />
+                </Form.Item>
+              </div>
             ) : null}
 
-            <Form.Item name="staffNote" label="Ghi chú">
-              <Input.TextArea rows={2} />
-            </Form.Item>
-
             {canReassignCm ? (
-              <>
+              <div className={styles.formSection}>
                 <p className={styles.sectionLabel}>Đổi Creative Manager</p>
                 <Form.Item
                   name="cmUserId"
@@ -570,71 +655,151 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                     }}
                   />
                 </Form.Item>
-              </>
+              </div>
             ) : null}
 
-            <p className={styles.sectionLabel}>Phân loại độ khó / Level</p>
-            {levelLocked ? (
-              <Alert
-                type="info"
-                showIcon
-                className={styles.banner}
-                message="Staff đã confirm. Không đổi Level được."
-              />
-            ) : null}
-            {!canEditLevel ? (
-              <Alert
-                type="info"
-                showIcon
-                className={styles.banner}
-                message="Creative Manager không được đổi Level."
-              />
-            ) : null}
-            <Form.Item name="designThinking" label={MY_TASK_COLUMN_HEADERS.designThinking}>
-              <ClassificationScale disabled={!canEdit || !canEditLevel || levelLocked} />
-            </Form.Item>
-            <Form.Item name="technical" label={MY_TASK_COLUMN_HEADERS.technical}>
-              <ClassificationScale disabled={!canEdit || !canEditLevel || levelLocked} />
-            </Form.Item>
-            <Form.Item name="contentProcessing" label={MY_TASK_COLUMN_HEADERS.contentProcessing}>
-              <ClassificationScale disabled={!canEdit || !canEditLevel || levelLocked} />
-            </Form.Item>
-            <div className={styles.levelBox}>Level task: {computedLevel ?? '—'}</div>
-
-            {canReassign ? (
-              <>
-                <p className={styles.sectionLabel}>Đổi Staff nhận task</p>
-                <p className={styles.note}>{periodNote}</p>
-                <Form.Item name="staffUserId" label="Creative Staff">
-                  <Select
-                    showSearch
-                    optionFilterProp="label"
-                    options={staffSelectOptions}
-                    optionRender={(option) => {
-                      const data = option.data as {
-                        staff: (typeof staffSelectOptions)[number]['staff'];
-                        activeCount: number;
-                        capacityPercent: number;
-                        availability: (typeof staffSelectOptions)[number]['availability'];
-                      };
-                      return (
-                        <AssigneeOptionLabel
-                          staff={data.staff}
-                          activeCount={data.activeCount}
-                          capacityPercent={data.capacityPercent}
-                          availability={data.availability}
-                        />
-                      );
-                    }}
-                  />
+            <div className={styles.formSection}>
+              <p className={styles.sectionLabel}>Nội dung</p>
+              <div className={styles.formSectionStack}>
+                <Form.Item name="description" label="Brief / mô tả">
+                  <Input.TextArea rows={3} />
                 </Form.Item>
-                <p className={styles.note}>
-                  Đổi Staff sẽ reset confirm và gửi noti task mới. Có thể giao khi Overloaded;
-                  capacity hiển thị theo thực tế (có thể &gt; 100%).
-                  {capacityLoading ? ' Đang tải capacity…' : null}
-                </p>
-              </>
-            ) : null}
+                <Form.Item name="additionalFactors" label="Yếu tố bổ sung">
+                  <Input.TextArea rows={2} />
+                </Form.Item>
+                <Form.Item name="staffNote" label="Ghi chú">
+                  <Input.TextArea rows={2} />
+                </Form.Item>
+              </div>
+            </div>
+
+            <div className={styles.formSection}>
+              <p className={styles.sectionLabel}>Lịch</p>
+              <div className={styles.formSectionStack}>
+                <div className={styles.deadlineRow}>
+                  <Form.Item
+                    name="deadline"
+                    label="Deadline PM"
+                    className={styles.deadlineField}
+                    rules={
+                      canEditSchedule
+                        ? [{ required: true, message: 'Chọn deadline PM' }]
+                        : undefined
+                    }
+                    extra={!canEditSchedule ? 'Chỉ Admin / PM được sửa.' : undefined}
+                  >
+                    <DatePicker
+                      showTime={{
+                        format: 'HH:mm',
+                        defaultValue: dayjs().second(0).millisecond(0),
+                      }}
+                      format={DATETIME_SHORT_FORMAT}
+                      style={{ width: '100%' }}
+                      allowClear={false}
+                      disabled={!canEdit || !canEditSchedule}
+                      showNow={false}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="creativeDeadline"
+                    label="Creative deadline"
+                    className={styles.deadlineField}
+                    extra={
+                      !canEditCreativeDeadline(role)
+                        ? 'Không có quyền sửa.'
+                        : !canEditCreativeDl
+                          ? 'CM chỉ sửa creative deadline sau khi đã giao Staff.'
+                          : canEditSchedule
+                            ? undefined
+                            : 'CM quyết deadline nội bộ.'
+                    }
+                  >
+                    <DatePicker
+                      showTime={{
+                        format: 'HH:mm',
+                        defaultValue: dayjs().second(0).millisecond(0),
+                      }}
+                      format={DATETIME_SHORT_FORMAT}
+                      style={{ width: '100%' }}
+                      allowClear={canEditCreativeDl}
+                      disabled={!canEdit || !canEditCreativeDl}
+                      placeholder="Nội bộ"
+                      showNow={false}
+                    />
+                  </Form.Item>
+                </div>
+
+                {canEditSchedule ? (
+                  <Form.Item
+                    name="urgency"
+                    label="Urgency"
+                    className={styles.urgencyField}
+                    rules={[{ required: true, message: 'Chọn mức urgency' }]}
+                  >
+                    <TaskUrgencySelect />
+                  </Form.Item>
+                ) : null}
+              </div>
+            </div>
+
+            <div className={styles.formSection}>
+              <Collapse
+                ghost
+                className={styles.secondaryPanel}
+                items={[
+                  {
+                    key: 'level',
+                    label: (
+                      <span className={styles.sectionLabel} style={{ margin: 0 }}>
+                        Phân loại độ khó / Level · {computedLevel ?? '—'}
+                      </span>
+                    ),
+                    children: (
+                      <div className={styles.formSectionStack}>
+                        {levelLocked ? (
+                          <Alert
+                            type="info"
+                            showIcon
+                            className={styles.banner}
+                            message="Staff đã confirm. Không đổi Level được."
+                          />
+                        ) : null}
+                        {!canEditLevel ? (
+                          <Alert
+                            type="info"
+                            showIcon
+                            className={styles.banner}
+                            message="Creative Manager không được đổi Level."
+                          />
+                        ) : null}
+                        <Form.Item
+                          name="designThinking"
+                          label={MY_TASK_COLUMN_HEADERS.designThinking}
+                        >
+                          <ClassificationScale
+                            disabled={!canEdit || !canEditLevel || levelLocked}
+                          />
+                        </Form.Item>
+                        <Form.Item name="technical" label={MY_TASK_COLUMN_HEADERS.technical}>
+                          <ClassificationScale
+                            disabled={!canEdit || !canEditLevel || levelLocked}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          name="contentProcessing"
+                          label={MY_TASK_COLUMN_HEADERS.contentProcessing}
+                        >
+                          <ClassificationScale
+                            disabled={!canEdit || !canEditLevel || levelLocked}
+                          />
+                        </Form.Item>
+                        <div className={styles.levelBox}>Level task: {computedLevel ?? '—'}</div>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            </div>
           </Form>
         </div>
       ) : null}

@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   DatePicker,
   Drawer,
@@ -88,6 +87,7 @@ export function CreativeManagerAssignDrawer({
 }: CreativeManagerAssignDrawerProps) {
   const [form] = Form.useForm<ManagerFormValues>();
   const [mode, setMode] = useState<CreativeAssignMode>('whole');
+  const [briefExpanded, setBriefExpanded] = useState(false);
   const currentUser = useAppSelector((state) => state.auth.user);
   const { mutate, isPending } = useAssignCreativeManager();
   const { mutate: updateStatus, isPending: isRefusing } = useUpdateMyTaskStatus();
@@ -122,6 +122,8 @@ export function CreativeManagerAssignDrawer({
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
   const pmDeadlineLabel = task ? formatTaskDateTime(getTaskDeadline(task)) : '—';
   const creativeDeadlineLabel = task ? resolveCreativeDeadlineLabel(task) : '—';
+  const briefText = task?.description?.trim() || 'Chưa có mô tả';
+  const briefLong = briefText.length > 140 || briefText.includes('\n');
   const splitLockedTotal = useMemo(
     () =>
       (watchedSubtasks ?? []).reduce((sum, row) => {
@@ -153,6 +155,7 @@ export function CreativeManagerAssignDrawer({
   useEffect(() => {
     if (!open || !task) return;
     setMode('whole');
+    setBriefExpanded(false);
     const defaultCreative = task.creativeDeadline
       ? fromTaskDeadline(task.creativeDeadline)
       : undefined;
@@ -171,6 +174,7 @@ export function CreativeManagerAssignDrawer({
   const resetAndClose = () => {
     form.resetFields();
     setMode('whole');
+    setBriefExpanded(false);
     onClose();
   };
 
@@ -288,6 +292,7 @@ export function CreativeManagerAssignDrawer({
       width={520}
       destroyOnHidden
       maskClosable={!busy}
+      className={styles.assignDrawer}
       footer={
         <div className={styles.footer}>
           <Button onClick={handleCloseRequest} disabled={busy}>
@@ -317,37 +322,73 @@ export function CreativeManagerAssignDrawer({
             <p className={styles.contextTitle}>
               {task.taskCode}: {task.taskName}
             </p>
-            <p className={styles.contextMeta}>
-              {task.projectName}
-              {task.projectManager.name ? ` · PM: ${task.projectManager.name}` : ''}
-              {` · CM: ${creativeManagerName}`}
-            </p>
             <p className={`${styles.contextMeta} ${styles.metaInline}`}>
-              Deadline gốc: {pmDeadlineLabel}
-              {' · '}
-              Creative: {creativeDeadlineLabel}
-              {urgencyDisplay ? (
-                <>
-                  {' · '}
-                  <ProjectUrgencyBadge urgency={urgencyDisplay} />
-                </>
+              <span>
+                {task.projectName}
+                {task.projectManager.name ? ` · PM: ${task.projectManager.name}` : ''}
+                {` · CM: ${creativeManagerName}`}
+              </span>
+              {urgencyDisplay ? <ProjectUrgencyBadge urgency={urgencyDisplay} /> : null}
+            </p>
+            <div className={styles.factsRow}>
+              <div className={styles.fact}>
+                <span className={styles.factLabel}>SL hiện tại</span>
+                <span className={styles.factValue}>
+                  {task.quantity > 0 ? task.quantity : '—'}
+                  <span className={styles.factValueMuted}> · CM xác nhận khi giao</span>
+                </span>
+              </div>{' '}
+              <div className={styles.fact}>
+                <span className={styles.factLabel}>Deadline PM</span>
+                <span className={styles.factValue}>{pmDeadlineLabel}</span>
+              </div>
+              <div className={styles.fact}>
+                <span className={styles.factLabel}>Creative DL</span>
+                <span className={styles.factValue}>{creativeDeadlineLabel}</span>
+              </div>
+              <div className={styles.fact}>
+                <span className={styles.factLabel}>Level</span>
+                <span className={styles.factValue}>
+                  {task.level}
+                  <span className={styles.factValueMuted}>
+                    {` · TD ${task.designThinking} · KT ${task.technical} · NL ${task.contentProcessing}`}
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+              <p
+                className={`${styles.briefClamp} ${briefExpanded ? styles.briefClampExpanded : ''}`}
+              >
+                {briefText}
+              </p>
+              {briefLong ? (
+                <Button
+                  type="link"
+                  className={styles.briefToggle}
+                  onClick={() => setBriefExpanded((prev) => !prev)}
+                >
+                  {briefExpanded ? 'Thu gọn' : 'Xem thêm'}
+                </Button>
               ) : null}
-            </p>
-          </div>
+              {task.additionalFactors?.trim() ? (
+                <p className={styles.contextMeta} style={{ marginTop: 4 }}>
+                  Yếu tố bổ sung: {task.additionalFactors.trim()}
+                </p>
+              ) : null}
+            </div>
 
-          <div className={styles.contextCard}>
-            <div className={styles.briefBlock}>{task.description?.trim() || 'Chưa có mô tả'}</div>
-            <p className={styles.contextMeta}>
-              Level {task.level} · TD {task.designThinking} · KT {task.technical} · NL{' '}
-              {task.contentProcessing}
-              {task.additionalFactors?.trim() ? ` · ${task.additionalFactors.trim()}` : ''}
-            </p>
+            {chNote ? (
+              <p className={styles.chNoteLine}>
+                <strong>CH note:</strong> {chNote}
+              </p>
+            ) : null}
           </div>
-
-          {chNote ? <Alert type="info" showIcon message={`Ghi chú từ CH: ${chNote}`} /> : null}
 
           {canSubmit ? (
-            <>
+            <div className={styles.formSection}>
+              <p className={styles.sectionLabel}>Hình thức giao</p>
               <Segmented
                 className={styles.modeToggle}
                 block
@@ -360,9 +401,9 @@ export function CreativeManagerAssignDrawer({
                 ]}
               />
 
-              <Form form={form} layout="vertical" size="small">
+              <Form form={form} layout="vertical" size="small" className={styles.editForm}>
                 {mode === 'whole' ? (
-                  <>
+                  <div className={styles.formSectionStack}>
                     <Form.Item
                       name="quantity"
                       label="Số lượng"
@@ -374,27 +415,37 @@ export function CreativeManagerAssignDrawer({
                           message: 'Số lượng phải lớn hơn 0',
                         },
                       ]}
-                      extra="Task Creative: CM điền số lượng khi giao Staff."
+                      extra={
+                        task.quantity > 0
+                          ? `SL hiện tại trên task (PM/Admin lúc tạo): ${task.quantity}. CM nhập SL chính thức khi giao.`
+                          : 'CM nhập số lượng khi giao Staff.'
+                      }
                     >
                       <InputNumber
                         min={0.01}
                         step={1}
                         style={{ width: '100%' }}
-                        placeholder="VD: 24"
+                        placeholder={task.quantity > 0 ? `VD: ${task.quantity}` : 'VD: 24'}
                       />
-                    </Form.Item>
+                    </Form.Item>{' '}
                     <Form.Item
                       name="staffUserId"
                       label="Giao cho"
                       rules={[{ required: true, message: 'Chọn Staff nhận task' }]}
-                      extra="Có thể chọn chính mình nếu CM tự thực thi."
+                      extra={
+                        <>
+                          Có thể chọn chính mình nếu CM tự thực thi. {periodNote}
+                          {capacityLoading ? ' · Đang tải capacity…' : null}
+                          {capacityError ? ' · Dùng ước lượng tạm.' : null}
+                        </>
+                      }
                     >
                       {renderStaffSelect(false)}
                     </Form.Item>
                     <Form.Item
                       name="creativeDeadline"
                       label="Creative deadline"
-                      extra="Deadline nội bộ do CM quyết. Bỏ trống = giữ / fallback deadline hiện có."
+                      extra="Bỏ trống = giữ deadline hiện có."
                     >
                       <DatePicker
                         showTime={{
@@ -407,21 +458,26 @@ export function CreativeManagerAssignDrawer({
                         showNow={false}
                       />
                     </Form.Item>
-                  </>
+                  </div>
                 ) : (
-                  <>
-                    <Alert
-                      type="info"
-                      showIcon
-                      className={styles.banner}
-                      message={`SL tổng sẽ khoá: ${splitLockedTotal || '—'}`}
-                      description="Sau khi chia, tổng này cố định. Chỉnh từng task nhỏ sau vẫn phải khớp tổng."
-                    />
+                  <div className={styles.formSectionStack}>
+                    <div className={styles.splitSummary}>
+                      <span className={styles.splitSummaryTotal}>
+                        {splitLockedTotal > 0
+                          ? `SL tổng sẽ khoá: ${splitLockedTotal}`
+                          : 'SL tổng sẽ khoá khi nhập đủ các phần'}
+                      </span>
+                      <span className={styles.splitSummaryHint}>
+                        {task.quantity > 0
+                          ? `SL hiện tại: ${task.quantity}. Cộng SL từng phần = tổng khoá.`
+                          : 'Cộng SL từng phần = tổng khoá sau khi giao.'}
+                      </span>{' '}
+                    </div>{' '}
                     <Form.List name="subtasks">
                       {(fields, { add, remove }) => (
                         <>
                           {fields.map((field, index) => (
-                            <div className={styles.subtaskCard} key={field.key}>
+                            <div className={styles.subtaskCardCompact} key={field.key}>
                               <div className={styles.subtaskHeader}>
                                 <span>Task nhỏ {index + 1}</span>
                                 {fields.length > 2 ? (
@@ -473,7 +529,6 @@ export function CreativeManagerAssignDrawer({
                               <Form.Item
                                 name={[field.name, 'creativeDeadline']}
                                 label="Creative deadline"
-                                extra="Deadline nội bộ phần này (CM)."
                               >
                                 <DatePicker
                                   showTime={{
@@ -494,32 +549,13 @@ export function CreativeManagerAssignDrawer({
                         </>
                       )}
                     </Form.List>
-                  </>
+                  </div>
                 )}
               </Form>
-            </>
+            </div>
           ) : (
             <CreativeAssignModeSection task={task} allTasks={allTasks} />
           )}
-
-          <div className={styles.workload}>
-            <p className={styles.workloadTitle}>Workload · {periodNote}</p>
-            {staffSelectOptions.map((option) => (
-              <div
-                key={option.value}
-                className={`${styles.workloadRow} ${option.disabled ? styles.workloadMuted : ''}`}
-              >
-                <span>{option.staff.name}</span>
-                <span>{option.activeCount}</span>
-                <span>{option.capacityPercent}%</span>
-              </div>
-            ))}
-            <p className={styles.note}>
-              Có thể giao khi Overloaded; capacity hiển thị theo thực tế (có thể &gt; 100%).
-              {capacityLoading ? ' Đang tải…' : null}
-              {capacityError ? ' Dùng ước lượng tạm.' : null}
-            </p>
-          </div>
         </div>
       ) : null}
     </Drawer>
