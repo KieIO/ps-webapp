@@ -1,4 +1,5 @@
 import type { MyTask } from '@/features/tasks/schemas/task.schema';
+import { countsTowardQuantityAggregates } from '@/features/tasks/utils/creativePipeline';
 import { isSlidesOutputTaskName } from '@/features/tasks/utils/taskName';
 import type { Project } from '../schemas/project.schema';
 import { isTaskForProject } from './projectTaskCount';
@@ -23,7 +24,9 @@ export const computeProjectTotalSlides = (
   tasks: MyTask[],
   allProjects: ProjectLike[],
 ): number =>
-  getProjectTasks(project, tasks, allProjects).reduce((sum, task) => sum + task.quantity, 0);
+  getProjectTasks(project, tasks, allProjects)
+    .filter(countsTowardQuantityAggregates)
+    .reduce((sum, task) => sum + task.quantity, 0);
 
 /** List-page %: quantity-weighted across all tasks. Detail uses an unweighted average of evaluated tasks. */
 export const computeProjectCompletionPercent = (
@@ -31,7 +34,9 @@ export const computeProjectCompletionPercent = (
   tasks: MyTask[],
   allProjects: ProjectLike[],
 ): number => {
-  const projectTasks = getProjectTasks(project, tasks, allProjects);
+  const projectTasks = getProjectTasks(project, tasks, allProjects).filter(
+    countsTowardQuantityAggregates,
+  );
   const totalSlides = projectTasks.reduce((sum, task) => sum + task.quantity, 0);
   if (totalSlides === 0) return 0;
 
@@ -57,7 +62,7 @@ export const computeProjectDetailStats = (tasks: MyTask[]): ProjectDetailStats =
     .map((task) => task.completionPercent)
     .filter((value): value is number => value != null);
   const totalSlides = tasks
-    .filter((task) => isSlidesOutputTaskName(task.taskName))
+    .filter((task) => isSlidesOutputTaskName(task.taskName) && countsTowardQuantityAggregates(task))
     .reduce((sum, task) => sum + task.quantity, 0);
 
   return {

@@ -370,6 +370,15 @@ export const UpdateCreativePipelineRequestSchema = z
     staffNote: z.string().optional(),
     /** CH/Admin: reassign CM while awaiting_cm. */
     cmUserId: z.string().optional(),
+    /** Atomic SL redistribution for split family; sum must equal locked parent total. */
+    childQuantities: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          quantity: z.number().positive(),
+        }),
+      )
+      .optional(),
   })
   .superRefine((value, ctx) => {
     const levelFields = [value.designThinking, value.technical, value.contentProcessing];

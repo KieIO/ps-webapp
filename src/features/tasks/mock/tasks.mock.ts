@@ -1063,6 +1063,7 @@ export const mockAssignCreativeManager = async (
 
   const parent: MyTask = {
     ...current,
+    quantity: children.reduce((sum, child) => sum + child.quantity, 0),
     pipelineStage: 'split',
     staff: uniqueChildStaff,
     assignedAt: undefined,
@@ -1154,47 +1155,119 @@ export const mockUpdateCreativePipeline = async (
     throw new Error('Chỉ Admin / PM được sửa deadline, creative deadline và urgency');
   }
 
+  const stage = resolveEffectivePipelineStage(current);
+  const isSplitChild =
+    Boolean(current.parentTaskId) &&
+    (current.taskKind === 'split' || !current.taskKind) &&
+    current.taskKind !== 'revision';
+
+  if (payload.quantity != null && stage === 'split') {
+    throw new Error('SL tổng của task chia nhỏ đã khoá — chỉnh từng task nhỏ cho khớp tổng');
+  }
+  if (payload.quantity != null && isSplitChild) {
+    throw new Error('Đổi SL task nhỏ qua childQuantities (đủ các phần, tổng khớp SL gốc)');
+  }
+  if (payload.staffUserId && isSplitChild && current.staffConfirmation === 'confirmed') {
+    throw new Error('Task nhỏ đã confirm — không đổi Staff / SL');
+  }
+
+  if (payload.childQuantities?.length) {
+    const parentId = stage === 'split' ? current.id : isSplitChild ? current.parentTaskId! : null;
+    if (!parentId) {
+      throw new Error('childQuantities chỉ dùng cho task chia nhỏ');
+    }
+    const parent = stage === 'split' ? current : tasks.find((entry) => entry.id === parentId);
+    if (!parent) {
+      throw new Error('Không tìm thấy task gốc');
+    }
+    const siblings = tasks.filter(
+      (entry) => entry.parentTaskId === parentId && entry.taskKind !== 'revision',
+    );
+    const nextQty = new Map(siblings.map((child) => [child.id, child.quantity]));
+    for (const row of payload.childQuantities) {
+      if (!nextQty.has(row.id)) {
+        throw new Error('childQuantities chứa task nhỏ không thuộc task này');
+      }
+      const sibling = siblings.find((child) => child.id === row.id)!;
+      if (row.quantity <= 0) {
+        throw new Error('Số lượng task nhỏ phải lớn hơn 0');
+      }
+      const qtyUnchanged = Math.abs(row.quantity - sibling.quantity) <= 1e-6;
+      if (
+        !qtyUnchanged &&
+        (sibling.staffConfirmation === 'confirmed' ||
+          sibling.staffConfirmation === 'finished' ||
+          sibling.staffConfirmation === 'cancelled')
+      ) {
+        throw new Error('Không đổi SL task nhỏ đã confirm / finish / huỷ');
+      }
+      nextQty.set(row.id, row.quantity);
+    }
+    const sum = [...nextQty.values()].reduce((total, qty) => total + qty, 0);
+    if (Math.abs(sum - parent.quantity) > 1e-6) {
+      throw new Error(`Tổng SL các phần (${sum}) phải bằng SL tổng (${parent.quantity})`);
+    }
+    const next = [...tasks];
+    for (const [id, quantity] of nextQty) {
+      const idx = next.findIndex((entry) => entry.id === id);
+      if (idx < 0) continue;
+      if (next[idx].quantity === quantity) continue;
+      next[idx] = {
+        ...next[idx],
+        quantity,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+    setMockTasksStore(next);
+  }
+
+  const storeAfterQty = getMockTasksStore();
+  const indexAfterQty = storeAfterQty.findIndex((entry) => entry.id === id);
+  const currentAfterQty = indexAfterQty >= 0 ? storeAfterQty[indexAfterQty] : current;
+
   // Mirror BE normalizeTaskDates: PM deadline change also moves calendar TaskDate.
   const nextDeadline =
     payload.deadline === undefined || payload.deadline === null || payload.deadline === ''
       ? undefined
       : payload.deadline;
-  const nextDate = nextDeadline ? normalizeTaskDateStart(nextDeadline) : current.date;
+  const nextDate = nextDeadline ? normalizeTaskDateStart(nextDeadline) : currentAfterQty.date;
 
   const updated: MyTask = {
-    ...current,
-    description: payload.description ?? current.description,
-    additionalFactors: payload.additionalFactors ?? current.additionalFactors,
-    quantity: payload.quantity ?? current.quantity,
+    ...currentAfterQty,
+    description: payload.description ?? currentAfterQty.description,
+    additionalFactors: payload.additionalFactors ?? currentAfterQty.additionalFactors,
+    quantity: payload.quantity ?? currentAfterQty.quantity,
     date: nextDate,
-    deadline: nextDeadline ?? current.deadline,
+    deadline: nextDeadline ?? currentAfterQty.deadline,
     creativeDeadline:
       payload.creativeDeadline === undefined
-        ? current.creativeDeadline
+        ? currentAfterQty.creativeDeadline
         : payload.creativeDeadline || null,
     urgency:
-      payload.urgency != null ? normalizeTaskUrgencySetting(payload.urgency) : current.urgency,
-    staffNote: payload.staffNote ?? current.staffNote,
+      payload.urgency != null
+        ? normalizeTaskUrgencySetting(payload.urgency)
+        : currentAfterQty.urgency,
+    staffNote: payload.staffNote ?? currentAfterQty.staffNote,
     designThinking,
     technical,
     contentProcessing,
     level: wantsLevel
       ? computeTaskLevel(designThinking, technical, contentProcessing)
-      : current.level,
+      : currentAfterQty.level,
     staff,
     creativeManager,
     staffConfirmation,
     assignedAt,
     pipelineStage:
-      resolveEffectivePipelineStage(current) === 'assigned_staff' || payload.staffUserId
+      resolveEffectivePipelineStage(currentAfterQty) === 'assigned_staff' || payload.staffUserId
         ? 'assigned_staff'
-        : current.pipelineStage,
+        : currentAfterQty.pipelineStage,
     updatedAt: new Date().toISOString(),
   };
 
-  const next = [...tasks];
-  next[index] = updated;
-  setMockTasksStore(next);
+  const nextRows = [...storeAfterQty];
+  nextRows[indexAfterQty >= 0 ? indexAfterQty : index] = updated;
+  setMockTasksStore(nextRows);
   return enrichMockTaskWithProjectContext(updated);
 };
 

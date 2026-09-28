@@ -375,6 +375,7 @@ describe('creative CH/CM pipeline', () => {
       'dev-creative_manager',
     );
     expect(parent.pipelineStage).toBe('split');
+    expect(parent.quantity).toBe(24);
     const children = getMockTasksStore().filter((item) => item.parentTaskId === 'task-cm-025');
     expect(children).toHaveLength(2);
     expect(children.every((item) => item.pipelineStage === 'assigned_staff')).toBe(true);
@@ -383,6 +384,127 @@ describe('creative CH/CM pipeline', () => {
     expect(parent.staff.map((member) => member.userId).sort()).toEqual(
       ['usr-creative-ha', 'usr-creative-tran'].sort(),
     );
+  });
+
+  it('locks parent quantity and enforces split child sum on creative edit', async () => {
+    await mockAssignCreativeManager(
+      'task-cm-025',
+      {
+        mode: 'split',
+        subtasks: [
+          {
+            name: 'Icon dashboard',
+            staffUserId: 'usr-creative-ha',
+            quantity: 12,
+            description: 'Brief icon dashboard',
+          },
+          {
+            name: 'Icon forms',
+            staffUserId: 'usr-creative-tran',
+            quantity: 12,
+            description: 'Brief icon forms',
+          },
+        ],
+      },
+      'dev-creative_manager',
+    );
+    await expect(
+      mockUpdateCreativePipeline('task-cm-025', { quantity: 30 }, 'dev-admin', 'admin'),
+    ).rejects.toThrow(/đã khoá/);
+
+    const children = getMockTasksStore().filter((item) => item.parentTaskId === 'task-cm-025');
+    const [first, second] = children;
+    await expect(
+      mockUpdateCreativePipeline(
+        first!.id,
+        {
+          childQuantities: [
+            { id: first!.id, quantity: 20 },
+            { id: second!.id, quantity: 12 },
+          ],
+        },
+        'dev-creative_manager',
+        'creative_manager',
+      ),
+    ).rejects.toThrow(/phải bằng SL tổng/);
+
+    await mockUpdateCreativePipeline(
+      first!.id,
+      {
+        childQuantities: [
+          { id: first!.id, quantity: 10 },
+          { id: second!.id, quantity: 14 },
+        ],
+      },
+      'dev-creative_manager',
+      'creative_manager',
+    );
+    expect(
+      getMockTasksStore()
+        .filter((item) => item.parentTaskId === 'task-cm-025')
+        .reduce((sum, item) => sum + item.quantity, 0),
+    ).toBe(24);
+    expect(getMockTasksStore().find((item) => item.id === first!.id)?.quantity).toBe(10);
+    expect(getMockTasksStore().find((item) => item.id === second!.id)?.quantity).toBe(14);
+  });
+
+  it('allows meta save when childQuantities repeats confirmed sibling qty unchanged', async () => {
+    await mockAssignCreativeManager(
+      'task-cm-025',
+      {
+        mode: 'split',
+        subtasks: [
+          {
+            name: 'Icon dashboard',
+            staffUserId: 'usr-creative-ha',
+            quantity: 12,
+            description: 'Brief icon dashboard',
+          },
+          {
+            name: 'Icon forms',
+            staffUserId: 'usr-creative-tran',
+            quantity: 12,
+            description: 'Brief icon forms',
+          },
+        ],
+      },
+      'dev-creative_manager',
+    );
+    const children = getMockTasksStore().filter((item) => item.parentTaskId === 'task-cm-025');
+    const [first, second] = children;
+    const store = getMockTasksStore();
+    const firstIdx = store.findIndex((item) => item.id === first!.id);
+    store[firstIdx] = { ...store[firstIdx], staffConfirmation: 'confirmed' };
+    setMockTasksStore([...store]);
+
+    await expect(
+      mockUpdateCreativePipeline(
+        'task-cm-025',
+        {
+          description: 'Updated brief',
+          childQuantities: [
+            { id: first!.id, quantity: 12 },
+            { id: second!.id, quantity: 12 },
+          ],
+        },
+        'dev-admin',
+        'admin',
+      ),
+    ).resolves.toMatchObject({ description: 'Updated brief' });
+
+    await expect(
+      mockUpdateCreativePipeline(
+        'task-cm-025',
+        {
+          childQuantities: [
+            { id: first!.id, quantity: 10 },
+            { id: second!.id, quantity: 14 },
+          ],
+        },
+        'dev-admin',
+        'admin',
+      ),
+    ).rejects.toThrow(/confirm/);
   });
 
   it('staffName filter matches displayed child staff on split parent, not parked CM', async () => {

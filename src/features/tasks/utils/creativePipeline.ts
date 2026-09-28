@@ -127,6 +127,26 @@ export const getCreativeSplitSubtasks = (parent: MyTask, allTasks: MyTask[]): My
     .filter((entry) => entry.parentTaskId === parent.id && !isRevisionTask(entry))
     .sort((a, b) => a.taskCode.localeCompare(b.taskCode));
 
+export const isSplitParentTask = (task: MyTask): boolean =>
+  resolveEffectivePipelineStage(task) === 'split';
+
+/** CM-split child (not revision). */
+export const isSplitChildTask = (task: MyTask): boolean =>
+  Boolean(task.parentTaskId) &&
+  (task.taskKind === 'split' || !task.taskKind) &&
+  !isRevisionTask(task);
+
+export const sumSplitChildrenQuantity = (children: MyTask[]): number =>
+  children.reduce((sum, child) => sum + (child.quantity ?? 0), 0);
+
+/** True when split family conserves locked parent total (within float epsilon). */
+export const isSplitQuantityConserved = (parentQty: number, children: MyTask[]): boolean =>
+  Math.abs(sumSplitChildrenQuantity(children) - parentQty) < 1e-6;
+
+/** Split parents hold a locked display total — aggregates count children only. */
+export const countsTowardQuantityAggregates = (task: MyTask): boolean =>
+  resolveEffectivePipelineStage(task) !== 'split';
+
 /** Staff on whole-assigned parent (excludes CM parked on assignees). */
 export const resolveWholeAssignStaff = (task: MyTask): TaskAssignee[] => {
   const cmUserId = task.creativeManager?.userId;
@@ -275,8 +295,16 @@ export const resolveCreativeDetailPipelineAction = (
   userId: string | undefined,
 ): CreativeDetailPipelineActionInfo | null => {
   if (!canSeeCreativeDetailPipelineAction(role)) return null;
-  if (!isCreativePipelineParent(task)) return null;
   if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return null;
+
+  // Split children: edit Staff + SL against locked parent total (no unsplit).
+  if (isSplitChildTask(task)) {
+    if (task.staffConfirmation === 'confirmed') return null;
+    if (!canEditCreativePipelineTask(task, role, userId)) return null;
+    return { action: 'edit', label: 'Đổi Staff / SL' };
+  }
+
+  if (!isCreativePipelineParent(task)) return null;
 
   const stage = resolveEffectivePipelineStage(task);
   if (!isPipelineBoardStage(stage)) return null;
@@ -303,7 +331,7 @@ export const resolveCreativeDetailPipelineAction = (
   }
 
   if (canEditCreativePipelineTask(task, role, userId)) {
-    return { action: 'edit', label: 'Sửa / Đổi giao' };
+    return { action: 'edit', label: stage === 'split' ? 'Sửa / Task nhỏ' : 'Sửa / Đổi giao' };
   }
   return null;
 };

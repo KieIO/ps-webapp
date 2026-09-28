@@ -497,6 +497,20 @@ describe('creativePipeline helpers', () => {
         'admin',
       ),
     ).toBeNull();
+    expect(
+      resolveCreativeDetailPipelineAction(
+        task({
+          pipelineStage: 'assigned_staff',
+          parentTaskId: 'parent-split',
+          taskKind: 'split',
+          staffConfirmation: 'not_updated',
+          creativeManager: assignee({ userId: 'cm-1' }),
+          staff: [assignee({ userId: 'staff-1', name: 'An' })],
+        }),
+        ROLES.ADMIN,
+        'admin',
+      ),
+    ).toEqual({ action: 'edit', label: 'Đổi Staff / SL' });
   });
 });
 

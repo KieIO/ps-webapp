@@ -23,7 +23,11 @@ import {
   filterCreativeManagers,
   filterCreativeStaff,
   getAssigneeWorkload,
+  getCreativeSplitSubtasks,
   isCreativeLevelLockedByStaffConfirm,
+  isSplitChildTask,
+  isSplitParentTask,
+  isSplitQuantityConserved,
   PIPELINE_STAGE_LABELS,
   resolveAssigneeAvailability,
   resolveEffectivePipelineStage,
@@ -48,6 +52,7 @@ type EditFormValues = {
   description?: string;
   additionalFactors?: string;
   quantity?: number;
+  childQuantities?: Record<string, number>;
   deadline?: dayjs.Dayjs | null;
   creativeDeadline?: dayjs.Dayjs | null;
   urgency?: ProjectUrgency;
@@ -80,8 +85,47 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   const canReassign = Boolean(task && canReassignCreativeStaff(task, role) && canEdit);
   const canReassignCm = Boolean(task && canReassignCreativeManager(task, role) && canEdit);
   const stage = task ? resolveEffectivePipelineStage(task) : undefined;
-  const quantityRequired = stage === 'assigned_staff' || stage === 'split';
+  const splitParent = Boolean(task && isSplitParentTask(task));
+  const splitChild = Boolean(task && isSplitChildTask(task));
+  const splitSiblings = useMemo(() => {
+    if (!task?.parentTaskId) return [];
+    const parent = allTasks.find((entry) => entry.id === task.parentTaskId);
+    if (!parent) {
+      return allTasks.filter(
+        (entry) => entry.parentTaskId === task.parentTaskId && entry.taskKind !== 'revision',
+      );
+    }
+    return getCreativeSplitSubtasks(parent, allTasks);
+  }, [allTasks, task]);
+  const splitChildren = useMemo(
+    () => (task && splitParent ? getCreativeSplitSubtasks(task, allTasks) : []),
+    [allTasks, splitParent, task],
+  );
+  const lockedParentTotal = useMemo(() => {
+    if (splitParent && task) return task.quantity;
+    if (splitChild && task?.parentTaskId) {
+      return allTasks.find((entry) => entry.id === task.parentTaskId)?.quantity;
+    }
+    return undefined;
+  }, [allTasks, splitChild, splitParent, task]);
+  const quantityLocked = splitParent;
+  const quantityRequired =
+    !quantityLocked && (stage === 'assigned_staff' || stage === 'split' || splitChild);
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
+  const quantityFamily = useMemo(() => {
+    if (splitParent) return splitChildren;
+    if (splitChild) return splitSiblings;
+    return [];
+  }, [splitChild, splitChildren, splitParent, splitSiblings]);
+  const watchedChildQuantities = Form.useWatch('childQuantities', form);
+  const allocatedFromForm = useMemo(() => {
+    if (quantityFamily.length === 0) return 0;
+    return quantityFamily.reduce((sum, child) => {
+      const fromForm = watchedChildQuantities?.[child.id];
+      const qty = fromForm != null ? Number(fromForm) : child.quantity;
+      return sum + (Number.isFinite(qty) ? qty : 0);
+    }, 0);
+  }, [quantityFamily, watchedChildQuantities]);
 
   const designThinking = Form.useWatch('designThinking', form);
   const technical = Form.useWatch('technical', form);
@@ -127,21 +171,25 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
 
   useEffect(() => {
     if (!open || !task) return;
+    const childQuantities = Object.fromEntries(
+      quantityFamily.map((child) => [child.id, child.quantity]),
+    );
     form.setFieldsValue({
       description: task.description,
       additionalFactors: task.additionalFactors,
       quantity: task.quantity > 0 ? task.quantity : undefined,
+      childQuantities,
       deadline: fromTaskDeadline(getTaskDeadline(task)),
       creativeDeadline: task.creativeDeadline ? fromTaskDeadline(task.creativeDeadline) : null,
       urgency: normalizeTaskUrgencySetting(task.urgency),
       designThinking: task.designThinking,
       technical: task.technical,
       contentProcessing: task.contentProcessing,
-      staffUserId: resolveWholeAssignStaff(task)[0]?.userId ?? undefined,
+      staffUserId: resolveWholeAssignStaff(task)[0]?.userId ?? task.staff[0]?.userId ?? undefined,
       cmUserId: task.creativeManager?.userId ?? task.staff[0]?.userId ?? undefined,
       staffNote: task.staffNote || task.cmNote || '',
     });
-  }, [open, task, form]);
+  }, [open, task, form, quantityFamily]);
 
   const resetAndClose = () => {
     form.resetFields();
@@ -168,13 +216,45 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     if (!task || !canEdit) return;
     const values = await form.validateFields();
 
+    const changedChildQuantities =
+      quantityFamily.length > 0
+        ? quantityFamily
+            .map((child) => ({
+              id: child.id,
+              quantity: Number(values.childQuantities?.[child.id] ?? child.quantity),
+            }))
+            .filter((row) => {
+              const original = quantityFamily.find((child) => child.id === row.id);
+              return original != null && Math.abs(row.quantity - original.quantity) > 1e-6;
+            })
+        : [];
+
+    if (changedChildQuantities.length > 0 && lockedParentTotal != null) {
+      const projected = quantityFamily.map((child) => {
+        const override = changedChildQuantities.find((row) => row.id === child.id);
+        return { ...child, quantity: override?.quantity ?? child.quantity };
+      });
+      if (!isSplitQuantityConserved(lockedParentTotal, projected)) {
+        form.setFields([
+          {
+            name: 'childQuantities',
+            errors: [
+              `Tổng SL các phần (${allocatedFromForm}) phải bằng SL tổng (${lockedParentTotal})`,
+            ],
+          },
+        ]);
+        return;
+      }
+    }
+
     const currentCmId = task.creativeManager?.userId ?? task.staff[0]?.userId ?? undefined;
     const cmChanged = canReassignCm && values.cmUserId && values.cmUserId !== currentCmId;
 
     const staffChanged =
       canReassign &&
       values.staffUserId &&
-      values.staffUserId !== (resolveWholeAssignStaff(task)[0]?.userId ?? undefined);
+      values.staffUserId !==
+        (resolveWholeAssignStaff(task)[0]?.userId ?? task.staff[0]?.userId ?? undefined);
 
     mutate(
       {
@@ -182,7 +262,8 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
         payload: {
           description: values.description,
           additionalFactors: values.additionalFactors,
-          quantity: values.quantity,
+          ...(quantityLocked || splitChild || splitParent ? {} : { quantity: values.quantity }),
+          ...(changedChildQuantities.length > 0 ? { childQuantities: changedChildQuantities } : {}),
           ...(canEditSchedule
             ? {
                 deadline: values.deadline?.isValid() ? toTaskDeadline(values.deadline) : undefined,
@@ -254,11 +335,31 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
             <Alert type="warning" showIcon message="Bạn chỉ có thể xem task này." />
           ) : null}
 
-          <CreativeAssignModeSection
-            task={task}
-            allTasks={allTasks}
-            showReassignHint={canReassign}
-          />
+          {!splitChild ? (
+            <CreativeAssignModeSection
+              task={task}
+              allTasks={allTasks}
+              showReassignHint={canReassign && !splitParent}
+            />
+          ) : null}
+
+          {splitParent ? (
+            <Alert
+              type="info"
+              showIcon
+              message={`SL tổng đã khoá: ${task.quantity}`}
+              description="Chỉnh Staff / SL trên từng task nhỏ (link Mở hoặc từ My Tasks). Tổng các phần phải luôn bằng SL tổng."
+            />
+          ) : null}
+
+          {splitChild && lockedParentTotal != null ? (
+            <Alert
+              type="info"
+              showIcon
+              message={`Task nhỏ · SL tổng gốc ${lockedParentTotal}`}
+              description="Đổi Staff / SL tại đây. Tổng SL mọi phần phải luôn bằng SL tổng."
+            />
+          ) : null}
 
           <Form form={form} layout="vertical" disabled={!canEdit || isPending}>
             <Form.Item name="description" label="Brief / mô tả">
@@ -267,25 +368,84 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
             <Form.Item name="additionalFactors" label="Yếu tố bổ sung">
               <Input.TextArea rows={2} />
             </Form.Item>
-            <Form.Item
-              name="quantity"
-              label="Số lượng"
-              rules={
-                quantityRequired
-                  ? [
-                      { required: true, message: 'CM nhập số lượng' },
-                      { type: 'number', min: 0.01, message: 'Số lượng phải lớn hơn 0' },
-                    ]
-                  : undefined
-              }
-              extra={
-                quantityRequired
-                  ? 'Task Creative: CM điền / chỉnh số lượng.'
-                  : 'CM sẽ nhập số lượng khi giao Staff.'
-              }
-            >
-              <InputNumber min={0.01} step={1} style={{ width: '100%' }} />
-            </Form.Item>
+            {quantityFamily.length > 0 ? (
+              <div className={styles.subtaskCard}>
+                <p className={styles.sectionLabel}>
+                  SL các phần · {allocatedFromForm}
+                  {lockedParentTotal != null ? ` / ${lockedParentTotal}` : ''}
+                </p>
+                {quantityFamily.map((child) => {
+                  const qtyLocked =
+                    child.staffConfirmation === 'confirmed' ||
+                    child.staffConfirmation === 'finished' ||
+                    child.staffConfirmation === 'cancelled';
+                  return (
+                    <Form.Item
+                      key={child.id}
+                      name={['childQuantities', child.id]}
+                      label={`${child.taskCode}: ${child.taskName}`}
+                      rules={[
+                        { required: true, message: 'Nhập SL' },
+                        { type: 'number', min: 0.01, message: 'SL > 0' },
+                      ]}
+                      extra={
+                        qtyLocked
+                          ? 'Đã confirm/finish — không đổi SL'
+                          : child.staff[0]?.name
+                            ? `Staff: ${child.staff[0].name}`
+                            : undefined
+                      }
+                    >
+                      <InputNumber
+                        min={0.01}
+                        step={1}
+                        style={{ width: '100%' }}
+                        disabled={!canEdit || qtyLocked || isPending}
+                      />
+                    </Form.Item>
+                  );
+                })}
+              </div>
+            ) : splitParent || splitChild ? (
+              <>
+                {splitParent ? (
+                  <Form.Item label="SL tổng (đã khoá)">
+                    <InputNumber value={task.quantity} style={{ width: '100%' }} disabled />
+                  </Form.Item>
+                ) : null}
+                <Alert
+                  type="warning"
+                  showIcon
+                  message="Chưa tải được danh sách task nhỏ"
+                  description="Không chỉnh SL khi thiếu danh sách phần. Đóng drawer rồi mở lại, hoặc mở từng task nhỏ từ My Tasks khi đã có đủ dữ liệu."
+                />
+              </>
+            ) : (
+              <Form.Item
+                name="quantity"
+                label="Số lượng"
+                rules={
+                  quantityRequired
+                    ? [
+                        { required: true, message: 'CM nhập số lượng' },
+                        { type: 'number', min: 0.01, message: 'Số lượng phải lớn hơn 0' },
+                      ]
+                    : undefined
+                }
+                extra={
+                  quantityRequired
+                    ? 'Task Creative: CM điền / chỉnh số lượng.'
+                    : 'CM sẽ nhập số lượng khi giao Staff.'
+                }
+              >
+                <InputNumber
+                  min={0.01}
+                  step={1}
+                  style={{ width: '100%' }}
+                  disabled={!canEdit || isPending}
+                />
+              </Form.Item>
+            )}
 
             <div className={styles.deadlineRow}>
               <Form.Item

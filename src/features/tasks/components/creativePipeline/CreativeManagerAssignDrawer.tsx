@@ -94,6 +94,15 @@ export function CreativeManagerAssignDrawer({
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
   const pmDeadlineLabel = task ? formatTaskDateTime(getTaskDeadline(task)) : '—';
   const creativeDeadlineLabel = task ? resolveCreativeDeadlineLabel(task) : '—';
+  const watchedSubtasks = Form.useWatch('subtasks', form) as SubtaskForm[] | undefined;
+  const splitLockedTotal = useMemo(
+    () =>
+      (watchedSubtasks ?? []).reduce((sum, row) => {
+        const qty = Number(row?.quantity);
+        return Number.isFinite(qty) && qty > 0 ? sum + qty : sum;
+      }, 0),
+    [watchedSubtasks],
+  );
 
   const staffSelectOptions = useMemo(
     () =>
@@ -341,67 +350,76 @@ export function CreativeManagerAssignDrawer({
                     </Form.Item>
                   </>
                 ) : (
-                  <Form.List name="subtasks">
-                    {(fields, { add, remove }) => (
-                      <>
-                        {fields.map((field, index) => (
-                          <div className={styles.subtaskCard} key={field.key}>
-                            <div className={styles.subtaskHeader}>
-                              <span>Task nhỏ {index + 1}</span>
-                              {fields.length > 2 ? (
-                                <Button type="link" danger onClick={() => remove(field.name)}>
-                                  Xóa
-                                </Button>
-                              ) : null}
-                            </div>
-                            <Form.Item
-                              name={[field.name, 'name']}
-                              label="Tên"
-                              rules={[{ required: true, message: 'Nhập tên task nhỏ' }]}
-                            >
-                              <Input placeholder={`${task.taskName} - phần ${index + 1}`} />
-                            </Form.Item>
-                            <Form.Item
-                              name={[field.name, 'description']}
-                              label="Brief"
-                              rules={[{ required: true, message: 'Nhập brief cho task nhỏ' }]}
-                            >
-                              <Input.TextArea
-                                rows={2}
-                                placeholder="Mô tả phần việc giao cho Staff..."
-                              />
-                            </Form.Item>
-                            <div className={styles.deadlineRow}>
+                  <>
+                    <Alert
+                      type="info"
+                      showIcon
+                      className={styles.banner}
+                      message={`SL tổng sẽ khoá: ${splitLockedTotal || '—'}`}
+                      description="Sau khi chia, tổng này cố định. Chỉnh từng task nhỏ sau vẫn phải khớp tổng."
+                    />
+                    <Form.List name="subtasks">
+                      {(fields, { add, remove }) => (
+                        <>
+                          {fields.map((field, index) => (
+                            <div className={styles.subtaskCard} key={field.key}>
+                              <div className={styles.subtaskHeader}>
+                                <span>Task nhỏ {index + 1}</span>
+                                {fields.length > 2 ? (
+                                  <Button type="link" danger onClick={() => remove(field.name)}>
+                                    Xóa
+                                  </Button>
+                                ) : null}
+                              </div>
                               <Form.Item
-                                name={[field.name, 'staffUserId']}
-                                label="Giao cho"
-                                rules={[{ required: true, message: 'Chọn Staff' }]}
+                                name={[field.name, 'name']}
+                                label="Tên"
+                                rules={[{ required: true, message: 'Nhập tên task nhỏ' }]}
                               >
-                                {renderStaffSelect(false)}
+                                <Input placeholder={`${task.taskName} - phần ${index + 1}`} />
                               </Form.Item>
                               <Form.Item
-                                name={[field.name, 'quantity']}
-                                label="Số lượng"
-                                rules={[
-                                  { required: true, message: 'Nhập số lượng' },
-                                  {
-                                    type: 'number',
-                                    min: 0.01,
-                                    message: 'Số lượng phải lớn hơn 0',
-                                  },
-                                ]}
+                                name={[field.name, 'description']}
+                                label="Brief"
+                                rules={[{ required: true, message: 'Nhập brief cho task nhỏ' }]}
                               >
-                                <InputNumber min={0.01} step={1} style={{ width: '100%' }} />
+                                <Input.TextArea
+                                  rows={2}
+                                  placeholder="Mô tả phần việc giao cho Staff..."
+                                />
                               </Form.Item>
+                              <div className={styles.deadlineRow}>
+                                <Form.Item
+                                  name={[field.name, 'staffUserId']}
+                                  label="Giao cho"
+                                  rules={[{ required: true, message: 'Chọn Staff' }]}
+                                >
+                                  {renderStaffSelect(false)}
+                                </Form.Item>
+                                <Form.Item
+                                  name={[field.name, 'quantity']}
+                                  label="Số lượng"
+                                  rules={[
+                                    { required: true, message: 'Nhập số lượng' },
+                                    {
+                                      type: 'number',
+                                      min: 0.01,
+                                      message: 'Số lượng phải lớn hơn 0',
+                                    },
+                                  ]}
+                                >
+                                  <InputNumber min={0.01} step={1} style={{ width: '100%' }} />
+                                </Form.Item>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                        <Button className={styles.addSubtask} onClick={() => add(emptySubtask())}>
-                          + Thêm task nhỏ
-                        </Button>
-                      </>
-                    )}
-                  </Form.List>
+                          ))}
+                          <Button className={styles.addSubtask} onClick={() => add(emptySubtask())}>
+                            + Thêm task nhỏ
+                          </Button>
+                        </>
+                      )}
+                    </Form.List>
+                  </>
                 )}
               </Form>
             </>

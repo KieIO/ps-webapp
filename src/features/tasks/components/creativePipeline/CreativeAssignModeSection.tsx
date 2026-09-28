@@ -5,8 +5,10 @@ import type { MyTask } from '../../schemas/task.schema';
 import {
   CREATIVE_ASSIGN_MODE_OPTIONS,
   getCreativeSplitSubtasks,
+  isSplitQuantityConserved,
   resolveCreativeAssignMode,
   resolveWholeAssignStaff,
+  sumSplitChildrenQuantity,
 } from '../../utils/creativePipeline';
 import styles from './creativePipeline.module.scss';
 
@@ -25,6 +27,8 @@ export function CreativeAssignModeSection({
   const assignMode = resolveCreativeAssignMode(task);
   const subtasks = assignMode === 'split' ? getCreativeSplitSubtasks(task, allTasks) : [];
   const wholeStaff = resolveWholeAssignStaff(task);
+  const allocated = sumSplitChildrenQuantity(subtasks);
+  const conserved = isSplitQuantityConserved(task.quantity, subtasks);
 
   return (
     <>
@@ -54,7 +58,7 @@ export function CreativeAssignModeSection({
             message="Hình thức giao đã khóa"
             description={
               assignMode === 'split'
-                ? 'Không chuyển lại giao nguyên task sau khi đã chia nhỏ. Chỉnh từng task nhỏ bên dưới hoặc trong My Tasks.'
+                ? `SL tổng ${task.quantity} đã khoá (đã phân ${allocated}). Không gộp lại nguyên task — chỉnh từng task nhỏ bên dưới.`
                 : 'Không chuyển sang chia nhỏ sau khi đã giao nguyên task. Có thể đổi Staff bên dưới (nếu được phép).'
             }
           />
@@ -71,6 +75,15 @@ export function CreativeAssignModeSection({
             </div>
           ) : (
             <>
+              {!conserved && subtasks.length > 0 ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  className={styles.banner}
+                  message="Tổng SL các phần lệch so với SL tổng"
+                  description={`Đã phân ${allocated} / tổng ${task.quantity}. Chỉnh SL từng task nhỏ cho khớp.`}
+                />
+              ) : null}
               {subtasks.length > 0 ? (
                 subtasks.map((subtask, index) => (
                   <div className={styles.subtaskCard} key={subtask.id}>
