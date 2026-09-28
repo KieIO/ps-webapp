@@ -44,6 +44,7 @@ import {
   isAwaitingCh,
   isCreativeHandoffPayload,
   isCreativeLevelLockedByStaffConfirm,
+  isSplitChildTask,
   needsChBrief,
   resolveCreateBriefOwner,
   resolveCreatePipelineStage,
@@ -1162,10 +1163,7 @@ export const mockUpdateCreativePipeline = async (
   }
 
   const stage = resolveEffectivePipelineStage(current);
-  const isSplitChild =
-    Boolean(current.parentTaskId) &&
-    (current.taskKind === 'split' || !current.taskKind) &&
-    current.taskKind !== 'revision';
+  const isSplitChild = isSplitChildTask(current);
 
   if (payload.quantity != null && stage === 'split') {
     throw new Error('SL tổng của task chia nhỏ đã khoá — chỉnh từng task nhỏ cho khớp tổng');
