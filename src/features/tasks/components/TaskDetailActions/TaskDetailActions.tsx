@@ -32,6 +32,7 @@ import {
   canProcessCmQueue,
   canStaffConfirmOrDeclineCreative,
   resolveCreativeDetailPipelineAction,
+  shouldUseCreativePipelineEditDrawer,
 } from '../../utils/creativePipeline';
 import { getTaskListPath } from '../../utils/taskDetail';
 import { canEvaluateTaskLayer } from '../../utils/taskEvaluation';
@@ -107,6 +108,8 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
   const [statusModalMode, setStatusModalMode] = useState<'update' | 'finish'>('update');
   const [evaluateOpen, setEvaluateOpen] = useState(false);
   const [pipelineOpen, setPipelineOpen] = useState(false);
+  /** Edit task button → CreativeEditDrawer (even when primary CTA is assign). */
+  const [creativeEditOpen, setCreativeEditOpen] = useState(false);
   const [revisionOpen, setRevisionOpen] = useState(false);
 
   const { mutate: deleteTask, isPending: isDeleting } = useDeleteMyTask();
@@ -169,13 +172,27 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
     setStatusModalMode('update');
   };
   const handleCloseEvaluate = () => setEvaluateOpen(false);
-  const handleClosePipeline = () => setPipelineOpen(false);
+  const handleClosePipeline = () => {
+    setPipelineOpen(false);
+    setCreativeEditOpen(false);
+  };
   const handleCloseRevision = () => setRevisionOpen(false);
+
+  const useCreativeEditDrawer = shouldUseCreativePipelineEditDrawer(task, role, userId);
+  /** Hide duplicate Edit when primary CTA already opens CreativeEditDrawer. */
+  const showGenericEditButton = canEdit && pipelineAction?.action !== 'edit';
 
   const openAssignCm = pipelineOpen && pipelineAction?.action === 'assign_cm';
   const openAssignStaff = pipelineOpen && pipelineAction?.action === 'assign_staff';
-  const openPipelineEdit = pipelineOpen && pipelineAction?.action === 'edit';
+  const openPipelineEdit = creativeEditOpen || (pipelineOpen && pipelineAction?.action === 'edit');
 
+  const openEditAction = () => {
+    if (useCreativeEditDrawer) {
+      setCreativeEditOpen(true);
+      return;
+    }
+    setEditOpen(true);
+  };
   const headReadOnly = !canProcessChQueue(role);
   const managerReadOnly = !canProcessCmQueue(role);
 
@@ -277,8 +294,8 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
           {showUpdateStatus
             ? renderLockedAction('Update status', <SyncOutlined />, openUpdateStatusModal)
             : null}
-          {canEdit
-            ? renderLockedAction('Edit task', <EditOutlined />, () => setEditOpen(true))
+          {showGenericEditButton
+            ? renderLockedAction('Edit task', <EditOutlined />, openEditAction)
             : null}
           {canEvaluate
             ? renderLockedAction('Evaluate', <StarOutlined />, () => setEvaluateOpen(true))
@@ -332,7 +349,7 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
       {canEdit && role === ROLES.HEAD ? (
         <EditHeadTaskModal open={editOpen} task={task} onClose={handleCloseEdit} />
       ) : null}
-      {canEdit && role !== ROLES.HEAD ? (
+      {canEdit && role !== ROLES.HEAD && !useCreativeEditDrawer ? (
         <EditTaskModal
           open={editOpen}
           task={task}

@@ -20,6 +20,7 @@ import { computeTaskLevel } from '../../utils/taskLevel';
 import { canEditCreativeDeadline as canEditCreativeDeadlineRole } from '../../utils/creativeVisibility';
 import {
   getEditTaskFieldsForRole,
+  requiresStaffOnGenericEdit,
   showsEvaluationReadOnly,
   showsTaskLevelPreview,
   type EditTaskField,
@@ -27,6 +28,7 @@ import {
 import { mergeStaffSelectOptions, resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
 import { fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
 import { getTaskDeadline } from '../../utils/taskDetail';
+import { resolveWholeAssignStaff } from '../../utils/creativePipeline';
 import {
   canCancelTask,
   canChangeTaskStatus,
@@ -71,7 +73,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
   );
 
   const { data: staffOptions = [] } = useCreateTaskStaffOptions();
-  const isProjectTask = task?.taskCategory === 'project';
+  const staffRequired = Boolean(task && requiresStaffOnGenericEdit(task));
 
   const designThinking = Form.useWatch('designThinking', form);
   const technical = Form.useWatch('technical', form);
@@ -107,6 +109,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
 
   useEffect(() => {
     if (task && open) {
+      const wholeStaff = resolveWholeAssignStaff(task)[0] ?? task.staff[0];
       form.setFieldsValue({
         taskName: task.taskName,
         quantity: task.quantity,
@@ -119,7 +122,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
         technical: task.technical,
         contentProcessing: task.contentProcessing,
         additionalFactors: task.additionalFactors,
-        staffUserId: task.staff[0] ? staffOptionKey(task.staff[0]) : undefined,
+        staffUserId: wholeStaff ? staffOptionKey(wholeStaff) : undefined,
         staffConfirmation: task.staffConfirmation,
         staffNote: task.staffNote,
         urgency: task.urgency,
@@ -152,6 +155,18 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
       if (!confirmed) return;
     }
 
+    const nextStaff = (() => {
+      if (!hasField(editableFields, 'staff')) return task.staff.slice(0, 1);
+      if (values.staffUserId) {
+        return resolveStaffFromUserId(values.staffUserId, staffOptions, task.staff);
+      }
+      // Creative pipeline tasks: do not wipe assignees when Staff is optional / empty.
+      if (!staffRequired && task.taskCategory === 'project') {
+        return task.staff;
+      }
+      return [];
+    })();
+
     const payload: UpdateMyTaskRequest = {
       taskName: hasField(editableFields, 'taskName') ? values.taskName : task.taskName,
       quantity: hasField(editableFields, 'quantity') ? values.quantity : task.quantity,
@@ -171,9 +186,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
       additionalFactors: hasField(editableFields, 'additionalFactors')
         ? (values.additionalFactors ?? '')
         : task.additionalFactors,
-      staff: hasField(editableFields, 'staff')
-        ? resolveStaffFromUserId(values.staffUserId, staffOptions, task.staff)
-        : task.staff.slice(0, 1),
+      staff: nextStaff,
       staffConfirmation: nextConfirmation,
       staffNote: hasField(editableFields, 'staffNote') ? (values.staffNote ?? '') : task.staffNote,
       urgency: hasField(editableFields, 'urgency') ? values.urgency : task.urgency,
@@ -436,16 +449,16 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
               name="staffUserId"
               label={MY_TASK_COLUMN_HEADERS.staffName}
               rules={
-                isProjectTask
+                staffRequired
                   ? [{ required: true, message: 'Select a staff member for this project task' }]
                   : []
               }
             >
               <Select
-                allowClear={!isProjectTask}
+                allowClear={!staffRequired}
                 showSearch
                 optionFilterProp="label"
-                placeholder={isProjectTask ? 'Select staff for this task' : UNASSIGNED_STAFF_LABEL}
+                placeholder={staffRequired ? 'Select staff for this task' : UNASSIGNED_STAFF_LABEL}
                 options={staffSelectOptions}
               />
             </Form.Item>

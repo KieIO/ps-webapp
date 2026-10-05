@@ -269,6 +269,16 @@ export const canEditCreativePipelineTask = (
   return isAssignedToUser(task, userId);
 };
 
+/**
+ * Prefer CreativeEditDrawer over generic EditTaskModal for in-pipeline creative tasks
+ * (awaiting_cm / assigned_staff / split) so deadline edits do not force Staff re-select.
+ */
+export const shouldUseCreativePipelineEditDrawer = (
+  task: MyTask,
+  role: Role | undefined,
+  userId: string | undefined,
+): boolean => canEditCreativePipelineTask(task, role, userId);
+
 export const canReassignCreativeStaff = (task: MyTask, role: Role | undefined): boolean =>
   resolveEffectivePipelineStage(task) === 'assigned_staff' && canEditCreativePipelineRole(role);
 

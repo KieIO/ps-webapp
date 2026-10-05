@@ -89,3 +89,22 @@ export const showsEvaluationReadOnly = (role: Role, canEvaluate: boolean): boole
     columns.includes('completion') || columns.includes('evaluation') || columns.includes('pmNote')
   );
 };
+
+/**
+ * Generic EditTaskModal requires Staff for normal project tasks.
+ * Creative handoff / pipeline tasks assign via Creative drawers — do not force Staff here.
+ */
+export const requiresStaffOnGenericEdit = (task: {
+  taskCategory?: string;
+  department?: string | null;
+  assignDirection?: string | null;
+  workflowKind?: string | null;
+}): boolean => {
+  if (task.taskCategory !== 'project') return false;
+  const isCreative =
+    task.department === 'creative' ||
+    Boolean(task.department?.startsWith('creative_')) ||
+    task.assignDirection === 'creative_department' ||
+    task.workflowKind === 'creative';
+  return !isCreative;
+};

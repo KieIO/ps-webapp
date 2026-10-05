@@ -23,6 +23,7 @@ import {
   getCreativeSplitSubtasks,
   resolveWholeAssignStaff,
   resolveCreativeDetailPipelineAction,
+  shouldUseCreativePipelineEditDrawer,
 } from './creativePipeline';
 
 const assignee = (overrides: Partial<TaskAssignee>): TaskAssignee => ({
@@ -434,6 +435,10 @@ describe('creativePipeline helpers', () => {
     expect(canChangeCreativeLevelRole(ROLES.CREATIVE_HEAD)).toBe(true);
     expect(canEditCreativePipelineTask(assigned, ROLES.CREATIVE_MANAGER, 'cm-1')).toBe(true);
     expect(canEditCreativePipelineTask(assigned, ROLES.CREATIVE_MANAGER, 'other')).toBe(false);
+    expect(shouldUseCreativePipelineEditDrawer(assigned, ROLES.PM, 'pm-1')).toBe(true);
+    expect(
+      shouldUseCreativePipelineEditDrawer(task({ pipelineStage: 'awaiting_ch' }), ROLES.PM, 'pm-1'),
+    ).toBe(false);
     expect(canReassignCreativeStaff(assigned, ROLES.CREATIVE_HEAD)).toBe(true);
   });
 

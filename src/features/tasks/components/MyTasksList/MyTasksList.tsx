@@ -4,10 +4,12 @@ import { useSearchParams } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { ROLES } from '@/config/permissions';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import { AssignTaskModal } from '../AssignTaskModal/AssignTaskModal';
+import { CreativeEditDrawer } from '../creativePipeline/CreativeEditDrawer';
 import { EvaluateTaskModal } from '../EvaluateTaskModal/EvaluateTaskModal';
 import { EditHeadTaskModal } from '../EditHeadTaskModal/EditHeadTaskModal';
 import { EditTaskModal } from '../EditTaskModal/EditTaskModal';
@@ -19,6 +21,7 @@ import { useDeleteMyTask } from '../../hooks/useDeleteMyTask';
 import { useMyTaskColumns } from '../../hooks/useMyTaskColumns';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { exportMyTasksToCsv } from '../../utils/exportMyTasks';
+import { shouldUseCreativePipelineEditDrawer } from '../../utils/creativePipeline';
 import { canDeleteTask, canEditTask } from '../../utils/taskStatusLock';
 import { computeTaskConfirmationSummary } from '../../utils/taskConfirmationSummary';
 import { canEvaluateTaskLayer } from '../../utils/taskEvaluation';
@@ -101,6 +104,7 @@ const writeWorkDateParam = (
 export function MyTasksList({ taskCategory }: MyTasksListProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { can, role } = usePermission();
+  const userId = useAppSelector((state) => state.auth.user?.id);
   const defaultTodayEnabled = taskCategory === 'project' && !can('VIEW_ALL_TASKS');
   const [filters, setFilters] = useState<MyTaskListFilters>(() =>
     readUrlFilters(searchParams, taskCategory, defaultTodayEnabled),
@@ -116,6 +120,10 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
   const canEvaluate = can('EVALUATE_TASK');
   const canEdit = canEditTask(role);
   const canDelete = canDeleteTask(role);
+
+  const editingUsesCreativeDrawer = Boolean(
+    editingTask && shouldUseCreativePipelineEditDrawer(editingTask, role, userId),
+  );
 
   useEffect(() => {
     if (taskCategory === 'project' && shouldDefaultWorkDate(searchParams, defaultTodayEnabled)) {
@@ -306,7 +314,14 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
           onClose={() => setEditingTask(null)}
         />
       ) : null}
-      {canEdit && role !== ROLES.HEAD ? (
+      {canEdit && role !== ROLES.HEAD && editingUsesCreativeDrawer ? (
+        <CreativeEditDrawer
+          open={editingTask !== null}
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+        />
+      ) : null}
+      {canEdit && role !== ROLES.HEAD && !editingUsesCreativeDrawer ? (
         <EditTaskModal
           open={editingTask !== null}
           task={editingTask}
