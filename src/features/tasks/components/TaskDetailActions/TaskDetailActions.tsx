@@ -34,6 +34,7 @@ import {
   resolveCreativeDetailPipelineAction,
 } from '../../utils/creativePipeline';
 import { getTaskListPath } from '../../utils/taskDetail';
+import { canEvaluateTaskLayer } from '../../utils/taskEvaluation';
 import {
   canRequestRevision,
   getRequestRevisionBlockReason,
@@ -54,7 +55,7 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
   const navigate = useNavigate();
   const { can, role } = usePermission();
   const userId = useAppSelector((state) => state.auth.user?.id);
-  const canEvaluate = can('EVALUATE_TASK');
+  const canEvaluate = can('EVALUATE_TASK') && canEvaluateTaskLayer(role, task);
   const canEdit = canEditTask(role);
   const canDelete = canDeleteTask(role);
   const updateStatus = useUpdateMyTaskStatus();

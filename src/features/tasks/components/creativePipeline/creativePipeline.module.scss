@@ -8,6 +8,10 @@
   margin: 0;
 }
 
+.cmFrameToggle {
+  align-self: flex-start;
+}
+
 .assignDrawer {
   :global(.ant-drawer-body) {
     overflow-y: auto;

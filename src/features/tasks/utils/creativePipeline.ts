@@ -26,6 +26,14 @@ export const PIPELINE_STAGE_LABELS: Record<CreativePipelineStage, string> = {
 
 export type CreativeQueueView = 'ch' | 'cm';
 
+/** CM Creative queue frames — intake (CH→CM) vs execution (CM→staff). */
+export type CreativeCmQueueFrame = 'intake' | 'execution';
+
+export const CREATIVE_CM_QUEUE_FRAME_LABELS: Record<CreativeCmQueueFrame, string> = {
+  intake: 'Nhận từ CH / PM',
+  execution: 'Giao Staff',
+};
+
 export const canViewCreativeQueue = (role: Role | undefined): boolean =>
   role === ROLES.CREATIVE_HEAD ||
   role === ROLES.CREATIVE_MANAGER ||
@@ -73,7 +81,7 @@ export const hasReadyBrief = (task: MyTask): boolean => Boolean(task.description
 
 export const isCreativePipelineParent = (task: MyTask): boolean => !task.parentTaskId;
 
-const isCreativeDeptTask = (task: MyTask): boolean =>
+export const isCreativeDeptTask = (task: MyTask): boolean =>
   task.department === 'creative' ||
   Boolean(task.department?.startsWith('creative_')) ||
   task.assignDirection === 'creative_department' ||
@@ -339,41 +347,53 @@ export const resolveCreativeDetailPipelineAction = (
 /**
  * Creative queue board:
  * - CH: all creative parent tasks in pipeline stages (including already assigned / split)
- * - CM: awaiting_cm + assigned_staff + split for tasks assigned to that CM (Admin: all)
- * Subtasks (parentTaskId) and non-creative / non-project tasks are excluded.
+ * - CM intake: awaiting_cm parents only (work received from CH/PM)
+ * - CM execution: assigned_staff / split parents + split children for staff management
+ * Subtasks are excluded from CH and CM intake; execution includes split children.
  */
 export const filterCreativeQueue = (
   tasks: MyTask[],
   view: CreativeQueueView,
   userId: string | undefined,
   role: Role | undefined,
+  cmFrame: CreativeCmQueueFrame = 'intake',
 ): MyTask[] => {
   const rows: { task: MyTask; stage: CreativePipelineStage }[] = [];
 
   for (const task of tasks) {
-    if (
-      !isCreativePipelineParent(task) ||
-      task.taskCategory !== 'project' ||
-      !isCreativeDeptTask(task)
-    ) {
+    if (task.taskCategory !== 'project' || !isCreativeDeptTask(task)) {
       continue;
     }
-
-    const stage = resolveEffectivePipelineStage(task);
-    if (!isPipelineBoardStage(stage)) continue;
 
     if (view === 'ch') {
+      if (!isCreativePipelineParent(task)) continue;
+      const stage = resolveEffectivePipelineStage(task);
+      if (!isPipelineBoardStage(stage)) continue;
       rows.push({ task, stage });
       continue;
     }
 
-    // CM board never lists CH-inbox items.
-    if (stage === 'awaiting_ch') continue;
-    if (canSeeFullCmQueue(role)) {
+    // CM frames
+    if (cmFrame === 'intake') {
+      if (!isCreativePipelineParent(task)) continue;
+      const stage = resolveEffectivePipelineStage(task);
+      if (stage !== 'awaiting_cm') continue;
+      if (!canSeeFullCmQueue(role) && (!userId || !isAssignedToUser(task, userId))) continue;
       rows.push({ task, stage });
       continue;
     }
-    if (!userId || !isAssignedToUser(task, userId)) continue;
+
+    // execution: staff-facing work
+    if (isSplitChildTask(task)) {
+      if (!isCmScopedExecutionTask(task, userId, role)) continue;
+      rows.push({ task, stage: 'assigned_staff' });
+      continue;
+    }
+
+    if (!isCreativePipelineParent(task)) continue;
+    const stage = resolveEffectivePipelineStage(task);
+    if (stage !== 'assigned_staff' && stage !== 'split') continue;
+    if (!canSeeFullCmQueue(role) && (!userId || !isAssignedToUser(task, userId))) continue;
     rows.push({ task, stage });
   }
 
@@ -382,15 +402,39 @@ export const filterCreativeQueue = (
   return rows.map((row) => row.task);
 };
 
+const isCmScopedExecutionTask = (
+  task: MyTask,
+  userId: string | undefined,
+  role: Role | undefined,
+): boolean => {
+  if (canSeeFullCmQueue(role)) return true;
+  if (!userId) return false;
+  if (task.creativeManager?.userId === userId) return true;
+  return isAssignedToUser(task, userId);
+};
+
 export const countActionableQueueItems = (
   tasks: MyTask[],
   view: CreativeQueueView,
   userId: string | undefined,
   role: Role | undefined,
-): number =>
-  filterCreativeQueue(tasks, view, userId, role).filter((task) =>
-    view === 'ch' ? isAwaitingCh(task) : isAwaitingCm(task),
+  cmFrame: CreativeCmQueueFrame = 'intake',
+): number => {
+  if (view === 'ch') {
+    return filterCreativeQueue(tasks, view, userId, role).filter((task) => isAwaitingCh(task))
+      .length;
+  }
+  if (cmFrame === 'intake') {
+    return filterCreativeQueue(tasks, view, userId, role, 'intake').filter((task) =>
+      isAwaitingCm(task),
+    ).length;
+  }
+  return filterCreativeQueue(tasks, view, userId, role, 'execution').filter(
+    (task) =>
+      task.staffConfirmation === 'not_updated' &&
+      (isSplitChildTask(task) || resolveEffectivePipelineStage(task) === 'assigned_staff'),
   ).length;
+};
 
 export const filterCreativeManagers = (staffOptions: TaskAssignee[]): TaskAssignee[] =>
   staffOptions.filter(

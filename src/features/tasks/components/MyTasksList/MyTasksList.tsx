@@ -21,6 +21,8 @@ import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { exportMyTasksToCsv } from '../../utils/exportMyTasks';
 import { canDeleteTask, canEditTask } from '../../utils/taskStatusLock';
 import { computeTaskConfirmationSummary } from '../../utils/taskConfirmationSummary';
+import { canEvaluateTaskLayer } from '../../utils/taskEvaluation';
+import { filterTasksForViewerRole } from '../../utils/taskListVisibility';
 import {
   parseWorkDateParam,
   shouldDefaultWorkDate,
@@ -187,10 +189,12 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
   const { data, isLoading, isError, error } = useMyTaskList(queryFilters);
 
   const displayItems = useMemo(() => {
-    const items = data?.items ?? [];
-    if (!filters.otOnly) return items;
-    return items.filter((task) => Boolean(task.overtimeRequestId));
-  }, [data?.items, filters.otOnly]);
+    let items = filterTasksForViewerRole(data?.items ?? [], role);
+    if (filters.otOnly) {
+      items = items.filter((task) => Boolean(task.overtimeRequestId));
+    }
+    return items;
+  }, [data?.items, filters.otOnly, role]);
 
   const confirmationSummary = useMemo(
     () => computeTaskConfirmationSummary(displayItems),
@@ -307,7 +311,9 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
           open={editingTask !== null}
           task={editingTask}
           role={role ?? ROLES.EMPLOYEE}
-          canEvaluate={canEvaluate}
+          canEvaluate={Boolean(
+            canEvaluate && editingTask && canEvaluateTaskLayer(role, editingTask),
+          )}
           onClose={() => setEditingTask(null)}
         />
       ) : null}

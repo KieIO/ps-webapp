@@ -171,7 +171,7 @@ describe('creativePipeline helpers', () => {
     expect(needsChBrief(items[0])).toBe(false);
   });
 
-  it('CM board shows own awaiting_cm, assigned_staff, and split only', () => {
+  it('CM intake frame only shows awaiting_cm tasks assigned to that CM', () => {
     const cm = 'dev-creative_manager';
     const items = [
       task({
@@ -191,6 +191,33 @@ describe('creativePipeline helpers', () => {
         staff: [assignee({ userId: 'staff-1' })],
       }),
       task({
+        id: 'split-mine',
+        pipelineStage: 'split',
+        creativeManager: assignee({ userId: cm, name: 'Me' }),
+        staff: [assignee({ userId: cm })],
+      }),
+      task({ id: 'still-ch', pipelineStage: 'awaiting_ch' }),
+    ];
+    expect(
+      filterCreativeQueue(items, 'cm', cm, ROLES.CREATIVE_MANAGER, 'intake').map((item) => item.id),
+    ).toEqual(['await-mine']);
+  });
+
+  it('CM execution frame shows assigned_staff / split parents and split children for that CM', () => {
+    const cm = 'dev-creative_manager';
+    const items = [
+      task({
+        id: 'await-mine',
+        pipelineStage: 'awaiting_cm',
+        staff: [assignee({ userId: cm })],
+      }),
+      task({
+        id: 'done-mine',
+        pipelineStage: 'assigned_staff',
+        creativeManager: assignee({ userId: cm, name: 'Me' }),
+        staff: [assignee({ userId: 'staff-1' })],
+      }),
+      task({
         id: 'done-other',
         pipelineStage: 'assigned_staff',
         creativeManager: assignee({ userId: 'usr-cm-yen', name: 'Other' }),
@@ -202,14 +229,23 @@ describe('creativePipeline helpers', () => {
         creativeManager: assignee({ userId: cm, name: 'Me' }),
         staff: [assignee({ userId: cm })],
       }),
-      task({ id: 'still-ch', pipelineStage: 'awaiting_ch' }),
+      task({
+        id: 'child-mine',
+        parentTaskId: 'split-mine',
+        taskKind: 'split',
+        pipelineStage: 'assigned_staff',
+        creativeManager: assignee({ userId: cm, name: 'Me' }),
+        staff: [assignee({ userId: 'staff-1' })],
+      }),
     ];
     expect(
-      filterCreativeQueue(items, 'cm', cm, ROLES.CREATIVE_MANAGER).map((item) => item.id),
-    ).toEqual(['await-mine', 'done-mine', 'split-mine']);
+      filterCreativeQueue(items, 'cm', cm, ROLES.CREATIVE_MANAGER, 'execution').map(
+        (item) => item.id,
+      ),
+    ).toEqual(['child-mine', 'done-mine', 'split-mine']);
   });
 
-  it('Admin CM view sees all post-CH pipeline tasks', () => {
+  it('Admin CM intake sees awaiting_cm; execution sees staff work', () => {
     const items = [
       task({ id: 'ch', pipelineStage: 'awaiting_ch' }),
       task({
@@ -224,13 +260,15 @@ describe('creativePipeline helpers', () => {
         staff: [assignee({ userId: 'staff' })],
       }),
     ];
-    expect(filterCreativeQueue(items, 'cm', 'admin', ROLES.ADMIN).map((item) => item.id)).toEqual([
-      'cm1',
-      'cm2',
-    ]);
+    expect(
+      filterCreativeQueue(items, 'cm', 'admin', ROLES.ADMIN, 'intake').map((item) => item.id),
+    ).toEqual(['cm1']);
+    expect(
+      filterCreativeQueue(items, 'cm', 'admin', ROLES.ADMIN, 'execution').map((item) => item.id),
+    ).toEqual(['cm2']);
   });
 
-  it('PM CM view sees all post-CH pipeline tasks (like Admin)', () => {
+  it('PM CM intake sees awaiting_cm; execution sees staff work', () => {
     const items = [
       task({ id: 'ch', pipelineStage: 'awaiting_ch' }),
       task({
@@ -245,10 +283,12 @@ describe('creativePipeline helpers', () => {
         staff: [assignee({ userId: 'staff' })],
       }),
     ];
-    expect(filterCreativeQueue(items, 'cm', 'pm-1', ROLES.PM).map((item) => item.id)).toEqual([
-      'cm1',
-      'cm2',
-    ]);
+    expect(
+      filterCreativeQueue(items, 'cm', 'pm-1', ROLES.PM, 'intake').map((item) => item.id),
+    ).toEqual(['cm1']);
+    expect(
+      filterCreativeQueue(items, 'cm', 'pm-1', ROLES.PM, 'execution').map((item) => item.id),
+    ).toEqual(['cm2']);
   });
 
   it('CM with missing userId sees an empty board', () => {
@@ -287,6 +327,7 @@ describe('creativePipeline helpers', () => {
         'cm',
         'cm-1',
         ROLES.CREATIVE_MANAGER,
+        'intake',
       ),
     ).toBe(1);
   });

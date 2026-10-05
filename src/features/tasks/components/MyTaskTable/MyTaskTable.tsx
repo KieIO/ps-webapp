@@ -40,6 +40,7 @@ import {
   isRevisionTask,
   PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION,
 } from '../../utils/taskRevision';
+import { canEvaluateTaskLayer } from '../../utils/taskEvaluation';
 import { canChangeTaskStatus, TASK_STATUS_LOCKED_MESSAGE } from '../../utils/taskStatusLock';
 import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/CompletionProgressCell';
 import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
@@ -267,7 +268,7 @@ export function MyTaskTable({
                   />
                 </Tooltip>
               ) : null}
-              {canEvaluate && onEvaluate ? (
+              {canEvaluate && onEvaluate && canEvaluateTaskLayer(role, record) ? (
                 <Tooltip title={evaluateTooltip}>
                   <Button
                     type="text"

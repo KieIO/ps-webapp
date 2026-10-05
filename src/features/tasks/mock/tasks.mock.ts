@@ -51,6 +51,8 @@ import {
   resolveEffectivePipelineStage,
 } from '../utils/creativePipeline';
 import { canEditCreativeDeadline, canEditCreativeScheduleMeta } from '../utils/creativeVisibility';
+import { canEvaluateTaskLayer } from '../utils/taskEvaluation';
+import { shouldHideSplitChildFromTaskList } from '../utils/taskListVisibility';
 import { normalizeTaskUrgencySetting } from '../utils/taskUrgency';
 import {
   ACTIVE_REVISION_CONFIRMATIONS,
@@ -164,6 +166,9 @@ export const filterMockTasks = (
   const search = filters.search?.trim().toLowerCase();
   const viewAllTasks = canViewAllTasks(assigneeUserId, viewerRole);
 
+  const resolvedRole =
+    viewerRole ?? (assigneeUserId ? deriveDevRoleFromUserId(assigneeUserId) : undefined);
+
   return tasks.filter((task) => {
     if (assigneeUserId && !viewAllTasks) {
       const assigneeIds = task.staff.map((member) => member.userId).filter(Boolean);
@@ -173,6 +178,10 @@ export const filterMockTasks = (
       if (!isAssignee && !isCreativeManager) {
         return false;
       }
+    }
+    // Oversight roles (VIEW_ALL): hide CM→staff split children — parent handoff only.
+    if (viewAllTasks && shouldHideSplitChildFromTaskList(task, resolvedRole)) {
+      return false;
     }
     if (filters.taskCategory && task.taskCategory !== filters.taskCategory) return false;
     if (filters.projectName && task.projectName !== filters.projectName) return false;
@@ -845,6 +854,11 @@ export const mockUpdateMyTaskPmEvaluation = async (
   const index = tasks.findIndex((entry) => entry.id === id);
   if (index === -1) {
     throw new Error('Task not found');
+  }
+
+  const role = editorUserId ? deriveDevRoleFromUserId(editorUserId) : undefined;
+  if (role && !canEvaluateTaskLayer(role, tasks[index])) {
+    throw new Error('Bạn không được đánh giá task ở tầng này');
   }
 
   const updated: MyTask = {

@@ -16,6 +16,7 @@ import {
   canProcessChQueue,
   canProcessCmQueue,
   countActionableQueueItems,
+  CREATIVE_CM_QUEUE_FRAME_LABELS,
   defaultCreativeQueueView,
   filterCreativeQueue,
   isAwaitingCh,
@@ -25,6 +26,7 @@ import {
   pipelineAssigneeLabel,
   queueActionLabel,
   resolveEffectivePipelineStage,
+  type CreativeCmQueueFrame,
   type CreativeQueueView,
 } from '../../utils/creativePipeline';
 import { getTaskDeadline } from '../../utils/taskDetail';
@@ -47,21 +49,27 @@ export function CreativePipelineView() {
   const user = useAppSelector((state) => state.auth.user);
   const role = user?.role;
   const [view, setView] = useState<CreativeQueueView>(defaultCreativeQueueView(role));
+  const [cmFrame, setCmFrame] = useState<CreativeCmQueueFrame>('intake');
   const [selected, setSelected] = useState<MyTask | null>(null);
 
   useEffect(() => {
     setView(defaultCreativeQueueView(role));
   }, [role]);
+
+  useEffect(() => {
+    if (view !== 'cm') setCmFrame('intake');
+  }, [view]);
+
   const { data, isLoading } = useMyTaskList({ taskCategory: 'project' });
   const tasks = useMemo(() => data?.items ?? [], [data?.items]);
 
   const queue = useMemo(
-    () => filterCreativeQueue(tasks, view, user?.id, role),
-    [tasks, view, user?.id, role],
+    () => filterCreativeQueue(tasks, view, user?.id, role, cmFrame),
+    [tasks, view, user?.id, role, cmFrame],
   );
   const actionableCount = useMemo(
-    () => countActionableQueueItems(tasks, view, user?.id, role),
-    [tasks, view, user?.id, role],
+    () => countActionableQueueItems(tasks, view, user?.id, role, cmFrame),
+    [tasks, view, user?.id, role, cmFrame],
   );
 
   const showViewToggle = role === ROLES.ADMIN || role === ROLES.PM;
@@ -72,7 +80,9 @@ export function CreativePipelineView() {
   const closeDrawer = () => setSelected(null);
 
   const openHeadAssign = Boolean(selected && view === 'ch' && isAwaitingCh(selected));
-  const openManagerAssign = Boolean(selected && view === 'cm' && isAwaitingCm(selected));
+  const openManagerAssign = Boolean(
+    selected && view === 'cm' && cmFrame === 'intake' && isAwaitingCm(selected),
+  );
   const openEdit = Boolean(
     selected &&
       !openHeadAssign &&
@@ -84,7 +94,9 @@ export function CreativePipelineView() {
   const title = view === 'cm' ? 'Hàng chờ Creative Manager' : 'Hàng chờ Creative Head';
   const subtitle =
     view === 'cm'
-      ? 'Nhận task từ Creative Head, rồi giao nguyên hoặc chia nhỏ cho Staff.'
+      ? cmFrame === 'intake'
+        ? 'Task nhận từ Creative Head / PM — giao nguyên hoặc chia nhỏ cho Staff.'
+        : 'Task đã giao Staff (nguyên hoặc task nhỏ) — quản lý và đánh giá nhân viên.'
       : 'Nhận task từ PM, bổ sung brief nếu cần, rồi giao cho Creative Manager.';
 
   const columns: ColumnsType<MyTask> = useMemo(
@@ -240,7 +252,8 @@ export function CreativePipelineView() {
   );
 
   const headReadOnly = !selected || !chEnabled || !isAwaitingCh(selected) || view !== 'ch';
-  const managerReadOnly = !selected || !cmEnabled || !isAwaitingCm(selected) || view !== 'cm';
+  const managerReadOnly =
+    !selected || !cmEnabled || !isAwaitingCm(selected) || view !== 'cm' || cmFrame !== 'intake';
 
   return (
     <div className={styles.page}>
@@ -261,6 +274,18 @@ export function CreativePipelineView() {
         }
       />
 
+      {view === 'cm' ? (
+        <Segmented
+          className={styles.cmFrameToggle}
+          value={cmFrame}
+          onChange={(value) => setCmFrame(value as CreativeCmQueueFrame)}
+          options={[
+            { label: CREATIVE_CM_QUEUE_FRAME_LABELS.intake, value: 'intake' },
+            { label: CREATIVE_CM_QUEUE_FRAME_LABELS.execution, value: 'execution' },
+          ]}
+        />
+      ) : null}
+
       {actionableCount > 0 ? (
         <Alert
           className={styles.pageAlert}
@@ -269,12 +294,16 @@ export function CreativePipelineView() {
           message={
             view === 'ch'
               ? `${actionableCount} task cần xử lý và giao cho CM`
-              : `${actionableCount} task cần giao cho Staff`
+              : cmFrame === 'intake'
+                ? `${actionableCount} task cần giao cho Staff`
+                : `${actionableCount} task Staff chưa cập nhật`
           }
         />
       ) : null}
 
-      <CardWrapper title="Danh sách task">
+      <CardWrapper
+        title={view === 'cm' ? CREATIVE_CM_QUEUE_FRAME_LABELS[cmFrame] : 'Danh sách task'}
+      >
         <TableWrapper
           loading={isLoading}
           isEmpty={!isLoading && queue.length === 0}
@@ -282,7 +311,9 @@ export function CreativePipelineView() {
           emptyDescription={
             view === 'ch'
               ? 'Task Creative từ PM sẽ xuất hiện tại đây khi cần bạn xử lý.'
-              : 'Task Creative Head giao cho bạn sẽ xuất hiện tại đây.'
+              : cmFrame === 'intake'
+                ? 'Task Creative Head giao cho bạn sẽ xuất hiện tại đây.'
+                : 'Task đã giao Staff (nguyên hoặc chia nhỏ) sẽ xuất hiện tại đây.'
           }
         >
           <Table
