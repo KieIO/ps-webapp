@@ -1,8 +1,12 @@
 import { Form, Input, InputNumber, Modal, Select } from 'antd';
 import { useEffect } from 'react';
-import { PROJECT_NAME_COLUMN_LABEL, PROJECT_TABLE_COLUMN_HEADERS } from '../../constants';
+import {
+  EVALUATION_SCORE_OPTIONS,
+  PROJECT_NAME_COLUMN_LABEL,
+  PROJECT_TABLE_COLUMN_HEADERS,
+} from '../../constants';
 import { useUpdateProject } from '../../hooks/useUpdateProject';
-import { EVALUATION_LEVELS, type Project } from '../../schemas/project.schema';
+import type { Project } from '../../schemas/project.schema';
 import { buildUpdateProjectPayload } from '../../utils/buildUpdateProjectPayload';
 import styles from '../EditProjectModal/EditProjectModal.module.scss';
 
@@ -11,12 +15,6 @@ interface EvaluateProjectModalProps {
   project: Project | null;
   onClose: () => void;
 }
-
-/** Project "Đánh giá" is a 1–4 score stored as string for API compatibility. */
-const PROJECT_EVALUATION_OPTIONS = EVALUATION_LEVELS.map((value) => ({
-  value: String(value),
-  label: String(value),
-}));
 
 type EvaluateProjectFormValues = {
   completionPercent: number;
@@ -98,7 +96,7 @@ export function EvaluateProjectModal({ open, project, onClose }: EvaluateProject
           <InputNumber min={0} max={100} precision={0} addonAfter="%" style={{ width: '100%' }} />
         </Form.Item>
         <Form.Item name="evaluation" label={PROJECT_TABLE_COLUMN_HEADERS.evaluation}>
-          <Select allowClear placeholder="—" options={PROJECT_EVALUATION_OPTIONS} />
+          <Select allowClear placeholder="—" options={[...EVALUATION_SCORE_OPTIONS]} />
         </Form.Item>
         <Form.Item name="note" label={PROJECT_TABLE_COLUMN_HEADERS.note}>
           <Input.TextArea rows={3} placeholder="Add a note" />

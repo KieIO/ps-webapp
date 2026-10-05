@@ -61,6 +61,15 @@ export const EVALUATION_LEVEL_LABELS: Record<EvaluationLevel, string> = {
   4: 'Level 4',
 };
 
+/**
+ * Đánh giá task / project score (1–5).
+ * Separate from volume / nature / time / projectLevel classification (1–4).
+ */
+export const EVALUATION_SCORE_OPTIONS = ['1', '2', '3', '4', '5'].map((value) => ({
+  value,
+  label: value,
+}));
+
 export const PROJECT_URGENCY_STYLES: Record<ProjectUrgencyColor, { dot: string; label: string }> = {
   red: { dot: URGENCY_STYLES.red.dot, label: URGENCY_STYLES.red.label },
   orange: { dot: URGENCY_STYLES.orange.dot, label: URGENCY_STYLES.orange.label },

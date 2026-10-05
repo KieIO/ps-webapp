@@ -1,8 +1,16 @@
 import { Form, Input, InputNumber, Modal, Select } from 'antd';
 import { useEffect } from 'react';
-import { MY_TASK_COLUMN_HEADERS, PROJECT_EVALUATION_SCORE_OPTIONS } from '../../constants';
+import {
+  EVALUATE_TASK_COMPLETED_QUANTITY_LABEL,
+  MY_TASK_COLUMN_HEADERS,
+  PROJECT_EVALUATION_SCORE_OPTIONS,
+} from '../../constants';
 import { useUpdateMyTaskPmEvaluation } from '../../hooks/useUpdateMyTaskPmEvaluation';
 import type { MyTask, UpdateMyTaskPmEvaluationRequest } from '../../schemas/task.schema';
+import {
+  computeCompletionPercentFromQuantity,
+  deriveCompletedQuantityFromPercent,
+} from '../../utils/evaluationCompletion';
 import { formatTaskStaffNames } from '../../utils/staff';
 import styles from '../EditTaskModal/EditTaskModal.module.scss';
 
@@ -12,13 +20,23 @@ interface EvaluateTaskModalProps {
   onClose: () => void;
 }
 
+type EvaluateTaskFormValues = UpdateMyTaskPmEvaluationRequest & {
+  /** UI-only — drives %; not persisted separately. */
+  completedQuantity: number;
+};
+
 export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProps) {
-  const [form] = Form.useForm<UpdateMyTaskPmEvaluationRequest>();
+  const [form] = Form.useForm<EvaluateTaskFormValues>();
   const { mutate, isPending } = useUpdateMyTaskPmEvaluation();
 
   useEffect(() => {
     if (open && task) {
+      const assignedQuantity = task.quantity ?? 0;
       form.setFieldsValue({
+        completedQuantity: deriveCompletedQuantityFromPercent(
+          task.completionPercent,
+          assignedQuantity,
+        ),
         completionPercent: task.completionPercent ?? 0,
         pmEvaluation: task.pmEvaluation,
         pmNote: task.pmNote,
@@ -31,7 +49,17 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
     onClose();
   };
 
-  const handleFinish = (values: UpdateMyTaskPmEvaluationRequest) => {
+  const handleValuesChange = (changed: Partial<EvaluateTaskFormValues>) => {
+    if (!('completedQuantity' in changed) || !task) return;
+    const assignedQuantity = task.quantity ?? 0;
+    if (assignedQuantity <= 0) return;
+    form.setFieldValue(
+      'completionPercent',
+      computeCompletionPercentFromQuantity(changed.completedQuantity ?? 0, assignedQuantity),
+    );
+  };
+
+  const handleFinish = (values: EvaluateTaskFormValues) => {
     if (!task) return;
 
     mutate(
@@ -51,6 +79,8 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
       },
     );
   };
+
+  const assignedQuantity = task?.quantity ?? 0;
 
   return (
     <Modal
@@ -77,14 +107,36 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
             <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.staffName}:</span>{' '}
             {formatTaskStaffNames(task.staff, '—')}
           </span>
+          <span>
+            <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.quantity}:</span>{' '}
+            {assignedQuantity}
+          </span>
         </div>
       )}
 
-      <Form form={form} layout="vertical" onFinish={handleFinish} requiredMark={false}>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleFinish}
+        onValuesChange={handleValuesChange}
+        requiredMark={false}
+      >
+        <Form.Item
+          name="completedQuantity"
+          label={EVALUATE_TASK_COMPLETED_QUANTITY_LABEL}
+          rules={[{ required: true, message: 'Nhập số lượng hoàn thành' }]}
+        >
+          <InputNumber min={0} precision={1} style={{ width: '100%' }} />
+        </Form.Item>
         <Form.Item
           name="completionPercent"
           label={MY_TASK_COLUMN_HEADERS.completion}
           rules={[{ required: true, message: 'Completion is required' }]}
+          extra={
+            assignedQuantity > 0
+              ? 'Tự tính từ số lượng hoàn thành / số lượng được giao. Có thể chỉnh tay nếu cần.'
+              : undefined
+          }
         >
           <InputNumber min={0} max={100} precision={0} addonAfter="%" style={{ width: '100%' }} />
         </Form.Item>

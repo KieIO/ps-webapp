@@ -110,6 +110,9 @@ export const MY_TASK_COLUMN_HEADERS: Record<MyTaskColumnKey, string> = {
   finishedDate: 'Finished Date',
 };
 
+/** Evaluate task — primary input is completed units; % is derived. */
+export const EVALUATE_TASK_COMPLETED_QUANTITY_LABEL = 'Số lượng hoàn thành';
+
 /** Department Head — column labels on the task list (and shared labels in EditHeadTaskModal). */
 export const MY_TASK_HEAD_COLUMN_HEADERS: Partial<Record<MyTaskColumnKey, string>> = {
   projectName: PROJECT_NAME_COLUMN_LABEL,
@@ -214,10 +217,7 @@ export const MY_TASK_CREATIVE_MANAGER_COLUMN_KEYS: MyTaskColumnKey[] = [
 export const TASK_STATUS_CHANGE_NOTE_LABEL = 'Note khi đổi trạng thái (nếu có)';
 
 /** Head / project evaluation score shown in ĐÁNH GIÁ column (1–5). */
-export const PROJECT_EVALUATION_SCORE_OPTIONS = ['1', '2', '3', '4', '5'].map((value) => ({
-  value,
-  label: value,
-}));
+export { EVALUATION_SCORE_OPTIONS as PROJECT_EVALUATION_SCORE_OPTIONS } from '@/features/projects/constants';
 
 /** Urgency select options — Auto first, then locked levels in product table order. */
 export const TASK_URGENCY_OPTIONS = PROJECT_URGENCY_SETTING_ORDER.map((value: ProjectUrgency) => ({

@@ -3,7 +3,12 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
 import { TaskUrgencySelect } from '@/features/tasks/components/TaskUrgencySelect/TaskUrgencySelect';
-import { EVALUATION_LEVEL_OPTIONS, EVALUATION_LEVEL_LABELS, STATUS_OPTIONS } from '../../constants';
+import {
+  EVALUATION_LEVEL_OPTIONS,
+  EVALUATION_LEVEL_LABELS,
+  EVALUATION_SCORE_OPTIONS,
+  STATUS_OPTIONS,
+} from '../../constants';
 import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProjectList';
 import { useUpdateProject } from '../../hooks/useUpdateProject';
 import { computeProjectLevel } from '../../utils/projectLevel';
@@ -14,7 +19,6 @@ import {
   resolvePersonFromForm,
 } from '../../utils/personRef';
 import {
-  EVALUATION_LEVELS,
   type EvaluationLevel,
   type Project,
   type UpdateProjectRequest,
@@ -27,12 +31,6 @@ interface EditProjectModalProps {
   project: Project | null;
   onClose: () => void;
 }
-
-/** Project "Đánh giá" is a 1–4 score stored as string for API compatibility. */
-const PROJECT_EVALUATION_OPTIONS = EVALUATION_LEVELS.map((value) => ({
-  value: String(value),
-  label: String(value),
-}));
 
 type EditProjectFormValues = Omit<UpdateProjectRequest, 'startDate' | 'endDate' | 'department'> & {
   startDate: Dayjs;
@@ -322,7 +320,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
           <p className={styles.sectionTitle}>Status</p>
           <div className={styles.row}>
             <Form.Item name="evaluation" label="Đánh giá">
-              <Select allowClear placeholder="—" options={PROJECT_EVALUATION_OPTIONS} />
+              <Select allowClear placeholder="—" options={[...EVALUATION_SCORE_OPTIONS]} />
             </Form.Item>
             <Form.Item
               name="status"
