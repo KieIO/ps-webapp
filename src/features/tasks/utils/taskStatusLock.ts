@@ -11,12 +11,31 @@ export const isCancelledTaskStatus = (status: TaskConfirmationStatus): boolean =
 export const isCancelledTask = (task: Pick<MyTask, 'staffConfirmation'>): boolean =>
   isCancelledTaskStatus(task.staffConfirmation);
 
+/** Finished / cancelled tasks cannot have meta (deadline, level, …) edited. */
+export const isTaskMetaEditLockedByStatus = (status: TaskConfirmationStatus | undefined): boolean =>
+  status === 'finished' || status === 'cancelled';
+
 /** Employees cannot set a task to cancelled; PM+ (and Head/Admin) can. */
 export const canCancelTask = (role: Role | undefined): boolean =>
   role != null && role !== ROLES.EMPLOYEE;
 
-/** Employees and Creative Managers cannot edit task meta via the general edit flow.
- * CM uses Creative pipeline assign/edit endpoints for owned creative tasks instead. */
+/**
+ * Meta edit after assign/confirm: Admin, Head, or the user who clicked Create.
+ * Finished/cancelled tasks stay locked.
+ */
+export const canEditTaskMeta = (
+  task: Pick<MyTask, 'staffConfirmation' | 'createdById'> | null | undefined,
+  role: Role | undefined,
+  userId: string | undefined,
+): boolean => {
+  if (!role || !task) return false;
+  if (isTaskMetaEditLockedByStatus(task.staffConfirmation)) return false;
+  if (role === ROLES.ADMIN || role === ROLES.HEAD) return true;
+  if (userId && task.createdById && userId === task.createdById) return true;
+  return false;
+};
+
+/** @deprecated Prefer canEditTaskMeta(task, role, userId). Role-only check kept for delete gating. */
 export const canEditTask = (role: Role | undefined): boolean =>
   role != null && role !== ROLES.EMPLOYEE && role !== ROLES.CREATIVE_MANAGER;
 

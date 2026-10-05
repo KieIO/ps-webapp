@@ -130,6 +130,8 @@ export const MyTaskSchema = z.object({
    * update status / edit / evaluate.
    */
   activeRevisionChildCount: z.number().int().min(0).optional(),
+  /** User who clicked Create — used for post-confirm meta edit authz. */
+  createdById: z.string().nullish(),
   creativeManager: TaskPersonSchema.optional(),
   /** Set when the task is handed to a staff member (15-minute confirm SLA). */
   assignedAt: z.string().nullish(),

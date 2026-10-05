@@ -14,6 +14,7 @@ import dayjs from 'dayjs';
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { buildMyTaskDetailPath, DATETIME_SHORT_FORMAT } from '@/config/constants';
+import { ROLES } from '@/config/permissions';
 import type { ProjectUrgency } from '@/features/projects/schemas/project.schema';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
@@ -99,19 +100,29 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   } = useAssignPickerCapacity(task, open, capacityDeadlineOverride);
 
   const canEdit = Boolean(task && canEditCreativePipelineTask(task, role, userId));
-  const canEditSchedule = canEdit && canEditCreativeScheduleMeta(role);
-  const canEditLevel = Boolean(task && canChangeCreativeLevelRole(role));
+  const isCreator = Boolean(userId && task?.createdById && userId === task.createdById);
+  const canEditSchedule =
+    canEdit && (canEditCreativeScheduleMeta(role) || isCreator || role === ROLES.HEAD);
+  const canEditLevel = Boolean(
+    task &&
+      (canChangeCreativeLevelRole(role) || isCreator) &&
+      !isCreativeLevelLockedByStaffConfirm(task),
+  );
   const levelLocked = Boolean(task && isCreativeLevelLockedByStaffConfirm(task));
   const canReassign = Boolean(task && canReassignCreativeStaff(task, role) && canEdit);
   const canReassignCm = Boolean(task && canReassignCreativeManager(task, role) && canEdit);
   const stage = task ? resolveEffectivePipelineStage(task) : undefined;
   const splitParent = Boolean(task && isSplitParentTask(task));
   const splitChild = Boolean(task && isSplitChildTask(task));
-  // Match BE: Admin/PM anytime; CM only on assigned_staff / split child (not awaiting_cm / split parent).
+  // Match BE: Admin/PM/Head/creator anytime; CM only on assigned_staff / split child.
   const canEditCreativeDl =
     canEdit &&
-    canEditCreativeDeadline(role) &&
-    (canEditCreativeScheduleMeta(role) || stage === 'assigned_staff' || splitChild);
+    (canEditCreativeDeadline(role) || isCreator || role === ROLES.HEAD) &&
+    (canEditCreativeScheduleMeta(role) ||
+      isCreator ||
+      role === ROLES.HEAD ||
+      stage === 'assigned_staff' ||
+      splitChild);
   const splitSiblings = useMemo(() => {
     if (!task?.parentTaskId) return [];
     const parent = allTasks.find((entry) => entry.id === task.parentTaskId);

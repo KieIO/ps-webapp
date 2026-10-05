@@ -81,6 +81,7 @@ export const ProjectRecordSchema = z.object({
   finishedDate: z.string().optional(),
   archivedAt: z.string().optional(),
   updatedAt: z.string().optional(),
+  createdById: z.string().nullish(),
 });
 
 /** Optional list aggregates — backend may omit; UI defaults via `withProjectListDefaults`. */

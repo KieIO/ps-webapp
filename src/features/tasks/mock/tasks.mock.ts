@@ -589,6 +589,7 @@ export const mockCreateMyTask = async (
     assignedAt: payload.staff.length > 0 && !isCreativeHandoffPayload(payload) ? now : undefined,
     pipelineStage: resolveCreatePipelineStage(payload),
     briefOwner: resolveCreateBriefOwner(payload),
+    createdById: creatorUserId,
     updatedAt: now,
   });
 

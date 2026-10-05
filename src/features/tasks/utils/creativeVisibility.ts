@@ -13,9 +13,9 @@ export const canViewCreativeDeadline = (
   return false;
 };
 
-/** PM deadline / urgency — Admin & PM only (not CH/CM). */
+/** PM deadline / urgency — Admin, Head, PM (creator gated at call site when needed). */
 export const canEditCreativeScheduleMeta = (role: Role | undefined): boolean =>
-  role === ROLES.ADMIN || role === ROLES.PM;
+  role === ROLES.ADMIN || role === ROLES.HEAD || role === ROLES.PM;
 
 /**
  * Creative deadline: Admin/PM always; CM may set when assigning / editing execution tasks.

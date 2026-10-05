@@ -130,7 +130,10 @@ const generateProjectCode = (
   return `POKE${seq}.${day}.${month}.${clientAbbr}`;
 };
 
-export const mockCreateProject = async (payload: CreateProjectRequest): Promise<Project> => {
+export const mockCreateProject = async (
+  payload: CreateProjectRequest,
+  creatorUserId?: string,
+): Promise<Project> => {
   await mockDelay();
 
   const projects = getMockProjectsStore();
@@ -161,6 +164,7 @@ export const mockCreateProject = async (payload: CreateProjectRequest): Promise<
     status: payload.status,
     urgency: payload.urgency,
     finishedDate: payload.status === 'finish' ? now : undefined,
+    createdById: creatorUserId,
     updatedAt: now,
   };
 

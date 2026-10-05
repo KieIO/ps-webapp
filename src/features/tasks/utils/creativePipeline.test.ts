@@ -423,18 +423,23 @@ describe('creativePipeline helpers', () => {
     ).toBe('Hoang Yen, Nguyen Van An');
   });
 
-  it('locks level after staff confirm and scopes edit permissions', () => {
+  it('allows level after confirm and scopes edit to Admin/Head/creator (CM operational)', () => {
     const assigned = task({
       pipelineStage: 'assigned_staff',
       staffConfirmation: 'confirmed',
       creativeManager: assignee({ userId: 'cm-1', name: 'CM' }),
       staff: [assignee({ userId: 'staff-1', name: 'An' })],
+      createdById: 'pm-1',
     });
-    expect(isCreativeLevelLockedByStaffConfirm(assigned)).toBe(true);
+    expect(isCreativeLevelLockedByStaffConfirm(assigned)).toBe(false);
+    expect(
+      isCreativeLevelLockedByStaffConfirm({ ...assigned, staffConfirmation: 'finished' }),
+    ).toBe(true);
     expect(canChangeCreativeLevelRole(ROLES.CREATIVE_MANAGER)).toBe(false);
     expect(canChangeCreativeLevelRole(ROLES.CREATIVE_HEAD)).toBe(true);
     expect(canEditCreativePipelineTask(assigned, ROLES.CREATIVE_MANAGER, 'cm-1')).toBe(true);
     expect(canEditCreativePipelineTask(assigned, ROLES.CREATIVE_MANAGER, 'other')).toBe(false);
+    expect(shouldUseCreativePipelineEditDrawer(assigned, ROLES.PM, 'other-pm')).toBe(false);
     expect(shouldUseCreativePipelineEditDrawer(assigned, ROLES.PM, 'pm-1')).toBe(true);
     expect(
       shouldUseCreativePipelineEditDrawer(task({ pipelineStage: 'awaiting_ch' }), ROLES.PM, 'pm-1'),
@@ -528,7 +533,11 @@ describe('creativePipeline helpers', () => {
       creativeManager: assignee({ userId: 'cm-1' }),
       staff: [assignee({ userId: 'staff-1', name: 'An' })],
     });
-    expect(resolveCreativeDetailPipelineAction(assigned, ROLES.PM, 'pm')?.action).toBe('edit');
+    expect(resolveCreativeDetailPipelineAction(assigned, ROLES.PM, 'pm')?.action).toBeUndefined();
+    expect(
+      resolveCreativeDetailPipelineAction({ ...assigned, createdById: 'pm' }, ROLES.PM, 'pm')
+        ?.action,
+    ).toBe('edit');
     expect(
       resolveCreativeDetailPipelineAction(
         { ...assigned, staffConfirmation: 'finished' },

@@ -243,14 +243,15 @@ const isAssignedToUser = (task: MyTask, userId: string): boolean =>
 export const canEditCreativePipelineRole = (role: Role | undefined): boolean =>
   role === ROLES.ADMIN ||
   role === ROLES.PM ||
+  role === ROLES.HEAD ||
   role === ROLES.CREATIVE_HEAD ||
   role === ROLES.CREATIVE_MANAGER;
 
 export const canChangeCreativeLevelRole = (role: Role | undefined): boolean =>
-  role === ROLES.ADMIN || role === ROLES.CREATIVE_HEAD;
+  role === ROLES.ADMIN || role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD;
 
 export const isCreativeLevelLockedByStaffConfirm = (task: MyTask): boolean =>
-  task.staffConfirmation === 'confirmed' || task.staffConfirmation === 'finished';
+  task.staffConfirmation === 'finished';
 
 export const isEditableCreativePipelineStage = (task: MyTask): boolean => {
   const stage = resolveEffectivePipelineStage(task);
@@ -264,9 +265,24 @@ export const canEditCreativePipelineTask = (
 ): boolean => {
   if (!canEditCreativePipelineRole(role) || !isEditableCreativePipelineStage(task)) return false;
   if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
-  if (role === ROLES.ADMIN || role === ROLES.PM || role === ROLES.CREATIVE_HEAD) return true;
-  if (!userId) return false;
-  return isAssignedToUser(task, userId);
+
+  // Admin / Head / creator: full meta edit after assign/confirm.
+  if (role === ROLES.ADMIN || role === ROLES.HEAD) return true;
+  if (userId && task.createdById && userId === task.createdById) return true;
+
+  // CM: operational edits on owned tasks (Staff / creative deadline).
+  if (role === ROLES.CREATIVE_MANAGER) {
+    if (!userId) return false;
+    return isAssignedToUser(task, userId);
+  }
+
+  // CH: may open edit while awaiting_cm to reassign CM (operational).
+  if (role === ROLES.CREATIVE_HEAD) {
+    return resolveEffectivePipelineStage(task) === 'awaiting_cm';
+  }
+
+  // PM who did not create: no meta edit (assign drawers stay role-based).
+  return false;
 };
 
 /**

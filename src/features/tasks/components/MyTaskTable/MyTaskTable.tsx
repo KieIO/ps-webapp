@@ -53,6 +53,8 @@ interface MyTaskTableProps {
   loading: boolean;
   total: number;
   onEdit?: (task: MyTask) => void;
+  /** Per-row gate for Edit (Admin/Head/creator + not finished). */
+  canEditTask?: (task: MyTask) => boolean;
   onAssign?: (task: MyTask) => void;
   onUpdateStatus?: (task: MyTask) => void;
   onEvaluate?: (task: MyTask) => void;
@@ -158,6 +160,7 @@ export function MyTaskTable({
   loading,
   total,
   onEdit,
+  canEditTask: canEditTaskRow,
   onAssign,
   onUpdateStatus,
   onEvaluate,
@@ -255,7 +258,7 @@ export function MyTaskTable({
                   />
                 </Tooltip>
               ) : null}
-              {onEdit ? (
+              {onEdit && (!canEditTaskRow || canEditTaskRow(record)) ? (
                 <Tooltip title={editTooltip}>
                   <Button
                     type="text"
@@ -310,6 +313,7 @@ export function MyTaskTable({
   }, [
     actionsWidth,
     canAssign,
+    canEditTaskRow,
     canEvaluate,
     columnDefs,
     deletingTaskId,

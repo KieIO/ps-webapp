@@ -44,7 +44,7 @@ import {
   PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION,
   REQUEST_REVISION_BLOCK_MESSAGES,
 } from '../../utils/taskRevision';
-import { canChangeTaskStatus, canDeleteTask, canEditTask } from '../../utils/taskStatusLock';
+import { canChangeTaskStatus, canDeleteTask, canEditTaskMeta } from '../../utils/taskStatusLock';
 import styles from './TaskDetailActions.module.scss';
 
 interface TaskDetailActionsProps {
@@ -57,7 +57,7 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
   const { can, role } = usePermission();
   const userId = useAppSelector((state) => state.auth.user?.id);
   const canEvaluate = can('EVALUATE_TASK') && canEvaluateTaskLayer(role, task);
-  const canEdit = canEditTask(role);
+  const canEdit = canEditTaskMeta(task, role, userId);
   const canDelete = canDeleteTask(role);
   const updateStatus = useUpdateMyTaskStatus();
   const isAssignee = Boolean(userId && task.staff.some((member) => member.userId === userId));

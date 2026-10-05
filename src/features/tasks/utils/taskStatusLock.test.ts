@@ -1,8 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { ROLES } from '@/config/permissions';
-import { canCancelTask, canDeleteTask, canEditTask } from './taskStatusLock';
+import { canCancelTask, canDeleteTask, canEditTask, canEditTaskMeta } from './taskStatusLock';
 
-describe('canEditTask', () => {
+describe('canEditTaskMeta', () => {
+  const base = {
+    staffConfirmation: 'confirmed' as const,
+    createdById: 'usr-creator',
+  };
+
+  it('allows Admin, Head, and creator after confirm', () => {
+    expect(canEditTaskMeta(base, ROLES.ADMIN, 'anyone')).toBe(true);
+    expect(canEditTaskMeta(base, ROLES.HEAD, 'anyone')).toBe(true);
+    expect(canEditTaskMeta(base, ROLES.PM, 'usr-creator')).toBe(true);
+  });
+
+  it('denies non-creator PM and finished tasks', () => {
+    expect(canEditTaskMeta(base, ROLES.PM, 'other')).toBe(false);
+    expect(
+      canEditTaskMeta({ ...base, staffConfirmation: 'finished' }, ROLES.ADMIN, 'usr-creator'),
+    ).toBe(false);
+  });
+});
+
+describe('canEditTask (legacy role-only)', () => {
   it('denies employees and creative managers', () => {
     expect(canEditTask(ROLES.EMPLOYEE)).toBe(false);
     expect(canEditTask(ROLES.CREATIVE_MANAGER)).toBe(false);

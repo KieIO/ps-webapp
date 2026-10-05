@@ -13,12 +13,14 @@ import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
 import { PROJECT_NAME_COLUMN_LABEL } from '../../constants';
 import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { UserNameLink } from '@/shared/ui/UserNameLink/UserNameLink';
 import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/CompletionProgressCell';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { EvaluationLevelBadge } from '../EvaluationLevelBadge/EvaluationLevelBadge';
 import { ProjectStatusBadge } from '../ProjectStatusBadge/ProjectStatusBadge';
+import { canEditProjectMeta } from '../../utils/projectEditAuth';
 import {
   PROJECT_EVALUATION_COLUMN_HEADERS,
   PROJECT_TABLE_COLUMN_HEADERS,
@@ -120,10 +122,12 @@ export function ProjectTable({
   archivingProjectId = null,
   unarchivingProjectId = null,
 }: ProjectTableProps) {
-  const { can } = usePermission();
+  const { can, role } = usePermission();
+  const userId = useAppSelector((state) => state.auth.user?.id);
   const canEdit = can('EDIT_PROJECT') && !archivedView;
   const canArchive = can('ARCHIVE_PROJECT');
   const canDelete = can('DELETE_PROJECT');
+  const canEditMeta = (project: Project) => canEdit && canEditProjectMeta(project, role, userId);
   const actionsWidth = getProjectActionsWidth({
     hasUpdateStatus: canEdit && Boolean(onUpdateStatus),
     canAssign: canEdit && Boolean(onAssign),
@@ -372,7 +376,7 @@ export function ProjectTable({
                 />
               </Tooltip>
             ) : null}
-            {canEdit && onEdit ? (
+            {canEditMeta(record) && onEdit ? (
               <Tooltip title="Edit">
                 <Button
                   type="text"

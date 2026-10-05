@@ -95,11 +95,11 @@ export const projectApi = {
     return response.data as PersonWithCode[];
   },
 
-  create: async (payload: CreateProjectRequest): Promise<Project> => {
+  create: async (payload: CreateProjectRequest, creatorUserId?: string): Promise<Project> => {
     const data = CreateProjectRequestSchema.parse(payload);
 
     if (env.useProjectsMock) {
-      return ProjectSchema.parse(await mockCreateProject(data));
+      return ProjectSchema.parse(await mockCreateProject(data, creatorUserId));
     }
 
     try {

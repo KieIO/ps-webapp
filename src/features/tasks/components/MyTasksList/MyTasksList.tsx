@@ -22,7 +22,7 @@ import { useMyTaskColumns } from '../../hooks/useMyTaskColumns';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { exportMyTasksToCsv } from '../../utils/exportMyTasks';
 import { shouldUseCreativePipelineEditDrawer } from '../../utils/creativePipeline';
-import { canDeleteTask, canEditTask } from '../../utils/taskStatusLock';
+import { canDeleteTask, canEditTaskMeta } from '../../utils/taskStatusLock';
 import { computeTaskConfirmationSummary } from '../../utils/taskConfirmationSummary';
 import { canEvaluateTaskLayer } from '../../utils/taskEvaluation';
 import { filterTasksForViewerRole } from '../../utils/taskListVisibility';
@@ -118,8 +118,9 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
   const { columnDefs } = useMyTaskColumns();
   const canAssign = can('ASSIGN_TASK');
   const canEvaluate = can('EVALUATE_TASK');
-  const canEdit = canEditTask(role);
   const canDelete = canDeleteTask(role);
+
+  const canEditRow = (task: MyTask) => canEditTaskMeta(task, role, userId);
 
   const editingUsesCreativeDrawer = Boolean(
     editingTask && shouldUseCreativePipelineEditDrawer(editingTask, role, userId),
@@ -291,7 +292,8 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
         tasks={displayItems}
         loading={isLoading}
         total={filters.otOnly ? displayItems.length : (data?.total ?? 0)}
-        onEdit={canEdit ? setEditingTask : undefined}
+        onEdit={setEditingTask}
+        canEditTask={canEditRow}
         onAssign={setAssigningTask}
         onUpdateStatus={setStatusTask}
         onEvaluate={setEvaluatingTask}
@@ -307,21 +309,21 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
         onClose={() => setAssigningTask(null)}
       />
 
-      {canEdit && role === ROLES.HEAD ? (
+      {role === ROLES.HEAD ? (
         <EditHeadTaskModal
           open={editingTask !== null}
           task={editingTask}
           onClose={() => setEditingTask(null)}
         />
       ) : null}
-      {canEdit && role !== ROLES.HEAD && editingUsesCreativeDrawer ? (
+      {role !== ROLES.HEAD && editingUsesCreativeDrawer ? (
         <CreativeEditDrawer
           open={editingTask !== null}
           task={editingTask}
           onClose={() => setEditingTask(null)}
         />
       ) : null}
-      {canEdit && role !== ROLES.HEAD && !editingUsesCreativeDrawer ? (
+      {role !== ROLES.HEAD && !editingUsesCreativeDrawer ? (
         <EditTaskModal
           open={editingTask !== null}
           task={editingTask}

@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { UserNameLink } from '@/shared/ui/UserNameLink/UserNameLink';
 import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/CompletionProgressCell';
@@ -17,6 +18,7 @@ import { ProjectStatusBadge } from '../ProjectStatusBadge/ProjectStatusBadge';
 import { useProjectTasks } from '../../hooks/useProjectTasks';
 import { PROJECT_TABLE_COLUMN_HEADERS, STATUS_VARIANT } from '../../constants';
 import { resolveProjectDetailStats } from '../../utils/projectProgress';
+import { canEditProjectMeta } from '../../utils/projectEditAuth';
 import type { EvaluationLevel, Project } from '../../schemas/project.schema';
 import styles from './ProjectSummaryCard.module.scss';
 
@@ -41,8 +43,9 @@ export function ProjectSummaryCard({
   isArchiving = false,
   isUnarchiving = false,
 }: ProjectSummaryCardProps) {
-  const { can } = usePermission();
-  const canEdit = can('EDIT_PROJECT');
+  const { can, role } = usePermission();
+  const userId = useAppSelector((state) => state.auth.user?.id);
+  const canEdit = can('EDIT_PROJECT') && canEditProjectMeta(project, role, userId);
   const canArchive = can('ARCHIVE_PROJECT');
   const canDelete = can('DELETE_PROJECT');
   const canViewAllTasks = can('VIEW_ALL_TASKS');
