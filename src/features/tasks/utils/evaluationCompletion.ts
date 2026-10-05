@@ -1,6 +1,6 @@
 /**
  * Evaluate-by-quantity helpers: % is derived from completed / assigned.
- * Percent stays the persisted field; completed quantity is UI input.
+ * Percent stays the persisted field; completed quantity is UI input (whole units).
  */
 
 export const computeCompletionPercentFromQuantity = (
@@ -12,13 +12,11 @@ export const computeCompletionPercentFromQuantity = (
   return Math.min(100, Math.max(0, Math.round(raw)));
 };
 
-/** Reverse of percent ↔ quantity for reopening the evaluate form. */
+/** Reverse of percent ↔ quantity for reopening the evaluate form (integer units). */
 export const deriveCompletedQuantityFromPercent = (
   completionPercent: number | null | undefined,
   assignedQuantity: number,
 ): number => {
   if (assignedQuantity <= 0 || completionPercent == null) return 0;
-  const raw = (completionPercent / 100) * assignedQuantity;
-  // Match typical whole-unit slides; keep one decimal for partial quantities.
-  return Math.round(raw * 10) / 10;
+  return Math.round((completionPercent / 100) * assignedQuantity);
 };

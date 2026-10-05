@@ -112,6 +112,9 @@ export const MY_TASK_COLUMN_HEADERS: Record<MyTaskColumnKey, string> = {
 
 /** Evaluate task — primary input is completed units; % is derived. */
 export const EVALUATE_TASK_COMPLETED_QUANTITY_LABEL = 'Số lượng hoàn thành';
+export const EVALUATE_TASK_ASSIGNED_QUANTITY_LABEL = 'Số lượng';
+export const EVALUATE_TASK_NOTE_LABEL = 'Ghi chú';
+export const EVALUATE_TASK_NOTE_PLACEHOLDER = 'Nhập ghi chú';
 
 /** Department Head — column labels on the task list (and shared labels in EditHeadTaskModal). */
 export const MY_TASK_HEAD_COLUMN_HEADERS: Partial<Record<MyTaskColumnKey, string>> = {

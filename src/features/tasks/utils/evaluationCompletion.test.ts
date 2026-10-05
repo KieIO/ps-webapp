@@ -28,6 +28,7 @@ describe('deriveCompletedQuantityFromPercent', () => {
     expect(deriveCompletedQuantityFromPercent(50, 10)).toBe(5);
     expect(deriveCompletedQuantityFromPercent(100, 20)).toBe(20);
     expect(deriveCompletedQuantityFromPercent(0, 10)).toBe(0);
+    expect(deriveCompletedQuantityFromPercent(68, 20)).toBe(14);
   });
 
   it('returns 0 when percent or quantity is missing / invalid', () => {
