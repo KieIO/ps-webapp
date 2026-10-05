@@ -261,14 +261,25 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     const measureVisibleRows = () => {
       const rowsAreaHeight = Math.max(0, node.clientHeight - calHeaderHeight);
       const minCanvasHeight = totalProjectsHeight;
-      const fillRowCount = Math.ceil(
+      // Floor (not ceil) so filler rows never overshoot the measured area and
+      // push flex ancestors taller (empty-row feedback loop on Tracker).
+      const fillRowCount = Math.floor(
         Math.max(0, rowsAreaHeight - minCanvasHeight) / TRACKER_ROW_HEIGHT,
       );
-      const visibleRowCount = projects.length + fillRowCount;
+      const visibleRowCount = monthScopedProjects.length + fillRowCount;
+      const nextCanvasHeight = minCanvasHeight + fillRowCount * TRACKER_ROW_HEIGHT;
 
-      setRowLayout({
-        visibleRowCount,
-        canvasHeight: Math.max(minCanvasHeight, rowsAreaHeight),
+      setRowLayout((previous) => {
+        if (
+          previous.visibleRowCount === visibleRowCount &&
+          previous.canvasHeight === nextCanvasHeight
+        ) {
+          return previous;
+        }
+        return {
+          visibleRowCount,
+          canvasHeight: nextCanvasHeight,
+        };
       });
     };
 
@@ -277,7 +288,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     observer.observe(node);
 
     return () => observer.disconnect();
-  }, [calHeaderHeight, projects.length, totalProjectsHeight]);
+  }, [calHeaderHeight, monthScopedProjects.length, totalProjectsHeight]);
 
   const todayIndex = getDayIndex(days, TRACKER_TODAY);
 
@@ -672,6 +683,7 @@ function EmptyProjectRow({ rowIndex }: EmptyProjectRowProps) {
       className={classNames(styles.projectRow, styles.projectRowEmpty, {
         [styles.projectRowEven]: rowIndex % 2 === 1,
       })}
+      style={{ height: TRACKER_ROW_HEIGHT, minHeight: TRACKER_ROW_HEIGHT }}
       aria-hidden
     >
       <div className={styles.nameCell} />

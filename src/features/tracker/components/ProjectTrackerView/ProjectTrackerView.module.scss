@@ -466,6 +466,8 @@ $row-alt: #f9fafb;
 }
 
 .projectRowEmpty {
+  height: 48px;
+  min-height: 48px;
   border-left-color: transparent;
   pointer-events: none;
 }
@@ -586,6 +588,9 @@ $row-alt: #f9fafb;
 .calendarPanel {
   flex: 1;
   min-width: 0;
+  /* Prevent flex min-content height (header + canvas) from growing mainBody when
+     a horizontal scrollbar appears — that feedback loop spawned endless empty rows. */
+  min-height: 0;
   overflow: auto;
 }
 
