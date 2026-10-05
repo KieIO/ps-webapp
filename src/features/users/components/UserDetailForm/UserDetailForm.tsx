@@ -1,6 +1,6 @@
 import { Alert, Button, Form, Input, Select, Spin, message } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DATE_FORMAT, ROUTES } from '@/config/constants';
 import type { Role } from '@/config/permissions';
@@ -70,11 +70,18 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
   const { data: jobLevelsData, isLoading: jobLevelsLoading } = useJobLevelList();
   const selectedRole = Form.useWatch('role', form) as Role | undefined;
   const selectedJobLevelId = Form.useWatch('jobLevelId', form);
+  const selectedJobTitleId = Form.useWatch('jobTitleId', form);
   const jobTitles = jobTitlesData?.items ?? [];
   const jobLevels = jobLevelsData?.items ?? [];
-  const filteredJobTitles = jobTitles.filter(
-    (title) => !selectedJobLevelId || title.jobLevelId === selectedJobLevelId,
-  );
+  const titlesForSelect = useMemo(() => {
+    const filtered = jobTitles.filter(
+      (title) => !selectedJobLevelId || title.jobLevelId === selectedJobLevelId,
+    );
+    if (!selectedJobTitleId) return filtered;
+    if (filtered.some((title) => title.id === selectedJobTitleId)) return filtered;
+    const selectedTitle = jobTitles.find((title) => title.id === selectedJobTitleId);
+    return selectedTitle ? [selectedTitle, ...filtered] : filtered;
+  }, [jobTitles, selectedJobLevelId, selectedJobTitleId]);
 
   useEffect(() => {
     if (!user) return;
@@ -133,24 +140,27 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
       return;
     }
 
+    const jobLevelId = form.getFieldValue('jobLevelId') || values.jobLevelId;
+    const jobTitleId = form.getFieldValue('jobTitleId') || values.jobTitleId || user.jobTitleId;
+
     if (canEditOrg) {
-      if (!values.jobLevelId) {
+      if (!jobLevelId) {
         form.setFields([{ name: 'jobLevelId', errors: ['Select a level'] }]);
         message.error('Select a level before saving.');
         return;
       }
-      if (!values.jobTitleId) {
+      if (!jobTitleId) {
         form.setFields([{ name: 'jobTitleId', errors: ['Select a position code and job title'] }]);
         message.error('Select a position code and job title before saving.');
         return;
       }
-      const selectedTitle = jobTitles.find((entry) => entry.id === values.jobTitleId);
+      const selectedTitle = jobTitles.find((entry) => entry.id === jobTitleId);
       if (!selectedTitle) {
         form.setFields([{ name: 'jobTitleId', errors: ['Select a valid job title'] }]);
         message.error('Select a valid job title before saving.');
         return;
       }
-      if (selectedTitle.jobLevelId !== values.jobLevelId) {
+      if (selectedTitle.jobLevelId !== jobLevelId) {
         form.setFields([
           {
             name: 'jobTitleId',
@@ -162,14 +172,14 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
       }
     }
 
-    const { jobLevelId: _jobLevelId, ...rest } = values;
-    void _jobLevelId;
-
-    const jobTitleId = rest.jobTitleId || user.jobTitleId;
     if (!jobTitleId) {
       message.error('This user needs a job title assigned before saving.');
       return;
     }
+
+    const { jobLevelId: _jobLevelId, jobTitleId: _formJobTitleId, ...rest } = values;
+    void _jobLevelId;
+    void _formJobTitleId;
 
     const payload: UpdateUserRequest = {
       name: rest.name,
@@ -230,13 +240,24 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
     }
   };
 
-  const handleJobTitleSelection = (titleId: string) => {
-    form.setFieldValue('jobTitleId', titleId);
+  const handleJobTitleSelection = (titleId: string | null) => {
+    if (!titleId) {
+      form.setFieldsValue({ jobTitleId: undefined });
+      form.setFields([
+        {
+          name: 'jobTitleId',
+          errors: canEditOrg ? ['Select a position code and job title'] : [],
+        },
+      ]);
+      return;
+    }
+
+    form.setFieldsValue({ jobTitleId: titleId });
     form.setFields([{ name: 'jobTitleId', errors: [] }]);
 
     const title = jobTitles.find((entry) => entry.id === titleId);
     if (title) {
-      form.setFieldValue('jobLevelId', title.jobLevelId);
+      form.setFieldsValue({ jobLevelId: title.jobLevelId });
       form.setFields([{ name: 'jobLevelId', errors: [] }]);
     }
   };
@@ -246,17 +267,18 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
     label: level.label,
   }));
 
-  const positionCodeOptions = filteredJobTitles.map((title) => ({
+  const positionCodeOptions = titlesForSelect.map((title) => ({
     value: title.id,
     label: title.code,
   }));
 
-  const jobTitleOptions = filteredJobTitles.map((title) => ({
+  const jobTitleOptions = titlesForSelect.map((title) => ({
     value: title.id,
     label: title.name,
   }));
 
   const previewRole = selectedRole ?? user.role;
+  const displayPositionCode = user.jobTitleCode ?? user.positionCode;
   const jobTitleLabel = user.jobTitleName ?? user.jobTitleCode ?? 'Unassigned';
   const levelBadge = mapJobLevelCode(user.jobLevelCode);
   const statusOptions = getEditableStatusOptions(user.status);
@@ -279,7 +301,7 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
             <StatusPill label={STATUS_LABELS[user.status]} variant={STATUS_VARIANT[user.status]} />
             <span className={styles.summaryText}>
               {ROLE_LABELS[user.role]} · {DEPARTMENT_LABELS[user.department]}
-              {user.positionCode ? ` · ${user.positionCode}` : ''}
+              {displayPositionCode ? ` · ${displayPositionCode}` : ''}
             </span>
           </div>
 
@@ -372,16 +394,11 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
                   />
                 </Form.Item>
 
-                <Form.Item
-                  name="jobTitleId"
-                  label="Job title"
-                  className={styles.field}
-                  rules={
-                    canEditOrg ? [{ required: true, message: 'Select a job title' }] : undefined
-                  }
-                >
+                {/* Mirror of jobTitleId — do not register a second Form.Item with the same name. */}
+                <Form.Item label="Job title" className={styles.field} required={canEditOrg}>
                   <Select
                     placeholder="Select job title"
+                    value={selectedJobTitleId}
                     options={jobTitleOptions}
                     loading={jobTitlesLoading}
                     disabled={!canEditOrg}
@@ -429,7 +446,7 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
               </div>
               <div className={styles.readOnlyRow}>
                 <dt>Position code</dt>
-                <dd>{user.positionCode ?? '—'}</dd>
+                <dd>{displayPositionCode ?? '—'}</dd>
               </div>
               <div className={styles.readOnlyRow}>
                 <dt>Job title</dt>

@@ -90,8 +90,10 @@ export function UserTable({ users, loading }: UserTableProps) {
     {
       title: 'Position code',
       key: 'positionCode',
-      sorter: (a, b) => compareText(a.positionCode ?? '', b.positionCode ?? ''),
-      render: (_: unknown, record: User) => record.positionCode ?? '-',
+      sorter: (a, b) =>
+        compareText(a.jobTitleCode ?? a.positionCode ?? '', b.jobTitleCode ?? b.positionCode ?? ''),
+      // Prefer join-derived code so denormalized users.position_code cannot drift from title.
+      render: (_: unknown, record: User) => record.jobTitleCode ?? record.positionCode ?? '-',
     },
     {
       title: 'Job title',

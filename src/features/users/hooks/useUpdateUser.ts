@@ -21,6 +21,10 @@ export const useUpdateUser = (options?: UseUpdateUserOptions) => {
     onSuccess: (user: User) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.setQueryData(['users', user.id], user);
+      // Title/status changes affect capacity limits and Tracker remaining-output.
+      queryClient.invalidateQueries({ queryKey: ['capacity'] });
+      queryClient.invalidateQueries({ queryKey: ['tracker'] });
+      queryClient.invalidateQueries({ queryKey: ['home'] });
       if (!options?.silentSuccess) {
         message.success('User updated successfully');
       }
