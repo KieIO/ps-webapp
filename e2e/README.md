@@ -29,6 +29,9 @@ npm run test:e2e
 # UM smoke only (UM-11, UM-13, UM-18)
 npm run test:e2e:um
 
+# Project-mgmt UI smoke (PM-31, PM-40, PM-41)
+npm run test:e2e:projects
+
 # Headed / UI mode
 npm run test:e2e:headed
 npm run test:e2e:ui
@@ -53,10 +56,11 @@ Do not commit secrets; seed passwords are documented fixtures only.
 e2e/
   fixtures/auth.ts    # loginAs(role), sidebar helpers
   um/                 # User-mgmt UI cases (UM-11, 13, 18, …)
+  projects/           # Project-mgmt UI cases (PM-31, 40, 41, …)
   README.md
 ```
 
-Add new UM UI specs under `e2e/um/` and reuse `loginAs` / sidebar helpers.
+Add new UM UI specs under `e2e/um/` and project specs under `e2e/projects/`; reuse `loginAs` / sidebar helpers.
 
 ## Covered smoke (proof harness)
 
@@ -65,3 +69,6 @@ Add new UM UI specs under `e2e/um/` and reuse `loginAs` / sidebar helpers.
 | UM-11 Admin opens `/roles` | `um/um-11-roles-page.spec.ts` |
 | UM-13 PM blocked from `/roles` | `um/um-13-pm-roles-blocked.spec.ts` |
 | UM-18 Sidebar by role | `um/um-18-sidebar-by-role.spec.ts` |
+| PM-31 Sidebar Projects by role | `projects/pm-31-sidebar-projects.spec.ts` |
+| PM-40 Create button by role | `projects/pm-40-create-button-by-role.spec.ts` |
+| PM-41 Active ↔ Archived nav | `projects/pm-41-archived-nav.spec.ts` |
