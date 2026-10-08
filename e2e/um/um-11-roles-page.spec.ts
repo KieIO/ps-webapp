@@ -11,7 +11,7 @@ test.describe('UM-11 Open Roles matrix (Admin)', () => {
     await page.goto('/roles');
     await expect(page).toHaveURL(/\/roles/);
     await expect(page.getByRole('heading', { name: 'Roles & Permissions' })).toBeVisible();
-    await expect(page.getByText('Permission matrix')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Permission matrix' })).toBeVisible();
     // Matrix has role columns
     await expect(page.getByRole('columnheader', { name: 'Admin' })).toBeVisible();
   });

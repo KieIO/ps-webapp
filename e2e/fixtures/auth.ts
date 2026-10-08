@@ -56,9 +56,12 @@ export async function logout(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/login/);
 }
 
-/** Sidebar helpers — Ant Design Menu item labels. */
+/**
+ * Sidebar helpers — Ant Design Menu accessible names include icon aria
+ * (e.g. "user Users"), so match by substring rather than exact label.
+ */
 export async function expectSidebarHasUsers(page: Page, visible: boolean): Promise<void> {
-  const users = page.locator('aside').getByRole('menuitem', { name: /^Users$/ });
+  const users = page.locator('aside').getByRole('menuitem', { name: /\bUsers\b/ });
   if (visible) {
     await expect(users).toBeVisible();
   } else {
@@ -68,22 +71,30 @@ export async function expectSidebarHasUsers(page: Page, visible: boolean): Promi
 
 export async function expectSidebarHasRoles(page: Page, visible: boolean): Promise<void> {
   const aside = page.locator('aside');
-  const settings = aside.getByRole('menuitem', { name: /^Settings$/ });
+  const settings = aside.getByRole('menuitem', { name: /\bSettings\b/ });
+  const rolesItem = aside.getByRole('menuitem', { name: /Roles & Permissions/ });
 
   if (!visible) {
     // Settings submenu may be absent entirely for PM/employee, or present without Roles.
     if ((await settings.count()) === 0) {
-      await expect(aside.getByText('Roles & Permissions')).toHaveCount(0);
+      await expect(rolesItem).toHaveCount(0);
       return;
     }
-    await settings.click();
-    await expect(aside.getByText('Roles & Permissions')).toHaveCount(0);
+    // Open submenu if closed
+    const expanded = await settings.getAttribute('aria-expanded');
+    if (expanded !== 'true') {
+      await settings.click();
+    }
+    await expect(rolesItem).toHaveCount(0);
     return;
   }
 
   await expect(settings).toBeVisible();
-  await settings.click();
-  await expect(aside.getByText('Roles & Permissions')).toBeVisible();
+  const expanded = await settings.getAttribute('aria-expanded');
+  if (expanded !== 'true') {
+    await settings.click();
+  }
+  await expect(rolesItem).toBeVisible();
 }
 
 type AuthFixtures = {

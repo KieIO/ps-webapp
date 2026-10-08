@@ -11,7 +11,7 @@ test.describe('UM-13 PM cannot access Roles page', () => {
     await expectSidebarHasRoles(page, false);
 
     await page.goto('/roles');
-    await expect(page).toHaveURL(/\/forbidden/);
+    await expect(page).toHaveURL(/\/403/);
     await expect(page.getByText('Access denied')).toBeVisible();
   });
 });
