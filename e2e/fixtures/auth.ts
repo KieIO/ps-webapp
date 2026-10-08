@@ -134,6 +134,51 @@ export async function expectSidebarHasDepartments(page: Page, visible: boolean):
   await expect(deptItem).toBeVisible();
 }
 
+
+export async function expectSidebarHasTitleManagement(
+  page: Page,
+  visible: boolean,
+): Promise<void> {
+  const aside = page.locator('aside');
+  const item = aside.getByRole('menuitem', { name: /Title management/ });
+
+  if (!visible) {
+    if (!(await openSettingsSubmenu(page))) {
+      await expect(item).toHaveCount(0);
+      return;
+    }
+    await expect(item).toHaveCount(0);
+    return;
+  }
+
+  await expect(aside.getByRole('menuitem', { name: /\bSettings\b/ })).toBeVisible();
+  await openSettingsSubmenu(page);
+  await expect(item).toBeVisible();
+}
+
+/** Capacity formula — same MANAGE_TITLES gate as Title management. */
+
+export async function expectSidebarHasCapacityFormula(
+  page: Page,
+  visible: boolean,
+): Promise<void> {
+  const aside = page.locator('aside');
+  const item = aside.getByRole('menuitem', { name: /Capacity formula/ });
+
+  if (!visible) {
+    if (!(await openSettingsSubmenu(page))) {
+      await expect(item).toHaveCount(0);
+      return;
+    }
+    await expect(item).toHaveCount(0);
+    return;
+  }
+
+  await expect(aside.getByRole('menuitem', { name: /\bSettings\b/ })).toBeVisible();
+  await openSettingsSubmenu(page);
+  await expect(item).toBeVisible();
+}
+
 type AuthFixtures = {
   loginAsRole: (role: SeedRole) => Promise<void>;
 };

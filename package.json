@@ -16,6 +16,7 @@
     "test:e2e:um": "playwright test e2e/um",
     "test:e2e:projects": "playwright test e2e/projects",
     "test:e2e:departments": "playwright test e2e/departments",
+    "test:e2e:titles": "playwright test e2e/titles",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
