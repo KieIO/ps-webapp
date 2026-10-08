@@ -21,8 +21,8 @@ test.describe('PM-24 PM Archive action hidden', () => {
     // List may be empty (scoped) or show rows — Archive/Delete must never appear for PM
     await expect(page.getByRole('button', { name: /Tạo dự án/ })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /^Archive / })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: /^Delete / })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /^Unarchive / })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Delete / })).toHaveCount(0);
 
     await page.goto('/projects/archived');
     await expect(page.getByRole('heading', { name: /Dự án đã lưu trữ/ })).toBeVisible();
