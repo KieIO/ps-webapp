@@ -18,6 +18,7 @@
     "test:e2e:departments": "playwright test e2e/departments",
     "test:e2e:titles": "playwright test e2e/titles",
     "test:e2e:clients": "playwright test e2e/clients",
+    "test:e2e:taskscores": "playwright test e2e/task-scores",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",

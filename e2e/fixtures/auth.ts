@@ -209,6 +209,26 @@ export async function expectSidebarHasClientManagement(
   await expect(clientsItem).toBeVisible();
 }
 
+
+export async function expectSidebarHasTaskScores(page: Page, visible: boolean): Promise<void> {
+  const aside = page.locator('aside');
+  const item = aside.getByRole('menuitem', { name: /Task types & scores/ });
+
+  if (!visible) {
+    const hasSettings = await ensureSettingsOpen(page);
+    if (!hasSettings) {
+      await expect(item).toHaveCount(0);
+      return;
+    }
+    await expect(item).toHaveCount(0);
+    return;
+  }
+
+  const hasSettings = await ensureSettingsOpen(page);
+  expect(hasSettings).toBe(true);
+  await expect(item).toBeVisible();
+}
+
 type AuthFixtures = {
   loginAsRole: (role: SeedRole) => Promise<void>;
 };
