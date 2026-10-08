@@ -45,6 +45,9 @@ npm run test:e2e:titles
 # Client-mgmt UI smoke (CLIENT-41, CLIENT-42, CLIENT-43)
 npm run test:e2e:clients
 
+# Task scores UI smoke (TSCORE-39, TSCORE-40)
+npm run test:e2e:taskscores
+
 # Headed / UI mode
 npm run test:e2e:headed
 npm run test:e2e:ui
@@ -73,6 +76,7 @@ e2e/
   departments/        # Dept-mgmt UI cases (DEPT-30–32)
   titles/             # Title-mgmt UI cases (TITLE-35–39, …)
   clients/            # Client-mgmt UI cases (CLIENT-41, 42, 43, …)
+  task-scores/        # Task types & scores UI cases (TSCORE-39, 40, …)
   README.md
 ```
 

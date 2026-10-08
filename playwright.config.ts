@@ -44,6 +44,7 @@ export default defineConfig({
       VITE_USE_USERS_MOCK: 'false',
       VITE_USE_PROJECTS_MOCK: 'false',
       VITE_USE_TITLES_MOCK: 'false',
+      VITE_USE_TASK_SCORES_MOCK: 'false',
     },
   },
 });
