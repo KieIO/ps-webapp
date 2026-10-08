@@ -107,6 +107,33 @@ export async function expectSidebarHasProjects(page: Page, visible: boolean): Pr
   }
 }
 
+/** Settings → Department management — default MANAGE_DEPARTMENTS for Head/CH/Admin. */
+export async function expectSidebarHasDepartments(page: Page, visible: boolean): Promise<void> {
+  const aside = page.locator('aside');
+  const settings = aside.getByRole('menuitem', { name: /\bSettings\b/ });
+  const deptItem = aside.getByRole('menuitem', { name: /Department management/ });
+
+  if (!visible) {
+    if ((await settings.count()) === 0) {
+      await expect(deptItem).toHaveCount(0);
+      return;
+    }
+    const expanded = await settings.getAttribute('aria-expanded');
+    if (expanded !== 'true') {
+      await settings.click();
+    }
+    await expect(deptItem).toHaveCount(0);
+    return;
+  }
+
+  await expect(settings).toBeVisible();
+  const expanded = await settings.getAttribute('aria-expanded');
+  if (expanded !== 'true') {
+    await settings.click();
+  }
+  await expect(deptItem).toBeVisible();
+}
+
 type AuthFixtures = {
   loginAsRole: (role: SeedRole) => Promise<void>;
 };

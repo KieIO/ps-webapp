@@ -16,7 +16,7 @@ make migrate && make seed-dev && make dev
 # http://localhost:8080
 ```
 
-`test:e2e:um` and `test:e2e:projects` share this prerequisite — same Playwright + real API.
+`test:e2e:um`, `test:e2e:projects`, and `test:e2e:departments` share this prerequisite — same Playwright + real API.
 
 2. Node deps in this repo (`npm install`). First time / CI:
 
@@ -35,6 +35,9 @@ npm run test:e2e:um
 
 # Project-mgmt UI smoke (PM-31, PM-40, PM-41)
 npm run test:e2e:projects
+
+# Department management UI smoke (DEPT-30–32)
+npm run test:e2e:departments
 
 # Headed / UI mode
 npm run test:e2e:headed
@@ -61,18 +64,22 @@ e2e/
   fixtures/auth.ts    # loginAs(role), sidebar helpers
   um/                 # User-mgmt UI cases (UM-11, 13, 18, …)
   projects/           # Project-mgmt UI cases (PM-31, 40, 41, …)
+  departments/        # Dept-mgmt UI cases (DEPT-30–32)
   README.md
 ```
 
-Add new UM UI specs under `e2e/um/` and project specs under `e2e/projects/`; reuse `loginAs` / sidebar helpers.
+Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, and department specs under `e2e/departments/`; reuse `loginAs` / sidebar helpers.
 
 ## Covered smoke (proof harness)
 
-| Case                           | Spec                                           |
-| ------------------------------ | ---------------------------------------------- |
-| UM-11 Admin opens `/roles`     | `um/um-11-roles-page.spec.ts`                  |
-| UM-13 PM blocked from `/roles` | `um/um-13-pm-roles-blocked.spec.ts`            |
-| UM-18 Sidebar by role          | `um/um-18-sidebar-by-role.spec.ts`             |
-| PM-31 Sidebar Projects by role | `projects/pm-31-sidebar-projects.spec.ts`      |
-| PM-40 Create button by role    | `projects/pm-40-create-button-by-role.spec.ts` |
-| PM-41 Active ↔ Archived nav   | `projects/pm-41-archived-nav.spec.ts`          |
+| Case                                      | Spec                                           |
+| ----------------------------------------- | ---------------------------------------------- |
+| UM-11 Admin opens `/roles`                | `um/um-11-roles-page.spec.ts`                  |
+| UM-13 PM blocked from `/roles`            | `um/um-13-pm-roles-blocked.spec.ts`            |
+| UM-18 Sidebar by role                     | `um/um-18-sidebar-by-role.spec.ts`             |
+| PM-31 Sidebar Projects by role            | `projects/pm-31-sidebar-projects.spec.ts`      |
+| PM-40 Create button by role               | `projects/pm-40-create-button-by-role.spec.ts` |
+| PM-41 Active ↔ Archived nav              | `projects/pm-41-archived-nav.spec.ts`          |
+| DEPT-30 Sidebar Department management     | `departments/dept-30-sidebar-departments.spec.ts` |
+| DEPT-31 Admin opens `/settings/departments` | `departments/dept-31-admin-page.spec.ts`     |
+| DEPT-32 PM blocked from departments page  | `departments/dept-32-pm-page-blocked.spec.ts`  |
