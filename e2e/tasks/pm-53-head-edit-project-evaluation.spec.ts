@@ -39,14 +39,13 @@ test.describe('PM-53 Head My Tasks project evaluation', () => {
       .filter({ hasText: /Đánh Giá/ })
       .getByRole('combobox')
       .click();
-    await page.getByRole('option', { name: '4', exact: true }).click();
+    await page
+      .locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option')
+      .filter({ hasText: /^4$/ })
+      .click();
 
     const note = `E2E Head task→project note ${Date.now()}`;
-    await modal
-      .locator('.ant-form-item')
-      .filter({ hasText: /^Note$/ })
-      .getByRole('textbox')
-      .fill(note);
+    await modal.getByPlaceholder('Add a note').fill(note);
 
     await modal.getByRole('button', { name: 'Save changes' }).click();
     await expect(page.getByText('Project updated successfully')).toBeVisible({ timeout: 20_000 });

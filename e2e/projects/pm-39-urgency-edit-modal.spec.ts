@@ -20,13 +20,16 @@ test.describe('PM-39 Urgency edit modal', () => {
     const modal = page.getByRole('dialog');
     await expect(modal.getByText(/Edit project/)).toBeVisible();
 
-    // Ant Design Form.Item label "Urgency" → associated select
     await modal
       .locator('.ant-form-item')
       .filter({ hasText: /^Urgency/ })
       .getByRole('combobox')
       .click();
-    await page.getByRole('option', { name: /High priority/ }).click();
+    // Ant Design Select options render in a portal; prefer item class over role name.
+    await page
+      .locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option')
+      .filter({ hasText: 'High priority' })
+      .click();
 
     await modal.getByRole('button', { name: 'Save changes' }).click();
     await expect(page.getByText('Project updated successfully')).toBeVisible({ timeout: 15_000 });
