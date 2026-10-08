@@ -51,7 +51,11 @@ export async function loginAs(page: Page, role: SeedRole): Promise<void> {
 
 export async function logout(page: Page): Promise<void> {
   // Avatar dropdown in TopHeader
-  await page.locator('header').getByRole('button').filter({ has: page.locator('.ant-avatar') }).click();
+  await page
+    .locator('header')
+    .getByRole('button')
+    .filter({ has: page.locator('.ant-avatar') })
+    .click();
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/login/);
 }
@@ -97,6 +101,32 @@ export async function expectSidebarHasRoles(page: Page, visible: boolean): Promi
   await expect(rolesItem).toBeVisible();
 }
 
+/** Open Settings submenu if present; returns false when Settings nav is absent. */
+async function openSettingsSubmenu(page: Page): Promise<boolean> {
+  const settings = page.locator('aside').getByRole('menuitem', { name: /\bSettings\b/ });
+  if ((await settings.count()) === 0) return false;
+  const expanded = await settings.getAttribute('aria-expanded');
+  if (expanded !== 'true') {
+    await settings.click();
+  }
+  return true;
+}
+
+async function ensureSettingsOpen(page: Page): Promise<boolean> {
+  return openSettingsSubmenu(page);
+}
+
+/** Open Task management submenu (Project Tasks / Non-project children). */
+async function openTaskManagementSubmenu(page: Page): Promise<boolean> {
+  const taskMgmt = page.locator('aside').getByRole('menuitem', { name: /Task management/ });
+  if ((await taskMgmt.count()) === 0) return false;
+  const expanded = await taskMgmt.getAttribute('aria-expanded');
+  if (expanded !== 'true') {
+    await taskMgmt.click();
+  }
+  return true;
+}
+
 /** Projects nav — default MANAGE_PROJECTS for all seed roles. */
 export async function expectSidebarHasProjects(page: Page, visible: boolean): Promise<void> {
   const projects = page.locator('aside').getByRole('menuitem', { name: /\bProjects\b/ });
@@ -134,11 +164,7 @@ export async function expectSidebarHasDepartments(page: Page, visible: boolean):
   await expect(deptItem).toBeVisible();
 }
 
-
-export async function expectSidebarHasTitleManagement(
-  page: Page,
-  visible: boolean,
-): Promise<void> {
+export async function expectSidebarHasTitleManagement(page: Page, visible: boolean): Promise<void> {
   const aside = page.locator('aside');
   const item = aside.getByRole('menuitem', { name: /Title management/ });
 
@@ -158,10 +184,7 @@ export async function expectSidebarHasTitleManagement(
 
 /** Capacity formula — same MANAGE_TITLES gate as Title management. */
 
-export async function expectSidebarHasCapacityFormula(
-  page: Page,
-  visible: boolean,
-): Promise<void> {
+export async function expectSidebarHasCapacityFormula(page: Page, visible: boolean): Promise<void> {
   const aside = page.locator('aside');
   const item = aside.getByRole('menuitem', { name: /Capacity formula/ });
 
@@ -178,7 +201,6 @@ export async function expectSidebarHasCapacityFormula(
   await openSettingsSubmenu(page);
   await expect(item).toBeVisible();
 }
-
 
 export async function expectSidebarHasClientManagement(
   page: Page,
@@ -209,7 +231,6 @@ export async function expectSidebarHasClientManagement(
   await expect(clientsItem).toBeVisible();
 }
 
-
 export async function expectSidebarHasTaskScores(page: Page, visible: boolean): Promise<void> {
   const aside = page.locator('aside');
   const item = aside.getByRole('menuitem', { name: /Task types & scores/ });
@@ -228,7 +249,6 @@ export async function expectSidebarHasTaskScores(page: Page, visible: boolean): 
   expect(hasSettings).toBe(true);
   await expect(item).toBeVisible();
 }
-
 
 export async function expectSidebarHasTaskNav(page: Page, visible: boolean): Promise<void> {
   const aside = page.locator('aside');

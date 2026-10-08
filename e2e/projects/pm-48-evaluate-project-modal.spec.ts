@@ -26,10 +26,17 @@ test.describe('PM-48 Evaluate project modal', () => {
       .filter({ hasText: /Đánh giá/ })
       .getByRole('combobox')
       .click();
-    await page.getByRole('option', { name: '5', exact: true }).click();
+    await page
+      .locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option')
+      .filter({ hasText: /^5$/ })
+      .click();
 
     const note = `E2E Head eval note ${Date.now()}`;
-    await modal.getByLabel('Ghi chú').fill(note);
+    await modal
+      .locator('.ant-form-item')
+      .filter({ hasText: /Ghi chú/ })
+      .locator('textarea')
+      .fill(note);
 
     await modal.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('Project evaluation saved')).toBeVisible({ timeout: 15_000 });
