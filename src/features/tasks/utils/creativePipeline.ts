@@ -263,6 +263,8 @@ export const canEditCreativePipelineTask = (
   role: Role | undefined,
   userId: string | undefined,
 ): boolean => {
+  // Project-dept tasks may also persist pipelineStage=assigned_staff — creative drawer is creative-only.
+  if (!isCreativeDeptTask(task)) return false;
   if (!canEditCreativePipelineRole(role) || !isEditableCreativePipelineStage(task)) return false;
   if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
 
@@ -330,6 +332,8 @@ export const resolveCreativeDetailPipelineAction = (
 ): CreativeDetailPipelineActionInfo | null => {
   if (!canSeeCreativeDetailPipelineAction(role)) return null;
   if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return null;
+  // BE sets pipelineStage on project-dept too — detail CTA remains EditTaskModal there.
+  if (!isCreativeDeptTask(task)) return null;
 
   // Split children: edit Staff + SL against locked parent total (no unsplit).
   if (isSplitChildTask(task)) {

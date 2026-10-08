@@ -445,6 +445,17 @@ describe('creativePipeline helpers', () => {
       shouldUseCreativePipelineEditDrawer(task({ pipelineStage: 'awaiting_ch' }), ROLES.PM, 'pm-1'),
     ).toBe(false);
     expect(canReassignCreativeStaff(assigned, ROLES.CREATIVE_HEAD)).toBe(true);
+
+    // Project-dept with persisted assigned_staff must use EditTaskModal, not CreativeEditDrawer.
+    const projectAssigned = task({
+      department: 'project',
+      pipelineStage: 'assigned_staff',
+      staff: [assignee({ userId: 'staff-1', name: 'An' })],
+      createdById: 'pm-1',
+    });
+    expect(canEditCreativePipelineTask(projectAssigned, ROLES.ADMIN, 'admin')).toBe(false);
+    expect(shouldUseCreativePipelineEditDrawer(projectAssigned, ROLES.ADMIN, 'admin')).toBe(false);
+    expect(resolveCreativeDetailPipelineAction(projectAssigned, ROLES.ADMIN, 'admin')).toBeNull();
   });
 
   it('allows CH/Admin to reassign CM only while awaiting_cm', () => {
