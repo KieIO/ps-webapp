@@ -48,6 +48,9 @@ npm run test:e2e:clients
 # Task scores UI smoke (TSCORE-39, TSCORE-40)
 npm run test:e2e:taskscores
 
+# Capacity formula UI smoke (CAP-27–30)
+npm run test:e2e:capacity
+
 # Headed / UI mode
 npm run test:e2e:headed
 npm run test:e2e:ui
@@ -77,6 +80,7 @@ e2e/
   titles/             # Title-mgmt UI cases (TITLE-35–39, …)
   clients/            # Client-mgmt UI cases (CLIENT-41, 42, 43, …)
   task-scores/        # Task types & scores UI cases (TSCORE-39, 40, …)
+  capacity-formula/        # Capacity formula UI cases (CAP-27–30)
   README.md
 ```
 
@@ -100,3 +104,6 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, and de
 | TITLE-38 Tabs + create chrome | `titles/title-38-tabs-create-chrome.spec.ts` |
 | TITLE-39 Capacity page no-create | `titles/title-39-capacity-page-no-create.spec.ts` |
 | Variable | Default | Notes |
+| CAP-28 PM blocked from formula page | `capacity-formula/cap-28-pm-formula-blocked.spec.ts` |
+| CAP-29 Employee blocked from formula page | `capacity-formula/cap-29-employee-formula-blocked.spec.ts` |
+| CAP-30 Formula page chrome | `capacity-formula/cap-30-page-chrome.spec.ts` |
