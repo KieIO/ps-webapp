@@ -9,7 +9,7 @@ test.describe('PM-41 Active ↔ Archived navigation', () => {
     await page.goto('/projects');
     await expect(page.getByRole('heading', { name: 'Dự án' })).toBeVisible();
 
-    // Active view: Archive available, Unarchive not
+    // Active view: Archive available, Unarchive not (exact — Unarchive would match /^Archive /)
     await expect(page.getByRole('button', { name: /^Archive / }).first()).toBeVisible({
       timeout: 30_000,
     });
@@ -19,7 +19,7 @@ test.describe('PM-41 Active ↔ Archived navigation', () => {
     await expect(page).toHaveURL(/\/projects\/archived/);
     await expect(page.getByRole('heading', { name: /Dự án đã lưu trữ/ })).toBeVisible();
 
-    // Archived view: never shows Archive (Unarchive only when rows exist — covered by PM-11/13)
+    // Archived view: no Archive-* buttons (Unarchive uses separate aria-label prefix)
     await expect(page.getByRole('button', { name: /^Archive / })).toHaveCount(0);
 
     await page.getByRole('link', { name: /Quay lại dự án/ }).click();
