@@ -1,10 +1,4 @@
-import {
-  test,
-  expect,
-  loginAs,
-  logout,
-  expectSidebarHasTaskScores,
-} from '../fixtures/auth';
+import { test, expect, loginAs, logout, expectSidebarHasTaskScores } from '../fixtures/auth';
 
 /**
  * TSCORE-40 — Direct route blocked for PM / Employee
@@ -28,6 +22,6 @@ test.describe('TSCORE-40 Route gate for /settings/task-score', () => {
     await loginAs(page, 'admin');
     await page.goto('/settings/task-score');
     await expect(page).toHaveURL(/\/settings\/task-score/);
-    await expect(page.getByRole('heading', { name: /Task score/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Task score', exact: true })).toBeVisible();
   });
 });
