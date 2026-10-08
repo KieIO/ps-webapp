@@ -1,6 +1,5 @@
 import {
   test,
-  expect,
   loginAs,
   logout,
   expectSidebarHasClientManagement,
