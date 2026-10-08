@@ -229,6 +229,24 @@ export async function expectSidebarHasTaskScores(page: Page, visible: boolean): 
   await expect(item).toBeVisible();
 }
 
+
+export async function expectSidebarHasTaskNav(page: Page, visible: boolean): Promise<void> {
+  const aside = page.locator('aside');
+  const projectTasks = aside.getByRole('menuitem', { name: /Project Tasks/ });
+  const nonProject = aside.getByRole('menuitem', { name: /Non-project tasks/ });
+
+  if (!visible) {
+    await expect(projectTasks).toHaveCount(0);
+    await expect(nonProject).toHaveCount(0);
+    return;
+  }
+
+  const opened = await openTaskManagementSubmenu(page);
+  expect(opened).toBe(true);
+  await expect(projectTasks).toBeVisible();
+  await expect(nonProject).toBeVisible();
+}
+
 type AuthFixtures = {
   loginAsRole: (role: SeedRole) => Promise<void>;
 };
