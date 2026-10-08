@@ -20,6 +20,7 @@
     "test:e2e:clients": "playwright test e2e/clients",
     "test:e2e:taskscores": "playwright test e2e/task-scores",
     "test:e2e:capacity": "playwright test e2e/capacity-formula",
+    "test:e2e:tasks": "playwright test e2e/tasks",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
