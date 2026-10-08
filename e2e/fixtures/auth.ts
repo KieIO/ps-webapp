@@ -97,6 +97,16 @@ export async function expectSidebarHasRoles(page: Page, visible: boolean): Promi
   await expect(rolesItem).toBeVisible();
 }
 
+/** Projects nav — default MANAGE_PROJECTS for all seed roles. */
+export async function expectSidebarHasProjects(page: Page, visible: boolean): Promise<void> {
+  const projects = page.locator('aside').getByRole('menuitem', { name: /\bProjects\b/ });
+  if (visible) {
+    await expect(projects).toBeVisible();
+  } else {
+    await expect(projects).toHaveCount(0);
+  }
+}
+
 type AuthFixtures = {
   loginAsRole: (role: SeedRole) => Promise<void>;
 };
