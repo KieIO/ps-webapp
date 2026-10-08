@@ -42,6 +42,9 @@ npm run test:e2e:departments
 # Title-mgmt UI smoke (TITLE-35–39)
 npm run test:e2e:titles
 
+# Client-mgmt UI smoke (CLIENT-41, CLIENT-42, CLIENT-43)
+npm run test:e2e:clients
+
 # Headed / UI mode
 npm run test:e2e:headed
 npm run test:e2e:ui
@@ -69,6 +72,7 @@ e2e/
   projects/           # Project-mgmt UI cases (PM-31, 40, 41, …)
   departments/        # Dept-mgmt UI cases (DEPT-30–32)
   titles/             # Title-mgmt UI cases (TITLE-35–39, …)
+  clients/            # Client-mgmt UI cases (CLIENT-41, 42, 43, …)
   README.md
 ```
 
@@ -91,3 +95,4 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, and de
 | TITLE-37 PM/Employee blocked | `titles/title-37-pm-titles-blocked.spec.ts` |
 | TITLE-38 Tabs + create chrome | `titles/title-38-tabs-create-chrome.spec.ts` |
 | TITLE-39 Capacity page no-create | `titles/title-39-capacity-page-no-create.spec.ts` |
+| Variable | Default | Notes |

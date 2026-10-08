@@ -179,6 +179,36 @@ export async function expectSidebarHasCapacityFormula(
   await expect(item).toBeVisible();
 }
 
+
+export async function expectSidebarHasClientManagement(
+  page: Page,
+  visible: boolean,
+): Promise<void> {
+  const aside = page.locator('aside');
+  const settings = aside.getByRole('menuitem', { name: /\bSettings\b/ });
+  const clientsItem = aside.getByRole('menuitem', { name: /Client management/ });
+
+  if (!visible) {
+    if ((await settings.count()) === 0) {
+      await expect(clientsItem).toHaveCount(0);
+      return;
+    }
+    const expanded = await settings.getAttribute('aria-expanded');
+    if (expanded !== 'true') {
+      await settings.click();
+    }
+    await expect(clientsItem).toHaveCount(0);
+    return;
+  }
+
+  await expect(settings).toBeVisible();
+  const expanded = await settings.getAttribute('aria-expanded');
+  if (expanded !== 'true') {
+    await settings.click();
+  }
+  await expect(clientsItem).toBeVisible();
+}
+
 type AuthFixtures = {
   loginAsRole: (role: SeedRole) => Promise<void>;
 };
