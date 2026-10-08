@@ -36,7 +36,7 @@ npm run test:e2e:um
 # Project-mgmt UI smoke (PM-31/39/40/41/48/52 + PM-11/13/24 archive)
 npm run test:e2e:projects
 
-# Task UI smoke (+ PM-53 Head My Tasks → project evaluation)
+# Task UI smoke (+ Evaluate/decline/assign chrome + PM-53)
 npm run test:e2e:tasks
 
 # Department management UI smoke (DEPT-30–32)
