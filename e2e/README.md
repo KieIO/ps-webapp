@@ -39,6 +39,9 @@ npm run test:e2e:projects
 # Department management UI smoke (DEPT-30–32)
 npm run test:e2e:departments
 
+# Title-mgmt UI smoke (TITLE-35–39)
+npm run test:e2e:titles
+
 # Headed / UI mode
 npm run test:e2e:headed
 npm run test:e2e:ui
@@ -65,6 +68,7 @@ e2e/
   um/                 # User-mgmt UI cases (UM-11, 13, 18, …)
   projects/           # Project-mgmt UI cases (PM-31, 40, 41, …)
   departments/        # Dept-mgmt UI cases (DEPT-30–32)
+  titles/             # Title-mgmt UI cases (TITLE-35–39, …)
   README.md
 ```
 
@@ -83,3 +87,7 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, and de
 | DEPT-30 Sidebar Department management     | `departments/dept-30-sidebar-departments.spec.ts` |
 | DEPT-31 Admin opens `/settings/departments` | `departments/dept-31-admin-page.spec.ts`     |
 | DEPT-32 PM blocked from departments page  | `departments/dept-32-pm-page-blocked.spec.ts`  |
+| TITLE-36 Sidebar Capacity formula | `titles/title-36-sidebar-capacity-formula.spec.ts` |
+| TITLE-37 PM/Employee blocked | `titles/title-37-pm-titles-blocked.spec.ts` |
+| TITLE-38 Tabs + create chrome | `titles/title-38-tabs-create-chrome.spec.ts` |
+| TITLE-39 Capacity page no-create | `titles/title-39-capacity-page-no-create.spec.ts` |
