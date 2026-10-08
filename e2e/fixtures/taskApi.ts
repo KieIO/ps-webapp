@@ -64,7 +64,8 @@ export async function apiCreateAwaitingCh(taskName: string): Promise<ApiTask> {
     projectManager: { code: 'CUONG.LE', name: 'Le Minh Cuong' },
     taskName,
     quantity: 12,
-    date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+    // Use "today" so default My Tasks work-date filter (Hôm nay) still shows the row.
+    date: new Date().toISOString(),
     description: 'E2E creative brief',
     staff: [],
     designThinking: 2,

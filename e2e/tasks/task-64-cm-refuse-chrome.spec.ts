@@ -21,8 +21,9 @@ test.describe('TASK-64 CM Từ chối nhận chrome', () => {
     await expect(page.getByRole('button', { name: /Giao cho Staff/ })).toBeVisible();
 
     await page.getByRole('button', { name: 'Từ chối nhận' }).click();
-    const confirm = page.getByRole('dialog');
-    await expect(confirm.getByText('Từ chối nhận task này?')).toBeVisible();
+    // Ant Modal.confirm duplicates title in .ant-modal-title + .ant-modal-confirm-title
+    const confirm = page.locator('.ant-modal-confirm');
+    await expect(confirm.locator('.ant-modal-confirm-title')).toHaveText('Từ chối nhận task này?');
     await expect(confirm.getByRole('button', { name: 'Từ chối' })).toBeVisible();
     await confirm.getByRole('button', { name: 'Quay lại' }).click();
   });

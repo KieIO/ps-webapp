@@ -20,8 +20,8 @@ test.describe('TASK-65 Staff Từ chối chrome', () => {
     await expect(page.getByRole('button', { name: 'Từ chối' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Từ chối' }).click();
-    const confirm = page.getByRole('dialog');
-    await expect(confirm.getByText('Từ chối task này?')).toBeVisible();
+    const confirm = page.locator('.ant-modal-confirm');
+    await expect(confirm.locator('.ant-modal-confirm-title')).toHaveText('Từ chối task này?');
     await expect(confirm.getByRole('button', { name: 'Từ chối' })).toBeVisible();
     await confirm.getByRole('button', { name: 'Quay lại' }).click();
   });
