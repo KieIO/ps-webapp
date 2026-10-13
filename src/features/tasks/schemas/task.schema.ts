@@ -44,6 +44,8 @@ export const CREATIVE_PIPELINE_STAGES = [
   'awaiting_cm',
   'assigned_staff',
   'split',
+  /** CH refused PM handoff — left Creative queue (sticky decline). */
+  'returned_to_pm',
 ] as const;
 
 export type CreativePipelineStage = (typeof CREATIVE_PIPELINE_STAGES)[number];

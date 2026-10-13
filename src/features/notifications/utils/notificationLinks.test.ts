@@ -50,6 +50,18 @@ describe('getNotificationPath', () => {
     ).toContain('task-123');
   });
 
+  it('routes CH refuse (task_creative_pm) to task detail for PM', () => {
+    expect(
+      getNotificationPath(
+        base({
+          type: 'task_creative_pm',
+          refType: 'task',
+          refId: 'task-789',
+        }),
+      ),
+    ).toContain('task-789');
+  });
+
   it('keeps staff assign on task detail even when ref looks like creative task', () => {
     const path = getNotificationPath(
       base({

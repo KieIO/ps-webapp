@@ -4,6 +4,7 @@ import type { CreateMyTaskRequest, MyTask, TaskAssignee } from '../schemas/task.
 import {
   applyCreativeDeclineRollback,
   canChangeCreativeLevelRole,
+  canChRefuseCreativeHandoff,
   canCmRefuseCreativeAssignment,
   canEditCreativePipelineTask,
   canReassignCreativeManager,
@@ -604,6 +605,8 @@ describe('creative decline helpers', () => {
     });
     expect(canCmRefuseCreativeAssignment(awaitingCm, 'cm-1', ROLES.CREATIVE_MANAGER)).toBe(true);
     expect(canCmRefuseCreativeAssignment(awaitingCm, 'other', ROLES.CREATIVE_MANAGER)).toBe(false);
+    expect(canCmRefuseCreativeAssignment(awaitingCm, 'pm-1', ROLES.PM)).toBe(false);
+    expect(canCmRefuseCreativeAssignment(awaitingCm, 'admin-1', ROLES.ADMIN)).toBe(true);
 
     const refused = applyCreativeDeclineRollback({
       ...awaitingCm,
@@ -630,6 +633,31 @@ describe('creative decline helpers', () => {
     expect(() =>
       applyCreativeDeclineRollback(task({ pipelineStage: 'split', staffConfirmation: 'decline' })),
     ).toThrow(/chia nhỏ/);
+  });
+
+  it('allows CH refuse on awaiting_ch and returns sticky decline to PM', () => {
+    const awaitingCh = task({
+      pipelineStage: 'awaiting_ch',
+      staff: [],
+      staffConfirmation: 'not_updated',
+    });
+    expect(canChRefuseCreativeHandoff(awaitingCh, ROLES.CREATIVE_HEAD)).toBe(true);
+    expect(canChRefuseCreativeHandoff(awaitingCh, ROLES.ADMIN)).toBe(true);
+    expect(canChRefuseCreativeHandoff(awaitingCh, ROLES.PM)).toBe(false);
+    expect(canChRefuseCreativeHandoff(awaitingCh, ROLES.CREATIVE_MANAGER)).toBe(false);
+
+    const refused = applyCreativeDeclineRollback({
+      ...awaitingCh,
+      staffConfirmation: 'decline',
+    });
+    expect(refused.pipelineStage).toBe('returned_to_pm');
+    expect(refused.staffConfirmation).toBe('decline');
+    expect(refused.staff).toEqual([]);
+    expect(refused.creativeManager).toBeUndefined();
+
+    expect(
+      filterCreativeQueue([refused], 'ch', 'ch-1', ROLES.CREATIVE_HEAD).map((item) => item.id),
+    ).toEqual([]);
   });
 
   it('excludes decline from assign-picker workload', () => {

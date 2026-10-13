@@ -4,14 +4,17 @@ import { useEffect, useMemo } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import type { ProjectUrgency } from '@/features/projects/schemas/project.schema';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useAssignCreativeHead } from '../../hooks/useAssignCreativeHead';
 import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
 import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
+import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
 import type { MyTask } from '../../schemas/task.schema';
 import { fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import {
+  canChRefuseCreativeHandoff,
   canSelectAssignee,
   displayCapacityPercent,
   filterCreativeManagers,
@@ -65,7 +68,9 @@ export function CreativeHeadAssignDrawer({
   onClose,
 }: CreativeHeadAssignDrawerProps) {
   const [form] = Form.useForm<HeadFormValues>();
+  const currentUser = useAppSelector((state) => state.auth.user);
   const { mutate, isPending } = useAssignCreativeHead();
+  const { mutate: updateStatus, isPending: isRefusing } = useUpdateMyTaskStatus();
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
   const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
   const allTasks = useMemo(() => taskList?.items ?? [], [taskList?.items]);
@@ -92,6 +97,10 @@ export function CreativeHeadAssignDrawer({
   const fillBrief = Boolean(task && needsChBrief(task));
   const lockedBrief = Boolean(task && !needsChBrief(task));
   const canSubmit = Boolean(task && !readOnly && isAwaitingCh(task));
+  const canRefuse = Boolean(
+    task && !readOnly && canChRefuseCreativeHandoff(task, currentUser?.role),
+  );
+  const busy = isPending || isRefusing;
   const canEditUrgency = fillBrief && canSubmit;
   const canEditCreativeDeadline = fillBrief && canSubmit;
 
@@ -146,7 +155,7 @@ export function CreativeHeadAssignDrawer({
   };
 
   const handleCloseRequest = () => {
-    if (isPending) return;
+    if (busy) return;
     if (!readOnly && form.isFieldsTouched()) {
       Modal.confirm({
         title: 'Hủy xử lý task?',
@@ -159,6 +168,35 @@ export function CreativeHeadAssignDrawer({
       return;
     }
     resetAndClose();
+  };
+
+  const handleRefuse = () => {
+    if (!task) return;
+    Modal.confirm({
+      title: 'Từ chối nhận task này?',
+      content: 'Task sẽ trả về danh sách của PM với trạng thái Từ chối và ra khỏi Creative queue.',
+      okText: 'Từ chối',
+      okButtonProps: { danger: true },
+      cancelText: 'Quay lại',
+      centered: true,
+      onOk: () =>
+        new Promise<void>((resolve, reject) => {
+          updateStatus(
+            {
+              id: task.id,
+              staffConfirmation: 'decline',
+              staffNote: task.staffNote ?? '',
+            },
+            {
+              onSuccess: () => {
+                resetAndClose();
+                resolve();
+              },
+              onError: (error) => reject(error),
+            },
+          );
+        }),
+    });
   };
 
   const handleSubmit = async () => {
@@ -194,14 +232,24 @@ export function CreativeHeadAssignDrawer({
       onClose={handleCloseRequest}
       width={480}
       destroyOnHidden
-      maskClosable={!isPending}
+      maskClosable={!busy}
       footer={
         <div className={styles.footer}>
-          <Button onClick={handleCloseRequest} disabled={isPending}>
-            {canSubmit ? 'Hủy' : 'Đóng'}
+          <Button onClick={handleCloseRequest} disabled={busy}>
+            {canSubmit || canRefuse ? 'Hủy' : 'Đóng'}
           </Button>
+          {canRefuse ? (
+            <Button danger loading={isRefusing} disabled={busy} onClick={handleRefuse}>
+              Từ chối nhận
+            </Button>
+          ) : null}
           {canSubmit ? (
-            <Button type="primary" loading={isPending} onClick={() => void handleSubmit()}>
+            <Button
+              type="primary"
+              loading={isPending}
+              disabled={busy}
+              onClick={() => void handleSubmit()}
+            >
               {fillBrief ? 'Lưu & giao CM' : 'Giao CM'}
             </Button>
           ) : null}

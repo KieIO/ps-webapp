@@ -3,3 +3,47 @@
   flex-direction: column;
   gap: 16px;
 }
+
+.dbAlert {
+  margin-bottom: 24px;
+}
+
+.dbHint {
+  margin-bottom: 20px;
+}
+
+.dbActions {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dbGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dbGroupLabel {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.dbButtonRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 220px));
+  gap: 12px;
+  width: 100%;
+}
+
+.dbButton {
+  width: 100%;
+}
+
+@media (max-width: 575px) {
+  .dbButtonRow {
+    grid-template-columns: 1fr;
+  }
+}

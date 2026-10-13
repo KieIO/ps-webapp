@@ -94,58 +94,70 @@ export const GeneralSettingsPanel = () => {
       {canManageDatabase ? (
         <Card title="Database">
           <Alert
+            className={styles.dbAlert}
             type="warning"
             showIcon
             message="Destructive actions"
             description="Import and both reset options wipe current data and sign everyone out. Export downloads a full ZIP backup you can import later on a matching app schema."
-            style={{ marginBottom: 24 }}
           />
 
-          <Typography.Paragraph type="secondary" style={{ marginBottom: 16 }}>
+          <Typography.Paragraph type="secondary" className={styles.dbHint}>
             After reset or import, sign in again with an account from the restored data (seed
             password <Typography.Text code>ps123</Typography.Text>
             ), e.g. <Typography.Text code>admin@pokeslide.com</Typography.Text> or a{' '}
             <Typography.Text code>@pokeslide.dev</Typography.Text> role account.
           </Typography.Paragraph>
 
-          <Space wrap style={{ marginBottom: 16 }}>
-            <Button
-              type="primary"
-              loading={exportDatabase.isPending}
-              disabled={databaseBusy && !exportDatabase.isPending}
-              onClick={() => exportDatabase.mutate()}
-            >
-              Export database
-            </Button>
-            <Button
-              danger
-              loading={importDatabase.isPending}
-              disabled={databaseBusy && !importDatabase.isPending}
-              onClick={() => importDatabase.openFilePicker()}
-            >
-              Import database
-            </Button>
-          </Space>
+          <div className={styles.dbActions}>
+            <div className={styles.dbGroup}>
+              <Typography.Text className={styles.dbGroupLabel}>Backup</Typography.Text>
+              <div className={styles.dbButtonRow}>
+                <Button
+                  className={styles.dbButton}
+                  type="primary"
+                  loading={exportDatabase.isPending}
+                  disabled={databaseBusy && !exportDatabase.isPending}
+                  onClick={() => exportDatabase.mutate()}
+                >
+                  Export database
+                </Button>
+                <Button
+                  className={styles.dbButton}
+                  danger
+                  loading={importDatabase.isPending}
+                  disabled={databaseBusy && !importDatabase.isPending}
+                  onClick={() => importDatabase.openFilePicker()}
+                >
+                  Import database
+                </Button>
+              </div>
+            </div>
 
-          <Space wrap>
-            <Button
-              danger
-              type="primary"
-              loading={resetDatabase.isPending && resetDatabase.variables === 'empty'}
-              disabled={databaseBusy && !resetDatabase.isPending}
-              onClick={() => resetDatabase.confirmAndReset('empty')}
-            >
-              Reset to empty
-            </Button>
-            <Button
-              danger
-              loading={resetDatabase.isPending && resetDatabase.variables === 'seed'}
-              disabled={databaseBusy && !resetDatabase.isPending}
-              onClick={() => resetDatabase.confirmAndReset('seed')}
-            >
-              Reset to seed data
-            </Button>
-          </Space>
+            <div className={styles.dbGroup}>
+              <Typography.Text className={styles.dbGroupLabel}>Reset</Typography.Text>
+              <div className={styles.dbButtonRow}>
+                <Button
+                  className={styles.dbButton}
+                  danger
+                  type="primary"
+                  loading={resetDatabase.isPending && resetDatabase.variables === 'empty'}
+                  disabled={databaseBusy && !resetDatabase.isPending}
+                  onClick={() => resetDatabase.confirmAndReset('empty')}
+                >
+                  Reset to empty
+                </Button>
+                <Button
+                  className={styles.dbButton}
+                  danger
+                  loading={resetDatabase.isPending && resetDatabase.variables === 'seed'}
+                  disabled={databaseBusy && !resetDatabase.isPending}
+                  onClick={() => resetDatabase.confirmAndReset('seed')}
+                >
+                  Reset to seed data
+                </Button>
+              </div>
+            </div>
+          </div>
         </Card>
       ) : null}
     </div>

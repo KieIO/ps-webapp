@@ -8,6 +8,7 @@ export const NOTIFICATION_TYPES = [
   'task_assigned',
   'task_creative_handoff',
   'task_creative_cm',
+  'task_creative_pm',
   'project_assigned',
   'deadline_warning',
   'overload',

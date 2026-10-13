@@ -22,6 +22,7 @@ export const PIPELINE_STAGE_LABELS: Record<CreativePipelineStage, string> = {
   awaiting_cm: 'Chờ giao Staff',
   assigned_staff: 'Đã giao Staff',
   split: 'Đã chia nhỏ',
+  returned_to_pm: 'Đã trả PM',
 };
 
 export type CreativeQueueView = 'ch' | 'cm';
@@ -509,6 +510,7 @@ const CAPACITY_EXCLUDED_STAGES = new Set<CreativePipelineStage>([
   'awaiting_ch',
   'awaiting_cm',
   'split',
+  'returned_to_pm',
 ]);
 
 const ACTIVE_CONFIRMATIONS = new Set(['not_updated', 'confirmed']);
@@ -618,26 +620,39 @@ export const canStaffConfirmOrDeclineCreative = (
 };
 
 /**
- * CM (or Admin/PM on CM queue) may refuse an awaiting_cm handoff → returns to CH.
+ * CM (or Admin break-glass) may refuse an awaiting_cm handoff → returns to CH.
+ * PM is not allowed — handoff chain is PM → CH → CM.
  */
 export const canCmRefuseCreativeAssignment = (
   task: MyTask,
   userId: string | undefined,
   role: Role | undefined,
 ): boolean => {
-  if (!canProcessCmQueue(role)) return false;
   if (!isAwaitingCm(task)) return false;
   if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
   if (task.staffConfirmation === 'decline') return false;
   if (role === ROLES.CREATIVE_MANAGER) {
     return Boolean(userId && isAssignedToUser(task, userId));
   }
-  return role === ROLES.ADMIN || role === ROLES.PM;
+  return role === ROLES.ADMIN;
+};
+
+/**
+ * CH (or Admin break-glass) may refuse an awaiting_ch handoff from PM → returned_to_pm.
+ * PM is not allowed — they handed the task off.
+ */
+export const canChRefuseCreativeHandoff = (task: MyTask, role: Role | undefined): boolean => {
+  if (role !== ROLES.CREATIVE_HEAD && role !== ROLES.ADMIN) return false;
+  if (!isAwaitingCh(task)) return false;
+  if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
+  if (task.staffConfirmation === 'decline') return false;
+  return isCreativeDeptTask(task) && !isRevisionTask(task);
 };
 
 /**
  * Mirror BE creative decline rollback for mock mode.
- * Pipeline creative decline resets to not_updated after returning to CH/CM.
+ * return_to_ch / return_to_cm reset to not_updated for queue re-entry.
+ * return_to_pm keeps sticky decline and leaves the Creative board.
  * Revision / non-creative: keep decline status (flat).
  * Throws when creative decline is not allowed for the current stage.
  */
@@ -650,6 +665,16 @@ export const applyCreativeDeclineRollback = (task: MyTask): MyTask => {
     throw new Error(
       'Không từ chối task Creative đã chia nhỏ (split parent). Hãy xử lý từng task nhỏ.',
     );
+  }
+
+  if (stage === 'awaiting_ch') {
+    return {
+      ...task,
+      staffConfirmation: 'decline',
+      pipelineStage: 'returned_to_pm',
+      creativeManager: undefined,
+      staff: [],
+    };
   }
 
   if (stage === 'awaiting_cm') {

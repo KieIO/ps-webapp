@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Button, Result } from 'antd';
+import { isChunkLoadError, reloadOnChunkLoadError } from '@/shared/utils/chunkLoadError';
 import styles from './ErrorBoundary.module.scss';
 
 interface ErrorBoundaryProps {
@@ -8,20 +9,22 @@ interface ErrorBoundaryProps {
 
 interface ErrorBoundaryState {
   hasError: boolean;
+  error: Error | null;
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(): ErrorBoundaryState {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('Unhandled application error:', error, info);
+    reloadOnChunkLoadError(error);
   }
 
   handleReload = () => {
@@ -30,6 +33,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render() {
     if (this.state.hasError) {
+      if (isChunkLoadError(this.state.error)) {
+        return (
+          <div className={styles.container}>
+            <Result
+              status="info"
+              title="Updating…"
+              subTitle="Loading the latest version of the app."
+            />
+          </div>
+        );
+      }
+
       return (
         <div className={styles.container}>
           <Result

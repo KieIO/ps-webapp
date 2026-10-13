@@ -27,6 +27,7 @@ import { useTaskRevisions } from '../../hooks/useTaskRevisions';
 import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
 import type { MyTask } from '../../schemas/task.schema';
 import {
+  canChRefuseCreativeHandoff,
   canCmRefuseCreativeAssignment,
   canProcessChQueue,
   canProcessCmQueue,
@@ -75,6 +76,10 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
     () => canCmRefuseCreativeAssignment(task, userId, role) && !parentLockedByRevision,
     [task, userId, role, parentLockedByRevision],
   );
+  const showChRefuse = useMemo(
+    () => canChRefuseCreativeHandoff(task, role) && !parentLockedByRevision,
+    [task, role, parentLockedByRevision],
+  );
   /** After Confirm — next step is Finish (OT still needs the status modal for hours). */
   const showStaffFinish =
     isAssignee && task.staffConfirmation === 'confirmed' && !parentLockedByRevision;
@@ -86,6 +91,7 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
     canChangeTaskStatus(task, role) &&
     !showStaffConfirmDecline &&
     !showCmRefuse &&
+    !showChRefuse &&
     !showStaffFinish;
 
   const revisionsQuery = useTaskRevisions(task.id, {
@@ -158,6 +164,18 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
     Modal.confirm({
       title: 'Từ chối nhận task này?',
       content: 'Task sẽ trả về hàng chờ Creative Head để giao lại CM.',
+      okText: 'Từ chối',
+      okButtonProps: { danger: true },
+      cancelText: 'Quay lại',
+      centered: true,
+      onOk: () => runStaffStatus('decline'),
+    });
+  };
+
+  const confirmChRefuse = () => {
+    Modal.confirm({
+      title: 'Từ chối nhận task này?',
+      content: 'Task sẽ trả về danh sách của PM với trạng thái Từ chối và ra khỏi Creative queue.',
       okText: 'Từ chối',
       okButtonProps: { danger: true },
       cancelText: 'Quay lại',
@@ -286,6 +304,18 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
               loading={statusPending}
               disabled={updateStatus.isPending}
               onClick={confirmCmRefuse}
+              block
+            >
+              Từ chối nhận
+            </Button>
+          ) : null}
+          {showChRefuse ? (
+            <Button
+              danger
+              icon={<CloseOutlined />}
+              loading={statusPending}
+              disabled={updateStatus.isPending}
+              onClick={confirmChRefuse}
               block
             >
               Từ chối nhận
