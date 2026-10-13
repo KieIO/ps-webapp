@@ -22,8 +22,8 @@ export const env = {
   /** Opt-in only: set `VITE_USE_CAPACITY_MOCK=true` to use in-memory capacity data. */
   useCapacityMock: import.meta.env.VITE_USE_CAPACITY_MOCK === 'true',
   /**
-   * Destructive Settings → reset database. Shown for admin by default,
-   * including production. Set `false` to hide the button.
+   * Settings → Database tools (reset / export / import). Shown for admin by
+   * default, including production. Set `false` to hide the card.
    */
   enableDatabaseReset: import.meta.env.VITE_ENABLE_DATABASE_RESET !== 'false',
 } as const;

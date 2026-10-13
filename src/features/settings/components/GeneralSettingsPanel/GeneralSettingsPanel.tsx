@@ -7,13 +7,17 @@ import {
   useOvertimeSettings,
   useUpdateOvertimeSettings,
 } from '@/features/overtime/hooks/useOvertime';
+import { useExportDatabase } from '../../hooks/useExportDatabase';
+import { useImportDatabase } from '../../hooks/useImportDatabase';
 import { useResetDatabase } from '../../hooks/useResetDatabase';
 import styles from './GeneralSettingsPanel.module.scss';
 
 export const GeneralSettingsPanel = () => {
   const { role, can } = usePermission();
   const resetDatabase = useResetDatabase();
-  const canResetDatabase = role === ROLES.ADMIN && env.enableDatabaseReset;
+  const exportDatabase = useExportDatabase();
+  const importDatabase = useImportDatabase();
+  const canManageDatabase = role === ROLES.ADMIN && env.enableDatabaseReset;
   const canManageOtSettings =
     role === ROLES.ADMIN ||
     role === ROLES.HEAD ||
@@ -30,7 +34,10 @@ export const GeneralSettingsPanel = () => {
     }
   }, [settingsQuery.data]);
 
-  if (!canResetDatabase && !canManageOtSettings) {
+  const databaseBusy =
+    resetDatabase.isPending || exportDatabase.isPending || importDatabase.isPending;
+
+  if (!canManageDatabase && !canManageOtSettings) {
     return (
       <Card title="General">
         <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
@@ -84,29 +91,48 @@ export const GeneralSettingsPanel = () => {
         </Card>
       ) : null}
 
-      {canResetDatabase ? (
+      {canManageDatabase ? (
         <Card title="Database">
           <Alert
             type="warning"
             showIcon
-            message="Destructive action"
-            description="Both options wipe current data and sign everyone out. Empty keeps catalogs and one account per core role. Seed restores the full demo dataset."
+            message="Destructive actions"
+            description="Import and both reset options wipe current data and sign everyone out. Export downloads a full ZIP backup you can import later on a matching app schema."
             style={{ marginBottom: 24 }}
           />
 
           <Typography.Paragraph type="secondary" style={{ marginBottom: 16 }}>
-            After reset, sign in again with a seed account (password{' '}
-            <Typography.Text code>ps123</Typography.Text>
+            After reset or import, sign in again with an account from the restored data (seed
+            password <Typography.Text code>ps123</Typography.Text>
             ), e.g. <Typography.Text code>admin@pokeslide.com</Typography.Text> or a{' '}
             <Typography.Text code>@pokeslide.dev</Typography.Text> role account.
           </Typography.Paragraph>
+
+          <Space wrap style={{ marginBottom: 16 }}>
+            <Button
+              type="primary"
+              loading={exportDatabase.isPending}
+              disabled={databaseBusy && !exportDatabase.isPending}
+              onClick={() => exportDatabase.mutate()}
+            >
+              Export database
+            </Button>
+            <Button
+              danger
+              loading={importDatabase.isPending}
+              disabled={databaseBusy && !importDatabase.isPending}
+              onClick={() => importDatabase.openFilePicker()}
+            >
+              Import database
+            </Button>
+          </Space>
 
           <Space wrap>
             <Button
               danger
               type="primary"
               loading={resetDatabase.isPending && resetDatabase.variables === 'empty'}
-              disabled={resetDatabase.isPending}
+              disabled={databaseBusy && !resetDatabase.isPending}
               onClick={() => resetDatabase.confirmAndReset('empty')}
             >
               Reset to empty
@@ -114,7 +140,7 @@ export const GeneralSettingsPanel = () => {
             <Button
               danger
               loading={resetDatabase.isPending && resetDatabase.variables === 'seed'}
-              disabled={resetDatabase.isPending}
+              disabled={databaseBusy && !resetDatabase.isPending}
               onClick={() => resetDatabase.confirmAndReset('seed')}
             >
               Reset to seed data
