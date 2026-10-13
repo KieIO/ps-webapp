@@ -1,4 +1,4 @@
-import { Alert, Button, Segmented, Table, Tag, Tooltip } from 'antd';
+import { Alert, Button, Modal, Segmented, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -10,17 +10,20 @@ import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
+import { useRehandCreativeToCH } from '../../hooks/useRehandCreativeToCH';
 import type { MyTask } from '../../schemas/task.schema';
 import {
   canEditCreativePipelineTask,
   canProcessChQueue,
   canProcessCmQueue,
+  canRehandCreativeToCH,
   countActionableQueueItems,
   CREATIVE_CM_QUEUE_FRAME_LABELS,
   defaultCreativeQueueView,
   filterCreativeQueue,
   isAwaitingCh,
   isAwaitingCm,
+  isReturnedToPm,
   needsChBrief,
   PIPELINE_STAGE_LABELS,
   pipelineAssigneeLabel,
@@ -62,6 +65,7 @@ export function CreativePipelineView() {
 
   const { data, isLoading } = useMyTaskList({ taskCategory: 'project' });
   const tasks = useMemo(() => data?.items ?? [], [data?.items]);
+  const rehandCreative = useRehandCreativeToCH();
 
   const queue = useMemo(
     () => filterCreativeQueue(tasks, view, user?.id, role, cmFrame),
@@ -76,7 +80,24 @@ export function CreativePipelineView() {
   const chEnabled = canProcessChQueue(role);
   const cmEnabled = canProcessCmQueue(role);
 
-  const openTask = (task: MyTask) => setSelected(task);
+  const confirmRehandToCH = (task: MyTask) => {
+    Modal.confirm({
+      title: 'Đưa lại hàng chờ Creative Head?',
+      content: 'Task sẽ vào hàng chờ CH (awaiting_ch) để bất kỳ Creative Head nào nhận và giao CM.',
+      okText: 'Đưa lại hàng chờ CH',
+      cancelText: 'Quay lại',
+      centered: true,
+      onOk: () => rehandCreative.mutateAsync(task.id),
+    });
+  };
+
+  const openTask = (task: MyTask) => {
+    if (view === 'ch' && isReturnedToPm(task) && canRehandCreativeToCH(role)) {
+      confirmRehandToCH(task);
+      return;
+    }
+    setSelected(task);
+  };
   const closeDrawer = () => setSelected(null);
 
   const openHeadAssign = Boolean(selected && view === 'ch' && isAwaitingCh(selected));
@@ -87,6 +108,7 @@ export function CreativePipelineView() {
     selected &&
       !openHeadAssign &&
       !openManagerAssign &&
+      !isReturnedToPm(selected) &&
       (canEditCreativePipelineTask(selected, role, user?.id) ||
         resolveEffectivePipelineStage(selected) !== 'awaiting_ch'),
   );
@@ -223,9 +245,11 @@ export function CreativePipelineView() {
               ? 'orange'
               : stage === 'awaiting_cm'
                 ? 'gold'
-                : stage === 'split'
-                  ? 'blue'
-                  : 'green';
+                : stage === 'returned_to_pm'
+                  ? 'red'
+                  : stage === 'split'
+                    ? 'blue'
+                    : 'green';
           return <Tag color={color}>{PIPELINE_STAGE_LABELS[stage]}</Tag>;
         },
       },

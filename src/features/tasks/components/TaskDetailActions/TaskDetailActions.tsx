@@ -23,6 +23,7 @@ import { EvaluateTaskModal } from '../EvaluateTaskModal/EvaluateTaskModal';
 import { RequestRevisionDrawer } from '../RequestRevisionDrawer/RequestRevisionDrawer';
 import { UpdateTaskStatusModal } from '../UpdateTaskStatusModal/UpdateTaskStatusModal';
 import { useDeleteMyTask } from '../../hooks/useDeleteMyTask';
+import { useRehandCreativeToCH } from '../../hooks/useRehandCreativeToCH';
 import { useTaskRevisions } from '../../hooks/useTaskRevisions';
 import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
 import type { MyTask } from '../../schemas/task.schema';
@@ -119,7 +120,9 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
   const [revisionOpen, setRevisionOpen] = useState(false);
 
   const { mutate: deleteTask, isPending: isDeleting } = useDeleteMyTask();
+  const rehandCreative = useRehandCreativeToCH();
   const statusPending = updateStatus.isPending && updateStatus.variables?.id === task.id;
+  const rehandPending = rehandCreative.isPending && rehandCreative.variables === task.id;
 
   const handleDelete = () => {
     deleteTask(task.id, {
@@ -184,6 +187,17 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
     });
   };
 
+  const confirmRehandToCH = () => {
+    Modal.confirm({
+      title: 'Đưa lại hàng chờ Creative Head?',
+      content: 'Task sẽ vào hàng chờ CH (awaiting_ch) để bất kỳ Creative Head nào nhận và giao CM.',
+      okText: 'Đưa lại hàng chờ CH',
+      cancelText: 'Quay lại',
+      centered: true,
+      onOk: () => rehandCreative.mutateAsync(task.id),
+    });
+  };
+
   const handleCloseEdit = () => setEditOpen(false);
   const handleCloseStatus = () => {
     setStatusOpen(false);
@@ -203,6 +217,14 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
   const openAssignCm = pipelineOpen && pipelineAction?.action === 'assign_cm';
   const openAssignStaff = pipelineOpen && pipelineAction?.action === 'assign_staff';
   const openPipelineEdit = creativeEditOpen || (pipelineOpen && pipelineAction?.action === 'edit');
+
+  const handlePipelineActionClick = () => {
+    if (pipelineAction?.action === 'rehand_ch') {
+      confirmRehandToCH();
+      return;
+    }
+    setPipelineOpen(true);
+  };
 
   const openEditAction = () => {
     if (useCreativeEditDrawer) {
@@ -255,7 +277,9 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
             <Button
               type="primary"
               icon={<TeamOutlined />}
-              onClick={() => setPipelineOpen(true)}
+              loading={pipelineAction.action === 'rehand_ch' ? rehandPending : false}
+              disabled={pipelineAction.action === 'rehand_ch' ? rehandCreative.isPending : false}
+              onClick={handlePipelineActionClick}
               block
             >
               {pipelineAction.label}

@@ -13,7 +13,9 @@ import {
   mockCreateMyTask,
   mockCreateRevisionTask,
   mockListRevisionTasks,
+  mockRehandCreativeToCH,
   mockUpdateCreativePipeline,
+  mockUpdateMyTaskStatus,
 } from './tasks.mock';
 
 const baseTask = INITIAL_MOCK_TASKS[0];
@@ -246,6 +248,32 @@ describe('creative CH/CM pipeline', () => {
     expect(updated.staff[0]?.userId).toBe('dev-creative_manager');
     expect(updated.creativeManager?.userId).toBe('dev-creative_manager');
     expect(updated.creativeDeadline).toBeTruthy();
+  });
+
+  it('lets PM rehand a CH-refused task back to awaiting_ch for any CH', async () => {
+    const refused = await mockUpdateMyTaskStatus(
+      'task-ch-031',
+      { staffConfirmation: 'decline', staffNote: '' },
+      'dev-creative_head',
+    );
+    expect(refused.pipelineStage).toBe('returned_to_pm');
+    expect(refused.staffConfirmation).toBe('decline');
+
+    await expect(mockRehandCreativeToCH('task-ch-031', 'dev-creative_head')).rejects.toThrow(
+      /PM hoặc Admin/,
+    );
+
+    const rehanded = await mockRehandCreativeToCH('task-ch-031', 'dev-pm');
+    expect(rehanded.pipelineStage).toBe('awaiting_ch');
+    expect(rehanded.staffConfirmation).toBe('not_updated');
+    expect(rehanded.staff).toEqual([]);
+
+    const assigned = await mockAssignCreativeHead(
+      'task-ch-031',
+      { cmUserId: 'dev-creative_manager' },
+      'dev-creative_head',
+    );
+    expect(assigned.pipelineStage).toBe('awaiting_cm');
   });
 
   it('persists an explicit creative deadline when CH picks one', async () => {

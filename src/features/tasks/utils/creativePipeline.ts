@@ -213,14 +213,17 @@ const PIPELINE_BOARD_STAGES = new Set<CreativePipelineStage>([
 const resolveQueueRecency = (task: MyTask): string =>
   task.updatedAt ?? task.assignedAt ?? task.date ?? '';
 
+const isChQueueActionable = (task: MyTask, stage: CreativePipelineStage): boolean =>
+  isAwaitingCh(task) || stage === 'returned_to_pm';
+
 /** Actionable inbox rows stay on top; everything else by most recent pipeline activity. */
 const compareCreativeQueueRows = (
   a: { task: MyTask; stage: CreativePipelineStage },
   b: { task: MyTask; stage: CreativePipelineStage },
   view: CreativeQueueView,
 ): number => {
-  const aActionable = view === 'ch' ? isAwaitingCh(a.task) : isAwaitingCm(a.task);
-  const bActionable = view === 'ch' ? isAwaitingCh(b.task) : isAwaitingCm(b.task);
+  const aActionable = view === 'ch' ? isChQueueActionable(a.task, a.stage) : isAwaitingCm(a.task);
+  const bActionable = view === 'ch' ? isChQueueActionable(b.task, b.stage) : isAwaitingCm(b.task);
   if (aActionable !== bActionable) {
     return aActionable ? -1 : 1;
   }
@@ -313,12 +316,19 @@ export const canSeeCreativeDetailPipelineAction = (role: Role | undefined): bool
   role === ROLES.CREATIVE_HEAD ||
   role === ROLES.CREATIVE_MANAGER;
 
-export type CreativeDetailPipelineAction = 'assign_cm' | 'assign_staff' | 'edit';
+export type CreativeDetailPipelineAction = 'assign_cm' | 'assign_staff' | 'edit' | 'rehand_ch';
 
 export type CreativeDetailPipelineActionInfo = {
   action: CreativeDetailPipelineAction;
   label: string;
 };
+
+/** PM/Admin may put a CH-refused task back on the CH inbox (awaiting_ch). */
+export const canRehandCreativeToCH = (role: Role | undefined): boolean =>
+  role === ROLES.ADMIN || role === ROLES.PM;
+
+export const isReturnedToPm = (task: MyTask): boolean =>
+  resolveEffectivePipelineStage(task) === 'returned_to_pm';
 
 /**
  * Resolve assign/edit CTA for task detail — mirrors Creative queue actions for the
@@ -342,6 +352,10 @@ export const resolveCreativeDetailPipelineAction = (
   if (!isCreativePipelineParent(task)) return null;
 
   const stage = resolveEffectivePipelineStage(task);
+  if (stage === 'returned_to_pm') {
+    if (!canRehandCreativeToCH(role)) return null;
+    return { action: 'rehand_ch', label: 'Đưa lại hàng chờ CH' };
+  }
   if (!isPipelineBoardStage(stage)) return null;
 
   if (stage === 'awaiting_ch') {
@@ -395,6 +409,13 @@ export const filterCreativeQueue = (
     if (view === 'ch') {
       if (!isCreativePipelineParent(task)) continue;
       const stage = resolveEffectivePipelineStage(task);
+      // CH-refused tasks stay off the CH board; PM/Admin see them to rehand.
+      if (stage === 'returned_to_pm') {
+        if (canRehandCreativeToCH(role)) {
+          rows.push({ task, stage });
+        }
+        continue;
+      }
       if (!isPipelineBoardStage(stage)) continue;
       rows.push({ task, stage });
       continue;
@@ -448,8 +469,9 @@ export const countActionableQueueItems = (
   cmFrame: CreativeCmQueueFrame = 'intake',
 ): number => {
   if (view === 'ch') {
-    return filterCreativeQueue(tasks, view, userId, role).filter((task) => isAwaitingCh(task))
-      .length;
+    return filterCreativeQueue(tasks, view, userId, role).filter(
+      (task) => isAwaitingCh(task) || (isReturnedToPm(task) && canRehandCreativeToCH(role)),
+    ).length;
   }
   if (cmFrame === 'intake') {
     return filterCreativeQueue(tasks, view, userId, role, 'intake').filter((task) =>
@@ -590,6 +612,9 @@ export const queueActionLabel = (
   userId?: string,
 ): string => {
   if (view === 'ch') {
+    if (isReturnedToPm(task) && canRehandCreativeToCH(role)) {
+      return 'Đưa lại CH';
+    }
     if (isAwaitingCh(task)) {
       return needsChBrief(task) ? 'Bổ sung brief' : 'Giao CM';
     }
@@ -647,6 +672,20 @@ export const canChRefuseCreativeHandoff = (task: MyTask, role: Role | undefined)
   if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
   if (task.staffConfirmation === 'decline') return false;
   return isCreativeDeptTask(task) && !isRevisionTask(task);
+};
+
+/** Mirror BE RehandCreativeToCH for mock mode. */
+export const applyCreativeRehandToCH = (task: MyTask): MyTask => {
+  if (!isReturnedToPm(task) || !isCreativePipelineParent(task)) {
+    throw new Error('Chỉ đưa lại hàng chờ CH khi task đã bị CH từ chối (returned_to_pm).');
+  }
+  return {
+    ...task,
+    staffConfirmation: 'not_updated',
+    pipelineStage: 'awaiting_ch',
+    creativeManager: undefined,
+    staff: [],
+  };
 };
 
 /**

@@ -50,6 +50,7 @@ import {
   mockAssignCreativeHead,
   mockAssignCreativeManager,
   mockAssignMyTask,
+  mockRehandCreativeToCH,
   mockCreateMyTask,
   mockCreateQualityReview,
   mockCreateRevisionTask,
@@ -333,6 +334,17 @@ export const myTaskApi = {
 
     const response = await api.patch(`/tasks/my/${id}/assign-cm`, data).catch((error: unknown) => {
       throw new Error(getApiErrorMessage(error, 'Không thể assign Creative Manager'));
+    });
+    return parseMyTaskResponse(response.data);
+  },
+
+  rehandCreativeToCH: async (id: string, editorUserId?: string): Promise<MyTask> => {
+    if (env.useTasksMock) {
+      return MyTaskSchema.parse(await mockRehandCreativeToCH(id, editorUserId));
+    }
+
+    const response = await api.patch(`/tasks/my/${id}/rehand-ch`).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Không thể đưa task lại hàng chờ Creative Head'));
     });
     return parseMyTaskResponse(response.data);
   },

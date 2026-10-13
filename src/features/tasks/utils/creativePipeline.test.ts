@@ -3,12 +3,14 @@ import { ROLES } from '@/config/permissions';
 import type { CreateMyTaskRequest, MyTask, TaskAssignee } from '../schemas/task.schema';
 import {
   applyCreativeDeclineRollback,
+  applyCreativeRehandToCH,
   canChangeCreativeLevelRole,
   canChRefuseCreativeHandoff,
   canCmRefuseCreativeAssignment,
   canEditCreativePipelineTask,
   canReassignCreativeManager,
   canReassignCreativeStaff,
+  canRehandCreativeToCH,
   canStaffConfirmOrDeclineCreative,
   countActionableQueueItems,
   filterCreativeManagers,
@@ -658,6 +660,29 @@ describe('creative decline helpers', () => {
     expect(
       filterCreativeQueue([refused], 'ch', 'ch-1', ROLES.CREATIVE_HEAD).map((item) => item.id),
     ).toEqual([]);
+    expect(filterCreativeQueue([refused], 'ch', 'pm-1', ROLES.PM).map((item) => item.id)).toEqual([
+      refused.id,
+    ]);
+    expect(
+      filterCreativeQueue([refused], 'ch', 'admin', ROLES.ADMIN).map((item) => item.id),
+    ).toEqual([refused.id]);
+    expect(canRehandCreativeToCH(ROLES.PM)).toBe(true);
+    expect(canRehandCreativeToCH(ROLES.ADMIN)).toBe(true);
+    expect(canRehandCreativeToCH(ROLES.CREATIVE_HEAD)).toBe(false);
+    expect(resolveCreativeDetailPipelineAction(refused, ROLES.PM, 'pm-1')).toEqual({
+      action: 'rehand_ch',
+      label: 'Đưa lại hàng chờ CH',
+    });
+    expect(resolveCreativeDetailPipelineAction(refused, ROLES.CREATIVE_HEAD, 'ch-1')).toBeNull();
+
+    const rehanded = applyCreativeRehandToCH(refused);
+    expect(rehanded.pipelineStage).toBe('awaiting_ch');
+    expect(rehanded.staffConfirmation).toBe('not_updated');
+    expect(rehanded.staff).toEqual([]);
+    expect(
+      filterCreativeQueue([rehanded], 'ch', 'ch-1', ROLES.CREATIVE_HEAD).map((item) => item.id),
+    ).toEqual([rehanded.id]);
+    expect(countActionableQueueItems([refused], 'ch', 'pm-1', ROLES.PM)).toBe(1);
   });
 
   it('excludes decline from assign-picker workload', () => {

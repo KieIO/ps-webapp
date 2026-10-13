@@ -32,18 +32,21 @@ import { isStaffAssignable } from '../utils/staffAvailability';
 import { resolveStaffFromUserId } from '../utils/staff';
 import {
   applyCreativeDeclineRollback,
+  applyCreativeRehandToCH,
   canChangeCreativeLevelRole,
   canEditCreativePipelineTask,
   canProcessChQueue,
   canProcessCmQueue,
   canReassignCreativeManager,
   canReassignCreativeStaff,
+  canRehandCreativeToCH,
   filterCreativeAssignableExecutors,
   filterCreativeManagers,
   filterCreativeStaff,
   isAwaitingCh,
   isCreativeHandoffPayload,
   isCreativeLevelLockedByStaffConfirm,
+  isReturnedToPm,
   isSplitChildTask,
   needsChBrief,
   resolveCreateBriefOwner,
@@ -867,6 +870,39 @@ export const mockUpdateMyTaskPmEvaluation = async (
     completionPercent: payload.completionPercent,
     pmEvaluation: payload.pmEvaluation,
     pmNote: payload.pmNote,
+    updatedAt: new Date().toISOString(),
+  };
+
+  const next = [...tasks];
+  next[index] = updated;
+  setMockTasksStore(next);
+  return updated;
+};
+
+export const mockRehandCreativeToCH = async (
+  id: string,
+  editorUserId?: string,
+): Promise<MyTask> => {
+  await mockDelay();
+
+  const role = resolveEditorRole(editorUserId);
+  if (!canRehandCreativeToCH(role)) {
+    throw new Error('Chỉ PM hoặc Admin mới đưa task lại hàng chờ Creative Head');
+  }
+
+  const tasks = getMockTasksStore();
+  const index = tasks.findIndex((entry) => entry.id === id);
+  if (index === -1) {
+    throw new Error('Task not found');
+  }
+
+  const current = tasks[index];
+  if (!isReturnedToPm(current)) {
+    throw new Error('Task này chưa bị CH từ chối (returned_to_pm)');
+  }
+
+  const updated: MyTask = {
+    ...applyCreativeRehandToCH(current),
     updatedAt: new Date().toISOString(),
   };
 
