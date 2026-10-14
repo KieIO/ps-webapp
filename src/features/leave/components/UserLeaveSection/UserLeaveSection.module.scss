@@ -12,6 +12,11 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: #fffbe6;
+  border: 1px solid #ffe58f;
+  border-radius: 8px;
 }
 
 .currentHeader {
@@ -34,19 +39,11 @@
   font-weight: 500;
 }
 
-.reason {
-  margin: 8px 0 0;
-  color: rgba(0, 0, 0, 0.65);
-}
-
 .pendingNote {
   margin: 8px 0 0;
-  color: #d48806;
+  color: #ad6800;
   font-size: 13px;
-}
-
-.reactivateBtn {
-  align-self: flex-start;
+  line-height: 1.45;
 }
 
 .actions {
@@ -56,25 +53,13 @@
 }
 
 .noLeave {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-
-  p {
-    margin: 0;
-    color: rgba(0, 0, 0, 0.65);
-  }
+  margin-bottom: 4px;
 }
 
 .noLeaveText {
   margin: 0;
-  color: rgba(0, 0, 0, 0.65);
-}
-
-.scheduleLink {
-  padding-left: 0;
-  margin-top: 4px;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 13px;
 }
 
 .history {
@@ -85,7 +70,7 @@
 
 .historyTitle {
   margin: 0 0 12px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -107,4 +92,45 @@
   justify-content: space-between;
   gap: 12px;
   font-size: 13px;
+}
+
+.openList {
+  margin-bottom: 12px;
+}
+
+.openItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  padding: 10px 12px;
+  background: var(--ps-surface-muted, #fafafa);
+  border: 1px solid var(--ps-border-subtle, #f0f0f0);
+  border-radius: 8px;
+}
+
+.openMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.reasonInline {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.scheduleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.scheduleHint {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
 }

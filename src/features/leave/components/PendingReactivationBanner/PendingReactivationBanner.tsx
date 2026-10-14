@@ -34,9 +34,7 @@ export function PendingReactivationBanner() {
           <strong>
             {data.length} employee{data.length === 1 ? '' : 's'} ready to return
           </strong>
-          <span className={styles.subtitle}>
-            Leave ended — reactivate to restore task assignment access
-          </span>
+          <span className={styles.subtitle}>Activate to restore access after leave</span>
         </div>
 
         <ul className={styles.list}>
@@ -51,6 +49,7 @@ export function PendingReactivationBanner() {
               </button>
               <span className={styles.dates}>
                 ended {dayjs(item.endDate).format(DATE_FORMAT)}
+                {item.hasUpcomingLeave ? ' · has upcoming leave' : ''}
               </span>
               <Button
                 type="primary"

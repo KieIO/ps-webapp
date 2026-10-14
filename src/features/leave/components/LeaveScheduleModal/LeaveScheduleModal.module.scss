@@ -1,7 +1,3 @@
-.leaveScheduleModal {
-  /* root hook if needed */
-}
-
 .modal {
   :global(.ant-modal-body) {
     padding-top: 8px;
@@ -9,7 +5,7 @@
 }
 
 .steps {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .intro {
@@ -17,11 +13,51 @@
 }
 
 .form {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .dateRange {
   width: 100%;
+}
+
+.bookedLoading {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 16px;
+}
+
+.bookedBlock {
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  background: var(--ps-surface-muted, #fafafa);
+  border: 1px solid var(--ps-border-subtle, #f0f0f0);
+  border-radius: 8px;
+}
+
+.bookedTitle {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.bookedList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bookedItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
 }
 
 .footer {
@@ -35,7 +71,11 @@
 
 .tasksStep,
 .confirmStep {
-  margin-top: 8px;
+  margin-top: 4px;
+}
+
+.tasksHint {
+  margin-bottom: 12px !important;
 }
 
 .loading {
@@ -45,9 +85,14 @@
 }
 
 .emptyAlert,
-.tasksAlert,
 .warningAlert {
   margin-bottom: 16px;
+}
+
+.outcomeNote {
+  margin: 0 0 4px !important;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .summaryCard {

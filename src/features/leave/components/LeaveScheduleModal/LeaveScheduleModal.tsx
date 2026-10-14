@@ -21,9 +21,15 @@ import { DEPARTMENT_LABELS, type UserDepartment } from '@/features/users/constan
 import { CONFIRMATION_LABELS } from '@/shared/constants/taskConfirmation';
 import type { TaskConfirmationStatus } from '@/shared/constants/taskConfirmation';
 import { StatusPill } from '@/shared/ui/StatusPill/StatusPill';
-import { useCreateLeave, useLeavePreview } from '../../hooks/useLeave';
-import { ReassignToColumnTitle } from '../ReassignToHelpTooltip/ReassignToHelpTooltip';
+import { useCreateLeave, useLeavePreview, useOpenLeaves } from '../../hooks/useLeave';
 import type { LeaveAffectedTask, LeaveReplacementCandidate } from '../../schemas/leave.schema';
+import {
+  isDayBookedByOpenLeaves,
+  leaveStatusLabel,
+  rangeOverlapsOpenLeaves,
+  resolveLeaveStatusOnCreate,
+} from '../../utils/leaveStatus';
+import { ReassignToColumnTitle } from '../ReassignToHelpTooltip/ReassignToHelpTooltip';
 import styles from './LeaveScheduleModal.module.scss';
 
 interface LeaveScheduleModalProps {
@@ -39,6 +45,12 @@ type StepKey = 'dates' | 'tasks' | 'confirm';
 type LeaveDatesFormValues = {
   dateRange: [Dayjs, Dayjs];
   reason?: string;
+};
+
+const MODAL_WIDTH: Record<StepKey, number> = {
+  dates: 560,
+  tasks: 920,
+  confirm: 560,
 };
 
 export function LeaveScheduleModal({
@@ -60,6 +72,7 @@ export function LeaveScheduleModal({
     isLoading: previewLoading,
     isFetching: previewFetching,
   } = useLeavePreview(open ? userId : null, startDate, endDate);
+  const { data: openLeaves = [], isLoading: openLeavesLoading } = useOpenLeaves(userId);
   const { mutate: createLeave, isPending } = useCreateLeave();
 
   useEffect(() => {
@@ -79,12 +92,29 @@ export function LeaveScheduleModal({
     [tasks, replacements],
   );
 
+  const bookedLeaves = useMemo(
+    () => openLeaves.filter((leave) => leave.status === 'scheduled' || leave.status === 'active'),
+    [openLeaves],
+  );
+
+  const disableBookedDate = (current: Dayjs) =>
+    Boolean(current && isDayBookedByOpenLeaves(current, bookedLeaves));
+
   const handleClose = () => {
     onClose();
   };
 
   const handleDatesNext = (values: LeaveDatesFormValues) => {
     const [start, end] = values.dateRange;
+    if (rangeOverlapsOpenLeaves(start, end, bookedLeaves)) {
+      datesForm.setFields([
+        {
+          name: 'dateRange',
+          errors: ['Selected dates overlap an existing leave period'],
+        },
+      ]);
+      return;
+    }
     setStartDate(start.format('YYYY-MM-DD'));
     setEndDate(end.format('YYYY-MM-DD'));
     setReason(values.reason?.trim() ?? '');
@@ -117,9 +147,17 @@ export function LeaveScheduleModal({
     );
   };
 
-  const isPastLeave = Boolean(endDate && dayjs(endDate).isBefore(dayjs(), 'day'));
+  const pendingStatus =
+    startDate && endDate ? resolveLeaveStatusOnCreate(startDate, endDate) : null;
 
   const stepIndex = step === 'dates' ? 0 : step === 'tasks' ? 1 : 2;
+
+  const outcomeNote =
+    pendingStatus === 'ended'
+      ? 'This period has already ended, so it is saved as history and the employee stays Active.'
+      : pendingStatus === 'scheduled'
+        ? 'Leave is scheduled. The employee stays Active until the start date, then goes On leave for this period. After it ends, an admin must Activate.'
+        : 'This period covers today, so the employee will be marked On leave. After it ends, an admin must Activate to restore task assignment.';
 
   const taskColumns: ColumnsType<LeaveAffectedTask> = [
     {
@@ -205,7 +243,7 @@ export function LeaveScheduleModal({
       open={open}
       onCancel={handleClose}
       footer={null}
-      width={920}
+      width={MODAL_WIDTH[step]}
       destroyOnHidden
       className={styles.modal}
     >
@@ -225,16 +263,53 @@ export function LeaveScheduleModal({
           className={styles.form}
         >
           <Typography.Paragraph type="secondary" className={styles.intro}>
-            Set the leave period for {userName}. The employee will be marked as on leave immediately
-            after confirmation.
+            Choose one period for {userName}. Booked dates are disabled below.
           </Typography.Paragraph>
+
+          {openLeavesLoading ? (
+            <div className={styles.bookedLoading}>
+              <Spin size="small" />
+            </div>
+          ) : bookedLeaves.length > 0 ? (
+            <div className={styles.bookedBlock}>
+              <h4 className={styles.bookedTitle}>Already booked</h4>
+              <ul className={styles.bookedList}>
+                {bookedLeaves.map((leave) => (
+                  <li key={leave.id} className={styles.bookedItem}>
+                    <StatusPill
+                      label={leaveStatusLabel(leave.status)}
+                      variant={leave.status === 'active' ? 'on-leave' : 'pending'}
+                    />
+                    <span>
+                      {dayjs(leave.startDate).format(DATE_FORMAT)} →{' '}
+                      {dayjs(leave.endDate).format(DATE_FORMAT)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           <Form.Item
             name="dateRange"
             label="Leave period"
-            rules={[{ required: true, message: 'Select leave dates' }]}
+            rules={[
+              { required: true, message: 'Select leave dates' },
+              {
+                validator: async (_, value: [Dayjs, Dayjs] | undefined) => {
+                  if (!value?.[0] || !value?.[1]) return;
+                  if (rangeOverlapsOpenLeaves(value[0], value[1], bookedLeaves)) {
+                    throw new Error('Selected dates overlap an existing leave period');
+                  }
+                },
+              },
+            ]}
           >
-            <DatePicker.RangePicker format={DATE_FORMAT} className={styles.dateRange} />
+            <DatePicker.RangePicker
+              format={DATE_FORMAT}
+              className={styles.dateRange}
+              disabledDate={disableBookedDate}
+            />
           </Form.Item>
 
           <Form.Item name="reason" label="Reason (optional)">
@@ -267,18 +342,15 @@ export function LeaveScheduleModal({
               type="success"
               showIcon
               message="No active tasks during this period"
-              description="This employee has no assigned tasks that overlap the leave period. You can proceed without reassignment."
+              description="You can proceed without reassignment."
               className={styles.emptyAlert}
             />
           ) : (
             <>
-              <Alert
-                type="warning"
-                showIcon
-                message={`${tasks.length} active task${tasks.length === 1 ? '' : 's'} during leave`}
-                description="Review and optionally reassign tasks. Replacements are recommended but not required."
-                className={styles.tasksAlert}
-              />
+              <Typography.Paragraph type="secondary" className={styles.tasksHint}>
+                {tasks.length} active task{tasks.length === 1 ? '' : 's'} in this period. Reassign
+                replacements if needed (optional).
+              </Typography.Paragraph>
               <Table
                 rowKey="id"
                 columns={taskColumns}
@@ -333,26 +405,14 @@ export function LeaveScheduleModal({
               type="warning"
               showIcon
               message={`${unassignedCount} task${unassignedCount === 1 ? '' : 's'} without replacement`}
-              description="These tasks will remain assigned to other staff or become unassigned for this employee."
+              description="These tasks stay with other staff or become unassigned for this employee."
               className={styles.warningAlert}
             />
           ) : null}
 
-          {isPastLeave ? (
-            <Alert
-              type="info"
-              showIcon
-              message="Leave will be recorded as history"
-              description="The leave period has already ended, so the employee stays Active and will not be marked On leave."
-            />
-          ) : (
-            <Alert
-              type="info"
-              showIcon
-              message="Employee will be marked On leave immediately"
-              description="When the leave period ends, an admin must manually reactivate the employee to restore task assignment."
-            />
-          )}
+          <Typography.Paragraph type="secondary" className={styles.outcomeNote}>
+            {outcomeNote}
+          </Typography.Paragraph>
 
           <div className={styles.footer}>
             <Button onClick={() => setStep('tasks')}>Back</Button>

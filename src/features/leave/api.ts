@@ -58,6 +58,13 @@ export const leaveApi = {
     }
   },
 
+  listOpen: async (userId: string): Promise<LeaveRecord[]> => {
+    const response = await api.get(`/users/${userId}/leave/open`).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Failed to load open leave periods'));
+    });
+    return z.array(LeaveRecordSchema).parse(response.data);
+  },
+
   listPendingReactivations: async (): Promise<PendingReactivation[]> => {
     const response = await api.get('/leave/pending-reactivations').catch((error: unknown) => {
       throw new Error(getApiErrorMessage(error, 'Failed to load pending reactivations'));
@@ -76,6 +83,15 @@ export const leaveApi = {
     const response = await api.post(`/users/${userId}/leave/cancel`).catch((error: unknown) => {
       throw new Error(getApiErrorMessage(error, 'Failed to cancel leave'));
     });
+    return response.data;
+  },
+
+  cancelByLeaveId: async (userId: string, leaveId: string) => {
+    const response = await api
+      .post(`/users/${userId}/leave/${leaveId}/cancel`)
+      .catch((error: unknown) => {
+        throw new Error(getApiErrorMessage(error, 'Failed to cancel leave'));
+      });
     return response.data;
   },
 };

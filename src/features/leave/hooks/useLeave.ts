@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
-import dayjs from 'dayjs';
 import { leaveApi } from '../api';
 import type { CreateLeaveRequest } from '../schemas/leave.schema';
+import { resolveLeaveStatusOnCreate } from '../utils/leaveStatus';
 
 export const useLeavePreview = (
   userId: string | null,
@@ -26,13 +26,16 @@ export const useCreateLeave = () => {
       queryClient.invalidateQueries({ queryKey: ['users', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['leave'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      const recordedAsHistory =
-        data.status === 'ended' || dayjs(variables.payload.endDate).isBefore(dayjs(), 'day');
-      message.success(
-        recordedAsHistory
-          ? 'Leave recorded in history. Employee stays Active.'
-          : 'Leave scheduled successfully',
-      );
+      const status =
+        data.status ||
+        resolveLeaveStatusOnCreate(variables.payload.startDate, variables.payload.endDate);
+      if (status === 'ended') {
+        message.success('Leave recorded in history. Employee stays Active.');
+      } else if (status === 'scheduled') {
+        message.success('Leave scheduled. Employee stays Active until the leave start date.');
+      } else {
+        message.success('Leave started — employee is On leave.');
+      }
     },
     onError: (error: Error) => {
       message.error(error.message || 'Failed to schedule leave');
@@ -44,6 +47,12 @@ export const useUserLeaveHistory = (userId: string) =>
   useQuery({
     queryKey: ['leave', 'history', userId],
     queryFn: () => leaveApi.listByUser(userId),
+  });
+
+export const useOpenLeaves = (userId: string) =>
+  useQuery({
+    queryKey: ['leave', 'open', userId],
+    queryFn: () => leaveApi.listOpen(userId),
   });
 
 export const useActiveLeave = (userId: string) =>
@@ -80,12 +89,13 @@ export const useCancelLeave = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (userId: string) => leaveApi.cancel(userId),
-    onSuccess: (_data, userId) => {
+    mutationFn: ({ userId, leaveId }: { userId: string; leaveId?: string }) =>
+      leaveId ? leaveApi.cancelByLeaveId(userId, leaveId) : leaveApi.cancel(userId),
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['users', userId] });
+      queryClient.invalidateQueries({ queryKey: ['users', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['leave'] });
-      message.success('Leave cancelled — employee is active again');
+      message.success('Leave cancelled');
     },
     onError: (error: Error) => {
       message.error(error.message || 'Failed to cancel leave');

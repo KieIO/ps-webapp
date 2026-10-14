@@ -123,7 +123,7 @@ export function UserTable({ users, loading }: UserTableProps) {
       width: canManageLeave ? 180 : 80,
       render: (_, record) => (
         <div style={{ display: 'flex', gap: 4 }}>
-          {canManageLeave && record.status !== 'on_leave' ? (
+          {canManageLeave && record.status !== 'inactive' && record.status !== 'invited' ? (
             <Button type="link" icon={<CalendarOutlined />} onClick={() => setLeaveTarget(record)}>
               Leave
             </Button>

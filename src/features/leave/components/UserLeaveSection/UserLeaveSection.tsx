@@ -8,9 +8,11 @@ import { StatusPill } from '@/shared/ui/StatusPill/StatusPill';
 import {
   useActiveLeave,
   useCancelLeave,
+  useOpenLeaves,
   useReactivateUser,
   useUserLeaveHistory,
 } from '../../hooks/useLeave';
+import { isOpenLeave, leaveStatusLabel } from '../../utils/leaveStatus';
 import styles from './UserLeaveSection.module.scss';
 
 interface UserLeaveSectionProps {
@@ -25,6 +27,7 @@ export function UserLeaveSection({ userId, userStatus, onScheduleLeave }: UserLe
   const canReactivate = can('REACTIVATE_USER');
 
   const { data: activeLeave, isLoading: activeLoading } = useActiveLeave(userId);
+  const { data: openLeaves = [], isLoading: openLoading } = useOpenLeaves(userId);
   const { data: history = [], isLoading: historyLoading } = useUserLeaveHistory(userId);
   const { mutate: reactivate, isPending: reactivating } = useReactivateUser();
   const { mutate: cancelLeave, isPending: cancelling } = useCancelLeave();
@@ -33,89 +36,132 @@ export function UserLeaveSection({ userId, userStatus, onScheduleLeave }: UserLe
     activeLeave?.status === 'ended' ||
     (activeLeave != null && dayjs(activeLeave.endDate).isBefore(dayjs(), 'day'));
 
-  // Leave row may already be marked ended (no active leave) while user.status is still on_leave.
+  // Leave row may already be marked ended (no covering active leave) while user.status is still on_leave.
   const needsReactivation = userStatus === 'on_leave' && (!activeLeave || leaveEnded);
-  const canCancelLeave = canManageLeave && activeLeave?.status === 'active' && !leaveEnded;
-
   const latestEndedLeave = history.find((entry) => entry.status === 'ended');
   const pendingLeaveDates = activeLeave ?? latestEndedLeave;
-
-  const handleCancelLeave = () => {
-    Modal.confirm({
-      title: 'Cancel leave?',
-      content:
-        'The employee will return to Active status immediately. Task reassignments made during leave scheduling will not be automatically reversed.',
-      okText: 'Cancel leave',
-      okType: 'danger',
-      cancelText: 'Keep leave',
-      onOk: () => cancelLeave(userId),
-    });
-  };
+  const hasUpcomingScheduled = openLeaves.some((leave) => leave.status === 'scheduled');
+  const canSchedule = canManageLeave && userStatus !== 'inactive' && userStatus !== 'invited';
 
   const pastHistory = history.filter((entry) => {
-    if (activeLeave && entry.id === activeLeave.id) return false;
-    // When showing ended leave in the pending-reactivation card, don't duplicate it below.
+    if (isOpenLeave(entry)) return false;
     if (needsReactivation && !activeLeave && latestEndedLeave && entry.id === latestEndedLeave.id) {
       return false;
     }
     return true;
   });
 
-  if (!canManageLeave && !canReactivate && !activeLeave && history.length === 0) {
+  const handleCancelLeave = (leaveId: string, label: string) => {
+    Modal.confirm({
+      title: 'Cancel leave?',
+      content: `Cancel ${label}? Task reassignments made for this period will not be automatically reversed.`,
+      okText: 'Cancel leave',
+      okType: 'danger',
+      cancelText: 'Keep leave',
+      onOk: () => cancelLeave({ userId, leaveId }),
+    });
+  };
+
+  if (
+    !canManageLeave &&
+    !canReactivate &&
+    openLeaves.length === 0 &&
+    !activeLeave &&
+    history.length === 0
+  ) {
     return null;
   }
 
+  const loading = activeLoading || openLoading;
+
   return (
     <CardWrapper title="Leave" className={styles.section}>
-      {activeLoading ? (
+      {loading ? (
         <div className={styles.loading}>
           <Spin size="small" />
         </div>
-      ) : activeLeave || needsReactivation ? (
-        <div className={styles.currentLeave}>
-          <div className={styles.currentHeader}>
-            <CalendarOutlined className={styles.calendarIcon} />
-            <div>
-              <div className={styles.currentTitle}>
-                <StatusPill label="On leave" variant="on-leave" />
-                {pendingLeaveDates ? (
-                  <span>
-                    {dayjs(pendingLeaveDates.startDate).format(DATE_FORMAT)} →{' '}
-                    {dayjs(pendingLeaveDates.endDate).format(DATE_FORMAT)}
-                  </span>
-                ) : null}
+      ) : (
+        <>
+          {needsReactivation ? (
+            <div className={styles.currentLeave}>
+              <div className={styles.currentHeader}>
+                <CalendarOutlined className={styles.calendarIcon} />
+                <div>
+                  <div className={styles.currentTitle}>
+                    <StatusPill label="Needs Activate" variant="on-leave" />
+                    {pendingLeaveDates ? (
+                      <span>
+                        {dayjs(pendingLeaveDates.startDate).format(DATE_FORMAT)} →{' '}
+                        {dayjs(pendingLeaveDates.endDate).format(DATE_FORMAT)}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className={styles.pendingNote}>
+                    Leave has ended. Activate to restore access
+                    {hasUpcomingScheduled ? '. Upcoming scheduled leave stays booked.' : '.'}
+                  </p>
+                </div>
               </div>
-              {activeLeave?.reason ? <p className={styles.reason}>{activeLeave.reason}</p> : null}
-              {needsReactivation ? (
-                <p className={styles.pendingNote}>
-                  Leave period has ended. Reactivate this employee to restore access.
-                </p>
+              {canReactivate ? (
+                <div className={styles.actions}>
+                  <Button type="primary" loading={reactivating} onClick={() => reactivate(userId)}>
+                    Activate employee
+                  </Button>
+                </div>
               ) : null}
             </div>
-          </div>
+          ) : null}
 
-          <div className={styles.actions}>
-            {canCancelLeave ? (
-              <Button danger loading={cancelling} onClick={handleCancelLeave}>
-                Cancel leave
+          {openLeaves.length > 0 ? (
+            <div className={styles.openList}>
+              <h4 className={styles.historyTitle}>Scheduled & current</h4>
+              <ul className={styles.historyList}>
+                {openLeaves.map((leave) => {
+                  const rangeLabel = `${dayjs(leave.startDate).format(DATE_FORMAT)} → ${dayjs(leave.endDate).format(DATE_FORMAT)}`;
+                  return (
+                    <li key={leave.id} className={styles.openItem}>
+                      <div className={styles.openMeta}>
+                        <StatusPill
+                          label={leaveStatusLabel(leave.status)}
+                          variant={leave.status === 'active' ? 'on-leave' : 'pending'}
+                        />
+                        <span>{rangeLabel}</span>
+                        {leave.reason ? (
+                          <span className={styles.reasonInline}>{leave.reason}</span>
+                        ) : null}
+                      </div>
+                      {canManageLeave ? (
+                        <Button
+                          danger
+                          size="small"
+                          loading={cancelling}
+                          onClick={() => handleCancelLeave(leave.id, rangeLabel)}
+                        >
+                          Cancel
+                        </Button>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : !needsReactivation ? (
+            <div className={styles.noLeave}>
+              <p className={styles.noLeaveText}>No scheduled or active leave.</p>
+            </div>
+          ) : null}
+
+          {canSchedule ? (
+            <div className={styles.scheduleRow}>
+              <Button type="default" onClick={onScheduleLeave}>
+                Schedule leave
               </Button>
-            ) : null}
-            {canReactivate && needsReactivation ? (
-              <Button type="primary" loading={reactivating} onClick={() => reactivate(userId)}>
-                Activate employee
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      ) : canManageLeave ? (
-        <div className={styles.noLeave}>
-          <p>No active leave scheduled.</p>
-          <Button type="default" onClick={onScheduleLeave}>
-            Schedule leave
-          </Button>
-        </div>
-      ) : (
-        <p className={styles.noLeaveText}>No active leave.</p>
+              {openLeaves.length > 0 ? (
+                <span className={styles.scheduleHint}>Add another non-overlapping period</span>
+              ) : null}
+            </div>
+          ) : null}
+        </>
       )}
 
       {historyLoading ? (
@@ -133,7 +179,7 @@ export function UserLeaveSection({ userId, userStatus, onScheduleLeave }: UserLe
                   {dayjs(entry.endDate).format(DATE_FORMAT)}
                 </span>
                 <StatusPill
-                  label={entry.status === 'ended' ? 'Ended' : entry.status}
+                  label={leaveStatusLabel(entry.status)}
                   variant={entry.status === 'cancelled' ? 'overdue' : 'completed'}
                 />
               </li>

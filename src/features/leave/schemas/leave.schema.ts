@@ -3,7 +3,7 @@ import { TASK_CONFIRMATION_STATUSES } from '@/shared/constants/taskConfirmation'
 import { USER_DEPARTMENTS } from '@/features/users/constants';
 import { JOB_LEVELS, WORK_STATUSES } from '@/features/capacity/constants';
 
-export const LEAVE_STATUSES = ['active', 'ended', 'cancelled'] as const;
+export const LEAVE_STATUSES = ['scheduled', 'active', 'ended', 'cancelled'] as const;
 
 export const LeaveStaffSchema = z.object({
   userId: z.string().optional(),
@@ -66,6 +66,7 @@ export const PendingReactivationSchema = z.object({
   leaveId: z.string(),
   startDate: z.string(),
   endDate: z.string(),
+  hasUpcomingLeave: z.boolean().optional().default(false),
 });
 
 export type LeaveAffectedTask = z.infer<typeof LeaveAffectedTaskSchema>;
