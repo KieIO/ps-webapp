@@ -273,6 +273,41 @@ export const mockGetMyTaskById = async (
   return withRevisionChildCount(enrichMockTaskWithProjectContext(task));
 };
 
+/** Split family for edit drawers — bypasses oversight list hide of CM children. */
+export const mockListSplitChildren = async (
+  id: string,
+  viewerUserId?: string,
+  viewerRole?: Role,
+): Promise<MyTask[]> => {
+  await mockDelay();
+  const store = getMockTasksStore();
+  const task = store.find((entry) => entry.id === id);
+  if (!task) {
+    throw new Error('Task not found');
+  }
+  if (!canViewTask(task, viewerUserId, viewerRole)) {
+    throw new Error('You do not have permission to view this task');
+  }
+
+  let parentId = task.id;
+  if (isSplitChildTask(task)) {
+    if (!task.parentTaskId) return [];
+    parentId = task.parentTaskId;
+  } else if (resolveEffectivePipelineStage(task) !== 'split') {
+    return [];
+  }
+
+  return store
+    .filter(
+      (entry) =>
+        entry.parentTaskId === parentId &&
+        entry.taskKind !== 'revision' &&
+        (entry.taskKind === 'split' || !entry.taskKind),
+    )
+    .sort((a, b) => a.taskCode.localeCompare(b.taskCode))
+    .map((entry) => withRevisionChildCount(enrichMockTaskWithProjectContext(entry)));
+};
+
 const withRevisionChildCount = (task: MyTask): MyTask => {
   if (isRevisionTask(task)) {
     return { ...task, revisionChildCount: 0, activeRevisionChildCount: 0 };

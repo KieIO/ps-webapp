@@ -19,10 +19,11 @@ import type { ProjectUrgency } from '@/features/projects/schemas/project.schema'
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { CONFIRMATION_LABELS, MY_TASK_COLUMN_HEADERS } from '../../constants';
+import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
 import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
+import { useCreativeSplitChildren } from '../../hooks/useCreativeSplitChildren';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateCreativePipeline } from '../../hooks/useUpdateCreativePipeline';
-import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
 import type { MyTask } from '../../schemas/task.schema';
 import { formatTaskDateTime, fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
@@ -36,7 +37,6 @@ import {
   filterCreativeAssignableExecutors,
   filterCreativeManagers,
   getAssigneeWorkload,
-  getCreativeSplitSubtasks,
   isCreativeLevelLockedByStaffConfirm,
   isSplitChildQuantityLocked,
   isSplitChildTask,
@@ -91,6 +91,18 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
   const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
   const allTasks = useMemo(() => taskList?.items ?? [], [taskList?.items]);
+  const stagePreview = task ? resolveEffectivePipelineStage(task) : undefined;
+  const needsSplitFamily = Boolean(
+    open &&
+      task &&
+      (stagePreview === 'split' ||
+        (task.parentTaskId && (task.taskKind === 'split' || !task.taskKind))),
+  );
+  const {
+    data: splitFamily = [],
+    isLoading: splitFamilyLoading,
+    isError: splitFamilyError,
+  } = useCreativeSplitChildren(task?.id, { enabled: needsSplitFamily });
   const watchedCreativeDeadline = Form.useWatch('creativeDeadline', form);
   const capacityDeadlineOverride = useMemo(
     () => (watchedCreativeDeadline?.isValid() ? toTaskDeadline(watchedCreativeDeadline) : null),
@@ -126,24 +138,14 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       role === ROLES.HEAD ||
       stage === 'assigned_staff' ||
       splitChild);
-  const splitSiblings = useMemo(() => {
-    if (!task?.parentTaskId) return [];
-    const parent = allTasks.find((entry) => entry.id === task.parentTaskId);
-    if (!parent) {
-      return allTasks.filter(
-        (entry) => entry.parentTaskId === task.parentTaskId && entry.taskKind !== 'revision',
-      );
-    }
-    return getCreativeSplitSubtasks(parent, allTasks);
-  }, [allTasks, task]);
-  const splitChildren = useMemo(
-    () => (task && splitParent ? getCreativeSplitSubtasks(task, allTasks) : []),
-    [allTasks, splitParent, task],
-  );
   const lockedParentTotal = useMemo(() => {
     if (splitParent && task) return task.quantity;
     if (splitChild && task?.parentTaskId) {
-      return allTasks.find((entry) => entry.id === task.parentTaskId)?.quantity;
+      return (
+        allTasks.find((entry) => entry.id === task.parentTaskId)?.quantity ??
+        // Parent may be absent from oversight lists — fall back to family sum + this child's known total via API parent qty when available.
+        undefined
+      );
     }
     return undefined;
   }, [allTasks, splitChild, splitParent, task]);
@@ -157,17 +159,21 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     ? formatTaskDateTime(task.creativeDeadline)
     : '—';
   const statusLabel = task ? CONFIRMATION_LABELS[task.staffConfirmation] : '—';
+  const quantityFamily = useMemo(() => {
+    if (!splitParent && !splitChild) return [];
+    return [...splitFamily].sort((a, b) => a.taskCode.localeCompare(b.taskCode));
+  }, [splitChild, splitFamily, splitParent]);
+  const effectiveParentTotal = useMemo(() => {
+    if (lockedParentTotal != null) return lockedParentTotal;
+    if (quantityFamily.length > 0) return sumSplitChildrenQuantity(quantityFamily);
+    return undefined;
+  }, [lockedParentTotal, quantityFamily]);
   const headerQuantity =
-    lockedParentTotal != null
-      ? lockedParentTotal
+    effectiveParentTotal != null
+      ? effectiveParentTotal
       : task && task.quantity > 0
         ? task.quantity
         : null;
-  const quantityFamily = useMemo(() => {
-    if (splitParent) return splitChildren;
-    if (splitChild) return splitSiblings;
-    return [];
-  }, [splitChild, splitChildren, splitParent, splitSiblings]);
   const watchedChildQuantities = Form.useWatch('childQuantities', form);
   const watchedParentQuantity = Form.useWatch('quantity', form);
   const allocatedFromForm = useMemo(() => {
@@ -181,7 +187,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   const parentTotalFromForm =
     watchedParentQuantity != null && Number.isFinite(Number(watchedParentQuantity))
       ? Number(watchedParentQuantity)
-      : (lockedParentTotal ?? allocatedFromForm);
+      : (effectiveParentTotal ?? allocatedFromForm);
   const allocationConserved =
     quantityFamily.length > 0
       ? isSplitQuantityConserved(
@@ -282,7 +288,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       additionalFactors: task.additionalFactors,
       quantity:
         splitParent || splitChild
-          ? (lockedParentTotal ?? task.quantity)
+          ? (effectiveParentTotal ?? lockedParentTotal ?? task.quantity)
           : task.quantity > 0
             ? task.quantity
             : undefined,
@@ -297,7 +303,16 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       cmUserId: task.creativeManager?.userId ?? task.staff[0]?.userId ?? undefined,
       staffNote: task.staffNote || task.cmNote || '',
     });
-  }, [open, task, form, quantityFamily, lockedParentTotal, splitParent, splitChild]);
+  }, [
+    open,
+    task,
+    form,
+    quantityFamily,
+    lockedParentTotal,
+    effectiveParentTotal,
+    splitParent,
+    splitChild,
+  ]);
 
   const resetAndClose = () => {
     form.resetFields();
@@ -403,10 +418,11 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       }
     }
 
+    const baselineParentQty = effectiveParentTotal ?? lockedParentTotal;
     const parentQtyChanged =
       quantityFamily.length > 0 &&
-      lockedParentTotal != null &&
-      Math.abs(projectedParentQty - lockedParentTotal) > 1e-6;
+      baselineParentQty != null &&
+      Math.abs(projectedParentQty - baselineParentQty) > 1e-6;
 
     const splitQtyPayload =
       quantityFamily.length > 0
@@ -600,7 +616,14 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                       message="Tổng SL các phần lệch so với SL tổng"
                     />
                   ) : null}
-                  {quantityFamily.length > 0 ? (
+                  {splitFamilyLoading ? (
+                    <Alert
+                      type="info"
+                      showIcon
+                      className={styles.banner}
+                      message="Đang tải danh sách task nhỏ…"
+                    />
+                  ) : quantityFamily.length > 0 ? (
                     quantityFamily.map((child, index) => {
                       const qtyLocked = isSplitChildQuantityLocked(child);
                       return (
@@ -650,7 +673,9 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                       type="warning"
                       showIcon
                       className={styles.banner}
-                      message="Chưa tải được danh sách task nhỏ"
+                      message={
+                        splitFamilyError ? 'Không tải được danh sách task nhỏ' : 'Chưa có task nhỏ'
+                      }
                       description="Đóng drawer rồi mở lại, hoặc mở từng task nhỏ từ My Tasks."
                     />
                   )}

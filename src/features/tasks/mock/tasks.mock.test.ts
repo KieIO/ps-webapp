@@ -13,6 +13,7 @@ import {
   mockCreateMyTask,
   mockCreateRevisionTask,
   mockListRevisionTasks,
+  mockListSplitChildren,
   mockRehandCreativeToCH,
   mockSpawnEvaluationRemainder,
   mockUpdateCreativePipeline,
@@ -563,6 +564,42 @@ describe('creative CH/CM pipeline', () => {
         'admin',
       ),
     ).rejects.toThrow(/finish|huỷ/);
+  });
+
+  it('lists split children for admin even though list hides them', async () => {
+    await mockAssignCreativeManager(
+      'task-cm-025',
+      {
+        mode: 'split',
+        subtasks: [
+          {
+            name: 'Icon dashboard',
+            staffUserId: 'usr-creative-ha',
+            quantity: 12,
+            description: 'Brief icon dashboard',
+          },
+          {
+            name: 'Icon forms',
+            staffUserId: 'usr-creative-tran',
+            quantity: 12,
+            description: 'Brief icon forms',
+          },
+        ],
+      },
+      'dev-creative_manager',
+    );
+
+    const listed = filterMockTasks(
+      getMockTasksStore(),
+      { taskCategory: 'project' },
+      'dev-admin',
+      'admin',
+    );
+    expect(listed.every((item) => item.parentTaskId !== 'task-cm-025')).toBe(true);
+
+    const children = await mockListSplitChildren('task-cm-025', 'dev-admin', 'admin');
+    expect(children).toHaveLength(2);
+    expect(children.every((item) => item.parentTaskId === 'task-cm-025')).toBe(true);
   });
 
   it('allows reassigning staff on confirmed split child and resets confirmation', async () => {

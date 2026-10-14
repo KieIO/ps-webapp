@@ -70,6 +70,7 @@ import {
   mockGetStaffOptions,
   mockListQualityReviews,
   mockListRevisionTasks,
+  mockListSplitChildren,
   mockSpawnEvaluationRemainder,
   mockUpdateCreativePipeline,
   mockUpdateHeadMyTask,
@@ -127,6 +128,26 @@ export const myTaskApi = {
 
     const response = await api.get(`/tasks/my/${id}`);
     return MyTaskSchema.parse(response.data);
+  },
+
+  /** Split children for edit drawers — not hidden for oversight roles. */
+  listSplitChildren: async (
+    id: string,
+    viewerUserId?: string,
+    viewerRole?: Role,
+  ): Promise<MyTask[]> => {
+    if (env.useTasksMock) {
+      return MyTaskSchema.array().parse(await mockListSplitChildren(id, viewerUserId, viewerRole));
+    }
+
+    const response = await api.get(`/tasks/my/${id}/split-children`).catch((error: unknown) => {
+      throw new Error(getApiErrorMessage(error, 'Failed to load split children'));
+    });
+    const payload = response.data as { items?: unknown } | unknown[];
+    const items = Array.isArray(payload)
+      ? payload
+      : ((payload as { items?: unknown })?.items ?? []);
+    return MyTaskSchema.array().parse(items);
   },
 
   getHistory: async (id: string): Promise<TaskHistoryListResponse> => {
