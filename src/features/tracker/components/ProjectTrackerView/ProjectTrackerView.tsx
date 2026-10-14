@@ -910,6 +910,24 @@ interface TimelineBlockProps {
   onCreateMilestoneAtDate: (deadlineDate: string) => void;
 }
 
+function resolveClickedDayOnBar(
+  event: MouseEvent<HTMLDivElement>,
+  days: CalendarDay[],
+  dayWidth: number,
+  barStart: string,
+  barWidthPx: number,
+): string | null {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const offsetX = Math.max(0, event.clientX - rect.left);
+  const dayOffset = Math.min(
+    Math.max(0, Math.floor(offsetX / dayWidth)),
+    Math.max(0, Math.round(barWidthPx / dayWidth) - 1),
+  );
+  const barStartIndex = getDayIndex(days, barStart);
+  if (barStartIndex < 0) return null;
+  return days[barStartIndex + dayOffset]?.date ?? null;
+}
+
 function TimelineBlock({
   project,
   block,
@@ -919,21 +937,22 @@ function TimelineBlock({
   canManageMilestones,
   onCreateMilestoneAtDate,
 }: TimelineBlockProps) {
-  const clickTimerRef = useRef<number | null>(null);
   const position = getBlockPosition(days, block.start, block.end, dayWidth);
   if (!position) return null;
 
   const isProjectBar = isProjectTimelineBar(block, project.name);
+  /** Admin/Head: bar click adds a milestone; open detail via project name on the left. */
+  const milestoneCreateOnBar = isProjectBar && canManageMilestones;
   const taskName = isProjectBar
     ? undefined
     : parseTrackerTaskBaseLabel(block.label, block.quantity);
-  const ariaLabel = isProjectBar
-    ? canManageMilestones
-      ? `Project ${project.name}. Double-click to add milestone.`
-      : `Open project ${project.name}`
-    : `View ${taskName ?? block.label} tasks for ${project.name}`;
+  const ariaLabel = milestoneCreateOnBar
+    ? `Add milestone on ${project.name}`
+    : isProjectBar
+      ? `Open project ${project.name}`
+      : `View ${taskName ?? block.label} tasks for ${project.name}`;
 
-  const handleOpen = () => {
+  const handleOpenDetailOrTasks = () => {
     if (isProjectBar) {
       navigate(buildProjectDetailPath(project.id));
       return;
@@ -951,43 +970,22 @@ function TimelineBlock({
     );
   };
 
-  const handleClick = () => {
-    if (clickTimerRef.current != null) {
-      window.clearTimeout(clickTimerRef.current);
+  const handleClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (milestoneCreateOnBar) {
+      event.preventDefault();
+      event.stopPropagation();
+      const date = resolveClickedDayOnBar(event, days, dayWidth, block.start, position.width);
+      if (date) onCreateMilestoneAtDate(date);
+      return;
     }
-    clickTimerRef.current = window.setTimeout(() => {
-      clickTimerRef.current = null;
-      handleOpen();
-    }, 220);
-  };
-
-  const handleDoubleClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (!isProjectBar || !canManageMilestones) return;
-    event.preventDefault();
-    event.stopPropagation();
-    if (clickTimerRef.current != null) {
-      window.clearTimeout(clickTimerRef.current);
-      clickTimerRef.current = null;
-    }
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    const offsetX = Math.max(0, event.clientX - rect.left);
-    const dayOffset = Math.min(
-      Math.max(0, Math.floor(offsetX / dayWidth)),
-      Math.max(0, Math.round(position.width / dayWidth) - 1),
-    );
-    const barStartIndex = getDayIndex(days, block.start);
-    if (barStartIndex < 0) return;
-    const day = days[barStartIndex + dayOffset];
-    if (!day) return;
-    onCreateMilestoneAtDate(day.date);
+    handleOpenDetailOrTasks();
   };
 
   return (
     <Tooltip
       title={
-        isProjectBar && canManageMilestones
-          ? `${block.label} · Double-click để thêm mốc`
+        milestoneCreateOnBar
+          ? `${block.label} · Click để thêm mốc (mở chi tiết qua tên dự án bên trái)`
           : block.label
       }
       mouseEnterDelay={0}
@@ -1012,7 +1010,7 @@ function TimelineBlock({
       }}
     >
       <div
-        role="link"
+        role={milestoneCreateOnBar ? 'button' : 'link'}
         tabIndex={0}
         aria-label={ariaLabel}
         className={classNames(styles.block, styles.blockClickable, styles[block.type])}
@@ -1023,11 +1021,15 @@ function TimelineBlock({
           height: TRACKER_BLOCK_HEIGHT,
         }}
         onClick={handleClick}
-        onDoubleClick={handleDoubleClick}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
-            handleOpen();
+            if (milestoneCreateOnBar) {
+              // Keyboard: add at bar start day (no pointer position).
+              onCreateMilestoneAtDate(block.start);
+              return;
+            }
+            handleOpenDetailOrTasks();
           }
         }}
       >
