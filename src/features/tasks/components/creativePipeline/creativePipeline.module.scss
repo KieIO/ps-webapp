@@ -50,6 +50,17 @@
   color: var(--color-text-muted);
 }
 
+.identityBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+
+  :global(.ant-tag) {
+    margin-inline-end: 0;
+  }
+}
+
 .identityName {
   display: -webkit-box;
   -webkit-line-clamp: 2;

@@ -56,10 +56,13 @@ export const formatEvaluationAcceptedLabel = (
   return `Đạt ${accepted}/${original}`;
 };
 
-/** List/detail badge: `Đạt x/y` after spawn, otherwise `Đã evaluate`. */
+/** Plain evaluate badge (no remainder spawn). Prefer VN over mixed “Đã evaluate”. */
+export const EVALUATED_BADGE_LABEL = 'Đã đánh giá';
+
+/** List/detail badge: `Đạt x/y` after spawn, otherwise `Đã đánh giá`. */
 export const formatEvaluationBadgeLabel = (
   task: Pick<MyTask, 'quantity' | 'originalAssignedQuantity'>,
-): string => formatEvaluationAcceptedLabel(task) ?? 'Đã evaluate';
+): string => formatEvaluationAcceptedLabel(task) ?? EVALUATED_BADGE_LABEL;
 
 /** Next `-S{n}` code under a split parent (max existing index + 1). */
 export const nextSplitChildTaskCode = (parentTaskCode: string, siblings: MyTask[]): string => {

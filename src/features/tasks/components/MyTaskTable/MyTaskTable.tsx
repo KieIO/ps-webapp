@@ -33,6 +33,15 @@ import { getMyTaskCompletionProgressStatus, isMyTaskDateAtRisk } from '../../uti
 import { getTaskDeadline } from '../../utils/taskDetail';
 import { formatEvaluationBadgeLabel, hasCmEvaluation } from '../../utils/evaluationRemainder';
 import {
+  inferParentTaskCodeFromSplit,
+  isSplitChildTask,
+  isSplitParentTask,
+  SPLIT_CHILD_BADGE_HINT,
+  SPLIT_CHILD_BADGE_LABEL,
+  SPLIT_PARENT_BADGE_HINT,
+  SPLIT_PARENT_BADGE_LABEL,
+} from '../../utils/creativePipeline';
+import {
   areParentActionsLockedByActiveRevision,
   formatHasRevisionChildrenLabel,
   formatRevisionLabel,
@@ -85,6 +94,8 @@ const renderTaskDetailLink = (label: string, record: MyTask) => {
   if (!label) return <span className={styles.empty}>—</span>;
 
   const isRevision = isRevisionTask(record);
+  const splitParent = isSplitParentTask(record);
+  const splitChild = isSplitChildTask(record);
   const parentHasRevisions = hasRevisionChildren(record);
   const parentHasActiveRevision = hasActiveRevisionChildren(record);
   const evaluated = hasCmEvaluation(record);
@@ -96,6 +107,7 @@ const renderTaskDetailLink = (label: string, record: MyTask) => {
             : ''
         }`
       : null;
+  const splitChildParentCode = splitChild ? inferParentTaskCodeFromSplit(record.taskCode) : null;
 
   return (
     <span className={styles.taskNameCell}>
@@ -118,6 +130,26 @@ const renderTaskDetailLink = (label: string, record: MyTask) => {
           <Tooltip title={`Đây là revision subtask · ${record.taskCode}`}>
             <Tag color="purple" className={styles.otBadge}>
               {formatRevisionLabel(record)}
+            </Tag>
+          </Tooltip>
+        ) : null}
+        {splitParent ? (
+          <Tooltip title={SPLIT_PARENT_BADGE_HINT}>
+            <Tag color="blue" className={styles.otBadge}>
+              {SPLIT_PARENT_BADGE_LABEL}
+            </Tag>
+          </Tooltip>
+        ) : null}
+        {splitChild ? (
+          <Tooltip
+            title={
+              splitChildParentCode
+                ? `${SPLIT_CHILD_BADGE_HINT} · Task cha: ${splitChildParentCode}`
+                : SPLIT_CHILD_BADGE_HINT
+            }
+          >
+            <Tag color="blue" className={styles.otBadge}>
+              {SPLIT_CHILD_BADGE_LABEL}
             </Tag>
           </Tooltip>
         ) : null}

@@ -15,8 +15,15 @@ import {
   getTaskDeadline,
   getTaskStartDate,
 } from '../../utils/taskDetail';
-import { inferParentTaskCodeFromSplit, isSplitChildTask } from '../../utils/creativePipeline';
 import {
+  inferParentTaskCodeFromSplit,
+  isSplitChildTask,
+  isSplitParentTask,
+  SPLIT_CHILD_BADGE_LABEL,
+  SPLIT_PARENT_BADGE_LABEL,
+} from '../../utils/creativePipeline';
+import {
+  EVALUATED_BADGE_LABEL,
   formatEvaluationAcceptedLabel,
   formatEvaluationBadgeLabel,
   hasCmEvaluation,
@@ -48,6 +55,7 @@ function formatTaskDepartment(task: MyTask): string {
 export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSummaryCardProps) {
   const revision = isRevisionTask(task);
   const splitChild = isSplitChildTask(task);
+  const splitParent = isSplitParentTask(task);
   const parentHasRevisions = hasRevisionChildren(task);
   const parentHasActiveRevision = hasActiveRevisionChildren(task);
   const parentCode = revision
@@ -76,11 +84,12 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
           <div className={styles.titleRow}>
             <h2 className={styles.taskTitle}>{displayName}</h2>
             {revision ? <Tag color="purple">{formatRevisionLabel(task)}</Tag> : null}
-            {splitChild ? <Tag color="blue">Task nhỏ</Tag> : null}
+            {splitParent ? <Tag color="blue">{SPLIT_PARENT_BADGE_LABEL}</Tag> : null}
+            {splitChild ? <Tag color="blue">{SPLIT_CHILD_BADGE_LABEL}</Tag> : null}
             {evaluated ? (
               <Tag color="green">
                 {evaluationAcceptedLabel
-                  ? `Đã evaluate · ${evaluationAcceptedLabel}`
+                  ? `${EVALUATED_BADGE_LABEL} · ${evaluationAcceptedLabel}`
                   : formatEvaluationBadgeLabel(task)}
               </Tag>
             ) : null}

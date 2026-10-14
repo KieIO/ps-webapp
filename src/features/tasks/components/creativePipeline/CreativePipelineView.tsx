@@ -21,14 +21,18 @@ import {
   CREATIVE_CM_QUEUE_FRAME_LABELS,
   defaultCreativeQueueView,
   filterCreativeQueue,
+  inferParentTaskCodeFromSplit,
   isAwaitingCh,
   isAwaitingCm,
   isReturnedToPm,
+  isSplitChildTask,
   needsChBrief,
   PIPELINE_STAGE_LABELS,
   pipelineAssigneeLabel,
   queueActionLabel,
   resolveEffectivePipelineStage,
+  SPLIT_CHILD_BADGE_HINT,
+  SPLIT_CHILD_BADGE_LABEL,
   type CreativeCmQueueFrame,
   type CreativeQueueView,
 } from '../../utils/creativePipeline';
@@ -127,19 +131,37 @@ export function CreativePipelineView() {
         title: 'Task',
         key: 'identity',
         width: 200,
-        render: (_, record) => (
-          <div className={styles.identityCell}>
-            <span className={styles.identityCode}>{record.taskCode}</span>
-            <Tooltip title={record.taskName}>
-              <span className={styles.identityName}>{record.taskName}</span>
-            </Tooltip>
-            {record.projectName ? (
-              <Tooltip title={record.projectName}>
-                <span className={styles.identityMeta}>{record.projectName}</span>
+        render: (_, record) => {
+          // Parent “Đã chia nhỏ” already appears in Stage column — only badge children here.
+          const splitChild = isSplitChildTask(record);
+          const parentCode = splitChild ? inferParentTaskCodeFromSplit(record.taskCode) : null;
+          return (
+            <div className={styles.identityCell}>
+              <span className={styles.identityCode}>{record.taskCode}</span>
+              <Tooltip title={record.taskName}>
+                <span className={styles.identityName}>{record.taskName}</span>
               </Tooltip>
-            ) : null}
-          </div>
-        ),
+              {splitChild ? (
+                <span className={styles.identityBadges}>
+                  <Tooltip
+                    title={
+                      parentCode
+                        ? `${SPLIT_CHILD_BADGE_HINT} · Task cha: ${parentCode}`
+                        : SPLIT_CHILD_BADGE_HINT
+                    }
+                  >
+                    <Tag color="blue">{SPLIT_CHILD_BADGE_LABEL}</Tag>
+                  </Tooltip>
+                </span>
+              ) : null}
+              {record.projectName ? (
+                <Tooltip title={record.projectName}>
+                  <span className={styles.identityMeta}>{record.projectName}</span>
+                </Tooltip>
+              ) : null}
+            </div>
+          );
+        },
       },
       {
         title: 'PM',

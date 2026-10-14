@@ -25,6 +25,12 @@ export const PIPELINE_STAGE_LABELS: Record<CreativePipelineStage, string> = {
   returned_to_pm: 'Đã trả PM',
 };
 
+/** List/detail badges — keep in sync with Creative edit drawer chips. */
+export const SPLIT_PARENT_BADGE_LABEL = 'Đã chia nhỏ';
+export const SPLIT_CHILD_BADGE_LABEL = 'Task nhỏ';
+export const SPLIT_PARENT_BADGE_HINT = 'CM đã chia task này thành các task nhỏ';
+export const SPLIT_CHILD_BADGE_HINT = 'Đây là một phần của task cha (sau khi CM chia nhỏ)';
+
 export type CreativeQueueView = 'ch' | 'cm';
 
 /** CM Creative queue frames — intake (CH→CM) vs execution (CM→staff). */

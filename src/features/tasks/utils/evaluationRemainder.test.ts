@@ -71,7 +71,7 @@ describe('evaluation display helpers', () => {
       'Đạt 3/15',
     );
     expect(formatEvaluationAcceptedLabel({ quantity: 40 })).toBeNull();
-    expect(formatEvaluationBadgeLabel({ quantity: 40 })).toBe('Đã evaluate');
+    expect(formatEvaluationBadgeLabel({ quantity: 40 })).toBe('Đã đánh giá');
     expect(formatEvaluationBadgeLabel({ quantity: 3, originalAssignedQuantity: 15 })).toBe(
       'Đạt 3/15',
     );

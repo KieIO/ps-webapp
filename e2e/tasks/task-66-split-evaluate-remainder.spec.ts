@@ -242,7 +242,7 @@ test.describe('TASK-66 split evaluate remainder + confirmed SL', () => {
     await expect(modal.getByRole('link', { name: /Mở chi tiết/ })).toBeVisible();
 
     await modal.getByRole('button', { name: /^Save$/ }).click();
-    await expect(page.getByText(/Đã evaluate · Đạt 3\/8/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/Đã đánh giá · Đạt 3\/8/)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/Đã tách phần còn lại →/)).toBeVisible();
 
     const after = await getTask(admin.token, source.id);
