@@ -1,5 +1,7 @@
+import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Form, Input, InputNumber, Modal, Select } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { buildMyTaskDetailPath } from '@/config/constants';
 import {
   EVALUATE_TASK_ASSIGNED_QUANTITY_LABEL,
@@ -23,7 +25,8 @@ import {
   computeAcceptedRemainderQuantity,
 } from '../../utils/evaluationRemainder';
 import { formatTaskStaffNames } from '../../utils/staff';
-import styles from '../EditTaskModal/EditTaskModal.module.scss';
+import editStyles from '../EditTaskModal/EditTaskModal.module.scss';
+import styles from './EvaluateTaskModal.module.scss';
 
 interface EvaluateTaskModalProps {
   open: boolean;
@@ -40,6 +43,7 @@ type RemainderLink = {
   id: string;
   taskName: string;
   taskCode: string;
+  quantity: number;
 };
 
 export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProps) {
@@ -123,6 +127,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
             id: result.remainderTask.id,
             taskName: result.remainderTask.taskName,
             taskCode: result.remainderTask.taskCode,
+            quantity: Math.round(result.remainderTask.quantity ?? 0),
           });
           form.setFieldsValue({
             completedQuantity: accepted,
@@ -172,29 +177,31 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
       okButtonProps={{ disabled: isSpawning }}
     >
       {workingTask ? (
-        <div className={styles.contextCard}>
-          <div className={styles.contextItem}>
-            <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.projectName}</span>
-            <span className={styles.contextValue}>{workingTask.projectName}</span>
+        <div className={editStyles.contextCard}>
+          <div className={editStyles.contextItem}>
+            <span className={editStyles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.projectName}</span>
+            <span className={editStyles.contextValue}>{workingTask.projectName}</span>
           </div>
-          <div className={styles.contextItem}>
-            <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.taskName}</span>
-            <span className={styles.contextValue}>{workingTask.taskName}</span>
+          <div className={editStyles.contextItem}>
+            <span className={editStyles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.taskName}</span>
+            <span className={editStyles.contextValue}>{workingTask.taskName}</span>
           </div>
-          <div className={styles.contextItem}>
-            <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.staffName}</span>
-            <span className={styles.contextValue}>
+          <div className={editStyles.contextItem}>
+            <span className={editStyles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.staffName}</span>
+            <span className={editStyles.contextValue}>
               {formatTaskStaffNames(workingTask.staff, '—')}
             </span>
           </div>
-          <div className={styles.contextItem}>
-            <span className={styles.readOnlyLabel}>{EVALUATE_TASK_ASSIGNED_QUANTITY_LABEL}</span>
-            <span className={styles.contextValue}>{assignedQuantity}</span>
+          <div className={editStyles.contextItem}>
+            <span className={editStyles.readOnlyLabel}>
+              {EVALUATE_TASK_ASSIGNED_QUANTITY_LABEL}
+            </span>
+            <span className={editStyles.contextValue}>{assignedQuantity}</span>
           </div>
           {remainderSummary ? (
-            <div className={styles.contextItem}>
-              <span className={styles.readOnlyLabel}>Tóm tắt</span>
-              <span className={styles.contextValue}>{remainderSummary}</span>
+            <div className={editStyles.contextItem}>
+              <span className={editStyles.readOnlyLabel}>Tóm tắt</span>
+              <span className={editStyles.contextValue}>{remainderSummary}</span>
             </div>
           ) : null}
         </div>
@@ -208,7 +215,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
         requiredMark={false}
         disabled={isPending || isSpawning}
       >
-        <div className={styles.row}>
+        <div className={editStyles.row}>
           <Form.Item
             name="completedQuantity"
             label={EVALUATE_TASK_COMPLETED_QUANTITY_LABEL}
@@ -246,15 +253,14 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
       </Form>
 
       {showRemainderAction ? (
-        <div className={styles.section}>
-          <p className={styles.readOnlyLabel}>{EVALUATE_TASK_REMAINDER_HINT}</p>
+        <div className={styles.remainderPanel}>
+          <p className={styles.remainderHint}>{EVALUATE_TASK_REMAINDER_HINT}</p>
           <Button
             type="default"
             block
             loading={isSpawning}
             disabled={isPending}
             onClick={handleSpawnRemainder}
-            style={{ marginTop: 8 }}
           >
             {EVALUATE_TASK_REMAINDER_BUTTON} ({remainderQuantity})
           </Button>
@@ -262,16 +268,22 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
       ) : null}
 
       {remainderLink ? (
-        <div className={styles.section}>
-          <span className={styles.readOnlyLabel}>Task phần còn lại</span>
-          <a
-            href={buildMyTaskDetailPath(remainderLink.id)}
-            target="_blank"
-            rel="noreferrer"
-            className={styles.contextValue}
-          >
-            {remainderLink.taskCode}: {remainderLink.taskName}
-          </a>
+        <div className={styles.remainderPanel}>
+          <div className={styles.remainderCard}>
+            <div className={styles.remainderCardHeader}>
+              <span className={styles.remainderChip}>Đã tạo task còn lại</span>
+              <span className={styles.remainderQty}>SL {remainderLink.quantity}</span>
+            </div>
+            <div className={styles.remainderBody}>
+              <p className={styles.remainderCode}>{remainderLink.taskCode}</p>
+              <p className={styles.remainderName}>{remainderLink.taskName}</p>
+              <p className={styles.remainderMeta}>Cùng task cha · chưa gán Staff</p>
+            </div>
+            <Link className={styles.remainderLink} to={buildMyTaskDetailPath(remainderLink.id)}>
+              Mở chi tiết
+              <ArrowRightOutlined className={styles.remainderLinkIcon} />
+            </Link>
+          </div>
         </div>
       ) : null}
     </Modal>

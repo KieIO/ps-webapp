@@ -24,6 +24,7 @@ import {
   resolveCreatePipelineStage,
   resolveCreativeAssignMode,
   getCreativeSplitSubtasks,
+  inferParentTaskCodeFromSplit,
   isSplitChildQuantityLocked,
   pickPrimaryEditableSplitChild,
   resolveWholeAssignStaff,
@@ -493,6 +494,12 @@ describe('creativePipeline helpers', () => {
         }),
       ).map((m) => m.name),
     ).toEqual(['An']);
+  });
+
+  it('infers parent task code from split child codes', () => {
+    expect(inferParentTaskCodeFromSplit('PO.020-SG-004-S4')).toBe('PO.020-SG-004');
+    expect(inferParentTaskCodeFromSplit('PO.001-S12')).toBe('PO.001');
+    expect(inferParentTaskCodeFromSplit('PO.020-SG-004')).toBeNull();
   });
 
   it('locks split-child quantity only when finished or cancelled', () => {

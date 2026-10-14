@@ -38,6 +38,7 @@ import {
   filterCreativeManagers,
   getAssigneeWorkload,
   isCreativeLevelLockedByStaffConfirm,
+  inferParentTaskCodeFromSplit,
   isSplitChildQuantityLocked,
   isSplitChildTask,
   isSplitParentTask,
@@ -525,6 +526,14 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
             <p className={styles.contextTitle}>
               {task.taskCode}: {task.taskName}
             </p>
+            {splitChild && task.parentTaskId ? (
+              <p className={styles.contextMeta}>
+                Task cha:{' '}
+                <Link to={buildMyTaskDetailPath(task.parentTaskId)}>
+                  {inferParentTaskCodeFromSplit(task.taskCode) ?? 'mở task gốc'}
+                </Link>
+              </p>
+            ) : null}
             <p className={`${styles.contextMeta} ${styles.metaInline}`}>
               <span>
                 {task.projectName}
@@ -589,8 +598,9 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                     </span>
                   </div>
                   <p className={styles.allocationHint}>
-                    Chỉnh SL tổng hoặc từng phần — tổng phải khớp. Phần finished/huỷ bị khoá. Chi
-                    tiết để xem/đổi Staff.
+                    {splitChild
+                      ? 'Đang sửa một task nhỏ trong cùng task cha. Tổng SL các phần phải khớp SL tổng.'
+                      : 'Chỉnh SL tổng hoặc từng phần — tổng phải khớp. Phần finished/huỷ bị khoá. Chi tiết để xem/đổi Staff.'}
                   </p>
                   <Form.Item
                     name="quantity"
@@ -634,6 +644,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                             </p>
                             <p className={styles.allocationSub}>
                               {child.taskCode}
+                              {child.id === task.id ? ' · đang mở' : ''}
                               {child.staff[0]?.name ? ` · ${child.staff[0].name}` : ''}
                               {qtyLocked
                                 ? ` · ${CONFIRMATION_LABELS[child.staffConfirmation]}`

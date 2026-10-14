@@ -15,6 +15,7 @@ import {
   getTaskDeadline,
   getTaskStartDate,
 } from '../../utils/taskDetail';
+import { inferParentTaskCodeFromSplit, isSplitChildTask } from '../../utils/creativePipeline';
 import {
   formatHasRevisionChildrenLabel,
   formatRevisionLabel,
@@ -41,9 +42,14 @@ function formatTaskDepartment(task: MyTask): string {
 
 export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSummaryCardProps) {
   const revision = isRevisionTask(task);
+  const splitChild = isSplitChildTask(task);
   const parentHasRevisions = hasRevisionChildren(task);
   const parentHasActiveRevision = hasActiveRevisionChildren(task);
-  const parentCode = revision ? inferParentTaskCodeFromRevision(task.taskCode) : null;
+  const parentCode = revision
+    ? inferParentTaskCodeFromRevision(task.taskCode)
+    : splitChild
+      ? inferParentTaskCodeFromSplit(task.taskCode)
+      : null;
   const displayName = formatTaskDisplayId(task);
   const hasRevisionLabel = formatHasRevisionChildrenLabel(task.revisionChildCount ?? 0, {
     activeCount: task.activeRevisionChildCount ?? 0,
@@ -59,6 +65,7 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
           <div className={styles.titleRow}>
             <h2 className={styles.taskTitle}>{displayName}</h2>
             {revision ? <Tag color="purple">{formatRevisionLabel(task)}</Tag> : null}
+            {splitChild ? <Tag color="blue">Task nhỏ</Tag> : null}
             {parentHasRevisions ? (
               <Tooltip
                 title={
@@ -112,6 +119,12 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
           {revision && task.parentTaskId ? (
             <p className={styles.parentLink}>
               Revision của{' '}
+              <Link to={buildMyTaskDetailPath(task.parentTaskId)}>{parentCode ?? 'task gốc'}</Link>
+            </p>
+          ) : null}
+          {splitChild && task.parentTaskId ? (
+            <p className={styles.parentLink}>
+              Task cha:{' '}
               <Link to={buildMyTaskDetailPath(task.parentTaskId)}>{parentCode ?? 'task gốc'}</Link>
             </p>
           ) : null}

@@ -145,6 +145,17 @@ export const isSplitChildTask = (task: MyTask): boolean =>
   (task.taskKind === 'split' || !task.taskKind) &&
   !isRevisionTask(task);
 
+/**
+ * Best-effort parent code from a split child (`PO.020-SG-004-S4` → `PO.020-SG-004`).
+ * Used when the child row only has `parentTaskId` and we need a readable label.
+ */
+export const inferParentTaskCodeFromSplit = (taskCode: string): string | null => {
+  const trimmed = taskCode.trim();
+  const match = /^(.*)-S\d+$/i.exec(trimmed);
+  if (!match?.[1]) return null;
+  return match[1];
+};
+
 export const sumSplitChildrenQuantity = (children: MyTask[]): number =>
   children.reduce((sum, child) => sum + (child.quantity ?? 0), 0);
 
