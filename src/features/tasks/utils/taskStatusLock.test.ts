@@ -8,17 +8,22 @@ describe('canEditTaskMeta', () => {
     createdById: 'usr-creator',
   };
 
-  it('allows Admin, Head, and creator after confirm', () => {
+  it('allows Admin, Head, PM, and creator after confirm', () => {
     expect(canEditTaskMeta(base, ROLES.ADMIN, 'anyone')).toBe(true);
     expect(canEditTaskMeta(base, ROLES.HEAD, 'anyone')).toBe(true);
     expect(canEditTaskMeta(base, ROLES.PM, 'usr-creator')).toBe(true);
+    expect(canEditTaskMeta(base, ROLES.PM, 'other')).toBe(true);
   });
 
-  it('denies non-creator PM and finished tasks', () => {
-    expect(canEditTaskMeta(base, ROLES.PM, 'other')).toBe(false);
+  it('denies finished tasks even for Admin', () => {
     expect(
       canEditTaskMeta({ ...base, staffConfirmation: 'finished' }, ROLES.ADMIN, 'usr-creator'),
     ).toBe(false);
+  });
+
+  it('allows creator CH when not Admin/Head/PM', () => {
+    expect(canEditTaskMeta(base, ROLES.CREATIVE_HEAD, 'usr-creator')).toBe(true);
+    expect(canEditTaskMeta(base, ROLES.CREATIVE_HEAD, 'other')).toBe(false);
   });
 });
 
