@@ -2,7 +2,9 @@ import { DatePicker, Form, Input, Modal, Select, message } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
+import type { Role } from '@/config/permissions';
 import { TaskUrgencySelect } from '@/features/tasks/components/TaskUrgencySelect/TaskUrgencySelect';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import {
   EVALUATION_LEVEL_OPTIONS,
   EVALUATION_LEVEL_LABELS,
@@ -11,6 +13,9 @@ import {
 } from '../../constants';
 import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProjectList';
 import { useUpdateProject } from '../../hooks/useUpdateProject';
+import { canManageProjectMilestones } from '../../utils/milestoneAuth';
+import { formRowsToMilestoneInputs, milestonesToFormRows } from '../../utils/milestoneForm';
+import { validateMilestones } from '../../utils/milestoneValidation';
 import { computeProjectLevel } from '../../utils/projectLevel';
 import {
   emptyPerson,
@@ -24,6 +29,10 @@ import {
   type UpdateProjectRequest,
 } from '../../schemas/project.schema';
 import { ClientSelectField } from '../ClientSelectField/ClientSelectField';
+import {
+  ProjectMilestonesFields,
+  type MilestoneFormRow,
+} from '../ProjectMilestonesFields/ProjectMilestonesFields';
 import styles from './EditProjectModal.module.scss';
 
 interface EditProjectModalProps {
@@ -32,9 +41,13 @@ interface EditProjectModalProps {
   onClose: () => void;
 }
 
-type EditProjectFormValues = Omit<UpdateProjectRequest, 'startDate' | 'endDate' | 'department'> & {
+type EditProjectFormValues = Omit<
+  UpdateProjectRequest,
+  'startDate' | 'endDate' | 'department' | 'milestones'
+> & {
   startDate: Dayjs;
   endDate: Dayjs;
+  milestones?: MilestoneFormRow[];
 };
 
 export function EditProjectModal({ open, project, onClose }: EditProjectModalProps) {
@@ -42,10 +55,14 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
   const { mutate, isPending } = useUpdateProject();
   const { data: headOptions = [] } = useProjectHeadOptions();
   const { data: pmOptions = [] } = useProjectPmOptions();
+  const role = useAppSelector((state) => state.auth.user?.role) as Role | undefined;
+  const canEditMilestones = canManageProjectMilestones(role);
 
   const volume = Form.useWatch('volume', form);
   const nature = Form.useWatch('nature', form);
   const time = Form.useWatch('time', form);
+  const watchedStart = Form.useWatch('startDate', form);
+  const watchedEnd = Form.useWatch('endDate', form);
 
   const previewLevel: EvaluationLevel | undefined =
     volume != null && nature != null && time != null
@@ -80,9 +97,10 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
         note: project.note,
         status: project.status,
         urgency: project.urgency,
+        milestones: canEditMilestones ? milestonesToFormRows(project.milestones) : undefined,
       });
     }
-  }, [project, open, form]);
+  }, [project, open, form, canEditMilestones]);
 
   const handleClose = () => {
     form.resetFields();
@@ -151,6 +169,20 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
       status: values.status,
       urgency: values.urgency,
     };
+
+    if (canEditMilestones) {
+      const milestoneInputs = formRowsToMilestoneInputs(values.milestones);
+      const check = validateMilestones(milestoneInputs, {
+        startDate: values.startDate.toISOString(),
+        endDate: values.endDate.toISOString(),
+        totalSlides: project.totalSlides,
+      });
+      if (!check.ok) {
+        message.error(check.message);
+        return;
+      }
+      payload.milestones = milestoneInputs;
+    }
 
     mutate(
       { id: project.id, payload },
@@ -334,6 +366,10 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
             <Input.TextArea rows={2} />
           </Form.Item>
         </section>
+
+        {canEditMilestones ? (
+          <ProjectMilestonesFields startDate={watchedStart} endDate={watchedEnd} />
+        ) : null}
       </Form>
     </Modal>
   );

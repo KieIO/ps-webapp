@@ -19,6 +19,13 @@ import type {
   ProjectUrgency,
 } from '../../schemas/project.schema';
 import { ClientSelectField } from '../ClientSelectField/ClientSelectField';
+import {
+  ProjectMilestonesFields,
+  type MilestoneFormRow,
+} from '../ProjectMilestonesFields/ProjectMilestonesFields';
+import { formRowsToMilestoneInputs } from '../../utils/milestoneForm';
+import { validateMilestones } from '../../utils/milestoneValidation';
+import { canManageProjectMilestones } from '../../utils/milestoneAuth';
 import styles from '../EditProjectModal/EditProjectModal.module.scss';
 
 /** Roles that pre-fill Dept. head with the signed-in user when the modal opens. */
@@ -32,11 +39,12 @@ interface CreateProjectModalProps {
 /** Create form omits API fields that are defaulted server-side / at submit (not collected in UI). */
 type CreateProjectFormValues = Omit<
   CreateProjectRequest,
-  'startDate' | 'endDate' | 'department' | 'evaluation' | 'status'
+  'startDate' | 'endDate' | 'department' | 'evaluation' | 'status' | 'milestones'
 > & {
   startDate: Dayjs;
   endDate: Dayjs;
   urgency: ProjectUrgency;
+  milestones?: MilestoneFormRow[];
 };
 
 const buildDefaultValues = (): CreateProjectFormValues => ({
@@ -53,6 +61,7 @@ const buildDefaultValues = (): CreateProjectFormValues => ({
   additionalFactors: '',
   pm: emptyPerson(),
   note: '',
+  milestones: [],
 });
 
 export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
@@ -76,6 +85,9 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
   const volume = Form.useWatch('volume', form);
   const nature = Form.useWatch('nature', form);
   const time = Form.useWatch('time', form);
+  const watchedStart = Form.useWatch('startDate', form);
+  const watchedEnd = Form.useWatch('endDate', form);
+  const canEditMilestones = canManageProjectMilestones(currentUser?.role as Role | undefined);
 
   const previewLevel: EvaluationLevel | undefined =
     volume != null && nature != null && time != null
@@ -166,6 +178,20 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
       note: values.note ?? '',
       urgency: values.urgency,
     };
+
+    if (canEditMilestones) {
+      const milestoneInputs = formRowsToMilestoneInputs(values.milestones);
+      const check = validateMilestones(milestoneInputs, {
+        startDate: values.startDate.toISOString(),
+        endDate: values.endDate.toISOString(),
+        totalSlides: 0,
+      });
+      if (!check.ok) {
+        message.error(check.message);
+        return;
+      }
+      payload.milestones = milestoneInputs;
+    }
 
     mutate(payload, {
       onSuccess: () => {
@@ -320,6 +346,10 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
             <Input.TextArea rows={2} />
           </Form.Item>
         </section>
+
+        {canEditMilestones ? (
+          <ProjectMilestonesFields startDate={watchedStart} endDate={watchedEnd} />
+        ) : null}
       </Form>
     </Modal>
   );

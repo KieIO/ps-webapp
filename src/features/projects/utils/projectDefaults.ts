@@ -41,4 +41,5 @@ export const withProjectListDefaults = (
   totalSlides: record.totalSlides ?? 0,
   completionPercent: record.completionPercent ?? 0,
   urgency: record.urgency ?? 'auto',
+  milestones: record.milestones ?? [],
 });

@@ -932,3 +932,90 @@ $row-alt: #f9fafb;
     text-decoration: line-through;
   }
 }
+
+.milestoneDot {
+  position: absolute;
+  z-index: 4;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #dc2626;
+  box-shadow: 0 0 0 1px rgb(127 29 29 / 25%);
+  cursor: default;
+  transform: translateZ(0);
+
+  &:hover {
+    transform: scale(1.15);
+  }
+}
+
+.milestoneDotStacked {
+  cursor: pointer;
+}
+
+.milestoneDotBadge {
+  position: absolute;
+  top: -7px;
+  right: -8px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: #7f1d1d;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+}
+
+.milestonePopover {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 240px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #0f172a;
+}
+
+.milestonePopoverItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  & + & {
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+  }
+}
+
+.milestonePopoverName {
+  font-weight: 600;
+}
+
+.milestonePopoverEdit {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.legendMilestoneDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #dc2626;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #fecaca;
+  flex-shrink: 0;
+}

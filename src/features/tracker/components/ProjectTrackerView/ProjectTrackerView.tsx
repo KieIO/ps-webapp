@@ -2,18 +2,27 @@ import { DatePicker, message, Popover, Tooltip } from 'antd';
 import { DownloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
 import dayjs, { type Dayjs } from 'dayjs';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { Link, useNavigate, type NavigateFunction } from 'react-router-dom';
 import {
   buildProjectDetailPath,
   buildProjectTasksPath,
   buildUserDetailPath,
 } from '@/config/constants';
+import type { Role } from '@/config/permissions';
 import { useRemainingOutput } from '@/features/capacity/hooks/useRemainingOutput';
 import type { RemainingOutputDay } from '@/features/capacity/schemas/remainingOutput.schema';
 import { PROJECT_NAME_COLUMN_LABEL } from '@/features/projects/constants';
+import type { ProjectMilestone } from '@/features/projects/schemas/milestone.schema';
+import { canManageProjectMilestones } from '@/features/projects/utils/milestoneAuth';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
+import { MilestoneMarkers } from '../MilestoneMarkers/MilestoneMarkers';
+import {
+  MilestoneQuickModal,
+  type MilestoneQuickTarget,
+} from '../MilestoneQuickModal/MilestoneQuickModal';
 import {
   TRACKER_ADMIN_DAY_ZOOM_DEFAULT,
   TRACKER_ADMIN_DAY_ZOOM_OPTIONS,
@@ -102,12 +111,24 @@ function TrackerLegendContent() {
           ))}
         </ul>
       </div>
+
+      <div className={styles.legendPopoverGroup}>
+        <p className={styles.legendPopoverTitle}>Mốc bàn giao</p>
+        <ul className={styles.legendPopoverList}>
+          <li className={styles.legendPopoverItem}>
+            <span className={styles.legendMilestoneDot} />
+            Deadline point (ngày giao)
+          </li>
+        </ul>
+      </div>
     </div>
   );
 }
 
 export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProps) {
   const { can } = usePermission();
+  const role = useAppSelector((state) => state.auth.user?.role) as Role | undefined;
+  const canManageMilestones = canManageProjectMilestones(role);
   const canViewRemainingOutput = can('VIEW_CAPACITY_FULL');
   const calHeaderHeight = getTrackerCalHeaderHeight(canViewRemainingOutput);
   const calendarScrollRef = useRef<HTMLDivElement>(null);
@@ -117,10 +138,15 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   const [selectedMonth, setSelectedMonth] = useState(() => dayjs(TRACKER_TODAY).startOf('month'));
   const [dayZoom, setDayZoom] = useState<TrackerAdminDayZoom>(TRACKER_ADMIN_DAY_ZOOM_DEFAULT);
   const [panelWidth, setPanelWidth] = useState(0);
+  const [milestoneTarget, setMilestoneTarget] = useState<MilestoneQuickTarget | null>(null);
   const [rowLayout, setRowLayout] = useState(() => ({
     visibleRowCount: projects.length,
     canvasHeight: projects.length * TRACKER_ROW_HEIGHT,
   }));
+  const sourceProjectsById = useMemo(
+    () => new Map(projects.map((project) => [project.id, project])),
+    [projects],
+  );
 
   const days = useMemo(
     () =>
@@ -637,6 +663,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                       <TimelineRow
                         key={project.id}
                         project={project}
+                        sourceProject={sourceProjectsById.get(project.id) ?? project}
                         blocks={projectLayouts[rowIndex]?.blocks ?? []}
                         days={days}
                         weekendDays={weekendDays}
@@ -645,6 +672,8 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                         rowIndex={rowIndex}
                         top={rowOffsets[rowIndex] ?? 0}
                         rowHeight={projectLayouts[rowIndex]?.rowHeight ?? TRACKER_ROW_HEIGHT}
+                        canManageMilestones={canManageMilestones}
+                        onMilestoneQuickTarget={setMilestoneTarget}
                       />
                     ))}
 
@@ -669,6 +698,8 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
           </div>
         </div>
       </div>
+
+      <MilestoneQuickModal target={milestoneTarget} onClose={() => setMilestoneTarget(null)} />
     </div>
   );
 }
@@ -742,6 +773,8 @@ function EmptyTimelineRow({
 
 interface TimelineRowProps {
   project: TrackerProject;
+  /** Unscoped project — full milestones + totalSlides for validation. */
+  sourceProject: TrackerProject;
   blocks: LaidOutBlock[];
   days: CalendarDay[];
   weekendDays: CalendarDay[];
@@ -750,10 +783,26 @@ interface TimelineRowProps {
   rowIndex: number;
   top: number;
   rowHeight: number;
+  canManageMilestones: boolean;
+  onMilestoneQuickTarget: (target: MilestoneQuickTarget) => void;
+}
+
+function resolveProjectDateRange(project: TrackerProject): { startDate: string; endDate: string } {
+  const bar = project.blocks.find((block) => isProjectTimelineBar(block, project.name));
+  if (bar) {
+    return { startDate: bar.start, endDate: bar.end };
+  }
+  const milestones = project.milestones ?? [];
+  if (milestones.length > 0) {
+    const dates = milestones.map((item) => item.deadlineDate).sort();
+    return { startDate: dates[0]!, endDate: dates[dates.length - 1]! };
+  }
+  return { startDate: '', endDate: '' };
 }
 
 function TimelineRow({
   project,
+  sourceProject,
   blocks,
   days,
   weekendDays,
@@ -762,8 +811,42 @@ function TimelineRow({
   rowIndex,
   top,
   rowHeight,
+  canManageMilestones,
+  onMilestoneQuickTarget,
 }: TimelineRowProps) {
   const navigate = useNavigate();
+  const projectBar = blocks.find((block) => isProjectTimelineBar(block, project.name));
+  const dateRange = resolveProjectDateRange(sourceProject);
+
+  const openCreateMilestone = (deadlineDate: string) => {
+    if (!canManageMilestones || !dateRange.startDate || !dateRange.endDate) return;
+    onMilestoneQuickTarget({
+      projectId: sourceProject.id,
+      projectName: sourceProject.name,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+      totalSlides: sourceProject.totalSlides,
+      milestones: sourceProject.milestones ?? [],
+      mode: 'create',
+      deadlineDate,
+    });
+  };
+
+  const openEditMilestone = (milestone: ProjectMilestone) => {
+    if (!canManageMilestones || !dateRange.startDate || !dateRange.endDate) return;
+    onMilestoneQuickTarget({
+      projectId: sourceProject.id,
+      projectName: sourceProject.name,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+      totalSlides: sourceProject.totalSlides,
+      milestones: sourceProject.milestones ?? [],
+      mode: 'edit',
+      deadlineDate: milestone.deadlineDate,
+      milestoneId: milestone.id,
+    });
+  };
+
   return (
     <div
       className={classNames(
@@ -798,8 +881,21 @@ function TimelineRow({
           days={days}
           dayWidth={dayWidth}
           navigate={navigate}
+          canManageMilestones={canManageMilestones}
+          onCreateMilestoneAtDate={openCreateMilestone}
         />
       ))}
+
+      {projectBar ? (
+        <MilestoneMarkers
+          milestones={sourceProject.milestones ?? []}
+          days={days}
+          dayWidth={dayWidth}
+          projectBarLane={projectBar.lane}
+          canManage={canManageMilestones}
+          onEditMilestone={openEditMilestone}
+        />
+      ) : null}
     </div>
   );
 }
@@ -810,9 +906,20 @@ interface TimelineBlockProps {
   days: CalendarDay[];
   dayWidth: number;
   navigate: NavigateFunction;
+  canManageMilestones: boolean;
+  onCreateMilestoneAtDate: (deadlineDate: string) => void;
 }
 
-function TimelineBlock({ project, block, days, dayWidth, navigate }: TimelineBlockProps) {
+function TimelineBlock({
+  project,
+  block,
+  days,
+  dayWidth,
+  navigate,
+  canManageMilestones,
+  onCreateMilestoneAtDate,
+}: TimelineBlockProps) {
+  const clickTimerRef = useRef<number | null>(null);
   const position = getBlockPosition(days, block.start, block.end, dayWidth);
   if (!position) return null;
 
@@ -821,7 +928,9 @@ function TimelineBlock({ project, block, days, dayWidth, navigate }: TimelineBlo
     ? undefined
     : parseTrackerTaskBaseLabel(block.label, block.quantity);
   const ariaLabel = isProjectBar
-    ? `Open project ${project.name}`
+    ? canManageMilestones
+      ? `Project ${project.name}. Double-click to add milestone.`
+      : `Open project ${project.name}`
     : `View ${taskName ?? block.label} tasks for ${project.name}`;
 
   const handleOpen = () => {
@@ -842,9 +951,45 @@ function TimelineBlock({ project, block, days, dayWidth, navigate }: TimelineBlo
     );
   };
 
+  const handleClick = () => {
+    if (clickTimerRef.current != null) {
+      window.clearTimeout(clickTimerRef.current);
+    }
+    clickTimerRef.current = window.setTimeout(() => {
+      clickTimerRef.current = null;
+      handleOpen();
+    }, 220);
+  };
+
+  const handleDoubleClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (!isProjectBar || !canManageMilestones) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (clickTimerRef.current != null) {
+      window.clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const offsetX = Math.max(0, event.clientX - rect.left);
+    const dayOffset = Math.min(
+      Math.max(0, Math.floor(offsetX / dayWidth)),
+      Math.max(0, Math.round(position.width / dayWidth) - 1),
+    );
+    const barStartIndex = getDayIndex(days, block.start);
+    if (barStartIndex < 0) return;
+    const day = days[barStartIndex + dayOffset];
+    if (!day) return;
+    onCreateMilestoneAtDate(day.date);
+  };
+
   return (
     <Tooltip
-      title={block.label}
+      title={
+        isProjectBar && canManageMilestones
+          ? `${block.label} · Double-click để thêm mốc`
+          : block.label
+      }
       mouseEnterDelay={0}
       mouseLeaveDelay={0.04}
       placement="right"
@@ -877,7 +1022,8 @@ function TimelineBlock({ project, block, days, dayWidth, navigate }: TimelineBlo
           top: getBlockTop(block.lane),
           height: TRACKER_BLOCK_HEIGHT,
         }}
-        onClick={handleOpen}
+        onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();

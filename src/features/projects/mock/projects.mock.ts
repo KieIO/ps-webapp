@@ -3,6 +3,7 @@ import { getMockClientsStore } from '@/features/clients/mock/clients.data';
 import { getMockTasksStore, MOCK_PROJECT_STAFF_ROSTER } from '@/features/tasks/mock/tasks.data';
 import { getMockUsersStore } from '@/features/users/mock/users.data';
 import type { PersonWithCode } from '../schemas/project.schema';
+import type { ProjectMilestoneInput } from '../schemas/milestone.schema';
 import type {
   CreateProjectRequest,
   Project,
@@ -12,8 +13,30 @@ import type {
 } from '../schemas/project.schema';
 import { computeProjectLevel } from '../utils/projectLevel';
 import { enrichProject, enrichProjectsForList } from '../utils/projectTaskCount';
+import { toMilestoneDateKey, validateMilestones } from '../utils/milestoneValidation';
 import { mockDelay } from '@/shared/mock/mockDelay';
 import { getMockProjectsStore, setMockProjectsStore, type StoredProject } from './projects.data';
+
+const normalizeStoredMilestones = (
+  milestones: ProjectMilestoneInput[] | undefined,
+  totalSlides: number,
+  startDate: string,
+  endDate: string,
+): NonNullable<StoredProject['milestones']> => {
+  const list = milestones ?? [];
+  const check = validateMilestones(list, { startDate, endDate, totalSlides });
+  if (!check.ok) {
+    throw new Error(check.message);
+  }
+  return list.map((item) => ({
+    id: item.id?.trim() || `ms-${crypto.randomUUID().slice(0, 8)}`,
+    name: item.name.trim(),
+    deadlineDate: toMilestoneDateKey(item.deadlineDate),
+    quantity: item.quantity,
+    unit: item.unit,
+    note: item.note?.trim() ?? '',
+  }));
+};
 
 const codeFromEmail = (email: string): string => {
   const local = email.split('@')[0] ?? email;
@@ -142,6 +165,11 @@ export const mockCreateProject = async (
   const id = `prj-${crypto.randomUUID().slice(0, 8)}`;
   const client = resolveClientRef(payload.clientId);
 
+  const milestones =
+    payload.milestones !== undefined
+      ? normalizeStoredMilestones(payload.milestones, 0, payload.startDate, payload.endDate)
+      : [];
+
   const stored: StoredProject = {
     id,
     code: generateProjectCode(client.name, payload.startDate, projects),
@@ -166,6 +194,7 @@ export const mockCreateProject = async (
     finishedDate: payload.status === 'finish' ? now : undefined,
     createdById: creatorUserId,
     updatedAt: now,
+    milestones,
   };
 
   setMockProjectsStore([stored, ...projects]);
@@ -197,6 +226,10 @@ export const mockUpdateProject = async (
         : current.finishedDate;
   const client = resolveClientRef(payload.clientId);
 
+  const enrichedCurrent = enrichProject(current, getMockTasksStore(), projects, {
+    extraMembers: mockExtraMembersForProject(current.name),
+  });
+
   const updated: StoredProject = {
     ...current,
     clientId: client.id,
@@ -218,6 +251,15 @@ export const mockUpdateProject = async (
     status: payload.status,
     urgency: payload.urgency,
     finishedDate,
+    milestones:
+      payload.milestones !== undefined
+        ? normalizeStoredMilestones(
+            payload.milestones,
+            enrichedCurrent.totalSlides,
+            payload.startDate,
+            payload.endDate,
+          )
+        : (current.milestones ?? []),
     // Only overwrite when Evaluate (or another caller) explicitly sends a value.
     completionPercent:
       payload.completionPercent !== undefined
@@ -299,6 +341,43 @@ export const mockUnarchiveProject = async (id: string): Promise<Project> => {
     archivedAt: undefined,
     updatedAt: now,
   };
+  const next = [...projects];
+  next[index] = updated;
+  setMockProjectsStore(next);
+
+  return enrichProject(updated, getMockTasksStore(), next, {
+    extraMembers: mockExtraMembersForProject(updated.name),
+  });
+};
+
+export const mockReplaceProjectMilestones = async (
+  id: string,
+  milestones: ProjectMilestoneInput[],
+): Promise<Project> => {
+  await mockDelay();
+
+  const projects = getMockProjectsStore();
+  const index = projects.findIndex((entry) => entry.id === id);
+  if (index === -1) {
+    throw new Error('Project not found');
+  }
+
+  const current = projects[index];
+  const enriched = enrichProject(current, getMockTasksStore(), projects, {
+    extraMembers: mockExtraMembersForProject(current.name),
+  });
+
+  const updated: StoredProject = {
+    ...current,
+    milestones: normalizeStoredMilestones(
+      milestones,
+      enriched.totalSlides,
+      current.startDate,
+      current.endDate,
+    ),
+    updatedAt: new Date().toISOString(),
+  };
+
   const next = [...projects];
   next[index] = updated;
   setMockProjectsStore(next);

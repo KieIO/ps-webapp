@@ -18,6 +18,10 @@ import {
   mockUpdateProject,
 } from './mock/projects.mock';
 import {
+  ReplaceProjectMilestonesRequestSchema,
+  type ProjectMilestoneInput,
+} from './schemas/milestone.schema';
+import {
   CreateProjectRequestSchema,
   ProjectListFiltersSchema,
   ProjectListDerivedSchema,
@@ -35,6 +39,7 @@ import {
 } from './schemas/project.schema';
 import { withProjectListDefaults } from './utils/projectDefaults';
 import { buildUpdateProjectPayload } from './utils/buildUpdateProjectPayload';
+import { mockReplaceProjectMilestones } from './mock/projects.mock';
 
 const parseProjectListResponse = (data: unknown): ProjectListResponse => {
   const parsed = ProjectListRecordResponseSchema.parse(data);
@@ -168,5 +173,20 @@ export const projectApi = {
 
     const response = await api.post(`/projects/${id}/unarchive`);
     return parseProjectResponse(response.data);
+  },
+
+  replaceMilestones: async (id: string, milestones: ProjectMilestoneInput[]): Promise<Project> => {
+    const data = ReplaceProjectMilestonesRequestSchema.parse({ milestones });
+
+    if (env.useProjectsMock) {
+      return ProjectSchema.parse(await mockReplaceProjectMilestones(id, data.milestones));
+    }
+
+    try {
+      const response = await api.put(`/projects/${id}/milestones`, data);
+      return parseProjectResponse(response.data);
+    } catch (error) {
+      return rethrowApiError(error, 'Failed to update milestones');
+    }
   },
 };

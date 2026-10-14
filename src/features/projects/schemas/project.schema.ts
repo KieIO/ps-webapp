@@ -3,6 +3,7 @@
  * Backend contract: docs/PROJECTS_BACKEND_TODO.md (index: docs/BACKEND_API.md)
  */
 import { z } from 'zod';
+import { ProjectMilestoneInputSchema, ProjectMilestoneSchema } from './milestone.schema';
 
 export const EVALUATION_LEVELS = [1, 2, 3, 4] as const;
 
@@ -82,6 +83,8 @@ export const ProjectRecordSchema = z.object({
   archivedAt: z.string().optional(),
   updatedAt: z.string().optional(),
   createdById: z.string().nullish(),
+  /** Deadline points / mốc bàn giao. Omitted on older payloads → treat as []. */
+  milestones: z.array(ProjectMilestoneSchema).optional(),
 });
 
 /** Optional list aggregates — backend may omit; UI defaults via `withProjectListDefaults`. */
@@ -140,6 +143,11 @@ export const UpdateProjectRequestSchema = z.object({
   urgency: z.enum(PROJECT_URGENCIES),
   /** When set, persists a manual % hoàn thành override (Evaluate project). */
   completionPercent: z.number().min(0).max(100).optional(),
+  /**
+   * When set (including `[]`), replaces all project milestones.
+   * Omit to leave milestones unchanged (e.g. urgency-only / non-admin saves).
+   */
+  milestones: z.array(ProjectMilestoneInputSchema).optional(),
 });
 
 export const CreateProjectRequestSchema = UpdateProjectRequestSchema;

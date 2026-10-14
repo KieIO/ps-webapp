@@ -3,6 +3,7 @@
  * Backend contract: docs/TRACKER_BACKEND_TODO.md (index: docs/BACKEND_API.md)
  */
 import { z } from 'zod';
+import { ProjectMilestoneSchema } from '@/features/projects/schemas/milestone.schema';
 import { TRACKER_BLOCK_TYPES } from '@/shared/constants/taskConfirmation';
 
 export { TRACKER_BLOCK_TYPES };
@@ -40,6 +41,8 @@ export const TrackerProjectSchema = z.object({
   /** Stored urgency setting (includes `auto`). Falls back to resolved urgency for older payloads. */
   urgencySetting: z.enum(TRACKER_URGENCY_SETTINGS).optional(),
   blocks: z.array(TrackerBlockSchema),
+  /** Deadline points on the project bar. Older payloads omit → treat as []. */
+  milestones: z.array(ProjectMilestoneSchema).optional(),
 });
 
 export const TrackerOffPersonSchema = z.object({

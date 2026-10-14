@@ -13,8 +13,16 @@ export const mockGetTracker = async (
   options: MockGetTrackerOptions = {},
 ): Promise<TrackerResponse> => {
   await mockDelay();
+  const projects = withAdminAggregatedBlocks(
+    TRACKER_PROJECTS,
+    Boolean(options.aggregateTaskNames),
+  ).map((project) => ({
+    ...project,
+    milestones: project.milestones ?? [],
+  }));
+
   return {
-    projects: withAdminAggregatedBlocks(TRACKER_PROJECTS, Boolean(options.aggregateTaskNames)),
+    projects,
     offDays: TRACKER_OFF_DAYS,
   };
 };

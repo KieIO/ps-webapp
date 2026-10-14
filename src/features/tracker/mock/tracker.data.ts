@@ -54,8 +54,27 @@ export const TRACKER_PROJECTS: TrackerProject[] = [
     totalSlides: 58,
     urgency: 'orange',
     blocks: [
+      { start: d(5, 5), end: d(5, 8), label: "Trans'Actif Immobilier", type: 'active', band: 0 },
       { start: d(5, 5), end: d(5, 8), label: '10 slides', type: 'active', band: 0 },
       { start: d(5, 5), end: d(5, 8), label: 'Pending feedback', type: 'pending', band: 1 },
+    ],
+    milestones: [
+      {
+        id: 'ms-p05-1',
+        name: 'Nộp đợt 1',
+        deadlineDate: d(5, 6),
+        quantity: 10,
+        unit: 'slides',
+        note: 'Bàn giao nháp',
+      },
+      {
+        id: 'ms-p05-2',
+        name: 'Deadline đợt 2',
+        deadlineDate: d(5, 8),
+        quantity: 20,
+        unit: 'slides',
+        note: '',
+      },
     ],
   },
   {
