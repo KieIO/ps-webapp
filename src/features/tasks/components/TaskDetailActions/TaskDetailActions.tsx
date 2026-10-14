@@ -189,9 +189,9 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
 
   const confirmRehandToCH = () => {
     Modal.confirm({
-      title: 'Đưa lại hàng chờ Creative Head?',
-      content: 'Task sẽ vào hàng chờ CH (awaiting_ch) để bất kỳ Creative Head nào nhận và giao CM.',
-      okText: 'Đưa lại hàng chờ CH',
+      title: 'Đưa lại hàng chờ CH?',
+      content: 'Task sẽ vào lại hàng chờ để các Creative Head nhận và giao CM.',
+      okText: 'Đưa lại CH',
       cancelText: 'Quay lại',
       centered: true,
       onOk: () => rehandCreative.mutateAsync(task.id),

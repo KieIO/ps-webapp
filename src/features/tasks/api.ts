@@ -20,6 +20,8 @@ import {
   QualityReviewSchema,
   RevisionListResponseSchema,
   TaskHistoryListResponseSchema,
+  SpawnEvaluationRemainderRequestSchema,
+  SpawnEvaluationRemainderResponseSchema,
   UpdateCreativePipelineRequestSchema,
   UpdateHeadMyTaskRequestSchema,
   UpdateMyTaskPmEvaluationRequestSchema,
@@ -37,6 +39,8 @@ import {
   type QualityReview,
   type QualityReviewListResponse,
   type RevisionListResponse,
+  type SpawnEvaluationRemainderRequest,
+  type SpawnEvaluationRemainderResponse,
   type TaskAssignee,
   type TaskHistoryListResponse,
   type TaskPerson,
@@ -66,6 +70,7 @@ import {
   mockGetStaffOptions,
   mockListQualityReviews,
   mockListRevisionTasks,
+  mockSpawnEvaluationRemainder,
   mockUpdateCreativePipeline,
   mockUpdateHeadMyTask,
   mockUpdateMyTask,
@@ -306,6 +311,27 @@ export const myTaskApi = {
     return MyTaskSchema.parse(response.data);
   },
 
+  spawnEvaluationRemainder: async (
+    id: string,
+    payload: SpawnEvaluationRemainderRequest,
+    editorUserId?: string,
+  ): Promise<SpawnEvaluationRemainderResponse> => {
+    const data = SpawnEvaluationRemainderRequestSchema.parse(payload);
+
+    if (env.useTasksMock) {
+      return SpawnEvaluationRemainderResponseSchema.parse(
+        await mockSpawnEvaluationRemainder(id, data, editorUserId),
+      );
+    }
+
+    const response = await api
+      .post(`/tasks/my/${id}/spawn-evaluation-remainder`, data)
+      .catch((error: unknown) => {
+        throw new Error(getApiErrorMessage(error, 'Không thể tạo task phần còn lại'));
+      });
+    return SpawnEvaluationRemainderResponseSchema.parse(response.data);
+  },
+
   assign: async (
     id: string,
     payload: AssignMyTaskRequest,
@@ -344,7 +370,7 @@ export const myTaskApi = {
     }
 
     const response = await api.patch(`/tasks/my/${id}/rehand-ch`).catch((error: unknown) => {
-      throw new Error(getApiErrorMessage(error, 'Không thể đưa task lại hàng chờ Creative Head'));
+      throw new Error(getApiErrorMessage(error, 'Không thể đưa lại hàng chờ CH'));
     });
     return parseMyTaskResponse(response.data);
   },

@@ -94,12 +94,10 @@ test.describe('TASK-65 PM rehand CH-refused task', () => {
       .first()
       .click();
     const confirm = page.locator('.ant-modal-confirm').last();
-    await expect(confirm.locator('.ant-modal-confirm-title')).toHaveText(
-      'Đưa lại hàng chờ Creative Head?',
-    );
-    await confirm.getByRole('button', { name: 'Đưa lại hàng chờ CH', exact: true }).click();
+    await expect(confirm.locator('.ant-modal-confirm-title')).toHaveText('Đưa lại hàng chờ CH?');
+    await confirm.getByRole('button', { name: 'Đưa lại CH', exact: true }).click();
 
-    await expect(page.getByText('Đã đưa task lại hàng chờ Creative Head')).toBeVisible({
+    await expect(page.getByText('Đã đưa lại hàng chờ CH')).toBeVisible({
       timeout: 20_000,
     });
 

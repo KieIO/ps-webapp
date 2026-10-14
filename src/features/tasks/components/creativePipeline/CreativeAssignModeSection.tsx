@@ -58,7 +58,7 @@ export function CreativeAssignModeSection({
             message="Hình thức giao đã khóa"
             description={
               assignMode === 'split'
-                ? `SL tổng ${task.quantity} đã khoá (đã phân ${allocated}). Không gộp lại nguyên task — chỉnh từng task nhỏ bên dưới.`
+                ? `Đã chia nhỏ (đã phân ${allocated} / SL tổng ${task.quantity}). Có thể chỉnh SL tổng hoặc từng phần — tổng phải khớp.`
                 : 'Không chuyển sang chia nhỏ sau khi đã giao nguyên task. Có thể đổi Staff bên dưới (nếu được phép).'
             }
           />

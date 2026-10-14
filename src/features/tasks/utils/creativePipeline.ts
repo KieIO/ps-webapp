@@ -148,11 +148,28 @@ export const isSplitChildTask = (task: MyTask): boolean =>
 export const sumSplitChildrenQuantity = (children: MyTask[]): number =>
   children.reduce((sum, child) => sum + (child.quantity ?? 0), 0);
 
-/** True when split family conserves locked parent total (within float epsilon). */
+/** True when split family conserves parent total (within float epsilon). */
 export const isSplitQuantityConserved = (parentQty: number, children: MyTask[]): boolean =>
   Math.abs(sumSplitChildrenQuantity(children) - parentQty) < 1e-6;
 
-/** Split parents hold a locked display total — aggregates count children only. */
+/** Finished / cancelled children keep SL; confirmed stays editable. */
+export const isSplitChildQuantityLocked = (task: Pick<MyTask, 'staffConfirmation'>): boolean =>
+  task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled';
+
+/** Prefer largest editable child when redistributing parent SL delta. */
+export const pickPrimaryEditableSplitChild = <
+  T extends Pick<MyTask, 'quantity' | 'staffConfirmation'>,
+>(
+  children: T[],
+): T | undefined => {
+  const editable = children.filter((child) => !isSplitChildQuantityLocked(child));
+  if (editable.length === 0) return undefined;
+  return editable.reduce((best, child) =>
+    (child.quantity ?? 0) > (best.quantity ?? 0) ? child : best,
+  );
+};
+
+/** Split parents hold a display total — aggregates count children only. */
 export const countsTowardQuantityAggregates = (task: MyTask): boolean =>
   resolveEffectivePipelineStage(task) !== 'split';
 
@@ -342,9 +359,8 @@ export const resolveCreativeDetailPipelineAction = (
   if (!canSeeCreativeDetailPipelineAction(role)) return null;
   if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return null;
 
-  // Split children: edit Staff + SL against locked parent total (no unsplit).
+  // Split children: edit Staff + SL (confirmed allowed; finished/cancelled blocked above).
   if (isSplitChildTask(task)) {
-    if (task.staffConfirmation === 'confirmed') return null;
     if (!canEditCreativePipelineTask(task, role, userId)) return null;
     return { action: 'edit', label: 'Đổi Staff / SL' };
   }
@@ -354,7 +370,7 @@ export const resolveCreativeDetailPipelineAction = (
   const stage = resolveEffectivePipelineStage(task);
   if (stage === 'returned_to_pm') {
     if (!canRehandCreativeToCH(role)) return null;
-    return { action: 'rehand_ch', label: 'Đưa lại hàng chờ CH' };
+    return { action: 'rehand_ch', label: 'Đưa lại CH' };
   }
   if (!isPipelineBoardStage(stage)) return null;
 

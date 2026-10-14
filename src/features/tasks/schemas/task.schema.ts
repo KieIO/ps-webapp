@@ -297,6 +297,22 @@ export const UpdateMyTaskPmEvaluationRequestSchema = z.object({
   pmNote: z.string(),
 });
 
+/** CM: accept partial quantity on a finished split child → spawn remainder sibling. */
+export const SpawnEvaluationRemainderRequestSchema = z.object({
+  acceptedQuantity: z.number().int().min(0),
+});
+
+export type SpawnEvaluationRemainderRequest = z.infer<typeof SpawnEvaluationRemainderRequestSchema>;
+
+export const SpawnEvaluationRemainderResponseSchema = z.object({
+  sourceTask: MyTaskSchema,
+  remainderTask: MyTaskSchema,
+});
+
+export type SpawnEvaluationRemainderResponse = z.infer<
+  typeof SpawnEvaluationRemainderResponseSchema
+>;
+
 export const AssignMyTaskRequestSchema = z.object({
   staff: z
     .array(TaskAssigneeSchema)
@@ -378,7 +394,12 @@ export const UpdateCreativePipelineRequestSchema = z
     staffNote: z.string().optional(),
     /** CH/Admin: reassign CM while awaiting_cm. */
     cmUserId: z.string().optional(),
-    /** Atomic SL redistribution for split family; sum must equal locked parent total. */
+    /**
+     * Atomic SL redistribution for split family.
+     * When omitted with a new parent quantity, mock/API may apply delta to an editable child.
+     * When provided, sum becomes the parent total (parent-follow) unless `quantity` is also set
+     * (then sum must equal that quantity).
+     */
     childQuantities: z
       .array(
         z.object({

@@ -61,14 +61,15 @@ npm run test:e2e:ui
 
 ### Env
 
-| Variable              | Default                        | Notes                                 |
-| --------------------- | ------------------------------ | ------------------------------------- |
-| `PLAYWRIGHT_BASE_URL` | `http://localhost:5173`        | App under test                        |
-| `VITE_API_URL`        | `http://localhost:8080/api/v1` | Real API (mocks forced off by config) |
-| `E2E_PASSWORD`        | `ps123`                        | Shared seed password                  |
-| `E2E_ADMIN_EMAIL`     | `admin@pokeslide.dev`          | Override per role if needed           |
-| `E2E_PM_EMAIL`        | `pm@pokeslide.dev`             |                                       |
-| `E2E_EMPLOYEE_EMAIL`  | `employee@pokeslide.dev`       |                                       |
+| Variable                     | Default                          | Notes                                 |
+| ---------------------------- | -------------------------------- | ------------------------------------- |
+| `PLAYWRIGHT_BASE_URL`        | `http://localhost:5173`          | App under test                        |
+| `VITE_API_URL`               | `http://localhost:8080/api/v1`   | Real API (mocks forced off by config) |
+| `E2E_PASSWORD`               | `ps123`                          | Shared seed password                  |
+| `E2E_ADMIN_EMAIL`            | `admin@pokeslide.dev`            | Override per role if needed           |
+| `E2E_PM_EMAIL`               | `pm@pokeslide.dev`               |                                       |
+| `E2E_EMPLOYEE_EMAIL`         | `employee@pokeslide.dev`         |                                       |
+| `E2E_CREATIVE_MANAGER_EMAIL` | `creative-manager@pokeslide.dev` | CM for TASK-66                        |
 
 Do not commit secrets; seed passwords are documented fixtures only.
 
@@ -106,6 +107,7 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, and de
 | PM-52 Evaluate hidden (Employee)            | `projects/pm-52-evaluate-hidden-by-role.spec.ts`           |
 | PM-53 Head My Tasks → project eval          | `tasks/pm-53-head-edit-project-evaluation.spec.ts`         |
 | TASK-64 CH refuse PM creative handoff       | `tasks/task-64-ch-refuse-pm-handoff.spec.ts` (+ manual md) |
+| TASK-66 Split evaluate remainder + SL edit  | `tasks/task-66-split-evaluate-remainder.spec.ts`           |
 | DEPT-30 Sidebar Department management       | `departments/dept-30-sidebar-departments.spec.ts`          |
 | DEPT-31 Admin opens `/settings/departments` | `departments/dept-31-admin-page.spec.ts`                   |
 | DEPT-32 PM blocked from departments page    | `departments/dept-32-pm-page-blocked.spec.ts`              |

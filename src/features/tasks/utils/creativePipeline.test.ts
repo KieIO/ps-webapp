@@ -24,6 +24,8 @@ import {
   resolveCreatePipelineStage,
   resolveCreativeAssignMode,
   getCreativeSplitSubtasks,
+  isSplitChildQuantityLocked,
+  pickPrimaryEditableSplitChild,
   resolveWholeAssignStaff,
   resolveCreativeDetailPipelineAction,
   shouldUseCreativePipelineEditDrawer,
@@ -493,6 +495,19 @@ describe('creativePipeline helpers', () => {
     ).toEqual(['An']);
   });
 
+  it('locks split-child quantity only when finished or cancelled', () => {
+    expect(isSplitChildQuantityLocked(task({ staffConfirmation: 'confirmed' }))).toBe(false);
+    expect(isSplitChildQuantityLocked(task({ staffConfirmation: 'finished' }))).toBe(true);
+    expect(isSplitChildQuantityLocked(task({ staffConfirmation: 'cancelled' }))).toBe(true);
+    expect(
+      pickPrimaryEditableSplitChild([
+        task({ id: 'a', quantity: 4, staffConfirmation: 'finished' }),
+        task({ id: 'b', quantity: 6, staffConfirmation: 'confirmed' }),
+        task({ id: 'c', quantity: 5, staffConfirmation: 'not_updated' }),
+      ])?.id,
+    ).toBe('b');
+  });
+
   it('resolves task-detail creative assign CTA by stage and role', () => {
     const awaitingCh = task({ pipelineStage: 'awaiting_ch', staff: [], description: '' });
     expect(resolveCreativeDetailPipelineAction(awaitingCh, ROLES.CREATIVE_HEAD, 'ch')).toEqual({
@@ -562,6 +577,20 @@ describe('creativePipeline helpers', () => {
           parentTaskId: 'parent-split',
           taskKind: 'split',
           staffConfirmation: 'not_updated',
+          creativeManager: assignee({ userId: 'cm-1' }),
+          staff: [assignee({ userId: 'staff-1', name: 'An' })],
+        }),
+        ROLES.ADMIN,
+        'admin',
+      ),
+    ).toEqual({ action: 'edit', label: 'Đổi Staff / SL' });
+    expect(
+      resolveCreativeDetailPipelineAction(
+        task({
+          pipelineStage: 'assigned_staff',
+          parentTaskId: 'parent-split',
+          taskKind: 'split',
+          staffConfirmation: 'confirmed',
           creativeManager: assignee({ userId: 'cm-1' }),
           staff: [assignee({ userId: 'staff-1', name: 'An' })],
         }),
@@ -671,7 +700,7 @@ describe('creative decline helpers', () => {
     expect(canRehandCreativeToCH(ROLES.CREATIVE_HEAD)).toBe(false);
     expect(resolveCreativeDetailPipelineAction(refused, ROLES.PM, 'pm-1')).toEqual({
       action: 'rehand_ch',
-      label: 'Đưa lại hàng chờ CH',
+      label: 'Đưa lại CH',
     });
     expect(resolveCreativeDetailPipelineAction(refused, ROLES.CREATIVE_HEAD, 'ch-1')).toBeNull();
 

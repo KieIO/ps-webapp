@@ -110,11 +110,14 @@ export const MY_TASK_COLUMN_HEADERS: Record<MyTaskColumnKey, string> = {
   finishedDate: 'Finished Date',
 };
 
-/** Evaluate task — primary input is completed units; % is derived. */
-export const EVALUATE_TASK_COMPLETED_QUANTITY_LABEL = 'Số lượng hoàn thành';
-export const EVALUATE_TASK_ASSIGNED_QUANTITY_LABEL = 'Số lượng';
+/** Evaluate task — primary input is accepted units; % is derived. */
+export const EVALUATE_TASK_COMPLETED_QUANTITY_LABEL = 'Số lượng đạt / chấp nhận';
+export const EVALUATE_TASK_ASSIGNED_QUANTITY_LABEL = 'Số lượng giao';
 export const EVALUATE_TASK_NOTE_LABEL = 'Ghi chú';
 export const EVALUATE_TASK_NOTE_PLACEHOLDER = 'Nhập ghi chú';
+export const EVALUATE_TASK_REMAINDER_BUTTON = 'Tạo task phần còn lại';
+export const EVALUATE_TASK_REMAINDER_HINT =
+  'Phần chưa đạt sẽ thành task nhỏ mới (cùng task cha, chưa gán Staff).';
 
 /** Department Head — column labels on the task list (and shared labels in EditHeadTaskModal). */
 export const MY_TASK_HEAD_COLUMN_HEADERS: Partial<Record<MyTaskColumnKey, string>> = {

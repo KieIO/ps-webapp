@@ -1,7 +1,7 @@
 import { test as base, expect, type Page } from '@playwright/test';
 
 /** Seed-dev roles used by UM UI smoke (password shared unless overridden). */
-export type SeedRole = 'admin' | 'pm' | 'employee' | 'head' | 'creative_head';
+export type SeedRole = 'admin' | 'pm' | 'employee' | 'head' | 'creative_head' | 'creative_manager';
 
 export interface SeedAccount {
   email: string;
@@ -37,6 +37,11 @@ export const SEED_ACCOUNTS: Record<SeedRole, SeedAccount> = {
     role: 'creative_head',
     email: process.env.E2E_CREATIVE_HEAD_EMAIL ?? 'creative-head@pokeslide.dev',
     password: process.env.E2E_CREATIVE_HEAD_PASSWORD ?? defaultPassword,
+  },
+  creative_manager: {
+    role: 'creative_manager',
+    email: process.env.E2E_CREATIVE_MANAGER_EMAIL ?? 'creative-manager@pokeslide.dev',
+    password: process.env.E2E_CREATIVE_MANAGER_PASSWORD ?? defaultPassword,
   },
 };
 

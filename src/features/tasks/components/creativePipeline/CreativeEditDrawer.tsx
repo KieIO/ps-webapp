@@ -38,13 +38,16 @@ import {
   getAssigneeWorkload,
   getCreativeSplitSubtasks,
   isCreativeLevelLockedByStaffConfirm,
+  isSplitChildQuantityLocked,
   isSplitChildTask,
   isSplitParentTask,
   isSplitQuantityConserved,
+  pickPrimaryEditableSplitChild,
   PIPELINE_STAGE_LABELS,
   resolveAssigneeAvailability,
   resolveEffectivePipelineStage,
   resolveWholeAssignStaff,
+  sumSplitChildrenQuantity,
 } from '../../utils/creativePipeline';
 import {
   canEditCreativeDeadline,
@@ -144,9 +147,9 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     }
     return undefined;
   }, [allTasks, splitChild, splitParent, task]);
-  const quantityLocked = splitParent;
   const quantityRequired =
-    !quantityLocked && (stage === 'assigned_staff' || stage === 'split' || splitChild);
+    !splitParent && !splitChild && (stage === 'assigned_staff' || stage === 'split');
+  const canEditParentSplitTotal = Boolean(canEdit && (splitParent || splitChild));
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
   const pmDeadlineIso = task ? getTaskDeadline(task) : null;
   const pmDeadlineLabel = pmDeadlineIso ? formatTaskDateTime(pmDeadlineIso) : '—';
@@ -166,6 +169,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     return [];
   }, [splitChild, splitChildren, splitParent, splitSiblings]);
   const watchedChildQuantities = Form.useWatch('childQuantities', form);
+  const watchedParentQuantity = Form.useWatch('quantity', form);
   const allocatedFromForm = useMemo(() => {
     if (quantityFamily.length === 0) return 0;
     return quantityFamily.reduce((sum, child) => {
@@ -174,10 +178,14 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       return sum + (Number.isFinite(qty) ? qty : 0);
     }, 0);
   }, [quantityFamily, watchedChildQuantities]);
+  const parentTotalFromForm =
+    watchedParentQuantity != null && Number.isFinite(Number(watchedParentQuantity))
+      ? Number(watchedParentQuantity)
+      : (lockedParentTotal ?? allocatedFromForm);
   const allocationConserved =
-    lockedParentTotal != null && quantityFamily.length > 0
+    quantityFamily.length > 0
       ? isSplitQuantityConserved(
-          lockedParentTotal,
+          parentTotalFromForm,
           quantityFamily.map((child) => {
             const fromForm = watchedChildQuantities?.[child.id];
             const qty = fromForm != null ? Number(fromForm) : child.quantity;
@@ -272,7 +280,12 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     form.setFieldsValue({
       description: task.description,
       additionalFactors: task.additionalFactors,
-      quantity: task.quantity > 0 ? task.quantity : undefined,
+      quantity:
+        splitParent || splitChild
+          ? (lockedParentTotal ?? task.quantity)
+          : task.quantity > 0
+            ? task.quantity
+            : undefined,
       childQuantities,
       deadline: fromTaskDeadline(getTaskDeadline(task)),
       creativeDeadline: task.creativeDeadline ? fromTaskDeadline(task.creativeDeadline) : null,
@@ -284,7 +297,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       cmUserId: task.creativeManager?.userId ?? task.staff[0]?.userId ?? undefined,
       staffNote: task.staffNote || task.cmNote || '',
     });
-  }, [open, task, form, quantityFamily]);
+  }, [open, task, form, quantityFamily, lockedParentTotal, splitParent, splitChild]);
 
   const resetAndClose = () => {
     form.resetFields();
@@ -307,40 +320,110 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     resetAndClose();
   };
 
+  const syncParentTotalFromChildren = (childQuantities: Record<string, number> | undefined) => {
+    if (quantityFamily.length === 0) return;
+    const sum = quantityFamily.reduce((total, child) => {
+      const raw = childQuantities?.[child.id];
+      const qty = raw != null ? Number(raw) : child.quantity;
+      return total + (Number.isFinite(qty) ? qty : 0);
+    }, 0);
+    form.setFieldValue('quantity', sum);
+  };
+
+  const redistributeParentDelta = (nextParentQty: number) => {
+    if (quantityFamily.length === 0) return;
+    const currentRows = quantityFamily.map((child) => {
+      const fromForm = form.getFieldValue(['childQuantities', child.id]);
+      const qty = fromForm != null ? Number(fromForm) : child.quantity;
+      return { ...child, quantity: Number.isFinite(qty) ? qty : 0 };
+    });
+    const currentSum = sumSplitChildrenQuantity(currentRows);
+    const delta = nextParentQty - currentSum;
+    if (Math.abs(delta) < 1e-6) return;
+    const primary = pickPrimaryEditableSplitChild(currentRows);
+    if (!primary) return;
+    const nextPrimary = primary.quantity + delta;
+    if (nextPrimary <= 0) return;
+    form.setFieldValue(['childQuantities', primary.id], nextPrimary);
+  };
+
+  const handleFormValuesChange = (changed: Partial<EditFormValues>) => {
+    if (!canEditParentSplitTotal) return;
+    if (changed.childQuantities) {
+      syncParentTotalFromChildren({
+        ...watchedChildQuantities,
+        ...changed.childQuantities,
+      });
+      return;
+    }
+    if (changed.quantity != null && Number.isFinite(Number(changed.quantity))) {
+      redistributeParentDelta(Number(changed.quantity));
+    }
+  };
+
   const handleSubmit = async () => {
     if (!task || !canEdit) return;
     const values = await form.validateFields();
 
-    const changedChildQuantities =
+    const nextChildQuantities =
       quantityFamily.length > 0
-        ? quantityFamily
-            .map((child) => ({
-              id: child.id,
-              quantity: Number(values.childQuantities?.[child.id] ?? child.quantity),
-            }))
-            .filter((row) => {
-              const original = quantityFamily.find((child) => child.id === row.id);
-              return original != null && Math.abs(row.quantity - original.quantity) > 1e-6;
-            })
+        ? quantityFamily.map((child) => ({
+            id: child.id,
+            quantity: Number(values.childQuantities?.[child.id] ?? child.quantity),
+          }))
         : [];
 
-    if (changedChildQuantities.length > 0 && lockedParentTotal != null) {
+    const changedChildQuantities = nextChildQuantities.filter((row) => {
+      const original = quantityFamily.find((child) => child.id === row.id);
+      return original != null && Math.abs(row.quantity - original.quantity) > 1e-6;
+    });
+
+    const projectedParentQty =
+      values.quantity != null && Number.isFinite(Number(values.quantity))
+        ? Number(values.quantity)
+        : sumSplitChildrenQuantity(
+            nextChildQuantities.map((row) => ({ ...task, quantity: row.quantity })),
+          );
+
+    if (quantityFamily.length > 0) {
       const projected = quantityFamily.map((child) => {
-        const override = changedChildQuantities.find((row) => row.id === child.id);
+        const override = nextChildQuantities.find((row) => row.id === child.id);
         return { ...child, quantity: override?.quantity ?? child.quantity };
       });
-      if (!isSplitQuantityConserved(lockedParentTotal, projected)) {
+      if (!isSplitQuantityConserved(projectedParentQty, projected)) {
         form.setFields([
           {
             name: 'childQuantities',
             errors: [
-              `Tổng SL các phần (${allocatedFromForm}) phải bằng SL tổng (${lockedParentTotal})`,
+              `Tổng SL các phần (${allocatedFromForm}) phải bằng SL tổng (${projectedParentQty})`,
             ],
           },
         ]);
         return;
       }
     }
+
+    const parentQtyChanged =
+      quantityFamily.length > 0 &&
+      lockedParentTotal != null &&
+      Math.abs(projectedParentQty - lockedParentTotal) > 1e-6;
+
+    const splitQtyPayload =
+      quantityFamily.length > 0
+        ? {
+            ...(splitParent && (parentQtyChanged || changedChildQuantities.length > 0)
+              ? { quantity: projectedParentQty }
+              : {}),
+            ...(changedChildQuantities.length > 0 || (splitParent && parentQtyChanged)
+              ? {
+                  childQuantities:
+                    changedChildQuantities.length > 0
+                      ? changedChildQuantities
+                      : nextChildQuantities,
+                }
+              : {}),
+          }
+        : { quantity: values.quantity };
 
     const currentCmId = task.creativeManager?.userId ?? task.staff[0]?.userId ?? undefined;
     const cmChanged = canReassignCm && values.cmUserId && values.cmUserId !== currentCmId;
@@ -372,8 +455,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
         payload: {
           description: values.description,
           additionalFactors: values.additionalFactors,
-          ...(quantityLocked || splitChild || splitParent ? {} : { quantity: values.quantity }),
-          ...(changedChildQuantities.length > 0 ? { childQuantities: changedChildQuantities } : {}),
+          ...splitQtyPayload,
           ...(canEditSchedule
             ? {
                 deadline: values.deadline?.isValid() ? toTaskDeadline(values.deadline) : undefined,
@@ -441,10 +523,11 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
               <div className={styles.fact}>
                 <span className={styles.factLabel}>SL tổng</span>
                 <span className={styles.factValue}>
-                  {headerQuantity != null ? headerQuantity : '—'}
-                  {splitParent || splitChild ? (
-                    <span className={styles.factValueMuted}> · khoá</span>
-                  ) : null}
+                  {splitParent || splitChild
+                    ? (parentTotalFromForm ?? headerQuantity ?? '—')
+                    : headerQuantity != null
+                      ? headerQuantity
+                      : '—'}
                 </span>
               </div>
               <div className={styles.fact}>
@@ -471,6 +554,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
             layout="vertical"
             disabled={!canEdit || isPending}
             className={styles.editForm}
+            onValuesChange={handleFormValuesChange}
           >
             <div className={styles.formSection}>
               {splitParent || splitChild ? (
@@ -479,22 +563,35 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                     <span className={styles.allocationChip}>
                       {splitParent ? 'Đã chia nhỏ' : 'Task nhỏ'}
                     </span>
-                    {lockedParentTotal != null ? (
-                      <span
-                        className={`${styles.allocationSum} ${
-                          allocationConserved ? '' : styles.allocationSumWarn
-                        }`}
-                      >
-                        {allocatedFromForm} / {lockedParentTotal}
-                        {allocationConserved ? ' · khớp' : ' · lệch'}
-                      </span>
-                    ) : null}
+                    <span
+                      className={`${styles.allocationSum} ${
+                        allocationConserved ? '' : styles.allocationSumWarn
+                      }`}
+                    >
+                      {allocatedFromForm} / {parentTotalFromForm}
+                      {allocationConserved ? ' · khớp' : ' · lệch'}
+                    </span>
                   </div>
                   <p className={styles.allocationHint}>
-                    {splitParent
-                      ? 'SL tổng đã khoá. Chỉnh SL từng phần bên dưới — tổng phải luôn bằng SL tổng. Chi tiết để xem/đổi Staff.'
-                      : 'Đổi SL tại đây. Tổng mọi phần phải bằng SL tổng gốc.'}
+                    Chỉnh SL tổng hoặc từng phần — tổng phải khớp. Phần finished/huỷ bị khoá. Chi
+                    tiết để xem/đổi Staff.
                   </p>
+                  <Form.Item
+                    name="quantity"
+                    label="SL tổng"
+                    rules={[
+                      { required: true, message: 'Nhập SL tổng' },
+                      { type: 'number', min: 0.01, message: 'SL tổng > 0' },
+                    ]}
+                  >
+                    <InputNumber
+                      min={0.01}
+                      step={1}
+                      style={{ width: '100%' }}
+                      disabled={!canEdit || isPending}
+                      aria-label="SL tổng"
+                    />
+                  </Form.Item>
                   {!allocationConserved ? (
                     <Alert
                       type="warning"
@@ -505,10 +602,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                   ) : null}
                   {quantityFamily.length > 0 ? (
                     quantityFamily.map((child, index) => {
-                      const qtyLocked =
-                        child.staffConfirmation === 'confirmed' ||
-                        child.staffConfirmation === 'finished' ||
-                        child.staffConfirmation === 'cancelled';
+                      const qtyLocked = isSplitChildQuantityLocked(child);
                       return (
                         <div className={styles.allocationRow} key={child.id}>
                           <div className={styles.allocationMeta}>
@@ -520,7 +614,9 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                               {child.staff[0]?.name ? ` · ${child.staff[0].name}` : ''}
                               {qtyLocked
                                 ? ` · ${CONFIRMATION_LABELS[child.staffConfirmation]}`
-                                : ''}
+                                : child.staffConfirmation === 'confirmed'
+                                  ? ` · ${CONFIRMATION_LABELS.confirmed}`
+                                  : ''}
                             </p>
                           </div>
                           <div className={styles.allocationQty}>

@@ -16,6 +16,8 @@ import type {
   QualityReviewListResponse,
   RevisionListResponse,
   TaskAssignee,
+  SpawnEvaluationRemainderRequest,
+  SpawnEvaluationRemainderResponse,
   UpdateCreativePipelineRequest,
   UpdateHeadMyTaskRequest,
   UpdateMyTaskRequest,
@@ -47,13 +49,16 @@ import {
   isCreativeHandoffPayload,
   isCreativeLevelLockedByStaffConfirm,
   isReturnedToPm,
+  isSplitChildQuantityLocked,
   isSplitChildTask,
   needsChBrief,
+  pickPrimaryEditableSplitChild,
   resolveCreateBriefOwner,
   resolveCreatePipelineStage,
   resolveEffectivePipelineStage,
 } from '../utils/creativePipeline';
 import { canEditCreativeDeadline, canEditCreativeScheduleMeta } from '../utils/creativeVisibility';
+import { canSpawnEvaluationRemainder, nextSplitChildTaskCode } from '../utils/evaluationRemainder';
 import { canEvaluateTaskLayer } from '../utils/taskEvaluation';
 import { shouldHideSplitChildFromTaskList } from '../utils/taskListVisibility';
 import { normalizeTaskUrgencySetting } from '../utils/taskUrgency';
@@ -879,6 +884,94 @@ export const mockUpdateMyTaskPmEvaluation = async (
   return updated;
 };
 
+/**
+ * Accept partial quantity on a finished split child: shrink source to accepted,
+ * spawn unassigned sibling with the remainder (same parent, copied brief/DL/level).
+ */
+export const mockSpawnEvaluationRemainder = async (
+  id: string,
+  payload: SpawnEvaluationRemainderRequest,
+  editorUserId?: string,
+): Promise<SpawnEvaluationRemainderResponse> => {
+  await mockDelay();
+
+  if (!canUpdatePmEvaluation(editorUserId)) {
+    throw new Error('You do not have permission to evaluate this task');
+  }
+
+  const tasks = getMockTasksStore();
+  const index = tasks.findIndex((entry) => entry.id === id);
+  if (index === -1) {
+    throw new Error('Task not found');
+  }
+
+  const source = tasks[index];
+  const role = editorUserId ? deriveDevRoleFromUserId(editorUserId) : undefined;
+  if (role && !canEvaluateTaskLayer(role, source)) {
+    throw new Error('Bạn không được đánh giá task ở tầng này');
+  }
+  if (!canSpawnEvaluationRemainder(source, payload.acceptedQuantity)) {
+    throw new Error(
+      'Chỉ tách phần còn lại khi task con đã finished và số lượng đạt nhỏ hơn SL giao',
+    );
+  }
+
+  const parentId = source.parentTaskId!;
+  const parent = tasks.find((entry) => entry.id === parentId);
+  if (!parent) {
+    throw new Error('Không tìm thấy task gốc');
+  }
+
+  const accepted = Math.round(payload.acceptedQuantity);
+  const assigned = Math.round(source.quantity);
+  const remainderQty = assigned - accepted;
+  const siblings = tasks.filter(
+    (entry) => entry.parentTaskId === parentId && entry.taskKind !== 'revision',
+  );
+  const now = new Date().toISOString();
+  const remainder: MyTask = enrichMockTaskWithProjectContext({
+    ...source,
+    id: `task-${Date.now()}-rem`,
+    taskCode: nextSplitChildTaskCode(parent.taskCode, siblings),
+    taskName: source.taskName,
+    description: source.description,
+    quantity: remainderQty,
+    staff: [],
+    parentTaskId: parentId,
+    taskKind: 'split',
+    pipelineStage: 'assigned_staff',
+    assignedAt: undefined,
+    staffConfirmation: 'not_updated',
+    staffNote: '',
+    completionPercent: null,
+    pmEvaluation: '',
+    pmNote: '',
+    creativeDeadline: source.creativeDeadline,
+    designThinking: source.designThinking,
+    technical: source.technical,
+    contentProcessing: source.contentProcessing,
+    level: source.level,
+    creativeManager: source.creativeManager ?? parent.creativeManager,
+    updatedAt: now,
+    completedAt: undefined,
+  });
+
+  const updatedSource: MyTask = {
+    ...source,
+    quantity: accepted,
+    updatedAt: now,
+  };
+
+  const next = [...tasks];
+  next[index] = updatedSource;
+  setMockTasksStore([remainder, ...next]);
+
+  return {
+    sourceTask: enrichMockTaskWithProjectContext(updatedSource),
+    remainderTask: remainder,
+  };
+};
+
 export const mockRehandCreativeToCH = async (
   id: string,
   editorUserId?: string,
@@ -1191,6 +1284,9 @@ export const mockUpdateCreativePipeline = async (
     if (!canReassignCreativeStaff(current, editorRole)) {
       throw new Error('Chỉ đổi Staff khi task đã giao Staff');
     }
+    if (isSplitChildTask(current) && isSplitChildQuantityLocked(current)) {
+      throw new Error('Không đổi Staff task nhỏ đã finish / huỷ');
+    }
     const nextStaff = filterCreativeStaff(MOCK_ASSIGNABLE_STAFF).find(
       (member) => member.userId === payload.staffUserId,
     );
@@ -1216,14 +1312,8 @@ export const mockUpdateCreativePipeline = async (
   const stage = resolveEffectivePipelineStage(current);
   const isSplitChild = isSplitChildTask(current);
 
-  if (payload.quantity != null && stage === 'split') {
-    throw new Error('SL tổng của task chia nhỏ đã khoá — chỉnh từng task nhỏ cho khớp tổng');
-  }
   if (payload.quantity != null && isSplitChild) {
     throw new Error('Đổi SL task nhỏ qua childQuantities (đủ các phần, tổng khớp SL gốc)');
-  }
-  if (payload.staffUserId && isSplitChild && current.staffConfirmation === 'confirmed') {
-    throw new Error('Task nhỏ đã confirm — không đổi Staff / SL');
   }
 
   if (payload.childQuantities?.length) {
@@ -1248,20 +1338,17 @@ export const mockUpdateCreativePipeline = async (
         throw new Error('Số lượng task nhỏ phải lớn hơn 0');
       }
       const qtyUnchanged = Math.abs(row.quantity - sibling.quantity) <= 1e-6;
-      if (
-        !qtyUnchanged &&
-        (sibling.staffConfirmation === 'confirmed' ||
-          sibling.staffConfirmation === 'finished' ||
-          sibling.staffConfirmation === 'cancelled')
-      ) {
-        throw new Error('Không đổi SL task nhỏ đã confirm / finish / huỷ');
+      if (!qtyUnchanged && isSplitChildQuantityLocked(sibling)) {
+        throw new Error('Không đổi SL task nhỏ đã finish / huỷ');
       }
       nextQty.set(row.id, row.quantity);
     }
     const sum = [...nextQty.values()].reduce((total, qty) => total + qty, 0);
-    if (Math.abs(sum - parent.quantity) > 1e-6) {
-      throw new Error(`Tổng SL các phần (${sum}) phải bằng SL tổng (${parent.quantity})`);
+    const targetParentQty = payload.quantity != null ? payload.quantity : sum;
+    if (Math.abs(sum - targetParentQty) > 1e-6) {
+      throw new Error(`Tổng SL các phần (${sum}) phải bằng SL tổng (${targetParentQty})`);
     }
+    const nowIso = new Date().toISOString();
     const next = [...tasks];
     for (const [id, quantity] of nextQty) {
       const idx = next.findIndex((entry) => entry.id === id);
@@ -1270,9 +1357,50 @@ export const mockUpdateCreativePipeline = async (
       next[idx] = {
         ...next[idx],
         quantity,
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowIso,
       };
     }
+    const parentIdx = next.findIndex((entry) => entry.id === parentId);
+    if (parentIdx >= 0 && Math.abs(next[parentIdx].quantity - targetParentQty) > 1e-6) {
+      next[parentIdx] = {
+        ...next[parentIdx],
+        quantity: targetParentQty,
+        updatedAt: nowIso,
+      };
+    }
+    setMockTasksStore(next);
+  } else if (payload.quantity != null && stage === 'split') {
+    const siblings = tasks.filter(
+      (entry) => entry.parentTaskId === current.id && entry.taskKind !== 'revision',
+    );
+    const lockedSum = siblings
+      .filter((child) => isSplitChildQuantityLocked(child))
+      .reduce((total, child) => total + child.quantity, 0);
+    const editable = siblings.filter((child) => !isSplitChildQuantityLocked(child));
+    if (payload.quantity + 1e-6 < lockedSum + editable.length * 0.01) {
+      throw new Error(
+        `SL tổng tối thiểu ${lockedSum + editable.length * 0.01} (phần đã finish/huỷ + các phần còn mở)`,
+      );
+    }
+    const primary = pickPrimaryEditableSplitChild(editable);
+    if (!primary) {
+      throw new Error('Không còn task nhỏ nào để điều chỉnh SL tổng');
+    }
+    const editableSum = editable.reduce((total, child) => total + child.quantity, 0);
+    const nextPrimaryQty = payload.quantity - lockedSum - (editableSum - primary.quantity);
+    if (nextPrimaryQty <= 0) {
+      throw new Error('Không điều chỉnh được SL tổng với các phần đã khoá');
+    }
+    const nowIso = new Date().toISOString();
+    const next = tasks.map((entry) => {
+      if (entry.id === primary.id) {
+        return { ...entry, quantity: nextPrimaryQty, updatedAt: nowIso };
+      }
+      if (entry.id === current.id) {
+        return { ...entry, quantity: payload.quantity!, updatedAt: nowIso };
+      }
+      return entry;
+    });
     setMockTasksStore(next);
   }
 
