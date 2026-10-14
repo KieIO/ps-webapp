@@ -59,11 +59,12 @@ export const EVALUATION_LEVEL_LABELS: Record<EvaluationLevel, string> = {
   2: 'Level 2',
   3: 'Level 3',
   4: 'Level 4',
+  5: 'Level 5',
 };
 
 /**
  * Đánh giá task / project score (1–5).
- * Separate from volume / nature / time / projectLevel classification (1–4).
+ * Same scale as volume / nature / time / projectLevel classification (1–5).
  */
 export const EVALUATION_SCORE_OPTIONS = ['1', '2', '3', '4', '5'].map((value) => ({
   value,

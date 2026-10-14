@@ -5,7 +5,7 @@
 import { z } from 'zod';
 import { ProjectMilestoneInputSchema, ProjectMilestoneSchema } from './milestone.schema';
 
-export const EVALUATION_LEVELS = [1, 2, 3, 4] as const;
+export const EVALUATION_LEVELS = [1, 2, 3, 4, 5] as const;
 
 export const PROJECT_STATUSES = ['not_updated', 'in_progress', 'finish', 'cancel'] as const;
 
@@ -64,13 +64,13 @@ export const ProjectRecordSchema = z.object({
   name: z.string(),
   startDate: z.string(),
   endDate: z.string(),
-  projectLevel: z.number().int().min(1).max(4),
+  projectLevel: z.number().int().min(1).max(5),
   department: z.string().min(1),
   departmentHead: PersonWithCodeSchema,
   brief: z.string(),
-  volume: z.number().int().min(1).max(4),
-  nature: z.number().int().min(1).max(4),
-  time: z.number().int().min(1).max(4),
+  volume: z.number().int().min(1).max(5),
+  nature: z.number().int().min(1).max(5),
+  time: z.number().int().min(1).max(5),
   additionalFactors: z.string(),
   pm: PersonWithCodeSchema,
   evaluation: z.string(),
@@ -109,7 +109,7 @@ export const ProjectListFiltersSchema = z.object({
   status: z.enum(PROJECT_STATUSES).optional(),
   pmCode: z.string().optional(),
   headName: z.string().optional(),
-  projectLevel: z.number().int().min(1).max(4).optional(),
+  projectLevel: z.number().int().min(1).max(5).optional(),
   /** When true, list archived projects only; default/false = active projects. */
   archived: z.boolean().optional(),
 });
@@ -132,9 +132,9 @@ export const UpdateProjectRequestSchema = z.object({
   department: z.string().min(1),
   departmentHead: PersonWithCodeSchema,
   brief: z.string(),
-  volume: z.number().int().min(1).max(4),
-  nature: z.number().int().min(1).max(4),
-  time: z.number().int().min(1).max(4),
+  volume: z.number().int().min(1).max(5),
+  nature: z.number().int().min(1).max(5),
+  time: z.number().int().min(1).max(5),
   additionalFactors: z.string(),
   pm: PersonWithCodeSchema,
   evaluation: z.string(),

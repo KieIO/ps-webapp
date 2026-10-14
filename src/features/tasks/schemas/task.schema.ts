@@ -19,7 +19,7 @@ export {
   type TaskConfirmationStatus,
 } from '@/shared/constants/taskConfirmation';
 
-export const CLASSIFICATION_LEVELS = [1, 2, 3, 4] as const;
+export const CLASSIFICATION_LEVELS = [1, 2, 3, 4, 5] as const;
 
 export const TASK_CATEGORIES = ['project', 'non_project'] as const;
 
@@ -97,7 +97,7 @@ export const MyTaskSchema = z.object({
   projectName: z.string(),
   projectManager: TaskPersonSchema,
   taskName: z.string(),
-  level: z.coerce.number().min(1).max(4),
+  level: z.coerce.number().min(1).max(5),
   /** Backend stores quantity as float64 (partial slides/units allowed). */
   quantity: z.number().min(0),
   /** SL giao trước khi CM tách phần còn lại (spawn evaluation remainder). */
@@ -143,9 +143,9 @@ export const MyTaskSchema = z.object({
   creativeManager: TaskPersonSchema.optional(),
   /** Set when the task is handed to a staff member (15-minute confirm SLA). */
   assignedAt: z.string().nullish(),
-  designThinking: z.number().int().min(1).max(4),
-  technical: z.number().int().min(1).max(4),
-  contentProcessing: z.number().int().min(1).max(4),
+  designThinking: z.number().int().min(1).max(5),
+  technical: z.number().int().min(1).max(5),
+  contentProcessing: z.number().int().min(1).max(5),
   additionalFactors: z.string(),
   completionPercent: z.number().min(0).max(100).nullish(),
   pmEvaluation: z.string(),
@@ -164,11 +164,11 @@ export const MyTaskSchema = z.object({
   /** Denormalized project fields — populated by API or mock for Department Head columns. */
   projectStartDate: z.string().nullish(),
   projectEndDate: z.string().nullish(),
-  projectLevel: z.number().int().min(1).max(4).nullish(),
+  projectLevel: z.number().int().min(1).max(5).nullish(),
   projectBrief: z.string().nullish(),
-  projectVolume: z.number().int().min(1).max(4).nullish(),
-  projectNature: z.number().int().min(1).max(4).nullish(),
-  projectTime: z.number().int().min(1).max(4).nullish(),
+  projectVolume: z.number().int().min(1).max(5).nullish(),
+  projectNature: z.number().int().min(1).max(5).nullish(),
+  projectTime: z.number().int().min(1).max(5).nullish(),
   projectStatus: z.enum(PROJECT_STATUSES).nullish(),
   projectFinishedDate: z.string().nullish(),
 });
@@ -251,7 +251,7 @@ export const CreateRevisionRequestSchema = z
     revisionReason: z.string().trim().min(1, 'Nhập lý do / nội dung revision'),
     /** Rework scope units — independent of parent quantity (can be partial or expanded). */
     quantity: z.number().positive('Số lượng phải lớn hơn 0'),
-    level: z.number().int().min(1).max(4),
+    level: z.number().int().min(1).max(5),
     /** Calendar day used for capacity workload (YYYY-MM-DD or ISO). */
     date: z.string().min(1, 'Chọn ngày tính capacity'),
     /** Resubmission deadline (ISO datetime). */
@@ -272,14 +272,14 @@ export const CreateMyTaskRequestSchema = z.object({
   projectName: z.string().min(1, 'Project name is required'),
   projectManager: TaskPersonSchema,
   taskName: z.string().min(1, 'Task name is required'),
-  level: z.number().int().min(1).max(4),
+  level: z.number().int().min(1).max(5),
   quantity: z.number().min(0),
   date: z.string(),
   description: z.string(),
   department: z.string().min(1).optional(),
-  designThinking: z.number().int().min(1).max(4),
-  technical: z.number().int().min(1).max(4),
-  contentProcessing: z.number().int().min(1).max(4),
+  designThinking: z.number().int().min(1).max(5),
+  technical: z.number().int().min(1).max(5),
+  contentProcessing: z.number().int().min(1).max(5),
   additionalFactors: z.string(),
   staff: z.array(TaskAssigneeSchema).max(1, 'Only one staff member can be assigned'),
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
@@ -330,9 +330,9 @@ export const AssignMyTaskRequestSchema = z.object({
 export const AssignCreativeHeadRequestSchema = z.object({
   cmUserId: z.string().min(1, 'Chọn Creative Manager'),
   description: z.string().optional(),
-  designThinking: z.number().int().min(1).max(4).optional(),
-  technical: z.number().int().min(1).max(4).optional(),
-  contentProcessing: z.number().int().min(1).max(4).optional(),
+  designThinking: z.number().int().min(1).max(5).optional(),
+  technical: z.number().int().min(1).max(5).optional(),
+  contentProcessing: z.number().int().min(1).max(5).optional(),
   cmNote: z.string().optional(),
   /** Creative-department deadline; omit to default to Admin/PM deadline on the server. */
   creativeDeadline: z.string().optional(),
@@ -393,9 +393,9 @@ export const UpdateCreativePipelineRequestSchema = z
     deadline: z.string().nullish(),
     creativeDeadline: z.string().nullish(),
     urgency: z.enum(PROJECT_URGENCIES).optional(),
-    designThinking: z.number().int().min(1).max(4).optional(),
-    technical: z.number().int().min(1).max(4).optional(),
-    contentProcessing: z.number().int().min(1).max(4).optional(),
+    designThinking: z.number().int().min(1).max(5).optional(),
+    technical: z.number().int().min(1).max(5).optional(),
+    contentProcessing: z.number().int().min(1).max(5).optional(),
     staffUserId: z.string().optional(),
     staffNote: z.string().optional(),
     /** CH/Admin: reassign CM while awaiting_cm. */
@@ -439,9 +439,9 @@ export const UpdateMyTaskRequestSchema = z.object({
   quantity: z.number().min(0),
   date: z.string(),
   description: z.string(),
-  designThinking: z.number().int().min(1).max(4),
-  technical: z.number().int().min(1).max(4),
-  contentProcessing: z.number().int().min(1).max(4),
+  designThinking: z.number().int().min(1).max(5),
+  technical: z.number().int().min(1).max(5),
+  contentProcessing: z.number().int().min(1).max(5),
   additionalFactors: z.string(),
   staff: z.array(TaskAssigneeSchema).max(1, 'Only one staff member can be assigned'),
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
@@ -455,9 +455,9 @@ export const UpdateHeadMyTaskRequestSchema = z.object({
   projectStartDate: z.string(),
   projectEndDate: z.string(),
   projectBrief: z.string(),
-  projectVolume: z.number().int().min(1).max(4),
-  projectNature: z.number().int().min(1).max(4),
-  projectTime: z.number().int().min(1).max(4),
+  projectVolume: z.number().int().min(1).max(5),
+  projectNature: z.number().int().min(1).max(5),
+  projectTime: z.number().int().min(1).max(5),
   additionalFactors: z.string(),
   pmEvaluation: z.string(),
   pmNote: z.string(),

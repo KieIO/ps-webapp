@@ -20,8 +20,8 @@ export const canCancelTask = (role: Role | undefined): boolean =>
   role != null && role !== ROLES.EMPLOYEE;
 
 /**
- * Meta edit (deadline, brief, …): Admin, Head, PM, or the user who clicked Create.
- * Finished/cancelled tasks stay locked. CH/CM use pipeline drawers for operational edits.
+ * Meta edit (deadline, brief, …): Admin (incl. finished/cancelled), Head, PM, or creator.
+ * Non-admin roles stay locked on finished/cancelled. CH/CM use pipeline drawers.
  */
 export const canEditTaskMeta = (
   task: Pick<MyTask, 'staffConfirmation' | 'createdById'> | null | undefined,
@@ -29,8 +29,9 @@ export const canEditTaskMeta = (
   userId: string | undefined,
 ): boolean => {
   if (!role || !task) return false;
+  if (role === ROLES.ADMIN) return true;
   if (isTaskMetaEditLockedByStatus(task.staffConfirmation)) return false;
-  if (role === ROLES.ADMIN || role === ROLES.HEAD || role === ROLES.PM) return true;
+  if (role === ROLES.HEAD || role === ROLES.PM) return true;
   if (userId && task.createdById && userId === task.createdById) return true;
   return false;
 };

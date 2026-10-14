@@ -15,9 +15,15 @@ describe('canEditTaskMeta', () => {
     expect(canEditTaskMeta(base, ROLES.PM, 'other')).toBe(true);
   });
 
-  it('denies finished tasks even for Admin', () => {
+  it('allows Admin on finished/cancelled; locks other roles', () => {
+    expect(canEditTaskMeta({ ...base, staffConfirmation: 'finished' }, ROLES.ADMIN, 'anyone')).toBe(
+      true,
+    );
     expect(
-      canEditTaskMeta({ ...base, staffConfirmation: 'finished' }, ROLES.ADMIN, 'usr-creator'),
+      canEditTaskMeta({ ...base, staffConfirmation: 'cancelled' }, ROLES.ADMIN, 'anyone'),
+    ).toBe(true);
+    expect(
+      canEditTaskMeta({ ...base, staffConfirmation: 'finished' }, ROLES.PM, 'usr-creator'),
     ).toBe(false);
   });
 

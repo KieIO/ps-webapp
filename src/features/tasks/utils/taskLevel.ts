@@ -7,4 +7,4 @@ export const computeTaskLevel = (
   technical: number,
   contentProcessing: number,
 ): ClassificationLevel =>
-  computeAverageLevel(designThinking, technical, contentProcessing, 1, 4) as ClassificationLevel;
+  computeAverageLevel(designThinking, technical, contentProcessing, 1, 5) as ClassificationLevel;

@@ -302,10 +302,12 @@ export const canEditCreativePipelineTask = (
   userId: string | undefined,
 ): boolean => {
   if (!canEditCreativePipelineRole(role) || !isEditableCreativePipelineStage(task)) return false;
+  // Admin break-glass: edit even when finished/cancelled.
+  if (role === ROLES.ADMIN) return true;
   if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
 
-  // Admin / Head / creator: full meta edit after assign/confirm.
-  if (role === ROLES.ADMIN || role === ROLES.HEAD) return true;
+  // Head / creator: full meta edit after assign/confirm.
+  if (role === ROLES.HEAD) return true;
   if (userId && task.createdById && userId === task.createdById) return true;
 
   // CM: operational edits on owned tasks (Staff / creative deadline).
