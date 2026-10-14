@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { MyTask } from '../schemas/task.schema';
 import {
+  buildEvaluationRemainderAutoNote,
   canSpawnEvaluationRemainder,
   computeAcceptedRemainderQuantity,
+  formatEvaluationAcceptedLabel,
+  hasCmEvaluation,
   nextSplitChildTaskCode,
 } from './evaluationRemainder';
 
@@ -47,6 +50,29 @@ describe('canSpawnEvaluationRemainder', () => {
     expect(
       canSpawnEvaluationRemainder(baseChild({ taskKind: 'revision', parentTaskId: 'p' }), 3),
     ).toBe(false);
+    expect(canSpawnEvaluationRemainder(baseChild({ evaluationRemainderTaskId: 'rem-1' }), 3)).toBe(
+      false,
+    );
+  });
+});
+
+describe('evaluation display helpers', () => {
+  it('builds auto note and accepted labels', () => {
+    expect(
+      buildEvaluationRemainderAutoNote({
+        acceptedQuantity: 3,
+        originalAssignedQuantity: 15,
+        remainderTaskCode: 'PO.020-SG-004-S6',
+        remainderQuantity: 12,
+      }),
+    ).toBe('CM chấp nhận 3/15 · đã tạo PO.020-SG-004-S6 (12)');
+    expect(formatEvaluationAcceptedLabel({ quantity: 3, originalAssignedQuantity: 15 })).toBe(
+      'Đạt 3/15',
+    );
+    expect(formatEvaluationAcceptedLabel({ quantity: 3 })).toBe('Đạt 3');
+    expect(hasCmEvaluation({ completionPercent: 100, pmEvaluation: '' })).toBe(true);
+    expect(hasCmEvaluation({ completionPercent: null, pmEvaluation: 'A' })).toBe(true);
+    expect(hasCmEvaluation({ completionPercent: null, pmEvaluation: '' })).toBe(false);
   });
 });
 

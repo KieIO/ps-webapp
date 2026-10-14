@@ -100,6 +100,12 @@ export const MyTaskSchema = z.object({
   level: z.coerce.number().min(1).max(4),
   /** Backend stores quantity as float64 (partial slides/units allowed). */
   quantity: z.number().min(0),
+  /** SL giao trước khi CM tách phần còn lại (spawn evaluation remainder). */
+  originalAssignedQuantity: z.number().min(0).nullish(),
+  /** Sibling created for the unaccepted portion after evaluate spawn. */
+  evaluationRemainderTaskId: z.string().nullish(),
+  evaluationRemainderTaskCode: z.string().nullish(),
+  evaluationRemainderQuantity: z.number().min(0).nullish(),
   /** UTC start of the task calendar day (00:00:00). */
   date: z.string(),
   /** UTC end of the task calendar day (23:59:59), when provided by API. */

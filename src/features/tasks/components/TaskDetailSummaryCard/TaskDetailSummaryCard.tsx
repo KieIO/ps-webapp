@@ -16,6 +16,7 @@ import {
   getTaskStartDate,
 } from '../../utils/taskDetail';
 import { inferParentTaskCodeFromSplit, isSplitChildTask } from '../../utils/creativePipeline';
+import { formatEvaluationAcceptedLabel, hasCmEvaluation } from '../../utils/evaluationRemainder';
 import {
   formatHasRevisionChildrenLabel,
   formatRevisionLabel,
@@ -54,6 +55,11 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
   const hasRevisionLabel = formatHasRevisionChildrenLabel(task.revisionChildCount ?? 0, {
     activeCount: task.activeRevisionChildCount ?? 0,
   });
+  const evaluated = hasCmEvaluation(task);
+  const remainderId = task.evaluationRemainderTaskId;
+  const remainderCode = task.evaluationRemainderTaskCode;
+  const remainderQty =
+    task.evaluationRemainderQuantity != null ? Math.round(task.evaluationRemainderQuantity) : null;
 
   return (
     <section className={styles.card}>
@@ -66,6 +72,9 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
             <h2 className={styles.taskTitle}>{displayName}</h2>
             {revision ? <Tag color="purple">{formatRevisionLabel(task)}</Tag> : null}
             {splitChild ? <Tag color="blue">Task nhỏ</Tag> : null}
+            {evaluated ? (
+              <Tag color="green">Đã evaluate · {formatEvaluationAcceptedLabel(task)}</Tag>
+            ) : null}
             {parentHasRevisions ? (
               <Tooltip
                 title={
@@ -126,6 +135,15 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
             <p className={styles.parentLink}>
               Task cha:{' '}
               <Link to={buildMyTaskDetailPath(task.parentTaskId)}>{parentCode ?? 'task gốc'}</Link>
+            </p>
+          ) : null}
+          {remainderId && remainderCode ? (
+            <p className={styles.parentLink}>
+              Đã tách phần còn lại →{' '}
+              <Link to={buildMyTaskDetailPath(remainderId)}>
+                {remainderCode}
+                {remainderQty != null ? ` (SL ${remainderQty})` : ''}
+              </Link>
             </p>
           ) : null}
         </div>

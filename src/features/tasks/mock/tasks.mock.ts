@@ -58,7 +58,11 @@ import {
   resolveEffectivePipelineStage,
 } from '../utils/creativePipeline';
 import { canEditCreativeDeadline, canEditCreativeScheduleMeta } from '../utils/creativeVisibility';
-import { canSpawnEvaluationRemainder, nextSplitChildTaskCode } from '../utils/evaluationRemainder';
+import {
+  buildEvaluationRemainderAutoNote,
+  canSpawnEvaluationRemainder,
+  nextSplitChildTaskCode,
+} from '../utils/evaluationRemainder';
 import { canEvaluateTaskLayer } from '../utils/taskEvaluation';
 import { shouldHideSplitChildFromTaskList } from '../utils/taskListVisibility';
 import { normalizeTaskUrgencySetting } from '../utils/taskUrgency';
@@ -905,11 +909,27 @@ export const mockUpdateMyTaskPmEvaluation = async (
     throw new Error('Bạn không được đánh giá task ở tầng này');
   }
 
+  const current = tasks[index];
+  let pmNote = payload.pmNote;
+  if (
+    !String(pmNote ?? '').trim() &&
+    current.originalAssignedQuantity != null &&
+    current.evaluationRemainderTaskId &&
+    current.evaluationRemainderTaskCode
+  ) {
+    pmNote = buildEvaluationRemainderAutoNote({
+      acceptedQuantity: Math.round(current.quantity),
+      originalAssignedQuantity: Math.round(current.originalAssignedQuantity),
+      remainderTaskCode: current.evaluationRemainderTaskCode,
+      remainderQuantity: Math.round(current.evaluationRemainderQuantity ?? 0),
+    });
+  }
+
   const updated: MyTask = {
-    ...tasks[index],
+    ...current,
     completionPercent: payload.completionPercent,
     pmEvaluation: payload.pmEvaluation,
-    pmNote: payload.pmNote,
+    pmNote,
     updatedAt: new Date().toISOString(),
   };
 
@@ -994,6 +1014,10 @@ export const mockSpawnEvaluationRemainder = async (
   const updatedSource: MyTask = {
     ...source,
     quantity: accepted,
+    originalAssignedQuantity: assigned,
+    evaluationRemainderTaskId: remainder.id,
+    evaluationRemainderTaskCode: remainder.taskCode,
+    evaluationRemainderQuantity: remainderQty,
     updatedAt: now,
   };
 

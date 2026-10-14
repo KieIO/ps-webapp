@@ -21,11 +21,38 @@ export const canSpawnEvaluationRemainder = (task: MyTask, acceptedQuantity: numb
   if (!isSplitChildTask(task)) return false;
   if (task.staffConfirmation !== 'finished') return false;
   if (!task.parentTaskId) return false;
+  if (task.evaluationRemainderTaskId) return false;
   const assigned = Math.round(task.quantity ?? 0);
   if (assigned <= 0) return false;
   const accepted = Math.round(acceptedQuantity);
   if (accepted < 0 || accepted >= assigned) return false;
   return true;
+};
+
+/** Default evaluate note after CM accepts a partial quantity and spawns a remainder. */
+export const buildEvaluationRemainderAutoNote = (input: {
+  acceptedQuantity: number;
+  originalAssignedQuantity: number;
+  remainderTaskCode: string;
+  remainderQuantity: number;
+}): string =>
+  `CM chấp nhận ${Math.round(input.acceptedQuantity)}/${Math.round(input.originalAssignedQuantity)} · đã tạo ${input.remainderTaskCode} (${Math.round(input.remainderQuantity)})`;
+
+export const hasCmEvaluation = (
+  task: Pick<MyTask, 'completionPercent' | 'pmEvaluation'>,
+): boolean => task.completionPercent != null || Boolean(task.pmEvaluation?.trim());
+
+/** e.g. `Đạt 3/15` when originalAssigned is known, else `Đạt 3`. */
+export const formatEvaluationAcceptedLabel = (
+  task: Pick<MyTask, 'quantity' | 'originalAssignedQuantity'>,
+): string => {
+  const accepted = Math.round(task.quantity ?? 0);
+  const original =
+    task.originalAssignedQuantity != null ? Math.round(task.originalAssignedQuantity) : null;
+  if (original != null && original > 0) {
+    return `Đạt ${accepted}/${original}`;
+  }
+  return `Đạt ${accepted}`;
 };
 
 /** Next `-S{n}` code under a split parent (max existing index + 1). */

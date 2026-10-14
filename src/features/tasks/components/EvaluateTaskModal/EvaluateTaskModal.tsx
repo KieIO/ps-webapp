@@ -21,6 +21,7 @@ import {
   deriveCompletedQuantityFromPercent,
 } from '../../utils/evaluationCompletion';
 import {
+  buildEvaluationRemainderAutoNote,
   canSpawnEvaluationRemainder,
   computeAcceptedRemainderQuantity,
 } from '../../utils/evaluationRemainder';
@@ -52,89 +53,132 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
   const { mutate: spawnRemainder, isPending: isSpawning } = useSpawnEvaluationRemainder();
   const [workingTask, setWorkingTask] = useState<MyTask | null>(task);
   const [remainderLink, setRemainderLink] = useState<RemainderLink | null>(null);
+  /** SL giao lúc mở modal — giữ sau spawn để UI không nhảy theo quantity đã thu nhỏ. */
+  const [originalAssignedQuantity, setOriginalAssignedQuantity] = useState(0);
+  const [acceptedAtSpawn, setAcceptedAtSpawn] = useState<number | null>(null);
 
   useEffect(() => {
     if (!open) {
       setRemainderLink(null);
       setWorkingTask(null);
+      setOriginalAssignedQuantity(0);
+      setAcceptedAtSpawn(null);
       return;
     }
-    if (task) {
+    // After spawn in this session, ignore prop refreshes that would wipe accepted qty.
+    if (task && !remainderLink) {
       setWorkingTask(task);
-      const assignedQuantity = Math.round(task.quantity ?? 0);
+      const originalAssigned =
+        task.originalAssignedQuantity != null
+          ? Math.round(task.originalAssignedQuantity)
+          : Math.round(task.quantity ?? 0);
+      setOriginalAssignedQuantity(originalAssigned);
+
+      if (task.evaluationRemainderTaskId && task.evaluationRemainderTaskCode) {
+        const accepted = Math.round(task.quantity ?? 0);
+        setAcceptedAtSpawn(accepted);
+        setRemainderLink({
+          id: task.evaluationRemainderTaskId,
+          taskName: task.taskName,
+          taskCode: task.evaluationRemainderTaskCode,
+          quantity: Math.round(task.evaluationRemainderQuantity ?? 0),
+        });
+        form.setFieldsValue({
+          completedQuantity: accepted,
+          completionPercent: computeCompletionPercentFromQuantity(accepted, originalAssigned),
+          pmEvaluation: task.pmEvaluation,
+          pmNote: task.pmNote,
+        });
+        return;
+      }
+
       form.setFieldsValue({
         completedQuantity: deriveCompletedQuantityFromPercent(
           task.completionPercent,
-          assignedQuantity,
+          originalAssigned,
         ),
         completionPercent: task.completionPercent ?? 0,
         pmEvaluation: task.pmEvaluation,
         pmNote: task.pmNote,
       });
     }
-  }, [open, task, form]);
+  }, [open, task, form, remainderLink]);
 
   const watchedCompleted = Form.useWatch('completedQuantity', form);
-  const assignedQuantity = Math.round(workingTask?.quantity ?? 0);
-  const completedQuantity = Math.round(watchedCompleted ?? 0);
+  const assignedQuantity = originalAssignedQuantity;
+  const completedQuantity = Math.round(
+    acceptedAtSpawn != null ? acceptedAtSpawn : (watchedCompleted ?? 0),
+  );
   const remainderQuantity = computeAcceptedRemainderQuantity(assignedQuantity, completedQuantity);
   const showRemainderAction = Boolean(
-    workingTask && canSpawnEvaluationRemainder(workingTask, completedQuantity) && !remainderLink,
+    workingTask &&
+      canSpawnEvaluationRemainder(
+        { ...workingTask, quantity: assignedQuantity },
+        completedQuantity,
+      ) &&
+      !remainderLink,
   );
 
   const remainderSummary = useMemo(() => {
     if (assignedQuantity <= 0) return null;
-    return `Đạt ${Math.min(Math.max(0, completedQuantity), assignedQuantity)} / ${assignedQuantity}${
+    const achieved = Math.min(Math.max(0, completedQuantity), assignedQuantity);
+    if (remainderLink) {
+      return `Đạt ${achieved} / ${assignedQuantity} · đã tách ${remainderLink.quantity}`;
+    }
+    return `Đạt ${achieved} / ${assignedQuantity}${
       remainderQuantity > 0 ? ` · Còn ${remainderQuantity}` : ''
     }`;
-  }, [assignedQuantity, completedQuantity, remainderQuantity]);
+  }, [assignedQuantity, completedQuantity, remainderLink, remainderQuantity]);
 
   const handleClose = () => {
     form.resetFields();
     setRemainderLink(null);
     setWorkingTask(null);
+    setOriginalAssignedQuantity(0);
+    setAcceptedAtSpawn(null);
     onClose();
   };
 
   const handleValuesChange = (changed: Partial<EvaluateTaskFormValues>) => {
-    if (!('completedQuantity' in changed) || !workingTask) return;
-    const assigned = Math.round(workingTask.quantity ?? 0);
-    if (assigned <= 0) return;
+    if (!('completedQuantity' in changed) || remainderLink) return;
+    if (assignedQuantity <= 0) return;
     const nextCompleted = Math.min(
       Math.max(0, Math.round(changed.completedQuantity ?? 0)),
-      assigned,
+      assignedQuantity,
     );
     if (nextCompleted !== changed.completedQuantity) {
       form.setFieldValue('completedQuantity', nextCompleted);
     }
     form.setFieldValue(
       'completionPercent',
-      computeCompletionPercentFromQuantity(nextCompleted, assigned),
+      computeCompletionPercentFromQuantity(nextCompleted, assignedQuantity),
     );
   };
 
   const handleSpawnRemainder = () => {
-    if (!workingTask) return;
+    if (!workingTask || assignedQuantity <= 0) return;
     const accepted = Math.round(form.getFieldValue('completedQuantity') ?? 0);
-    if (!canSpawnEvaluationRemainder(workingTask, accepted)) return;
+    if (!canSpawnEvaluationRemainder({ ...workingTask, quantity: assignedQuantity }, accepted)) {
+      return;
+    }
 
     spawnRemainder(
       { id: workingTask.id, payload: { acceptedQuantity: accepted } },
       {
         onSuccess: (result) => {
+          const remainderQty = Math.round(result.remainderTask.quantity ?? 0);
           setWorkingTask(result.sourceTask);
+          setAcceptedAtSpawn(accepted);
           setRemainderLink({
             id: result.remainderTask.id,
             taskName: result.remainderTask.taskName,
             taskCode: result.remainderTask.taskCode,
-            quantity: Math.round(result.remainderTask.quantity ?? 0),
+            quantity: remainderQty,
           });
+          // Header giữ SL giao gốc; % trên form = phần đã chấp nhận / SL gốc (vd 3/15 → 20%).
           form.setFieldsValue({
             completedQuantity: accepted,
-            completionPercent: computeCompletionPercentFromQuantity(
-              accepted,
-              Math.round(result.sourceTask.quantity),
-            ),
+            completionPercent: computeCompletionPercentFromQuantity(accepted, assignedQuantity),
           });
         },
       },
@@ -144,13 +188,26 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
   const handleFinish = (values: EvaluateTaskFormValues) => {
     if (!workingTask) return;
 
+    // After spawn, source qty đã = accepted → lưu 100% cho phần còn lại trên task này.
+    const completionPercent = remainderLink ? 100 : (values.completionPercent ?? 0);
+    const typedNote = (values.pmNote ?? '').trim();
+    let pmNote = values.pmNote ?? '';
+    if (!typedNote && remainderLink && acceptedAtSpawn != null && originalAssignedQuantity > 0) {
+      pmNote = buildEvaluationRemainderAutoNote({
+        acceptedQuantity: acceptedAtSpawn,
+        originalAssignedQuantity,
+        remainderTaskCode: remainderLink.taskCode,
+        remainderQuantity: remainderLink.quantity,
+      });
+    }
+
     mutate(
       {
         id: workingTask.id,
         payload: {
-          completionPercent: values.completionPercent,
+          completionPercent,
           pmEvaluation: values.pmEvaluation ?? '',
-          pmNote: values.pmNote ?? '',
+          pmNote,
         },
       },
       {
@@ -158,6 +215,8 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
           form.resetFields();
           setRemainderLink(null);
           setWorkingTask(null);
+          setOriginalAssignedQuantity(0);
+          setAcceptedAtSpawn(null);
           onClose();
         },
       },
@@ -226,13 +285,20 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
                 message: 'Số lượng phải là số nguyên',
               },
             ]}
-            extra={assignedQuantity > 0 ? `Tối đa ${assignedQuantity}` : undefined}
+            extra={
+              assignedQuantity > 0
+                ? remainderLink
+                  ? `Đã tách phần còn lại · giữ ${completedQuantity} / ${assignedQuantity}`
+                  : `Tối đa ${assignedQuantity}`
+                : undefined
+            }
           >
             <InputNumber
               min={0}
               max={assignedQuantity > 0 ? assignedQuantity : undefined}
               precision={0}
               step={1}
+              disabled={Boolean(remainderLink) || isPending || isSpawning}
               style={{ width: '100%' }}
             />
           </Form.Item>
@@ -240,8 +306,20 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
             name="completionPercent"
             label={MY_TASK_COLUMN_HEADERS.completion}
             rules={[{ required: true, message: 'Nhập % hoàn thành' }]}
+            extra={
+              remainderLink
+                ? 'Khi Save sẽ ghi 100% cho phần đã chấp nhận trên task này.'
+                : undefined
+            }
           >
-            <InputNumber min={0} max={100} precision={0} addonAfter="%" style={{ width: '100%' }} />
+            <InputNumber
+              min={0}
+              max={100}
+              precision={0}
+              addonAfter="%"
+              disabled={Boolean(remainderLink) || isPending || isSpawning}
+              style={{ width: '100%' }}
+            />
           </Form.Item>
         </div>
         <Form.Item name="pmEvaluation" label={MY_TASK_COLUMN_HEADERS.evaluation}>

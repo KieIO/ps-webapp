@@ -31,6 +31,7 @@ import {
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
 import { getMyTaskCompletionProgressStatus, isMyTaskDateAtRisk } from '../../utils/taskDeadline';
 import { getTaskDeadline } from '../../utils/taskDetail';
+import { formatEvaluationAcceptedLabel, hasCmEvaluation } from '../../utils/evaluationRemainder';
 import {
   areParentActionsLockedByActiveRevision,
   formatHasRevisionChildrenLabel,
@@ -86,6 +87,15 @@ const renderTaskDetailLink = (label: string, record: MyTask) => {
   const isRevision = isRevisionTask(record);
   const parentHasRevisions = hasRevisionChildren(record);
   const parentHasActiveRevision = hasActiveRevisionChildren(record);
+  const evaluated = hasCmEvaluation(record);
+  const remainderHint =
+    record.evaluationRemainderTaskCode != null
+      ? `Đã tách ${record.evaluationRemainderTaskCode}${
+          record.evaluationRemainderQuantity != null
+            ? ` (SL ${Math.round(record.evaluationRemainderQuantity)})`
+            : ''
+        }`
+      : null;
 
   return (
     <span className={styles.taskNameCell}>
@@ -108,6 +118,13 @@ const renderTaskDetailLink = (label: string, record: MyTask) => {
           <Tooltip title={`Đây là revision subtask · ${record.taskCode}`}>
             <Tag color="purple" className={styles.otBadge}>
               {formatRevisionLabel(record)}
+            </Tag>
+          </Tooltip>
+        ) : null}
+        {evaluated ? (
+          <Tooltip title={remainderHint ?? 'CM đã evaluate task này'}>
+            <Tag color="green" className={styles.otBadge}>
+              {formatEvaluationAcceptedLabel(record)}
             </Tag>
           </Tooltip>
         ) : null}

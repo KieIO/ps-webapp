@@ -68,6 +68,12 @@ type TaskDto = {
   parentTaskId?: string | null;
   pipelineStage?: string;
   staffConfirmation?: string;
+  originalAssignedQuantity?: number | null;
+  evaluationRemainderTaskId?: string | null;
+  evaluationRemainderTaskCode?: string | null;
+  evaluationRemainderQuantity?: number | null;
+  pmNote?: string;
+  completionPercent?: number | null;
 };
 
 type StaffOption = { userId?: string; name?: string; code?: string };
@@ -142,10 +148,15 @@ async function splitAssign(
 async function listSplitChildren(token: string, parentId: string): Promise<TaskDto[]> {
   const { data } = await apiJson<{ items: TaskDto[] }>(
     'GET',
-    '/tasks/my?taskCategory=project',
+    `/tasks/my/${parentId}/split-children`,
     token,
   );
-  return (data.items ?? []).filter((item) => item.parentTaskId === parentId);
+  return data.items ?? [];
+}
+
+async function getTask(token: string, taskId: string): Promise<TaskDto> {
+  const { data } = await apiJson<TaskDto>('GET', `/tasks/my/${taskId}`, token);
+  return data;
 }
 
 async function patchStatus(
@@ -221,13 +232,25 @@ test.describe('TASK-66 split evaluate remainder + confirmed SL', () => {
     const qtyInput = modal.getByRole('spinbutton', { name: /Số lượng đạt/ });
     await qtyInput.click();
     await qtyInput.fill('3');
-    await expect(modal.getByText(/Còn 5/)).toBeVisible();
+    await expect(modal.getByText(/Đạt 3 \/ 8 · Còn 5/)).toBeVisible();
 
     await modal.getByRole('button', { name: /Tạo task phần còn lại/ }).click();
-    await expect(page.getByText('Đã tạo task phần còn lại')).toBeVisible({ timeout: 20_000 });
-    const remainderLink = modal.getByRole('link').filter({ hasText: /-S\d+/ });
-    await expect(remainderLink).toBeVisible();
-    await expect(remainderLink).toHaveAttribute('target', '_blank');
+    await expect(modal.getByText('Đã tạo task còn lại')).toBeVisible({ timeout: 20_000 });
+    await expect(modal.getByText(/Đạt 3 \/ 8 · đã tách 5/)).toBeVisible();
+    await expect(modal.getByText(/Số lượng giao/)).toBeVisible();
+    await expect(modal.getByText('8', { exact: true }).first()).toBeVisible();
+    await expect(modal.getByRole('link', { name: /Mở chi tiết/ })).toBeVisible();
+
+    await modal.getByRole('button', { name: /^Save$/ }).click();
+    await expect(page.getByText(/Đã evaluate · Đạt 3\/8/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/Đã tách phần còn lại →/)).toBeVisible();
+
+    const after = await getTask(admin.token, source.id);
+    expect(after.quantity).toBe(3);
+    expect(after.originalAssignedQuantity).toBe(8);
+    expect(after.evaluationRemainderTaskId).toBeTruthy();
+    expect(after.evaluationRemainderQuantity).toBe(5);
+    expect(after.pmNote).toMatch(/CM chấp nhận 3\/8 · đã tạo .+-S\d+ \(5\)/);
   });
 
   test('Creative edit: confirmed SL editable, finished SL locked', async ({ page }) => {

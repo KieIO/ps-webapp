@@ -17,6 +17,7 @@ import {
   mockRehandCreativeToCH,
   mockSpawnEvaluationRemainder,
   mockUpdateCreativePipeline,
+  mockUpdateMyTaskPmEvaluation,
   mockUpdateMyTaskStatus,
 } from './tasks.mock';
 
@@ -677,6 +678,10 @@ describe('creative CH/CM pipeline', () => {
     );
 
     expect(result.sourceTask.quantity).toBe(3);
+    expect(result.sourceTask.originalAssignedQuantity).toBe(8);
+    expect(result.sourceTask.evaluationRemainderTaskId).toBe(result.remainderTask.id);
+    expect(result.sourceTask.evaluationRemainderTaskCode).toBe(result.remainderTask.taskCode);
+    expect(result.sourceTask.evaluationRemainderQuantity).toBe(5);
     expect(result.remainderTask.quantity).toBe(5);
     expect(result.remainderTask.parentTaskId).toBe('task-cm-025');
     expect(result.remainderTask.staff).toEqual([]);
@@ -692,6 +697,13 @@ describe('creative CH/CM pipeline', () => {
     await expect(
       mockSpawnEvaluationRemainder(source.id, { acceptedQuantity: 3 }, 'dev-creative_manager'),
     ).rejects.toThrow(/phần còn lại/);
+
+    const evaluated = await mockUpdateMyTaskPmEvaluation(
+      source.id,
+      { completionPercent: 100, pmEvaluation: '', pmNote: '' },
+      'dev-creative_manager',
+    );
+    expect(evaluated.pmNote).toBe(`CM chấp nhận 3/8 · đã tạo ${result.remainderTask.taskCode} (5)`);
   });
 
   it('staffName filter matches displayed child staff on split parent, not parked CM', async () => {
