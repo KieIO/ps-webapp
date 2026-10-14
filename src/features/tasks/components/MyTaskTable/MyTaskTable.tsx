@@ -31,7 +31,7 @@ import {
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
 import { getMyTaskCompletionProgressStatus, isMyTaskDateAtRisk } from '../../utils/taskDeadline';
 import { getTaskDeadline } from '../../utils/taskDetail';
-import { formatEvaluationAcceptedLabel, hasCmEvaluation } from '../../utils/evaluationRemainder';
+import { formatEvaluationBadgeLabel, hasCmEvaluation } from '../../utils/evaluationRemainder';
 import {
   areParentActionsLockedByActiveRevision,
   formatHasRevisionChildrenLabel,
@@ -124,7 +124,7 @@ const renderTaskDetailLink = (label: string, record: MyTask) => {
         {evaluated ? (
           <Tooltip title={remainderHint ?? 'CM đã evaluate task này'}>
             <Tag color="green" className={styles.otBadge}>
-              {formatEvaluationAcceptedLabel(record)}
+              {formatEvaluationBadgeLabel(record)}
             </Tag>
           </Tooltip>
         ) : null}

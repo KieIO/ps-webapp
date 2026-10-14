@@ -188,8 +188,11 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
   const handleFinish = (values: EvaluateTaskFormValues) => {
     if (!workingTask) return;
 
-    // After spawn, source qty đã = accepted → lưu 100% cho phần còn lại trên task này.
-    const completionPercent = remainderLink ? 100 : (values.completionPercent ?? 0);
+    // Keep % = đạt / SL giao ban đầu (vd 9/12 → 75%), kể cả sau khi đã tách phần còn lại.
+    const completionPercent =
+      remainderLink && acceptedAtSpawn != null && originalAssignedQuantity > 0
+        ? computeCompletionPercentFromQuantity(acceptedAtSpawn, originalAssignedQuantity)
+        : (values.completionPercent ?? 0);
     const typedNote = (values.pmNote ?? '').trim();
     let pmNote = values.pmNote ?? '';
     if (!typedNote && remainderLink && acceptedAtSpawn != null && originalAssignedQuantity > 0) {
@@ -308,7 +311,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
             rules={[{ required: true, message: 'Nhập % hoàn thành' }]}
             extra={
               remainderLink
-                ? 'Khi Save sẽ ghi 100% cho phần đã chấp nhận trên task này.'
+                ? 'Theo SL giao ban đầu (đạt / giao) — phần còn lại đã tách sang task mới.'
                 : undefined
             }
           >

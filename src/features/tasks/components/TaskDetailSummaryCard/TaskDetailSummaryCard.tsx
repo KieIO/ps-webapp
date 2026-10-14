@@ -16,7 +16,11 @@ import {
   getTaskStartDate,
 } from '../../utils/taskDetail';
 import { inferParentTaskCodeFromSplit, isSplitChildTask } from '../../utils/creativePipeline';
-import { formatEvaluationAcceptedLabel, hasCmEvaluation } from '../../utils/evaluationRemainder';
+import {
+  formatEvaluationAcceptedLabel,
+  formatEvaluationBadgeLabel,
+  hasCmEvaluation,
+} from '../../utils/evaluationRemainder';
 import {
   formatHasRevisionChildrenLabel,
   formatRevisionLabel,
@@ -56,6 +60,7 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
     activeCount: task.activeRevisionChildCount ?? 0,
   });
   const evaluated = hasCmEvaluation(task);
+  const evaluationAcceptedLabel = formatEvaluationAcceptedLabel(task);
   const remainderId = task.evaluationRemainderTaskId;
   const remainderCode = task.evaluationRemainderTaskCode;
   const remainderQty =
@@ -73,7 +78,11 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
             {revision ? <Tag color="purple">{formatRevisionLabel(task)}</Tag> : null}
             {splitChild ? <Tag color="blue">Task nhỏ</Tag> : null}
             {evaluated ? (
-              <Tag color="green">Đã evaluate · {formatEvaluationAcceptedLabel(task)}</Tag>
+              <Tag color="green">
+                {evaluationAcceptedLabel
+                  ? `Đã evaluate · ${evaluationAcceptedLabel}`
+                  : formatEvaluationBadgeLabel(task)}
+              </Tag>
             ) : null}
             {parentHasRevisions ? (
               <Tooltip

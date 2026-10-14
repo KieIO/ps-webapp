@@ -700,9 +700,10 @@ describe('creative CH/CM pipeline', () => {
 
     const evaluated = await mockUpdateMyTaskPmEvaluation(
       source.id,
-      { completionPercent: 100, pmEvaluation: '', pmNote: '' },
+      { completionPercent: 38, pmEvaluation: '', pmNote: '' },
       'dev-creative_manager',
     );
+    expect(evaluated.completionPercent).toBe(38);
     expect(evaluated.pmNote).toBe(`CM chấp nhận 3/8 · đã tạo ${result.remainderTask.taskCode} (5)`);
   });
 

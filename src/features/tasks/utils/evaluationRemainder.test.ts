@@ -5,6 +5,7 @@ import {
   canSpawnEvaluationRemainder,
   computeAcceptedRemainderQuantity,
   formatEvaluationAcceptedLabel,
+  formatEvaluationBadgeLabel,
   hasCmEvaluation,
   nextSplitChildTaskCode,
 } from './evaluationRemainder';
@@ -69,7 +70,11 @@ describe('evaluation display helpers', () => {
     expect(formatEvaluationAcceptedLabel({ quantity: 3, originalAssignedQuantity: 15 })).toBe(
       'Đạt 3/15',
     );
-    expect(formatEvaluationAcceptedLabel({ quantity: 3 })).toBe('Đạt 3');
+    expect(formatEvaluationAcceptedLabel({ quantity: 40 })).toBeNull();
+    expect(formatEvaluationBadgeLabel({ quantity: 40 })).toBe('Đã evaluate');
+    expect(formatEvaluationBadgeLabel({ quantity: 3, originalAssignedQuantity: 15 })).toBe(
+      'Đạt 3/15',
+    );
     expect(hasCmEvaluation({ completionPercent: 100, pmEvaluation: '' })).toBe(true);
     expect(hasCmEvaluation({ completionPercent: null, pmEvaluation: 'A' })).toBe(true);
     expect(hasCmEvaluation({ completionPercent: null, pmEvaluation: '' })).toBe(false);

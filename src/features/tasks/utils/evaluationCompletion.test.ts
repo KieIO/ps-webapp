@@ -21,6 +21,11 @@ describe('computeCompletionPercentFromQuantity', () => {
     expect(computeCompletionPercentFromQuantity(1, 3)).toBe(33);
     expect(computeCompletionPercentFromQuantity(2, 3)).toBe(67);
   });
+
+  it('keeps partial acceptance vs original assigned after remainder spawn (e.g. 9/12)', () => {
+    expect(computeCompletionPercentFromQuantity(9, 12)).toBe(75);
+    expect(computeCompletionPercentFromQuantity(3, 8)).toBe(38);
+  });
 });
 
 describe('deriveCompletedQuantityFromPercent', () => {

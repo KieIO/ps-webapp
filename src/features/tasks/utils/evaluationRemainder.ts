@@ -42,18 +42,24 @@ export const hasCmEvaluation = (
   task: Pick<MyTask, 'completionPercent' | 'pmEvaluation'>,
 ): boolean => task.completionPercent != null || Boolean(task.pmEvaluation?.trim());
 
-/** e.g. `Đạt 3/15` when originalAssigned is known, else `Đạt 3`. */
+/**
+ * Partial-acceptance label after remainder spawn only (`Đạt 3/15`).
+ * Null for plain evaluate — avoids redundant `Đạt 40` next to Quantity 40.
+ */
 export const formatEvaluationAcceptedLabel = (
   task: Pick<MyTask, 'quantity' | 'originalAssignedQuantity'>,
-): string => {
-  const accepted = Math.round(task.quantity ?? 0);
+): string | null => {
   const original =
     task.originalAssignedQuantity != null ? Math.round(task.originalAssignedQuantity) : null;
-  if (original != null && original > 0) {
-    return `Đạt ${accepted}/${original}`;
-  }
-  return `Đạt ${accepted}`;
+  if (original == null || original <= 0) return null;
+  const accepted = Math.round(task.quantity ?? 0);
+  return `Đạt ${accepted}/${original}`;
 };
+
+/** List/detail badge: `Đạt x/y` after spawn, otherwise `Đã evaluate`. */
+export const formatEvaluationBadgeLabel = (
+  task: Pick<MyTask, 'quantity' | 'originalAssignedQuantity'>,
+): string => formatEvaluationAcceptedLabel(task) ?? 'Đã evaluate';
 
 /** Next `-S{n}` code under a split parent (max existing index + 1). */
 export const nextSplitChildTaskCode = (parentTaskCode: string, siblings: MyTask[]): string => {

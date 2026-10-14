@@ -250,6 +250,8 @@ test.describe('TASK-66 split evaluate remainder + confirmed SL', () => {
     expect(after.originalAssignedQuantity).toBe(8);
     expect(after.evaluationRemainderTaskId).toBeTruthy();
     expect(after.evaluationRemainderQuantity).toBe(5);
+    // 3/8 of original assigned — not 100% of shrunk qty
+    expect(after.completionPercent).toBe(38);
     expect(after.pmNote).toMatch(/CM chấp nhận 3\/8 · đã tạo .+-S\d+ \(5\)/);
   });
 
