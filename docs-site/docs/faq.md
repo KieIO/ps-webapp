@@ -55,7 +55,7 @@ Không phải mọi thứ đều giữ theo title cũ. Tùy loại dữ liệu.
 | Task và lịch sử làm việc                               | Task gắn theo người. Đổi title không làm mất hay chuyển task kỳ trước.                 |
 | KPI theo tháng (On-time, Quality, Revision, Output, …) | Tính từ task / đánh giá trong tháng đó. Đổi title sau **không** tính lại tháng đã qua. |
 
-**Ví dụ:** Tháng 9 Thi Junior, 12 task, on-time 90%, quality 4.2. Ngày 15/10 lên Senior. Mở lại tháng 9 vẫn 12 task, 90% và 4.2.
+**Ví dụ:** Nhân viên đang Junior trong tháng 9 (12 task, on-time 90%, quality 4.2), ngày 15/10 lên Senior. Mở lại tháng 9 vẫn thấy 12 task, 90% và 4.2.
 
 **Tính lại theo title hiện tại**
 
@@ -222,18 +222,18 @@ Tùy phần đó **còn mở** hay đã **Finished** và CM nhận ít hơn SL g
 ### Còn mở (chưa Finished / Cancelled)
 
 1. **Đổi Staff** trên đúng phần (cùng phần, cùng SL), hoặc
-2. **Giảm SL** người đang kẹt, **tăng SL** phần khác còn mở (tổng họ không đổi).
+2. **Giảm SL** phần của người đang kẹt, **tăng SL** các phần khác còn mở (tổng họ không đổi).
 
-**Ví dụ:** Tổng 20. A=8, B=8, C=4 → có thể A=3, B=13. Cách này **chưa** tạo người D trên phần “còn lại” tách riêng.
+**Ví dụ:** Tổng 20, chia 3 phần (8 + 8 + 4). Có thể chỉnh thành 3 + 13 + 4. Cách này chỉ san giữa **các phần / người đã có**. **Chưa** tạo thêm một phần mới cho **nhân viên mới** (người chưa nằm trong các phần hiện tại).
 
 ### Đã làm một phần, phần còn lại giao người mới
 
-Ví dụ A giao 8, cuối ngày chỉ xong 4, còn 4 cho **D**:
+Ví dụ: một phần giao SL 8 cho nhân viên đang làm. Cuối ngày chỉ xong 4. Muốn 4 còn lại giao cho **nhân viên khác** (chưa có phần trong họ task):
 
-1. A **Finished** (hoặc CM xử lý đánh giá).
+1. Nhân viên đang làm đánh dấu **Finished** (hoặc CM xử lý đánh giá).
 2. CM **Evaluate**: nhận SL đã làm (4) **&lt;** SL đã giao (8).
 3. Hệ thống tạo **task nhỏ mới** (phần còn lại, SL 4) trong cùng họ.
-4. CM giao task đó cho **D**.
+4. CM giao task mới đó cho nhân viên kia.
 
 Mỗi phần chỉ tách phần còn lại **một lần** khi Evaluate.
 
@@ -249,7 +249,7 @@ Mỗi phần chỉ tách phần còn lại **một lần** khi Evaluate.
 
 ## 9. Giảm scope người này, tăng người kia (hoặc thêm người hỗ trợ)?
 
-**Giảm A / tăng B** trên phần còn mở hoặc Confirmed: **được**, tổng khớp (cùng cách câu 6 và 8.1). Không lấy SL từ Finished / Cancelled.
+**Giảm SL phần người này, tăng phần người kia** trên phần còn mở hoặc Confirmed: **được**, tổng khớp (cùng cách câu 6 và phần “Còn mở” ở câu 8). Không lấy SL từ Finished / Cancelled.
 
 **Thêm người hỗ trợ**
 
