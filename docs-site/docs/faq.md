@@ -47,3 +47,36 @@ Số trên Settings có thể chỉnh theo công thức thực tế của hệ t
 **Tóm lại**
 
 Đổi Level xong phải chọn lại Position code / Job title cho khớp, rồi Save. Xem capacity cá nhân ở **Capacity by employee**. Xem định mức ở **Capacity formula**. Tracker chỉ phản ánh capacity team còn lại theo ngày.
+
+---
+
+## 2. Đổi chức vụ rồi, dữ liệu kỳ trước có giữ nguyên không?
+
+Sau ngày hiệu lực của chức vụ mới, **không phải mọi thứ đều “khóa” theo title cũ**. Tùy loại dữ liệu.
+
+**Giữ nguyên (không bị sửa vì đổi title)**
+
+| Loại                                                   | Giải thích ngắn                                                                                        |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Task và lịch sử làm việc                               | Task gắn theo người, không gắn theo chức vụ lúc làm. Đổi title không làm mất hay chuyển task kỳ trước. |
+| KPI theo tháng (On-time, Quality, Revision, Output, …) | Tính từ task và đánh giá trong tháng đó. Đổi title sau này **không** tính lại KPI tháng đã qua.        |
+
+**Ví dụ:** Tháng 9 Thi là Junior, xong 12 task, on-time 90%, quality 4.2. Ngày 15/10 lên Senior. Mở lại tháng 9 vẫn thấy 12 task, 90% và 4.2. Không bị tính lại theo chuẩn Senior.
+
+**Bị tính lại theo title hiện tại**
+
+| Loại                                       | Giải thích ngắn                                                                                                                                                                                      |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Capacity %, target output, ranking theo kỳ | Hệ thống **không** lưu title theo từng tháng để tính lại. Khi xem tháng cũ vẫn lấy **Capacity / ngày của title hiện tại**. Cùng khối lượng làm tháng cũ, % capacity có thể khác số lúc còn title cũ. |
+
+**Ví dụ:** Tháng 9 Thi Junior, capacity ~80%. Sau lên Senior (capacity / ngày cao hơn), mở lại tháng 9 có thể thấy ~50% dù lượng task tháng 9 không đổi.
+
+**Chức danh trên profile và màn Capacity**
+
+Luôn hiện **title hiện tại**. Hệ thống chưa lưu lịch sử title theo kỳ. Mở tháng cũ vẫn thấy title mới nếu đã đổi.
+
+**Ví dụ:** 15/10 lên Senior. Vào profile hoặc Capacity xem tháng 9 vẫn hiện Senior, không hiện Junior.
+
+**Tóm lại**
+
+Task và KPI tháng cũ giữ nguyên. Capacity %, target, ranking khi xem lại tháng cũ theo **title hiện tại**. Cột chức danh trên UI cũng luôn là title hiện tại.
