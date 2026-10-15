@@ -321,3 +321,39 @@ Tính năng này nằm ở bước **đánh giá của Creative Manager** theo s
 **Tóm lại**
 
 Chưa xong phần: đổi Staff hoặc chia lại SL giữa phần đang mở. Đã làm một phần và cần người mới cho phần còn lại: qua **Evaluate** (nhận SL thấp hơn) để hệ thống tạo task phần còn lại rồi assign.
+
+---
+
+## 9. Task giao trong nội bộ Creative: giảm scope người này, tăng người kia (hoặc thêm người hỗ trợ)?
+
+**Giảm / tăng SL giữa các phần đang mở: làm được.** Thêm người hỗ trợ tự do sau khi đã chia: chỉ một phần qua Evaluate; chưa thêm task nhỏ tùy ý.
+
+### 9.1. Giảm phần A, tăng phần B (cùng họ, giữ tổng)
+
+Điều kiện: các phần chỉnh SL còn **mở** (chưa Finished / Cancelled). Phần **Confirmed** cũng sửa được SL và Staff.
+
+1. Mở form sửa / đổi giao Creative.
+2. Giảm SL phần A, tăng SL phần B (hoặc C…).
+3. Tổng các phần phải **khớp SL tổng** (ví dụ vẫn = 20).
+4. Có thể **đổi Staff** trên phần mở, giữ nguyên SL phần đó.
+
+**Không** lấy SL từ phần đã **Finished** hoặc **Cancelled** để chuyển sang người khác bằng cách chỉnh form chia.
+
+### 9.2. Thêm người hỗ trợ
+
+| Nhu cầu                                                     | Hiện tại                                            |
+| ----------------------------------------------------------- | --------------------------------------------------- |
+| Đổi người trên phần đang có                                 | Làm được (phần mở / Confirmed)                      |
+| San SL giữa các phần đã có                                  | Làm được, tổng không đổi                            |
+| Tách phần còn lại sau khi làm dở cho người mới              | Qua CM **Evaluate** nhận SL thấp hơn (câu 8)        |
+| Thêm task nhỏ mới tùy ý sau lần chia đầu (hỗ trợ thêm, QA…) | **Chưa hỗ trợ** tạo tự do; QA cũng chưa trong scope |
+
+### 9.3. Liên hệ câu 6–8
+
+1. Sửa scope tổng quát: câu 6.
+2. Cancel rồi tạo mới giữ tổng: câu 7 (chưa đủ).
+3. Làm dở giao người mới: câu 8 (Evaluate phần còn lại).
+
+**Tóm lại**
+
+Giảm A tăng B trên phần còn mở / Confirmed: được, tổng khớp. Finished / Cancelled không lấy SL chuyển đi. Thêm người hỗ trợ ngoài các phần đã có: chủ yếu Evaluate phần còn lại; chưa thêm task nhỏ / QA tùy ý sau khi chia.
