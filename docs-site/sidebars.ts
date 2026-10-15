@@ -4,6 +4,12 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     {
       type: 'category',
+      label: 'FAQ',
+      collapsed: false,
+      items: ['faq'],
+    },
+    {
+      type: 'category',
       label: 'Task',
       collapsed: false,
       items: ['create-task-flow', 'on-time-rate', 'revision-flow', 'split-task-flow'],

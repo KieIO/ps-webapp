@@ -68,6 +68,15 @@ const config: Config = {
       style: 'dark',
       links: [
         {
+          title: 'FAQ',
+          items: [
+            {
+              label: 'FAQ',
+              to: '/faq',
+            },
+          ],
+        },
+        {
           title: 'Task',
           items: [
             {

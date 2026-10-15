@@ -38,6 +38,11 @@
       "source": "/split-task-flow",
       "destination": "/split-task",
       "permanent": true
+    },
+    {
+      "source": "/faq.md",
+      "destination": "/faq",
+      "permanent": true
     }
   ]
 }
