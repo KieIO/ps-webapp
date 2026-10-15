@@ -206,3 +206,47 @@ Câu hỏi / yêu cầu nghiệp vụ gốc nhấn mạnh: cần hỗ trợ **CH
 **Tóm lại**
 
 Decline Creative Task (nghĩa nghiệp vụ chính) = CH không nhận task từ PM → task Declined, về PM. PM quyết định bước tiếp. Từ chối CM↔Staff là luồng nội bộ Creative, khác tầng.
+
+---
+
+## 6. Task giao trong nội bộ Creative: sửa lại scope các task nhỏ được không?
+
+**Được một phần.** Sau khi CM đã **chia nhỏ**, có thể chỉnh lại phạm vi giữa các phần còn mở, trong khuôn khổ SL tổng đã khóa.
+
+### 6.1. Sửa scope (SL) các task nhỏ
+
+**Làm được**
+
+1. Mở task gốc đã chia (hoặc form **Sửa / Task nhỏ**).
+2. Phân bổ lại **số lượng** giữa các phần còn mở.
+3. Tổng SL các phần phải **khớp SL tổng** của task gốc (ví dụ tổng 20 thì các phần cộng đúng 20).
+4. Phần còn mở cũng đổi được **Staff** và **deadline**.
+
+**Không đổi được**
+
+1. **SL tổng** của task gốc sau khi đã chia (ví dụ không đổi 20 → 25 trên cùng họ task đã chia).
+2. SL của phần đã **Hoàn thành (Finished)** hoặc **Cancelled** (bị khóa).
+3. **Thêm / xóa** task nhỏ sau lần chia ban đầu (hiện chưa hỗ trợ).
+
+Phần còn **Confirmed** hoặc chưa confirm: **vẫn sửa được SL** (không khóa như Finished / Cancelled).
+
+**Ví dụ:** Gốc SL tổng = 20. Phần 1 đã Finished = 8 (khóa). Còn 12 để chia lại giữa phần 2 và 3 (8+4, 7+5, …) miễn tổng vẫn 20.
+
+### 6.2. Cần thêm người / đổi người thì sao?
+
+Mỗi task nhỏ hiện chỉ giao **một Staff**.
+
+Cách xử lý thường dùng:
+
+1. **Đổi Staff** trên phần còn mở (CM / Admin / Head / PM qua form sửa). Người On leave hiện trong danh sách nhưng **không chọn được**.
+2. Không thêm người thứ hai trên cùng một phần. Muốn hai người làm phần còn lại: để Staff hiện tại xong một phần → CM **Evaluate / nhận** phần đó → hệ thống có thể tạo phần còn lại (task sibling) → giao Staff khác; hoặc phân bổ lại SL giữa các phần **đã có**, không tạo thêm phần ngoài luồng Evaluate.
+
+### 6.3. QA trước khi trả PM?
+
+Case QA riêng **chưa nằm trong scope** sản phẩm hiện tại. Cần quy trình ngoài hệ thống hoặc chờ bổ sung sau.
+
+Chi tiết luồng chia: [Luồng chia task con](/split-task).
+
+**Tóm lại**
+
+Sửa scope task nhỏ: **có**, bằng cách phân bổ lại SL các phần còn mở cho khớp tổng đã khóa. Không đổi SL tổng, không sửa phần Finished / Cancelled, chưa thêm / xóa phần sau khi chia. Đổi người được trên phần còn mở; thêm người song song thì dùng đổi Staff hoặc tách phần còn lại qua Evaluate.
