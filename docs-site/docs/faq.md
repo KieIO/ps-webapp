@@ -175,13 +175,14 @@ Quy tắc chung sau khi chia:
 
 ## 6. Sửa lại scope các task nhỏ được không?
 
-**Được một phần:** phân bổ lại SL giữa các phần còn mở, tổng phải khớp SL gốc.
+**Được một phần:** đổi SL tổng và / hoặc phân bổ lại SL giữa các phần còn mở; tổng các phần phải khớp SL tổng.
 
 **Làm được**
 
 1. Mở task gốc đã chia (form **Sửa / Task nhỏ**).
-2. Chia lại **số lượng** các phần còn mở; tổng = SL tổng.
-3. Đổi **Staff** / **deadline** trên phần còn mở.
+2. Đổi **SL tổng** (ví dụ 20 → 25); hệ thống điều chỉnh phần còn mở cho khớp.
+3. Chia lại **số lượng** các phần còn mở; tổng = SL tổng.
+4. Đổi **Staff** / **deadline** trên phần còn mở.
 
 **Không làm được**
 
@@ -295,16 +296,15 @@ Rà từ 10 câu FAQ trên. Chỉ liệt kê **khoảng trống sản phẩm** (
 | 3   | Tạo task nhỏ **chưa gán Staff**, assign sau                                  | Mỗi phần bắt buộc chọn Staff lúc chia.                                                             | Câu 10      |
 | 4   | **Plan dở** trên SL tổng đã chốt (ví dụ giao 10/20, phần còn lại plan sau)   | Phải giao đủ phần ngay; không giữ slot “chưa plan”.                                                | Câu 10      |
 | 5   | **Cancel** một phần rồi **tạo phần mới thay thế**, vẫn giữ SL tổng           | Cancel khóa phần đó, không giải phóng SL để tạo phần thay.                                         | Câu 7       |
-| 6   | **Đổi SL tổng** của họ đã chia (ví dụ 20 → 25)                               | SL tổng khóa theo tổng phần lúc chia.                                                              | Câu 6       |
-| 7   | Lấy SL từ phần **Finished / Cancelled** chuyển sang người khác bằng form sửa | Chỉ san SL giữa phần còn mở.                                                                       | Câu 6, 8, 9 |
-| 8   | Một task nhỏ giao **nhiều Staff** cùng lúc                                   | Mỗi phần một người.                                                                                | Câu 6, 9    |
+| 6   | Lấy SL từ phần **Finished / Cancelled** chuyển sang người khác bằng form sửa | Chỉ san SL giữa phần còn mở (hoặc tăng SL tổng rồi đẩy vào phần mở).                               | Câu 6, 8, 9 |
+| 7   | Một task nhỏ giao **nhiều Staff** cùng lúc                                   | Mỗi phần một người.                                                                                | Câu 6, 9    |
 
 ### Khác (ngoài Creative split)
 
 | #   | Khoảng trống                                                                  | Ghi chú ngắn                                                     | Nguồn |
 | --- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- | ----- |
-| 9   | **Lịch sử chức danh theo kỳ** (profile / Capacity / tính Capacity % tháng cũ) | UI và Capacity % luôn theo title hiện tại; KPI tháng cũ thì giữ. | Câu 2 |
+| 8   | **Lịch sử chức danh theo kỳ** (profile / Capacity / tính Capacity % tháng cũ) | UI và Capacity % luôn theo title hiện tại; KPI tháng cũ thì giữ. | Câu 2 |
 
-**Không xếp vào debt ở đây** (đã có hoặc đúng thiết kế hiện tại): đổi Staff / chia lại SL phần còn mở; Evaluate tạo phần còn lại khi làm dở; Decline CH từ PM; nghỉ nhiều kỳ + Activate; Tracker dùng điểm task CM.
+**Không xếp vào debt ở đây** (đã có hoặc đúng thiết kế hiện tại): đổi Staff / chia lại SL phần còn mở; **đổi SL tổng** sau khi chia (trong giới hạn phần đã khóa); Evaluate tạo phần còn lại khi làm dở; Decline CH từ PM; nghỉ nhiều kỳ + Activate; Tracker dùng điểm task CM.
 
 Khi làm xong một mục, cập nhật FAQ liên quan và gạch mục tương ứng trong bảng này.
