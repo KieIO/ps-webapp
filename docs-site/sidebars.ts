@@ -4,7 +4,7 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     {
       type: 'category',
-      label: 'Hỏi đáp',
+      label: 'FAQ',
       collapsed: false,
       items: ['faq'],
     },

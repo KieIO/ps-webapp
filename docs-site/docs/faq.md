@@ -1,12 +1,12 @@
 ---
 sidebar_position: 1
-sidebar_label: FAQ / Product knowledge
+sidebar_label: FAQ
 slug: /faq
 ---
 
 # FAQ
 
-Câu hỏi thường gặp khi dùng PokeSlide. Ngắn, đủ ý, dùng được làm product knowledge.
+Câu hỏi thường gặp khi dùng PokeSlide.
 
 ---
 

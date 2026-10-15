@@ -68,10 +68,10 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Hỏi đáp',
+          title: 'FAQ',
           items: [
             {
-              label: 'FAQ / Product knowledge',
+              label: 'FAQ',
               to: '/faq',
             },
           ],
