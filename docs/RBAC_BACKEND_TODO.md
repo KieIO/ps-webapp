@@ -75,7 +75,7 @@ Matrix column order (least → most privileged): `employee`, `pm`, `creative_man
 | Key                    | Default granted roles                                      |
 | ---------------------- | ---------------------------------------------------------- |
 | `MANAGE_PROJECTS`      | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `EDIT_PROJECT`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| `EDIT_PROJECT`         | `head`, `admin`                                            |
 | `ASSIGN_TASK`          | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
 | `REVIEW_CREATIVE_TASK` | `creative_head`                                            |
 | `VIEW_ALL_TASKS`       | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |

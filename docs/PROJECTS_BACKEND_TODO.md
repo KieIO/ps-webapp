@@ -18,14 +18,14 @@ This is **not** the same as `GET /tracker` (see [TRACKER_BACKEND_TODO.md](./TRAC
 
 ## Current frontend behavior
 
-| Concern        | Temporary solution                                                                | Location                                          |
-| -------------- | --------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Data source    | In-memory mock (12 sample projects from spreadsheet reference)                    | `src/features/projects/mock/`                     |
-| Mock toggle    | `VITE_USE_PROJECTS_MOCK` (default `true` in dev)                                  | `src/config/env.ts`                               |
-| API client     | Calls real endpoints when mock is disabled                                        | `src/features/projects/api.ts`                    |
-| Validation     | Zod schemas at API boundary                                                       | `src/features/projects/schemas/project.schema.ts` |
-| UI route       | `/projects`                                                                       | `src/pages/ProjectsPage/`                         |
-| Access control | View: `MANAGE_PROJECTS` · Edit: `EDIT_PROJECT` (default: all manager-level roles) | `src/config/permissions.ts`                       |
+| Concern        | Temporary solution                                                        | Location                                          |
+| -------------- | ------------------------------------------------------------------------- | ------------------------------------------------- |
+| Data source    | In-memory mock (12 sample projects from spreadsheet reference)            | `src/features/projects/mock/`                     |
+| Mock toggle    | `VITE_USE_PROJECTS_MOCK` (default `true` in dev)                          | `src/config/env.ts`                               |
+| API client     | Calls real endpoints when mock is disabled                                | `src/features/projects/api.ts`                    |
+| Validation     | Zod schemas at API boundary                                               | `src/features/projects/schemas/project.schema.ts` |
+| UI route       | `/projects`                                                               | `src/pages/ProjectsPage/`                         |
+| Access control | View: `MANAGE_PROJECTS` · Edit: `EDIT_PROJECT` (default: `head`, `admin`) | `src/config/permissions.ts`                       |
 
 To test against a real API locally, set in `.env.local`:
 
@@ -51,7 +51,7 @@ GET    /projects/head-name-options   → department head name options for Projec
 GET    /projects/head-options        → department head code/name options (create/edit forms)
 ```
 
-Read endpoints require **`MANAGE_PROJECTS`**. Create/update require **`EDIT_PROJECT`** (manager-level roles by default). Delete is authenticated in v1 frontend (RBAC TBD).
+Read endpoints require **`MANAGE_PROJECTS`**. Create requires **`CREATE_PROJECT`**; update requires **`EDIT_PROJECT`** (default: `head`, `admin`). Delete is authenticated in v1 frontend (RBAC TBD).
 
 ---
 
@@ -217,7 +217,7 @@ Creates a new project record. Used by the **Create project** modal on `/projects
 
 Updates an existing project record. Used by the **Edit project** modal on `/projects`.
 
-**Permission:** `EDIT_PROJECT` (default: all manager-level roles).
+**Permission:** `EDIT_PROJECT` (default: `head`, `admin`).
 
 **Request body:** align with `UpdateProjectRequestSchema` in `src/features/projects/schemas/project.schema.ts`:
 

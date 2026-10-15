@@ -39,9 +39,9 @@ export const PERMISSIONS = {
     ROLES.HEAD,
     ROLES.ADMIN,
   ],
-  // Create: Department Head (+ Admin) only — PM/CM/CH may edit but not create.
+  // Create / edit project records: Department Head (+ Admin) only.
   CREATE_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
-  EDIT_PROJECT: [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
+  EDIT_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
   ARCHIVE_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
   DELETE_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
   CREATE_TASK: [ROLES.PM, ROLES.ADMIN],
