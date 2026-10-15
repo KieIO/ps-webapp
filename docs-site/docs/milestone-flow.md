@@ -48,7 +48,7 @@ Tracker hiện chấm đỏ trên thanh project
 | Xem chấm đỏ và thông tin mốc trên Tracker | Ai xem được Tracker (manager-level) |
 | Không CRUD mốc                            | PM, CM, Creative Head, Employee, …  |
 
-CRUD mốc gắn role **Head / Admin** (không phụ thuộc `EDIT_PROJECT` của PM).
+CRUD mốc gắn role **Head / Admin** (PM không được thêm/sửa/xóa mốc).
 
 ---
 

@@ -57,7 +57,7 @@ Head / Admin duyệt hoặc từ chối
 | **Home** (Head / Admin)               | Duyệt nhanh các request **Chờ duyệt**           |
 | **My Tasks** (Staff)                  | Làm task OT đã gắn; filter task OT nếu cần      |
 
-Menu Overtime hiện với ai có `REQUEST_OT` hoặc `APPROVE_OT`.
+Menu Overtime hiện với ai có quyền **xin OT** hoặc **duyệt OT**.
 
 ---
 
