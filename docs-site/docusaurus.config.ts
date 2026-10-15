@@ -102,6 +102,15 @@ const config: Config = {
             },
           ],
         },
+        {
+          title: 'Project',
+          items: [
+            {
+              label: 'Mốc giao (milestone)',
+              to: '/milestone',
+            },
+          ],
+        },
       ],
       copyright: `Copyright © ${new Date().getFullYear()} PokeSlide. Built with GoWare JSC.`,
     },

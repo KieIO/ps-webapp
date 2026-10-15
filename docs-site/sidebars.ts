@@ -20,6 +20,12 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: ['leave-flow'],
     },
+    {
+      type: 'category',
+      label: 'Project',
+      collapsed: false,
+      items: ['milestone-flow'],
+    },
   ],
 };
 

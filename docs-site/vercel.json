@@ -28,6 +28,11 @@
       "source": "/revision-flow",
       "destination": "/revision",
       "permanent": true
+    },
+    {
+      "source": "/milestone-flow",
+      "destination": "/milestone",
+      "permanent": true
     }
   ]
 }
