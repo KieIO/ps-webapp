@@ -357,3 +357,20 @@ Chưa xong phần: đổi Staff hoặc chia lại SL giữa phần đang mở. �
 **Tóm lại**
 
 Giảm A tăng B trên phần còn mở / Confirmed: được, tổng khớp. Finished / Cancelled không lấy SL chuyển đi. Thêm người hỗ trợ ngoài các phần đã có: chủ yếu Evaluate phần còn lại; chưa thêm task nhỏ / QA tùy ý sau khi chia.
+
+---
+
+## 10. Task giao trong nội bộ Creative: plan trước một phần (ví dụ 10/20), phần còn lại plan sau?
+
+**Chưa làm được.** Có thể bổ sung sau.
+
+Khi **chia nhỏ**, phải giao các phần **ngay trong lần chia**. SL tổng **khóa** theo tổng các phần đã tạo. Sau đó chỉ:
+
+1. Chia lại SL giữa các phần **đã có**
+2. Đổi người trên các phần còn mở
+
+**Không** giữ “phần chưa plan” trong cùng SL tổng đã chốt rồi bổ sung task nhỏ sau (ví dụ giao 10 trước, để 10 sau trên tổng 20).
+
+**Tóm lại**
+
+Plan dở 10/20 rồi plan tiếp phần còn lại trên cùng tổng đã chốt: **chưa hỗ trợ**. Chia lần đầu phải giao đủ các phần; sau chỉ chỉnh trong các phần đã có (hoặc Evaluate phần còn lại sau khi làm dở, xem câu 8).
