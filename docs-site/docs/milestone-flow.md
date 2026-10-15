@@ -69,7 +69,7 @@ CRUD mốc gắn role **Head / Admin** (không phụ thuộc `EDIT_PROJECT` củ
 | Tên mốc       | Có       | Ví dụ: “Batch 1”, “Giao draft” |
 | Ngày deadline | Có       | Ngày giao (calendar date)      |
 | Khối lượng    | Có       | Số > 0                         |
-| Đơn vị        | Có       | `slides` hoặc `DA`             |
+| Đơn vị        | Có       | Slides hoặc DA                 |
 | Ghi chú       | Không    | Tuỳ chọn                       |
 
 ---

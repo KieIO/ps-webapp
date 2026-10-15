@@ -61,7 +61,7 @@ Có thể tạo Revision tiếp theo nếu cần
 | Xem danh sách revision                   | Ai vào được chi tiết task (tab **Revision**)     |
 | Không tạo revision                       | Staff / Employee                                 |
 
-Quyền tạo revision gắn với quyền **đánh giá task** (`EVALUATE_TASK`).
+Quyền tạo revision gắn với quyền **đánh giá task** trên hệ thống (cùng nhóm role được đánh giá).
 
 ---
 
