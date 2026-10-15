@@ -1,5 +1,6 @@
 import { Popover } from 'antd';
 import classNames from 'classnames';
+import { useState } from 'react';
 import type { ProjectMilestone } from '@/features/projects/schemas/milestone.schema';
 import { formatMilestoneQuantity, groupMilestonesByDate } from '../../utils/milestoneMarkers';
 import { getDayIndex } from '../../utils/calendar';
@@ -27,6 +28,12 @@ export function MilestoneMarkers({
   onEditMilestone,
 }: MilestoneMarkersProps) {
   const groups = groupMilestonesByDate(milestones);
+  const [openDateKey, setOpenDateKey] = useState<string | null>(null);
+
+  const openEdit = (milestone: ProjectMilestone) => {
+    setOpenDateKey(null);
+    onEditMilestone(milestone);
+  };
 
   return (
     <>
@@ -35,7 +42,7 @@ export function MilestoneMarkers({
         if (dayIndex < 0) return null;
 
         const count = group.milestones.length;
-        const title = (
+        const content = (
           <div className={styles.milestonePopover}>
             {group.milestones.map((milestone) => (
               <div key={milestone.id} className={styles.milestonePopoverItem}>
@@ -49,7 +56,7 @@ export function MilestoneMarkers({
                     className={styles.milestonePopoverEdit}
                     onClick={(event) => {
                       event.stopPropagation();
-                      onEditMilestone(milestone);
+                      openEdit(milestone);
                     }}
                   >
                     Sửa
@@ -63,11 +70,13 @@ export function MilestoneMarkers({
         return (
           <Popover
             key={group.dateKey}
-            content={title}
+            content={content}
             trigger="hover"
             mouseEnterDelay={0.05}
             placement="top"
             destroyOnHidden
+            open={openDateKey === group.dateKey}
+            onOpenChange={(open) => setOpenDateKey(open ? group.dateKey : null)}
           >
             <button
               type="button"
@@ -86,7 +95,7 @@ export function MilestoneMarkers({
               onClick={(event) => {
                 event.stopPropagation();
                 if (canManage && group.milestones[0]) {
-                  onEditMilestone(group.milestones[0]);
+                  openEdit(group.milestones[0]);
                 }
               }}
             >
