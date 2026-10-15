@@ -279,3 +279,32 @@ Workaround gần nhất (không phải plan dở đúng nghĩa): lúc chia vẫn
 Phần còn lại **sau khi làm dở**: dùng Evaluate (câu 8), không phải chừa phần chưa giao từ đầu.
 
 **Tóm lại:** Plan dở 10/20 trên cùng tổng đã chốt: chưa làm được. Không tạo phần không có Staff. Chỉ giao tạm rồi đổi người sau, hoặc Evaluate khi làm dở.
+
+---
+
+## Technical debt (theo dõi làm sau)
+
+Rà từ 10 câu FAQ trên. Chỉ liệt kê **khoảng trống sản phẩm** (chưa làm / làm một phần), không gồm thứ đã có workaround ổn.
+
+### Task giao trong nội bộ Creative (câu 6–10)
+
+| #   | Khoảng trống                                                                 | Ghi chú ngắn                                                                                       | Nguồn       |
+| --- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------- |
+| 1   | Thêm / xóa task nhỏ **tùy ý** sau lần chia đầu                               | Hiện chỉ tách phần còn lại khi CM Evaluate nhận SL thấp hơn (câu 8). Không thêm phần hỗ trợ tự do. | Câu 6, 8, 9 |
+| 2   | Task nhỏ loại **QA** (hoặc loại hỗ trợ riêng) trong họ chia                  | Chưa có loại / luồng QA trước khi trả PM.                                                          | Câu 6, 9    |
+| 3   | Tạo task nhỏ **chưa gán Staff**, assign sau                                  | Mỗi phần bắt buộc chọn Staff lúc chia.                                                             | Câu 10      |
+| 4   | **Plan dở** trên SL tổng đã chốt (ví dụ giao 10/20, phần còn lại plan sau)   | Phải giao đủ phần ngay; không giữ slot “chưa plan”.                                                | Câu 10      |
+| 5   | **Cancel** một phần rồi **tạo phần mới thay thế**, vẫn giữ SL tổng           | Cancel khóa phần đó, không giải phóng SL để tạo phần thay.                                         | Câu 7       |
+| 6   | **Đổi SL tổng** của họ đã chia (ví dụ 20 → 25)                               | SL tổng khóa theo tổng phần lúc chia.                                                              | Câu 6       |
+| 7   | Lấy SL từ phần **Finished / Cancelled** chuyển sang người khác bằng form sửa | Chỉ san SL giữa phần còn mở.                                                                       | Câu 6, 8, 9 |
+| 8   | Một task nhỏ giao **nhiều Staff** cùng lúc                                   | Mỗi phần một người.                                                                                | Câu 6, 9    |
+
+### Khác (ngoài Creative split)
+
+| #   | Khoảng trống                                                                  | Ghi chú ngắn                                                     | Nguồn |
+| --- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- | ----- |
+| 9   | **Lịch sử chức danh theo kỳ** (profile / Capacity / tính Capacity % tháng cũ) | UI và Capacity % luôn theo title hiện tại; KPI tháng cũ thì giữ. | Câu 2 |
+
+**Không xếp vào debt ở đây** (đã có hoặc đúng thiết kế hiện tại): đổi Staff / chia lại SL phần còn mở; Evaluate tạo phần còn lại khi làm dở; Decline CH từ PM; nghỉ nhiều kỳ + Activate; Tracker dùng điểm task CM.
+
+Khi làm xong một mục, cập nhật FAQ liên quan và gạch mục tương ứng trong bảng này.
