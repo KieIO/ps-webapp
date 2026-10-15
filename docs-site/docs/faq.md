@@ -268,8 +268,14 @@ Mỗi phần chỉ tách phần còn lại **một lần** khi Evaluate.
 
 **Chưa hỗ trợ.** Có thể bổ sung sau.
 
-Khi chia nhỏ phải **giao đủ các phần ngay**. SL tổng khóa theo tổng phần đã tạo. Sau đó chỉ chia lại SL / đổi người trong phần **đã có**.
+Khi chia nhỏ phải **giao đủ các phần ngay**. Mỗi phần **bắt buộc chọn Staff** (UI: “Chọn Staff”; hệ thống không cho tạo phần trống người nhận). SL tổng khóa theo tổng phần đã tạo. Sau đó chỉ chia lại SL / đổi người trong phần **đã có**.
 
 **Không** giữ “10 chưa plan” trên tổng 20 rồi bổ sung phần sau.
 
-**Tóm lại:** Plan dở 10/20 rồi plan tiếp trên cùng tổng đã chốt: chưa làm được. Chia lần đầu phải giao đủ; phần còn lại sau khi làm dở dùng Evaluate (câu 8), không phải “chừa slot chưa plan”.
+**Workaround “tạo phần chưa assign, sau mới giao”?** **Không.** Không tạo được task nhỏ mà bỏ trống người nhận.
+
+Workaround gần nhất (không phải plan dở đúng nghĩa): lúc chia vẫn phải chọn người cho mọi phần. Có thể **giao tạm** một người (kể cả CM tự nhận), sau đó **đổi Staff** trên phần còn mở khi đã biết ai làm. Phần đó vẫn đã chiếm SL trong tổng khóa; không phải slot “chưa plan”.
+
+Phần còn lại **sau khi làm dở**: dùng Evaluate (câu 8), không phải chừa phần chưa giao từ đầu.
+
+**Tóm lại:** Plan dở 10/20 trên cùng tổng đã chốt: chưa làm được. Không tạo phần không có Staff. Chỉ giao tạm rồi đổi người sau, hoặc Evaluate khi làm dở.
