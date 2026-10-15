@@ -166,7 +166,7 @@ Sau khi CM **chia nhỏ** task Creative. Chi tiết luồng chia: [Luồng chia 
 
 Quy tắc chung sau khi chia:
 
-1. **SL tổng** khóa theo tổng các phần đã tạo (không đổi 20 → 25 trên cùng họ).
+1. **SL tổng** và tổng SL các phần phải **khớp**. Có thể **đổi SL tổng** sau khi chia (form sửa): hệ thống điều chỉnh phần còn mở; phần Finished / Cancelled giữ nguyên. Tổng mới không được nhỏ hơn tổng các phần đã khóa.
 2. Mỗi phần một **Staff**. Có thể đổi Staff / deadline / SL trên phần còn mở (**Confirmed** vẫn sửa được).
 3. Phần **Finished** hoặc **Cancelled**: SL khóa.
 4. **Không** thêm / xóa phần tùy ý sau lần chia đầu (trừ tách phần còn lại khi Evaluate, câu 8).
@@ -185,15 +185,15 @@ Quy tắc chung sau khi chia:
 
 **Không làm được**
 
-1. Đổi SL tổng của họ đã chia.
-2. Sửa SL phần Finished / Cancelled.
-3. Thêm / xóa task nhỏ tùy ý sau lần chia đầu.
+1. Sửa SL phần Finished / Cancelled.
+2. Thêm / xóa task nhỏ tùy ý sau lần chia đầu.
+3. Đổi SL tổng xuống thấp hơn tổng các phần đã khóa (Finished / Cancelled).
 
-**Ví dụ:** Tổng 20. Phần 1 Finished = 8 (khóa). Còn 12 chia lại giữa phần 2 và 3 (8+4, 7+5, …).
+**Ví dụ:** Tổng 20. Phần 1 Finished = 8 (khóa). Có thể tăng SL tổng lên 25 (phần còn mở nhận thêm). Có thể chia lại 12 còn lại giữa phần 2 và 3. Không giảm tổng xuống dưới 8 + phần mở tối thiểu.
 
 Muốn hai người cùng làm phần còn lại: đổi Staff, chia lại SL giữa phần đã có, hoặc tách phần còn lại qua Evaluate (câu 8). QA riêng **chưa trong scope**.
 
-**Tóm lại:** Sửa scope = chia lại SL phần còn mở cho khớp tổng. Không đổi tổng, không sửa Finished / Cancelled, chưa thêm / xóa phần tùy ý.
+**Tóm lại:** Sửa scope = đổi SL tổng (kèm điều chỉnh phần mở) và / hoặc chia lại SL phần còn mở cho khớp tổng. Không sửa Finished / Cancelled, chưa thêm / xóa phần tùy ý.
 
 ---
 
