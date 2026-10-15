@@ -68,10 +68,10 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'FAQ',
+          title: 'Hỏi đáp',
           items: [
             {
-              label: 'FAQ',
+              label: 'FAQ / Product knowledge',
               to: '/faq',
             },
           ],
@@ -84,34 +84,16 @@ const config: Config = {
               to: '/',
             },
             {
-              label: 'On-time rate',
-              to: '/on-time',
+              label: 'Chia task con',
+              to: '/split-task',
             },
             {
-              label: 'Luồng tạo revision',
+              label: 'Tạo revision',
               to: '/revision',
             },
             {
-              label: 'Luồng chia task con',
-              to: '/split-task',
-            },
-          ],
-        },
-        {
-          title: 'Overtime',
-          items: [
-            {
-              label: 'Luồng OT',
-              to: '/overtime',
-            },
-          ],
-        },
-        {
-          title: 'Leave',
-          items: [
-            {
-              label: 'Luồng nghỉ phép',
-              to: '/leave',
+              label: 'On-time rate',
+              to: '/on-time',
             },
           ],
         },
@@ -119,8 +101,26 @@ const config: Config = {
           title: 'Project',
           items: [
             {
-              label: 'Mốc giao (milestone)',
+              label: 'Mốc giao',
               to: '/milestone',
+            },
+          ],
+        },
+        {
+          title: 'Nghỉ phép',
+          items: [
+            {
+              label: 'Nghỉ phép',
+              to: '/leave',
+            },
+          ],
+        },
+        {
+          title: 'Overtime',
+          items: [
+            {
+              label: 'Overtime (OT)',
+              to: '/overtime',
             },
           ],
         },

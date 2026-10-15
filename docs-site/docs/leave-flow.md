@@ -1,6 +1,6 @@
 ---
 sidebar_position: 1
-sidebar_label: Luồng nghỉ phép
+sidebar_label: Nghỉ phép
 slug: /leave
 ---
 

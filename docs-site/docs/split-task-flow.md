@@ -1,6 +1,6 @@
 ---
 sidebar_position: 4
-sidebar_label: Luồng chia task con
+sidebar_label: Chia task con
 slug: /split-task
 ---
 

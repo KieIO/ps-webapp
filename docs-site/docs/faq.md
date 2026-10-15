@@ -1,6 +1,6 @@
 ---
 sidebar_position: 1
-sidebar_label: FAQ
+sidebar_label: FAQ / Product knowledge
 slug: /faq
 ---
 
@@ -164,10 +164,12 @@ PM chuyển Creative → CH nhận
 
 Sau khi CM **chia nhỏ** task Creative. Chi tiết luồng chia: [Luồng chia task con](/split-task).
 
+**Phần còn mở** = task nhỏ **chưa** Finished và **chưa** Cancelled (kể cả đã Confirmed). Chỉ các phần này còn sửa được SL / Staff / deadline.
+
 Quy tắc chung sau khi chia:
 
 1. **SL tổng** và tổng SL các phần phải **khớp**. Có thể **đổi SL tổng** sau khi chia (form sửa): hệ thống điều chỉnh phần còn mở; phần Finished / Cancelled giữ nguyên. Tổng mới không được nhỏ hơn tổng các phần đã khóa.
-2. Mỗi phần một **Staff**. Có thể đổi Staff / deadline / SL trên phần còn mở (**Confirmed** vẫn sửa được).
+2. Mỗi phần một **Staff**. Có thể đổi Staff / deadline / SL trên phần còn mở.
 3. Phần **Finished** hoặc **Cancelled**: SL khóa.
 4. **Không** thêm / xóa phần tùy ý sau lần chia đầu (trừ tách phần còn lại khi Evaluate, câu 8).
 
@@ -289,15 +291,15 @@ Rà từ 10 câu FAQ trên. Chỉ liệt kê **khoảng trống sản phẩm** (
 
 ### Task giao trong nội bộ Creative (câu 6–10)
 
-| #   | Khoảng trống                                                                 | Ghi chú ngắn                                                                                       | Nguồn       |
-| --- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------- |
-| 1   | Thêm / xóa task nhỏ **tùy ý** sau lần chia đầu                               | Hiện chỉ tách phần còn lại khi CM Evaluate nhận SL thấp hơn (câu 8). Không thêm phần hỗ trợ tự do. | Câu 6, 8, 9 |
-| 2   | Task nhỏ loại **QA** (hoặc loại hỗ trợ riêng) trong họ chia                  | Chưa có loại / luồng QA trước khi trả PM.                                                          | Câu 6, 9    |
-| 3   | Tạo task nhỏ **chưa gán Staff**, assign sau                                  | Mỗi phần bắt buộc chọn Staff lúc chia.                                                             | Câu 10      |
-| 4   | **Plan dở** trên SL tổng đã chốt (ví dụ giao 10/20, phần còn lại plan sau)   | Phải giao đủ phần ngay; không giữ slot “chưa plan”.                                                | Câu 10      |
-| 5   | **Cancel** một phần rồi **tạo phần mới thay thế**, vẫn giữ SL tổng           | Cancel khóa phần đó, không giải phóng SL để tạo phần thay.                                         | Câu 7       |
-| 6   | Lấy SL từ phần **Finished / Cancelled** chuyển sang người khác bằng form sửa | Chỉ san SL giữa phần còn mở (hoặc tăng SL tổng rồi đẩy vào phần mở).                               | Câu 6, 8, 9 |
-| 7   | Một task nhỏ giao **nhiều Staff** cùng lúc                                   | Mỗi phần một người.                                                                                | Câu 6, 9    |
+| #   | Khoảng trống                                                                 | Ghi chú ngắn                                                                                                                                                         | Nguồn       |
+| --- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| 1   | Thêm / xóa task nhỏ **tùy ý** sau lần chia đầu                               | Hiện chỉ tách phần còn lại khi CM Evaluate nhận SL thấp hơn (câu 8). Không thêm phần hỗ trợ tự do.                                                                   | Câu 6, 8, 9 |
+| 2   | Task nhỏ loại **QA** (hoặc loại hỗ trợ riêng) trong họ chia                  | Chưa có loại / luồng QA trước khi trả PM.                                                                                                                            | Câu 6, 9    |
+| 3   | Tạo task nhỏ **chưa gán Staff**, assign sau                                  | Mỗi phần bắt buộc chọn Staff lúc chia.                                                                                                                               | Câu 10      |
+| 4   | **Plan dở** trên SL tổng đã chốt (ví dụ giao 10/20, phần còn lại plan sau)   | Phải giao đủ phần ngay; không giữ slot “chưa plan”.                                                                                                                  | Câu 10      |
+| 5   | **Cancel** một phần rồi **tạo phần mới thay thế**, vẫn giữ SL tổng           | Cancel khóa phần đó, không giải phóng SL để tạo phần thay.                                                                                                           | Câu 7       |
+| 6   | Lấy SL từ phần **Finished / Cancelled** chuyển sang người khác bằng form sửa | Form sửa không bớt SL phần đã xong / đã hủy để chuyển người khác. Chỉ chỉnh được các phần **chưa** Finished / Cancelled (hoặc tăng SL tổng rồi đẩy vào các phần đó). | Câu 6, 8, 9 |
+| 7   | Một task nhỏ giao **nhiều Staff** cùng lúc                                   | Mỗi phần một người.                                                                                                                                                  | Câu 6, 9    |
 
 ### Khác (ngoài Creative split)
 
@@ -307,4 +309,4 @@ Rà từ 10 câu FAQ trên. Chỉ liệt kê **khoảng trống sản phẩm** (
 
 **Không xếp vào debt ở đây** (đã có hoặc đúng thiết kế hiện tại): đổi Staff / chia lại SL phần còn mở; **đổi SL tổng** sau khi chia (trong giới hạn phần đã khóa); Evaluate tạo phần còn lại khi làm dở; Decline CH từ PM; nghỉ nhiều kỳ + Activate; Tracker dùng điểm task CM.
 
-Khi làm xong một mục, cập nhật FAQ liên quan và gạch mục tương ứng trong bảng này.
+Khi làm xong một mục, team Dev cập nhật FAQ liên quan và gạch mục tương ứng trong bảng này.

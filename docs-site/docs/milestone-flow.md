@@ -1,6 +1,6 @@
 ---
 sidebar_position: 1
-sidebar_label: Mốc giao (milestone)
+sidebar_label: Mốc giao
 slug: /milestone
 ---
 

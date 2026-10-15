@@ -1,6 +1,6 @@
 ---
 sidebar_position: 3
-sidebar_label: Luồng tạo revision
+sidebar_label: Tạo revision
 slug: /revision
 ---
 
