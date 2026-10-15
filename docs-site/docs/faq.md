@@ -6,371 +6,270 @@ slug: /faq
 
 # FAQ
 
-Câu hỏi thường gặp khi dùng PokeSlide. Nội dung ngắn, đủ để tra cứu và dùng làm product knowledge.
+Câu hỏi thường gặp khi dùng PokeSlide. Ngắn, đủ ý, dùng được làm product knowledge.
 
 ---
 
 ## 1. Đổi Level / Position code rồi mà Job title hoặc capacity không đổi?
 
-**Triệu chứng thường gặp**
+**Triệu chứng**
 
-1. Đổi Level hoặc Position code, Save xong danh sách Users vẫn lệch: Code đã Level 4 nhưng Job title còn Level 1.
+1. Save xong Users lệch: Code đã Level 4 nhưng Job title còn Level 1.
 2. Capacity cá nhân không tăng theo title mới.
-3. Nhìn dòng **S** trên Tracker rồi kết luận sai capacity của từng người.
+3. Nhìn dòng **S** trên Tracker rồi tưởng đó là capacity từng người.
 
-**Cách làm đúng khi sửa user**
+**Cách sửa đúng**
 
 1. Mở edit user.
-2. Đổi **Level** nếu cần. Khi đổi Level, **Position code** bị reset.
-3. Chọn lại **Position code** hoặc **Job title** cho khớp Level mới (hai field này luôn đi cặp).
-4. Kiểm tra trước khi Save: Code và Title cùng một level (ví dụ PE-4 với Job title Level 4).
+2. Đổi **Level** nếu cần (khi đổi Level, **Position code** bị reset).
+3. Chọn lại **Position code** hoặc **Job title** cho khớp Level mới. Hai field này luôn đi cặp.
+4. Trước Save: Code và Title cùng một level (ví dụ PE-4 với Job title Level 4).
 5. Save.
 
-Nếu Code và Title không khớp, capacity theo title sẽ không đúng như mong đợi.
-
-**Verify sau khi Save**
+**Verify**
 
 1. **Users**: Code và Job title cùng level.
-2. **Capacity → Capacity by employee**: row user hiện đúng title / level mới.
-3. Muốn xem định mức gốc (điểm / ngày): **Settings → Capacity formula**.
-4. **Tracker**: refresh để thấy capacity team. Dòng **S** là capacity còn lại của **team theo ngày**, không phải “một người = 14 slides/ngày”. Không dùng Tracker để confirm capacity cá nhân.
+2. **Capacity → Capacity by employee**: đúng title / level mới.
+3. Định mức điểm / ngày: **Settings → Capacity formula**.
+4. **Tracker**: dòng **S** / **Còn lại** là capacity **team theo ngày**, không phải quota một người. Xem thêm câu 4.
 
-**Ví dụ định mức (tham chiếu công thức)**
+| Title | Điểm / ngày (khoảng) | Quy ra slides (điểm ÷ 45) |
+| ----- | -------------------- | ------------------------- |
+| PE-1  | ~480                 | ~10 slides                |
+| PE-4  | ~633                 | ~14 slides                |
 
-| Title | Điểm / ngày (khoảng) | Quy ra slides trên Tracker (điểm ÷ 45) |
-| ----- | -------------------- | -------------------------------------- |
-| PE-1  | ~480                 | ~10 slides                             |
-| PE-4  | ~633                 | ~14 slides                             |
+Số trên Settings có thể đổi theo công thức thực tế.
 
-Số trên Settings có thể chỉnh theo công thức thực tế của hệ thống. Bảng trên chỉ giúp hiểu quan hệ điểm và slides.
-
-**Tóm lại**
-
-Đổi Level xong phải chọn lại Position code / Job title cho khớp, rồi Save. Xem capacity cá nhân ở **Capacity by employee**. Xem định mức ở **Capacity formula**. Tracker chỉ phản ánh capacity team còn lại theo ngày.
+**Tóm lại:** Đổi Level xong phải chọn lại Code / Title cho khớp rồi Save. Capacity cá nhân xem ở Capacity by employee; Tracker chỉ phản ánh team.
 
 ---
 
 ## 2. Đổi chức vụ rồi, dữ liệu kỳ trước có giữ nguyên không?
 
-Sau ngày hiệu lực của chức vụ mới, **không phải mọi thứ đều “khóa” theo title cũ**. Tùy loại dữ liệu.
+Không phải mọi thứ đều giữ theo title cũ. Tùy loại dữ liệu.
 
-**Giữ nguyên (không bị sửa vì đổi title)**
+**Giữ nguyên**
 
-| Loại                                                   | Giải thích ngắn                                                                                        |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| Task và lịch sử làm việc                               | Task gắn theo người, không gắn theo chức vụ lúc làm. Đổi title không làm mất hay chuyển task kỳ trước. |
-| KPI theo tháng (On-time, Quality, Revision, Output, …) | Tính từ task và đánh giá trong tháng đó. Đổi title sau này **không** tính lại KPI tháng đã qua.        |
+| Loại                                                   | Giải thích                                                                             |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| Task và lịch sử làm việc                               | Task gắn theo người. Đổi title không làm mất hay chuyển task kỳ trước.                 |
+| KPI theo tháng (On-time, Quality, Revision, Output, …) | Tính từ task / đánh giá trong tháng đó. Đổi title sau **không** tính lại tháng đã qua. |
 
-**Ví dụ:** Tháng 9 Thi là Junior, xong 12 task, on-time 90%, quality 4.2. Ngày 15/10 lên Senior. Mở lại tháng 9 vẫn thấy 12 task, 90% và 4.2. Không bị tính lại theo chuẩn Senior.
+**Ví dụ:** Tháng 9 Thi Junior, 12 task, on-time 90%, quality 4.2. Ngày 15/10 lên Senior. Mở lại tháng 9 vẫn 12 task, 90% và 4.2.
 
-**Bị tính lại theo title hiện tại**
+**Tính lại theo title hiện tại**
 
-| Loại                                       | Giải thích ngắn                                                                                                                                                                                      |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Capacity %, target output, ranking theo kỳ | Hệ thống **không** lưu title theo từng tháng để tính lại. Khi xem tháng cũ vẫn lấy **Capacity / ngày của title hiện tại**. Cùng khối lượng làm tháng cũ, % capacity có thể khác số lúc còn title cũ. |
+| Loại                                       | Giải thích                                                                                                                        |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| Capacity %, target output, ranking theo kỳ | Không lưu title theo từng tháng. Xem tháng cũ vẫn lấy Capacity / ngày của **title hiện tại**, nên % có thể khác lúc còn title cũ. |
 
-**Ví dụ:** Tháng 9 Thi Junior, capacity ~80%. Sau lên Senior (capacity / ngày cao hơn), mở lại tháng 9 có thể thấy ~50% dù lượng task tháng 9 không đổi.
+**Ví dụ:** Tháng 9 capacity ~80% khi còn Junior. Sau lên Senior, mở lại tháng 9 có thể thấy ~50% dù lượng task không đổi.
 
-**Chức danh trên profile và màn Capacity**
+**Chức danh trên profile / Capacity:** luôn hiện **title hiện tại**. Chưa có lịch sử title theo kỳ.
 
-Luôn hiện **title hiện tại**. Hệ thống chưa lưu lịch sử title theo kỳ. Mở tháng cũ vẫn thấy title mới nếu đã đổi.
-
-**Ví dụ:** 15/10 lên Senior. Vào profile hoặc Capacity xem tháng 9 vẫn hiện Senior, không hiện Junior.
-
-**Tóm lại**
-
-Task và KPI tháng cũ giữ nguyên. Capacity %, target, ranking khi xem lại tháng cũ theo **title hiện tại**. Cột chức danh trên UI cũng luôn là title hiện tại.
+**Tóm lại:** Task và KPI tháng cũ giữ nguyên. Capacity %, target, ranking và cột chức danh khi xem lại theo **title hiện tại**.
 
 ---
 
 ## 3. Nghỉ phép nhiều đợt rời nhau thì làm sao?
 
-Ví dụ cần nghỉ 30/09→16/10, rồi 26/10, 20/11, rồi 10/12→20/12. **Mỗi khoảng liên tục phải Schedule leave một lần.** Không gộp các ngày rời thành một kỳ.
+Ví dụ 30/09→16/10, rồi 26/10, 20/11, rồi 10/12→20/12. **Mỗi khoảng liền phải Schedule leave một lần.** Không gộp ngày rời thành một kỳ.
 
 **Cách lên lịch**
 
-1. **Users** → chọn nhân viên **Active** → **Leave**, hoặc **User detail** → **Schedule leave**.
-2. Chọn ngày bắt đầu / kết thúc (một khoảng liền), lý do tuỳ chọn.
+1. **Users** → nhân viên **Active** → **Leave**, hoặc **User detail** → **Schedule leave**.
+2. Chọn ngày bắt đầu / kết thúc, lý do tuỳ chọn.
 3. Xem task trong kỳ → chọn người thay hoặc để trống.
-4. **Confirm leave**.
+4. **Confirm leave**. Thêm đợt khác: Schedule khoảng mới (không chồng). Wizard hiện **Already booked** và khoá ngày đã chiếm.
 
-Muốn thêm đợt khác: Schedule lại khoảng mới (không chồng ngày đã book). Wizard hiện **Already booked** và khoá ngày đã chiếm.
+**Quy tắc**
 
-**Quy tắc cần nhớ**
-
-1. Mỗi lần Confirm = **một khoảng liên tục** (từ ngày A đến ngày B).
-2. Có thể đặt **nhiều kỳ**, miễn **không chồng lịch**.
-3. Nghỉ **tương lai**: Confirm xong nhân viên **vẫn Active** đến ngày bắt đầu, rồi mới **On leave**.
-4. Kỳ **cover hôm nay**: Confirm xong → **On leave** ngay.
-5. Trong lúc **On leave**: **không** giao task mới cho người đó.
-6. Hết kỳ đúng hạn: **không** tự về Active. **Chỉ Admin** bấm **Activate employee**. Nếu không Activate, vẫn On leave (kể cả khi còn kỳ tương lai đã lên lịch).
-7. Đi làm sớm hơn ngày kết thúc đã đặt: **Cancel leave** từng kỳ (người có quyền lên lịch), về Active ngay nếu đang On leave vì kỳ đó.
-
-**Luồng ngắn**
+1. Mỗi Confirm = **một khoảng liên tục**.
+2. Nhiều kỳ được, miễn **không chồng lịch**.
+3. Nghỉ **tương lai**: vẫn **Active** đến ngày bắt đầu, rồi mới **On leave**.
+4. Kỳ **cover hôm nay**: **On leave** ngay sau Confirm.
+5. Đang **On leave**: **không** giao task mới.
+6. Hết kỳ đúng hạn: **không** tự Active. **Chỉ Admin** bấm **Activate employee**. Không Activate thì vẫn On leave (kể cả còn kỳ tương lai đã lên lịch).
+7. Đi làm sớm: **Cancel leave** từng kỳ → Active ngay nếu đang On leave vì kỳ đó.
 
 ```text
-Active
-  → Schedule leave + Confirm
-  → (tới ngày) On leave
-  → hết kỳ
-  → vẫn On leave
-  → Admin Activate
-  → Active
+Active → Schedule + Confirm → (tới ngày) On leave → hết kỳ → vẫn On leave → Admin Activate → Active
 ```
 
-Chi tiết đầy đủ: [Luồng nghỉ phép](/leave).
+Chi tiết: [Luồng nghỉ phép](/leave).
 
-**Tóm lại**
-
-Ngày nghỉ rời nhau → Schedule từng khoảng. Nhiều kỳ được, không chồng. Hết nghỉ phải Admin Activate mới về Active và nhận task lại.
+**Tóm lại:** Ngày rời nhau → Schedule từng khoảng. Hết nghỉ phải Admin Activate mới nhận task lại.
 
 ---
 
 ## 4. Dòng “Còn lại / ngày” trên Project Tracker tính thế nào?
 
-Đó là ước lượng **output còn lại của cả team theo ngày** (Slides hoặc DA), sau khi trừ workload đã giao. **Không** phải quota cá nhân của một người.
+Ước lượng **output còn lại của cả team theo ngày** (Slides hoặc DA) sau khi trừ việc đã giao. **Không** phải quota một người.
 
-**Nguồn điểm**
-
-Hệ thống lấy **điểm task CM** của mọi nhân viên đang **Active** (không On leave), theo title trong Settings.
+**Nguồn điểm** (nhân viên **Active**, không On leave):
 
 ```text
 Điểm task CM = Capacity / ngày × tỷ lệ CM / quản lý (%)
 ```
 
-1. **PM, Creative Manager:** dùng tỷ lệ theo title (ví dụ PM-5: Capacity / ngày 994, tỷ lệ 30% → điểm task CM = 298).
-2. **Staff thường:** tỷ lệ 100% → điểm task CM = Capacity / ngày.
+1. **PM, Creative Manager:** theo tỷ lệ title (ví dụ PM-5: 994 × 30% = 298).
+2. **Staff thường:** tỷ lệ 100% → điểm = Capacity / ngày.
 
-Trước đây Tracker từng lấy nhầm **Capacity / ngày** (PM-5 ra ~22 S). Hiện lấy **điểm task CM** (PM-5 ra ~6 S).
+Tracker dùng **điểm task CM**, không dùng nguyên Capacity / ngày (tránh case PM-5 hiện ~22 S thay vì ~6 S).
 
-**Cách quy ra Slides / DA mỗi ngày**
+**Mỗi ngày**
 
 1. Cộng điểm task CM của team Active trong phòng.
-2. Trừ điểm workload đã giao trong ngày đó.
-3. Quy đổi phần còn lại:
-   - Phòng **Project:** điểm còn lại ÷ **45** → số **Slides** (chuẩn Level 3).
-   - Phòng **Creative:** điểm còn lại ÷ **480** → số **DA** (chuẩn Level 2).
-4. Kết quả **làm tròn xuống** (floor).
+2. Trừ điểm việc đã giao trong ngày.
+3. Quy đổi: Project → điểm còn lại ÷ **45** = **Slides** (chuẩn Level 3); Creative → ÷ **480** = **DA** (chuẩn Level 2).
+4. **Làm tròn xuống**.
 
-**Ví dụ:** Chỉ 1 PM-5 Active, chưa có workload → 298 ÷ 45 ≈ 6.62 → Tracker hiện **6 S**.
+**Ví dụ:** 1 PM-5, chưa có việc → 298 ÷ 45 ≈ 6.62 → hiện **6 S**.
 
-Hover nhãn **Còn lại / ngày** trên Tracker để xem giả định quy đổi đang dùng.
+Hover nhãn **Còn lại / ngày** để xem giả định quy đổi. Định mức: **Settings → Capacity formula**. Cá nhân: **Capacity by employee**.
 
-Định mức Capacity / ngày và tỷ lệ CM xem tại **Settings → Capacity formula**. Capacity cá nhân xem **Capacity → Capacity by employee** (không dùng dòng S trên Tracker để confirm từng người).
-
-**Tóm lại**
-
-Còn lại / ngày = (điểm task CM của team Active − workload ngày đó), rồi ÷ 45 (Project → Slides) hoặc ÷ 480 (Creative → DA), làm tròn xuống. Là capacity **team**, không phải từng người.
+**Tóm lại:** (điểm task CM team − việc trong ngày), rồi ÷ 45 hoặc ÷ 480, làm tròn xuống. Là capacity **team**.
 
 ---
 
 ## 5. Decline Creative Task hoạt động thế nào?
 
-Đây là luồng **Creative Head từ chối task PM đã chuyển sang phòng Creative**, không phải chỉ luồng từ chối nội bộ trong Creative.
+Luồng **Creative Head từ chối task PM đã chuyển sang Creative**, khác với từ chối nội bộ trong phòng Creative.
 
-**Luồng chính (PM ↔ Creative Head)**
+**Luồng chính**
 
-1. PM tạo / chuyển task sang phòng Creative.
-2. Task vào hàng chờ Creative Head (CH).
-3. CH có thể **giao CM** hoặc **Decline** (từ chối nhận từ PM).
-4. Sau khi CH Decline: task đánh dấu Decline, **trả về phía PM**, ra khỏi board Creative của CH.
-5. PM xử lý tiếp: tạo task mới, hoặc giao lại cho phòng Project (khi cần theo dõi số lần decline), hoặc đưa lại hàng chờ CH nếu muốn gửi Creative lần nữa.
+1. PM chuyển task sang Creative.
+2. Task vào hàng chờ **Creative Head (CH)**.
+3. CH **giao CM** hoặc **Decline**.
+4. Decline → task đánh dấu Decline, **trả về PM**, ra khỏi board CH.
+5. PM tạo task mới, giao phòng Project, hoặc gửi lại CH.
 
 ```text
-PM chuyển Creative
-      │
-      ▼
-CH nhận trên Creative queue
-      │
-      ├── Giao CM → tiếp tục luồng Creative
-      │
-      └── Decline
-            │
-            ▼
-      Trả về PM (ra khỏi board CH)
-            │
-            ▼
-      PM tạo mới / giao Project / gửi lại CH
+PM chuyển Creative → CH nhận
+  ├── Giao CM → tiếp tục Creative
+  └── Decline → về PM → PM tạo mới / giao Project / gửi lại CH
 ```
-
-**Khác với từ chối nội bộ Creative**
 
 | Ai từ chối                          | Ý nghĩa                                            |
 | ----------------------------------- | -------------------------------------------------- |
-| **CH từ chối nhận từ PM**           | Từ chối ở cấp project / handoff phòng. Task về PM. |
-| **CM từ chối nhận từ CH**           | Trả lại hàng chờ CH trong phòng Creative.          |
-| **Staff từ chối sau khi được giao** | Trả về CM để giao lại / xử lý trong phòng.         |
+| **CH từ chối nhận từ PM**           | Từ chối nhận việc từ PM sang Creative. Task về PM. |
+| **CM từ chối nhận từ CH**           | Trả lại hàng chờ CH trong Creative.                |
+| **Staff từ chối sau khi được giao** | Trả về CM để giao lại trong phòng.                 |
 
-Câu hỏi / yêu cầu nghiệp vụ gốc nhấn mạnh: cần hỗ trợ **CH từ chối thẳng request của PM**. Không chỉ dừng ở decline giữa CM và Staff.
-
-**Tóm lại**
-
-Decline Creative Task (nghĩa nghiệp vụ chính) = CH không nhận task từ PM → task Declined, về PM. PM quyết định bước tiếp. Từ chối CM↔Staff là luồng nội bộ Creative, khác tầng.
+**Tóm lại:** Decline Creative Task (nghĩa chính) = CH không nhận từ PM → về PM. Từ chối CM / Staff là tầng nội bộ Creative.
 
 ---
 
-## 6. Task giao trong nội bộ Creative: sửa lại scope các task nhỏ được không?
+## Task giao trong nội bộ Creative (câu 6–10)
 
-**Được một phần.** Sau khi CM đã **chia nhỏ**, có thể chỉnh lại phạm vi giữa các phần còn mở, trong khuôn khổ SL tổng đã khóa.
+Sau khi CM **chia nhỏ** task Creative. Chi tiết luồng chia: [Luồng chia task con](/split-task).
 
-### 6.1. Sửa scope (SL) các task nhỏ
+Quy tắc chung sau khi chia:
+
+1. **SL tổng** khóa theo tổng các phần đã tạo (không đổi 20 → 25 trên cùng họ).
+2. Mỗi phần một **Staff**. Có thể đổi Staff / deadline / SL trên phần còn mở (**Confirmed** vẫn sửa được).
+3. Phần **Finished** hoặc **Cancelled**: SL khóa.
+4. **Không** thêm / xóa phần tùy ý sau lần chia đầu (trừ tách phần còn lại khi Evaluate, câu 8).
+
+---
+
+## 6. Sửa lại scope các task nhỏ được không?
+
+**Được một phần:** phân bổ lại SL giữa các phần còn mở, tổng phải khớp SL gốc.
 
 **Làm được**
 
-1. Mở task gốc đã chia (hoặc form **Sửa / Task nhỏ**).
-2. Phân bổ lại **số lượng** giữa các phần còn mở.
-3. Tổng SL các phần phải **khớp SL tổng** của task gốc (ví dụ tổng 20 thì các phần cộng đúng 20).
-4. Phần còn mở cũng đổi được **Staff** và **deadline**.
+1. Mở task gốc đã chia (form **Sửa / Task nhỏ**).
+2. Chia lại **số lượng** các phần còn mở; tổng = SL tổng.
+3. Đổi **Staff** / **deadline** trên phần còn mở.
 
-**Không đổi được**
+**Không làm được**
 
-1. **SL tổng** của task gốc sau khi đã chia (ví dụ không đổi 20 → 25 trên cùng họ task đã chia).
-2. SL của phần đã **Hoàn thành (Finished)** hoặc **Cancelled** (bị khóa).
-3. **Thêm / xóa** task nhỏ sau lần chia ban đầu (hiện chưa hỗ trợ).
+1. Đổi SL tổng của họ đã chia.
+2. Sửa SL phần Finished / Cancelled.
+3. Thêm / xóa task nhỏ tùy ý sau lần chia đầu.
 
-Phần còn **Confirmed** hoặc chưa confirm: **vẫn sửa được SL** (không khóa như Finished / Cancelled).
+**Ví dụ:** Tổng 20. Phần 1 Finished = 8 (khóa). Còn 12 chia lại giữa phần 2 và 3 (8+4, 7+5, …).
 
-**Ví dụ:** Gốc SL tổng = 20. Phần 1 đã Finished = 8 (khóa). Còn 12 để chia lại giữa phần 2 và 3 (8+4, 7+5, …) miễn tổng vẫn 20.
+Muốn hai người cùng làm phần còn lại: đổi Staff, chia lại SL giữa phần đã có, hoặc tách phần còn lại qua Evaluate (câu 8). QA riêng **chưa trong scope**.
 
-### 6.2. Cần thêm người / đổi người thì sao?
-
-Mỗi task nhỏ hiện chỉ giao **một Staff**.
-
-Cách xử lý thường dùng:
-
-1. **Đổi Staff** trên phần còn mở (CM / Admin / Head / PM qua form sửa). Người On leave hiện trong danh sách nhưng **không chọn được**.
-2. Không thêm người thứ hai trên cùng một phần. Muốn hai người làm phần còn lại: để Staff hiện tại xong một phần → CM **Evaluate / nhận** phần đó → hệ thống có thể tạo phần còn lại (task sibling) → giao Staff khác; hoặc phân bổ lại SL giữa các phần **đã có**, không tạo thêm phần ngoài luồng Evaluate.
-
-### 6.3. QA trước khi trả PM?
-
-Case QA riêng **chưa nằm trong scope** sản phẩm hiện tại. Cần quy trình ngoài hệ thống hoặc chờ bổ sung sau.
-
-Chi tiết luồng chia: [Luồng chia task con](/split-task).
-
-**Tóm lại**
-
-Sửa scope task nhỏ: **có**, bằng cách phân bổ lại SL các phần còn mở cho khớp tổng đã khóa. Không đổi SL tổng, không sửa phần Finished / Cancelled, chưa thêm / xóa phần sau khi chia. Đổi người được trên phần còn mở; thêm người song song thì dùng đổi Staff hoặc tách phần còn lại qua Evaluate.
+**Tóm lại:** Sửa scope = chia lại SL phần còn mở cho khớp tổng. Không đổi tổng, không sửa Finished / Cancelled, chưa thêm / xóa phần tùy ý.
 
 ---
 
-## 7. Task giao trong nội bộ Creative: cancel task nhỏ rồi tạo task mới (giữ số tổng) được không?
+## 7. Cancel task nhỏ rồi tạo task mới (giữ số tổng) được không?
 
-**Luồng “Cancel phần A → tạo phần mới thay thế, vẫn giữ SL tổng” chưa được hỗ trợ đủ.** Không dùng Cancel để “đổi chỗ” một phần trong cùng họ chia nhỏ.
+**Chưa hỗ trợ đủ.** Không dùng Cancel để “đổi chỗ” một phần trong cùng họ.
 
-**Cancel một task nhỏ thì sao?**
+**Cancel một phần thì sao?**
 
-1. Có thể **Cancel** từng phần trong họ đã chia.
-2. Phần Cancelled **vẫn nằm trong danh sách**, SL bị **khóa**.
-3. Chỉ **Admin** mới mở lại / đổi trạng thái phần đã Cancelled (theo quyền hệ thống).
-4. Cancel **không** tự giải phóng SL để tạo thêm task nhỏ mới trong cùng họ với tổng không đổi.
+1. Cancel từng phần được; phần đó vẫn trong list, SL **khóa**.
+2. Thường chỉ **Admin** mở lại trạng thái phần Cancelled.
+3. Cancel **không** giải phóng SL để tạo phần mới thay thế với tổng không đổi.
 
-**Khi Staff không làm tiếp được (đã nhận / Confirmed)**
+**Staff không làm tiếp (kể cả đã Confirmed):** đổi **Staff** hoặc chia lại SL phần còn mở. Không Cancel rồi tạo mới.
 
-Làm theo hướng này, **không** cần Cancel rồi tạo mới:
+**Không kỳ vọng:** Cancel “1. Slides” → tạo task mới cùng họ → giao người khác → tổng vẫn 20.
 
-1. **Đổi Staff** trên phần đó (kể cả khi đã Confirmed).
-2. Hoặc **phân bổ lại SL** giữa các phần còn mở cho khớp tổng.
-3. Cần tách một phần (ví dụ 10 slides) cho **hai người**: dùng chỉnh SL / chia phần còn lại / đổi người trên các phần đang mở (xem câu 6). Chưa hỗ trợ “thêm task nhỏ mới” sau lần chia đầu ngoài luồng Evaluate phần còn lại.
-
-**Không nên kỳ vọng**
-
-Cancel “1. Slides” → tạo task mới cùng họ → assign người khác → tổng vẫn 20. Flow này **chưa có**.
-
-**Tóm lại**
-
-Cancel task nhỏ được, nhưng phần đó khóa và không mở chỗ tạo phần thay thế giữ tổng. Muốn đổi người hoặc tách việc: **đổi Staff** và / hoặc **chia lại SL** trên phần còn mở.
+**Tóm lại:** Cancel được nhưng khóa phần đó. Muốn đổi người / tách việc → đổi Staff hoặc chia lại SL (hoặc Evaluate, câu 8).
 
 ---
 
-## 8. Task giao trong nội bộ Creative: nhân viên không làm hết, phải giao phần còn lại cho người khác?
+## 8. Nhân viên không làm hết, phải giao phần còn lại cho người khác?
 
-Tùy thời điểm: phần đó **còn đang làm** hay đã **Finished** và CM đánh giá nhận ít hơn SL giao.
+Tùy phần đó **còn mở** hay đã **Finished** và CM nhận ít hơn SL giao.
 
-### 8.1. Phần còn mở (chưa Finished / Cancelled)
+### Còn mở (chưa Finished / Cancelled)
 
-Làm được ngay, **không** cần tạo task mới:
+1. **Đổi Staff** trên đúng phần (cùng phần, cùng SL), hoặc
+2. **Giảm SL** người đang kẹt, **tăng SL** phần khác còn mở (tổng họ không đổi).
 
-1. **Đổi Staff** trên đúng phần đó (cùng phần, cùng SL).
-2. Hoặc **giảm SL** phần của người đang kẹt, **tăng SL** các phần khác còn mở, tổng họ task vẫn khớp.
+**Ví dụ:** Tổng 20. A=8, B=8, C=4 → có thể A=3, B=13. Cách này **chưa** tạo người D trên phần “còn lại” tách riêng.
 
-**Ví dụ:** Tổng 20. A = 8, B = 8, C = 4. Có thể chỉnh A còn 3, B thành 13 (cùng các phần đã có).
+### Đã làm một phần, phần còn lại giao người mới
 
-Cách này **chưa** tạo người D mới trên một phần “còn lại” tách riêng nếu chưa qua bước đánh giá bên dưới.
+Ví dụ A giao 8, cuối ngày chỉ xong 4, còn 4 cho **D**:
 
-### 8.2. Nhân viên làm được một phần, phần còn lại giao người mới (case A còn 4 / 8 → người D)
+1. A **Finished** (hoặc CM xử lý đánh giá).
+2. CM **Evaluate**: nhận SL đã làm (4) **&lt;** SL đã giao (8).
+3. Hệ thống tạo **task nhỏ mới** (phần còn lại, SL 4) trong cùng họ.
+4. CM giao task đó cho **D**.
 
-Đây là case Pokeslide hỏi: cuối ngày A chỉ xong 4, còn 4 phải giao **D**. Chỉ đổi Staff / chia lại giữa A–B–C **không đủ**.
+Mỗi phần chỉ tách phần còn lại **một lần** khi Evaluate.
 
-**Cách làm hiện tại**
+| Tình huống                         | Cách xử lý                                                      |
+| ---------------------------------- | --------------------------------------------------------------- |
+| Đổi người cả phần, chưa Finished   | Đổi Staff                                                       |
+| San SL giữa phần đã có             | Phân bổ lại SL, tổng không đổi                                  |
+| Làm dở, phần còn lại cho người mới | Finished → Evaluate nhận ít hơn → task còn lại → giao người mới |
 
-1. A đánh dấu **Finished** phần mình (hoặc CM xử lý theo quy trình đánh giá).
-2. CM **Evaluate** phần đó: nhận SL đã làm (ví dụ 4), **ít hơn** SL đã giao (8).
-3. Hệ thống tạo **task nhỏ mới** (phần còn lại, ví dụ SL 4) trong cùng họ chia nhỏ.
-4. CM giao task mới đó cho **D**.
-
-Tính năng này nằm ở bước **đánh giá của Creative Manager** theo số lượng chưa nhận hết. Mỗi phần chỉ tách remainder **một lần**.
-
-### 8.3. Phân biệt nhanh
-
-| Tình huống                          | Cách xử lý                                                                 |
-| ----------------------------------- | -------------------------------------------------------------------------- |
-| Đổi người cả phần, chưa Finished    | Đổi Staff trên phần đó                                                     |
-| Gom / san SL giữa các phần đã có    | Phân bổ lại SL, tổng không đổi                                             |
-| Làm dở, phần còn lại giao người mới | Finished → CM Evaluate nhận ít hơn SL giao → task còn lại → giao người mới |
-
-**Tóm lại**
-
-Chưa xong phần: đổi Staff hoặc chia lại SL giữa phần đang mở. Đã làm một phần và cần người mới cho phần còn lại: qua **Evaluate** (nhận SL thấp hơn) để hệ thống tạo task phần còn lại rồi assign.
+**Tóm lại:** Còn mở → đổi Staff hoặc chia lại SL. Làm dở cần người mới → Evaluate nhận SL thấp hơn để tạo task phần còn lại.
 
 ---
 
-## 9. Task giao trong nội bộ Creative: giảm scope người này, tăng người kia (hoặc thêm người hỗ trợ)?
+## 9. Giảm scope người này, tăng người kia (hoặc thêm người hỗ trợ)?
 
-**Giảm / tăng SL giữa các phần đang mở: làm được.** Thêm người hỗ trợ tự do sau khi đã chia: chỉ một phần qua Evaluate; chưa thêm task nhỏ tùy ý.
+**Giảm A / tăng B** trên phần còn mở hoặc Confirmed: **được**, tổng khớp (cùng cách câu 6 và 8.1). Không lấy SL từ Finished / Cancelled.
 
-### 9.1. Giảm phần A, tăng phần B (cùng họ, giữ tổng)
+**Thêm người hỗ trợ**
 
-Điều kiện: các phần chỉnh SL còn **mở** (chưa Finished / Cancelled). Phần **Confirmed** cũng sửa được SL và Staff.
+| Nhu cầu                                   | Hiện tại         |
+| ----------------------------------------- | ---------------- |
+| Đổi người trên phần đang có               | Được             |
+| San SL giữa phần đã có                    | Được             |
+| Tách phần còn lại sau khi làm dở          | Evaluate (câu 8) |
+| Thêm task nhỏ / QA tùy ý sau lần chia đầu | **Chưa**         |
 
-1. Mở form sửa / đổi giao Creative.
-2. Giảm SL phần A, tăng SL phần B (hoặc C…).
-3. Tổng các phần phải **khớp SL tổng** (ví dụ vẫn = 20).
-4. Có thể **đổi Staff** trên phần mở, giữ nguyên SL phần đó.
-
-**Không** lấy SL từ phần đã **Finished** hoặc **Cancelled** để chuyển sang người khác bằng cách chỉnh form chia.
-
-### 9.2. Thêm người hỗ trợ
-
-| Nhu cầu                                                     | Hiện tại                                            |
-| ----------------------------------------------------------- | --------------------------------------------------- |
-| Đổi người trên phần đang có                                 | Làm được (phần mở / Confirmed)                      |
-| San SL giữa các phần đã có                                  | Làm được, tổng không đổi                            |
-| Tách phần còn lại sau khi làm dở cho người mới              | Qua CM **Evaluate** nhận SL thấp hơn (câu 8)        |
-| Thêm task nhỏ mới tùy ý sau lần chia đầu (hỗ trợ thêm, QA…) | **Chưa hỗ trợ** tạo tự do; QA cũng chưa trong scope |
-
-### 9.3. Liên hệ câu 6–8
-
-1. Sửa scope tổng quát: câu 6.
-2. Cancel rồi tạo mới giữ tổng: câu 7 (chưa đủ).
-3. Làm dở giao người mới: câu 8 (Evaluate phần còn lại).
-
-**Tóm lại**
-
-Giảm A tăng B trên phần còn mở / Confirmed: được, tổng khớp. Finished / Cancelled không lấy SL chuyển đi. Thêm người hỗ trợ ngoài các phần đã có: chủ yếu Evaluate phần còn lại; chưa thêm task nhỏ / QA tùy ý sau khi chia.
+**Tóm lại:** San scope giữa phần mở được. Thêm người ngoài phần đã có: chủ yếu Evaluate; chưa thêm task / QA tùy ý.
 
 ---
 
-## 10. Task giao trong nội bộ Creative: plan trước một phần (ví dụ 10/20), phần còn lại plan sau?
+## 10. Plan trước một phần (ví dụ 10/20), phần còn lại plan sau?
 
-**Chưa làm được.** Có thể bổ sung sau.
+**Chưa hỗ trợ.** Có thể bổ sung sau.
 
-Khi **chia nhỏ**, phải giao các phần **ngay trong lần chia**. SL tổng **khóa** theo tổng các phần đã tạo. Sau đó chỉ:
+Khi chia nhỏ phải **giao đủ các phần ngay**. SL tổng khóa theo tổng phần đã tạo. Sau đó chỉ chia lại SL / đổi người trong phần **đã có**.
 
-1. Chia lại SL giữa các phần **đã có**
-2. Đổi người trên các phần còn mở
+**Không** giữ “10 chưa plan” trên tổng 20 rồi bổ sung phần sau.
 
-**Không** giữ “phần chưa plan” trong cùng SL tổng đã chốt rồi bổ sung task nhỏ sau (ví dụ giao 10 trước, để 10 sau trên tổng 20).
-
-**Tóm lại**
-
-Plan dở 10/20 rồi plan tiếp phần còn lại trên cùng tổng đã chốt: **chưa hỗ trợ**. Chia lần đầu phải giao đủ các phần; sau chỉ chỉnh trong các phần đã có (hoặc Evaluate phần còn lại sau khi làm dở, xem câu 8).
+**Tóm lại:** Plan dở 10/20 rồi plan tiếp trên cùng tổng đã chốt: chưa làm được. Chia lần đầu phải giao đủ; phần còn lại sau khi làm dở dùng Evaluate (câu 8), không phải “chừa slot chưa plan”.
