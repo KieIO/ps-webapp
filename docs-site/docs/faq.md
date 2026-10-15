@@ -161,3 +161,48 @@ Hover nhãn **Còn lại / ngày** trên Tracker để xem giả định quy đ�
 **Tóm lại**
 
 Còn lại / ngày = (điểm task CM của team Active − workload ngày đó), rồi ÷ 45 (Project → Slides) hoặc ÷ 480 (Creative → DA), làm tròn xuống. Là capacity **team**, không phải từng người.
+
+---
+
+## 5. Decline Creative Task hoạt động thế nào?
+
+Đây là luồng **Creative Head từ chối task PM đã chuyển sang phòng Creative**, không phải chỉ luồng từ chối nội bộ trong Creative.
+
+**Luồng chính (PM ↔ Creative Head)**
+
+1. PM tạo / chuyển task sang phòng Creative.
+2. Task vào hàng chờ Creative Head (CH).
+3. CH có thể **giao CM** hoặc **Decline** (từ chối nhận từ PM).
+4. Sau khi CH Decline: task đánh dấu Decline, **trả về phía PM**, ra khỏi board Creative của CH.
+5. PM xử lý tiếp: tạo task mới, hoặc giao lại cho phòng Project (khi cần theo dõi số lần decline), hoặc đưa lại hàng chờ CH nếu muốn gửi Creative lần nữa.
+
+```text
+PM chuyển Creative
+      │
+      ▼
+CH nhận trên Creative queue
+      │
+      ├── Giao CM → tiếp tục luồng Creative
+      │
+      └── Decline
+            │
+            ▼
+      Trả về PM (ra khỏi board CH)
+            │
+            ▼
+      PM tạo mới / giao Project / gửi lại CH
+```
+
+**Khác với từ chối nội bộ Creative**
+
+| Ai từ chối                          | Ý nghĩa                                            |
+| ----------------------------------- | -------------------------------------------------- |
+| **CH từ chối nhận từ PM**           | Từ chối ở cấp project / handoff phòng. Task về PM. |
+| **CM từ chối nhận từ CH**           | Trả lại hàng chờ CH trong phòng Creative.          |
+| **Staff từ chối sau khi được giao** | Trả về CM để giao lại / xử lý trong phòng.         |
+
+Câu hỏi / yêu cầu nghiệp vụ gốc nhấn mạnh: cần hỗ trợ **CH từ chối thẳng request của PM**. Không chỉ dừng ở decline giữa CM và Staff.
+
+**Tóm lại**
+
+Decline Creative Task (nghĩa nghiệp vụ chính) = CH không nhận task từ PM → task Declined, về PM. PM quyết định bước tiếp. Từ chối CM↔Staff là luồng nội bộ Creative, khác tầng.
