@@ -14,7 +14,7 @@ Chỉ số đo mức độ hoàn thành task **đúng hạn** trong một tháng
 
 Nói ngắn gọn: trong số các task đã **Finished** trong tháng, bao nhiêu % hoàn thành **không trễ deadline**.
 
-Task chưa xong **không** vào mẫu số. Chỉ tính task đã hoàn thành có ngày hoàn thành (`completedAt`).
+Task chưa xong **không** vào mẫu số. Chỉ tính task đã hoàn thành có **ngày hoàn thành**.
 
 ## Công thức
 
@@ -28,11 +28,11 @@ On-time rate (%) =
 
 - Không có task hoàn thành trong tháng → chưa có số liệu (UI: **“Chưa có task hoàn thành trong tháng”**).
 - **Card KPI** trên Home Head và Productivity (org/team) chỉ lấy **Project Task**.
-- **Ranking / Team comparison / alert theo người** tính on-time trên task finished của người đó **không lọc riêng Project Task** (có thể gồm non-project nếu người đó có task finished loại đó).
+- **Ranking / Team comparison / alert theo người** tính on-time trên task finished của người đó — **không** chỉ lọc Project Task (có thể gồm task loại khác nếu người đó có finished).
 
 ## Thế nào là “đúng hạn”?
 
-Hệ thống so sánh **theo ngày** (không theo giờ) với **Deadline** hiệu lực trên task (cột bảng / form tạo·sửa / Task detail — thường map sang deadline nội bộ của task):
+Hệ thống so sánh **theo ngày** (không theo giờ) với **Deadline** hiệu lực trên task (cột bảng / form tạo·sửa / Task detail):
 
 ```text
 Ngày hoàn thành  ≤  Ngày Deadline trên task
@@ -61,10 +61,10 @@ Field này **không** tham gia tính on-time rate, **không** dùng cho Auto Urg
 Staff làm task (có deadline)
       │
       ▼
-Task chuyển Finished + ghi nhận completedAt
+Task chuyển Finished + ghi nhận ngày hoàn thành
       │
       ▼
-Hệ thống bucket theo tháng (theo ngày hoàn thành)
+Hệ thống nhóm theo tháng (theo ngày hoàn thành)
       │
       ├── Không đúng hạn / không có deadline
       │         → chỉ tăng “đã hoàn thành”
@@ -83,23 +83,23 @@ Hiển thị trên Home / Productivity / Team comparison
 
 ## Các trạng thái liên quan khi lọc task
 
-| Filter trên UI           | Giá trị filter | Ý nghĩa                                                    |
-| ------------------------ | -------------- | ---------------------------------------------------------- |
-| **Đúng hạn**             | `on_time`      | Finished trong tháng và ngày hoàn thành ≤ deadline         |
-| **Không đúng hạn**       | `not_on_time`  | Finished trong tháng nhưng trễ, hoặc không có deadline     |
-| **Tất cả đã hoàn thành** | `completed`    | Finished có `completedAt` trong tháng (không xét đúng/trễ) |
+| Filter trên UI           | Ý nghĩa                                                      |
+| ------------------------ | ------------------------------------------------------------ |
+| **Đúng hạn**             | Finished trong tháng và ngày hoàn thành ≤ deadline           |
+| **Không đúng hạn**       | Finished trong tháng nhưng trễ, hoặc không có deadline       |
+| **Tất cả đã hoàn thành** | Finished có ngày hoàn thành trong tháng (không xét đúng/trễ) |
 
-Có thể lọc trên danh sách Project Tasks (`/tasks/project`) theo timeliness + tháng hoàn thành.
+Có thể lọc trên danh sách **Project Tasks** theo đúng hạn / trễ hạn + tháng hoàn thành.
 
 ## Xuất hiện ở đâu trong sản phẩm?
 
-| Màn hình                 | Ai xem                                                           | Hiển thị                                                             |
-| ------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------- |
-| **Home**                 | Head / Creative Head / Admin                                     | Card On-time rate (org, Project Task), drill-down sang task đúng hạn |
-| **Productivity**         | Head / Creative Head / Admin (org); PM / CM (team)               | Metric On-time (Project Task), chart theo tuần, cột ranking          |
-| **Team comparison**      | Role có quyền báo cáo (`EXPORT_REPORT`: PM, CM, CH, Head, Admin) | Cột On-time, radar, metric sort mặc định, insight                    |
-| **Employee performance** | Quản lý xem chi tiết NV                                          | On-time rate cá nhân + tag Đúng hạn / Trễ hạn khi có ngày hoàn thành |
-| **Project Tasks**        | Theo quyền task                                                  | Filter Đúng hạn / Không đúng hạn / Tất cả đã hoàn thành              |
+| Màn hình                 | Ai xem                                               | Hiển thị                                                             |
+| ------------------------ | ---------------------------------------------------- | -------------------------------------------------------------------- |
+| **Home**                 | Head / Creative Head / Admin                         | Card On-time rate (org, Project Task), drill-down sang task đúng hạn |
+| **Productivity**         | Head / Creative Head / Admin (org); PM / CM (team)   | Metric On-time (Project Task), chart theo tuần, cột ranking          |
+| **Team comparison**      | Role có quyền xuất báo cáo (PM, CM, CH, Head, Admin) | Cột On-time, radar, metric sort mặc định, insight                    |
+| **Employee performance** | Quản lý xem chi tiết NV                              | On-time rate cá nhân + tag Đúng hạn / Trễ hạn khi có ngày hoàn thành |
+| **Project Tasks**        | Theo quyền task                                      | Filter Đúng hạn / Không đúng hạn / Tất cả đã hoàn thành              |
 
 ## Alert & ngưỡng
 
@@ -109,14 +109,14 @@ Có thể lọc trên danh sách Project Tasks (`/tasks/project`) theo timelines
 
 ## Quan hệ với các chỉ số khác
 
-| Chỉ số                            | Quan hệ                                                            |
-| --------------------------------- | ------------------------------------------------------------------ |
-| **Task completion**               | Chỉ Finished + `completedAt` mới vào on-time                       |
-| **Deadline**                      | Field Deadline chính trên task quyết định đúng/trễ                 |
-| **Deadline Creative**             | Không dùng để tính on-time                                         |
-| **Overtime (OT)**                 | Cùng hệ thống báo cáo nhưng **không** đổi công thức on-time        |
-| **Revision / Quality / Capacity** | Metric cạnh nhau trên dashboard, tính độc lập                      |
-| **Productivity ranking**          | Có cột `onTimePercent`; Team comparison mặc định sort theo On-time |
+| Chỉ số                            | Quan hệ                                                       |
+| --------------------------------- | ------------------------------------------------------------- |
+| **Task completion**               | Chỉ task Finished có ngày hoàn thành mới vào on-time          |
+| **Deadline**                      | Field Deadline chính trên task quyết định đúng/trễ            |
+| **Deadline Creative**             | Không dùng để tính on-time                                    |
+| **Overtime (OT)**                 | Cùng hệ thống báo cáo nhưng **không** đổi công thức on-time   |
+| **Revision / Quality / Capacity** | Metric cạnh nhau trên dashboard, tính độc lập                 |
+| **Productivity ranking**          | Có cột % đúng hạn; Team comparison mặc định sort theo On-time |
 
 ## Tóm tắt nhanh
 
@@ -124,5 +124,5 @@ Có thể lọc trên danh sách Project Tasks (`/tasks/project`) theo timelines
 2. Đúng hạn = ngày hoàn thành ≤ ngày **Deadline** trên task.
 3. **Deadline Creative** không ảnh hưởng on-time.
 4. Rate = đúng hạn ÷ tổng finished × 100.
-5. Card KPI Home / Productivity dùng **Project Task**; ranking / Team comparison có thể gồm thêm non-project finished.
+5. Card KPI Home / Productivity dùng **Project Task**; ranking / Team comparison có thể gồm thêm task finished loại khác.
 6. Dưới **80%** thường được coi là cần chú ý trên alert/insight.

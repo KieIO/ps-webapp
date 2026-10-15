@@ -11,10 +11,10 @@ Hướng dẫn lên lịch nghỉ phép, bàn giao task, hủy sớm, và Activa
 ## Đọc trước 30 giây
 
 1. Trạng thái kỳ theo ngày:
-   - **Tương lai** → `scheduled`, nhân viên **giữ Active** đến ngày bắt đầu
-   - **Đang trong kỳ** → `active`, nhân viên **On leave**
-   - **Đã hết** → `ended`, ghi lịch sử, **giữ Active** (nếu trước đó chưa On leave)
-2. Có thể đặt **nhiều kỳ không chồng lịch**; mỗi Confirm = một khoảng, bàn giao task riêng.
+   - **Tương lai** → kỳ **đã lên lịch**, nhân viên **vẫn Active** đến ngày bắt đầu
+   - **Đang trong kỳ** → kỳ **đang diễn ra**, nhân viên **On leave**
+   - **Đã hết** → kỳ **đã kết thúc**, ghi lịch sử, nhân viên **vẫn Active** (nếu trước đó chưa On leave)
+2. Có thể đặt **nhiều kỳ không chồng lịch**; mỗi lần Confirm = một khoảng, bàn giao task riêng.
 3. **Không** giao task mới cho người đang On leave / ngày thuộc kỳ đã đặt.
 
 Đưa về **Active** bằng một trong hai cách:
@@ -26,7 +26,7 @@ Hướng dẫn lên lịch nghỉ phép, bàn giao task, hủy sớm, và Activa
 
 :::tip[Hay nhầm nhất]
 
-Hết mỗi đợt nghỉ **không** tự Active. Banner / section **Cần Activate** nhắc Admin. Phải bấm **Activate**; nếu không vẫn On leave (kể cả khi còn đợt `scheduled` sau).
+Hết mỗi đợt nghỉ **không** tự Active. Banner / mục **Cần Activate** nhắc Admin. Phải bấm **Activate**; nếu không vẫn On leave (kể cả khi còn đợt nghỉ tương lai đã lên lịch).
 
 :::
 
@@ -38,14 +38,14 @@ Hết mỗi đợt nghỉ **không** tự Active. Banner / section **Cần Activ
 
 Mỗi người chỉ **một kỳ đang mở**. Confirm xong → **On leave ngay** (kể cả nghỉ tương lai). Hủy / bàn giao gắn theo người. Wizard **không** hiện kỳ đã đặt.
 
-### Sau (multi leave + UX)
+### Sau (nhiều kỳ + UX)
 
 - Nhiều kỳ không chồng; mỗi Confirm một khoảng.
-- Kỳ có `scheduled` / `active` / `ended` / `cancelled`.
-- On leave **đúng ngày** (chỉ khi hôm nay trong kỳ `active`).
-- Cancel / reassign **theo từng kỳ**.
-- Hết mỗi kỳ → chờ Admin Activate; kỳ `scheduled` sau vẫn giữ.
-- Banner / section **Cần Activate**.
+- Mỗi kỳ có trạng thái: **Đã lên lịch** / **Đang diễn ra** / **Đã kết thúc** / **Đã hủy**.
+- On leave **đúng ngày** (chỉ khi hôm nay nằm trong kỳ đang diễn ra).
+- Hủy / bàn giao lại **theo từng kỳ**.
+- Hết mỗi kỳ → chờ Admin Activate; kỳ tương lai đã lên lịch vẫn giữ.
+- Banner / mục **Cần Activate**.
 - Wizard: **Already booked**, khoá ngày đã chiếm, báo lỗi nếu chồng lịch.
 
 **Tóm lại:** trước là một kỳ và On leave ngay; sau là nhiều kỳ theo lịch thật, quản lý từng kỳ, Activate có nhắc, wizard thấy ngày đã book.
@@ -66,15 +66,15 @@ Xem task trong kỳ → chọn người thay (hoặc để trống)
       ▼
 Confirm leave (một khoảng / lần)
       │
-      ├── Tương lai: scheduled, giữ Active
-      ├── Cover hôm nay: active, On leave
-      ├── Đã hết: ended, giữ Active
+      ├── Tương lai: đã lên lịch, giữ Active
+      ├── Cover hôm nay: đang diễn ra, On leave
+      ├── Đã hết: đã kết thúc, giữ Active
       └── Task: bàn giao theo lựa chọn
       │
       ▼
-(Có thể Schedule thêm kỳ khác nếu không chồng ngày)
+(Có thể lên lịch thêm kỳ khác nếu không chồng ngày)
       │
-      ├── Hủy từng kỳ → cancel theo leaveId
+      ├── Hủy từng kỳ
       │
       └── Hết hạn đúng lịch
                 │
@@ -83,7 +83,7 @@ Confirm leave (một khoảng / lần)
                 │
                 ▼
           Admin Activate → Active
-          (đợt scheduled sau vẫn giữ, tới ngày tự On leave)
+          (đợt đã lên lịch sau vẫn giữ, tới ngày tự On leave)
 ```
 
 ---
@@ -120,12 +120,12 @@ Hai lớp trạng thái, đừng nhầm.
 
 ### Kỳ nghỉ
 
-| Trạng thái    | Ý nghĩa                                                            |
-| ------------- | ------------------------------------------------------------------ |
-| **Scheduled** | Đã đặt, chưa tới ngày bắt đầu; nhân viên vẫn Active                |
-| **Active**    | Kỳ đang cover hôm nay                                              |
-| **Cancelled** | Đã hủy kỳ đó                                                       |
-| **Ended**     | Đã qua ngày kết thúc; nếu trước đó On leave thì chờ Admin Activate |
+| Trạng thái trên UI | Ý nghĩa                                                            |
+| ------------------ | ------------------------------------------------------------------ |
+| **Scheduled**      | Đã đặt, chưa tới ngày bắt đầu; nhân viên vẫn Active                |
+| **Active**         | Kỳ đang cover hôm nay                                              |
+| **Cancelled**      | Đã hủy kỳ đó                                                       |
+| **Ended**          | Đã qua ngày kết thúc; nếu trước đó On leave thì chờ Admin Activate |
 
 ---
 
@@ -149,7 +149,7 @@ Về Active: **Cancel** (còn trong kỳ) hoặc **Activate** (Admin, sau hết 
 
 - Ngày bắt đầu / kết thúc, lý do (tuỳ chọn)
 - Nhân viên **Active** hoặc **On leave** (không Inactive / Invited)
-- Không chồng kỳ `scheduled` / `active` khác
+- Không chồng kỳ **đã lên lịch** hoặc **đang diễn ra** khác
 - Mỗi Confirm = **một khoảng**; muốn nhiều đợt thì Schedule thêm
 - Wizard hiện **Already booked** và khoá ngày đã chiếm
 
@@ -164,9 +164,9 @@ Liệt kê task của người nghỉ có ngày trong kỳ, confirmation còn **
 
 Tóm tắt nhân viên, khoảng ngày, lý do, số task đã chọn người thay.
 
-- Tương lai → `scheduled`, giữ **Active**
-- Cover hôm nay → `active`, **On leave**
-- Cả kỳ đã qua → `ended`, giữ **Active**
+- Tương lai → kỳ **đã lên lịch**, giữ **Active**
+- Cover hôm nay → kỳ **đang diễn ra**, **On leave**
+- Cả kỳ đã qua → kỳ **đã kết thúc**, giữ **Active**
 - Task trong khoảng được bàn giao theo bước 2
 
 ---
@@ -176,7 +176,7 @@ Tóm tắt nhân viên, khoảng ngày, lý do, số task đã chọn người t
 | Việc thử                   | Hệ thống                                         |
 | -------------------------- | ------------------------------------------------ |
 | Giao / đổi staff trên task | **Không** chọn được người On leave               |
-| Capacity / Create task     | Hiện đang nghỉ; không assign                     |
+| Capacity / Create task     | Hiện đang nghỉ; không giao được                  |
 | Project Tracker            | Tên theo ngày trong kỳ leave; không gồm Inactive |
 | Đổi Status tay             | **Không** thoát On leave bằng cách này           |
 
@@ -211,7 +211,7 @@ Kết thúc đúng hạn → nhân viên **không** tự Active.
 2. Nhân viên **vẫn On leave**
 3. Admin **Activate** (banner trên Dashboard / Users / Tracker, hoặc nút trên User detail)
 
-Sau Activate: **Active**, nhận task trở lại. Kỳ `scheduled` sau vẫn giữ; tới ngày sẽ On leave lại.
+Sau Activate: **Active**, nhận task trở lại. Kỳ nghỉ tương lai đã lên lịch vẫn giữ; tới ngày sẽ On leave lại.
 
 :::warning[Chỉ Admin được Activate]
 
@@ -227,14 +227,14 @@ PM / Creative Manager / Creative Head **không** Activate sau hết nghỉ. Họ
 
 ### Smoke (làm trước)
 
-| #   | Case              | Cách làm                              | Kỳ vọng                                                         |
-| --- | ----------------- | ------------------------------------- | --------------------------------------------------------------- |
-| 1   | Nghỉ tương lai    | Schedule **sau hôm nay**, Confirm     | **Scheduled**, vẫn **Active**                                   |
-| 2   | Thêm kỳ 2         | Schedule khoảng sau kỳ 1, không chồng | 2 dòng trên profile; wizard **Already booked**, ngày kỳ 1 khoá  |
-| 3   | Chồng lịch        | Chọn ngày đã book                     | Disabled / lỗi overlap, không Confirm                           |
-| 4   | Cover hôm nay     | Khoảng có hôm nay                     | Kỳ **Active**, **On leave**, không giao task mới                |
-| 5   | Hủy theo kỳ       | 2 kỳ → Cancel 1                       | Chỉ kỳ đó Cancelled; task không tự hoàn                         |
-| 6   | Hết kỳ + Activate | On leave, kỳ đã hết → Admin Activate  | Banner / section nhắc; sau Activate → Active; Scheduled sau giữ |
+| #   | Case              | Cách làm                              | Kỳ vọng                                                        |
+| --- | ----------------- | ------------------------------------- | -------------------------------------------------------------- |
+| 1   | Nghỉ tương lai    | Schedule **sau hôm nay**, Confirm     | **Scheduled**, vẫn **Active**                                  |
+| 2   | Thêm kỳ 2         | Schedule khoảng sau kỳ 1, không chồng | 2 dòng trên profile; wizard **Already booked**, ngày kỳ 1 khoá |
+| 3   | Chồng lịch        | Chọn ngày đã book                     | Disabled / lỗi overlap, không Confirm                          |
+| 4   | Cover hôm nay     | Khoảng có hôm nay                     | Kỳ **Active**, **On leave**, không giao task mới               |
+| 5   | Hủy theo kỳ       | 2 kỳ → Cancel 1                       | Chỉ kỳ đó Cancelled; task không tự hoàn                        |
+| 6   | Hết kỳ + Activate | On leave, kỳ đã hết → Admin Activate  | Banner / mục nhắc; sau Activate → Active; kỳ Scheduled sau giữ |
 
 ### Thêm nếu còn thời gian
 
