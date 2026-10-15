@@ -25,18 +25,20 @@ Head / Admin duyệt hoặc từ chối
             │
             ▼
       Gắn project task vào request OT
+      (chọn sẵn hoặc tạo task mới rồi gắn)
             │
             ▼
       Staff làm task OT
             │
             ▼
       Staff đánh dấu Finished
-      (nhập giờ thực tế + ghi chú)
+      (giờ thực tế + ghi chú — bắt buộc)
             │
             ▼
       Head / Admin review kết quả
             │
             ├── Từ chối kết quả → quay lại Đang làm
+            │   (xóa giờ thực tế, task về Chưa cập nhật)
             │
             └── Duyệt kết quả → Hoàn thành
                   │
@@ -46,35 +48,54 @@ Head / Admin duyệt hoặc từ chối
 
 ---
 
-## 2. Ai làm gì?
+## 2. Vào đâu?
 
-| Việc                                  | Ai làm được                                      |
-| ------------------------------------- | ------------------------------------------------ |
-| Tạo / sửa request (khi còn Chờ duyệt) | PM, Creative Manager, Creative Head, Head, Admin |
-| Duyệt / từ chối request               | Head, Admin                                      |
-| Gắn task OT sau khi duyệt             | Người có quyền xin OT                            |
-| Làm task OT và nhập giờ thực tế       | Staff được chỉ định                              |
-| Review kết quả OT                     | Head, Admin                                      |
-| Xem danh sách OT và Dashboard         | Ai có quyền xin OT hoặc duyệt OT                 |
+| Chỗ                                   | Làm được gì                                     |
+| ------------------------------------- | ----------------------------------------------- |
+| Menu **Overtime**                     | Danh sách request, tạo/sửa, gắn task, Dashboard |
+| **Chi tiết dự án** → section Overtime | Xem OT của project; tạo OT sẵn chọn project đó  |
+| **Home** (Head / Admin)               | Duyệt nhanh các request **Chờ duyệt**           |
+| **My Tasks** (Staff)                  | Làm task OT đã gắn; filter task OT nếu cần      |
 
-Creative Head có thể xin OT nhưng **không** duyệt request hay review kết quả.
+Menu Overtime hiện với ai có `REQUEST_OT` hoặc `APPROVE_OT`.
 
 ---
 
-## 3. Các trạng thái
+## 3. Ai làm gì?
 
-| Trạng thái UI  | Khi nào                                                  |
-| -------------- | -------------------------------------------------------- |
-| **Chờ duyệt**  | Vừa tạo request, chờ Head/Admin                          |
-| **Từ chối**    | Head/Admin từ chối request                               |
-| **Đã duyệt**   | Head/Admin đã duyệt, chưa gắn task hoặc chưa bắt đầu làm |
-| **Đang làm**   | Đã gắn task, Staff đang thực hiện                        |
-| **Chờ review** | Staff đã Finished task OT và nhập giờ thực tế            |
-| **Hoàn thành** | Head/Admin đã duyệt kết quả                              |
+| Việc                                | Ai làm được                                      |
+| ----------------------------------- | ------------------------------------------------ |
+| Tạo request                         | PM, Creative Manager, Creative Head, Head, Admin |
+| Sửa request (chỉ khi **Chờ duyệt**) | Người có quyền xin OT                            |
+| Duyệt / từ chối request             | Head, Admin                                      |
+| Gắn task OT sau khi duyệt           | Người có quyền xin OT                            |
+| Làm task OT và nộp giờ thực tế      | Staff (Employee) được chỉ định                   |
+| Review kết quả OT                   | Head, Admin                                      |
+| Đổi ngưỡng cảnh báo OT (Settings)   | Head, Creative Head, Admin                       |
+| Xem danh sách OT và Dashboard       | Ai có quyền xin OT hoặc duyệt OT                 |
+
+Creative Head có thể xin OT và chỉnh ngưỡng cảnh báo, nhưng **không** duyệt request hay review kết quả.
+
+**Người OT** luôn là **Staff (Employee) đang Active** — không chọn PM / Head / CH làm người OT.
 
 ---
 
-## 4. Chi tiết từng bước
+## 4. Các trạng thái
+
+| Trạng thái UI  | Khi nào                                       |
+| -------------- | --------------------------------------------- |
+| **Chờ duyệt**  | Vừa tạo request, chờ Head/Admin               |
+| **Từ chối**    | Head/Admin từ chối request                    |
+| **Đã duyệt**   | Head/Admin đã duyệt, chưa gắn task            |
+| **Đang làm**   | Đã gắn task, Staff đang thực hiện             |
+| **Chờ review** | Staff đã Finished task OT và nhập giờ thực tế |
+| **Hoàn thành** | Head/Admin đã duyệt kết quả                   |
+
+Chỉ sửa request khi còn **Chờ duyệt**. Đã duyệt / từ chối thì không sửa được.
+
+---
+
+## 5. Chi tiết từng bước
 
 ### Bước 1: Tạo OT request
 
@@ -82,17 +103,20 @@ Creative Head có thể xin OT nhưng **không** duyệt request hay review kế
 
 **Cần nhập:**
 
-- Dự án
-- Người OT (Staff)
+- Dự án (không phải project đã archive)
+- Người OT (Staff Active)
 - Ngày OT
-- Khung giờ bắt đầu và kết thúc (hệ thống tính giờ ước tính từ khung giờ này)
-- Nhóm lý do (chọn ít nhất một)
+- Khung giờ bắt đầu và kết thúc (hệ thống tự tính **giờ ước tính**; tối đa 24h và không vượt khung giờ)
+- Nhóm lý do (chọn ít nhất một): Late Feedbacks, Urgent, Scope of Works, Internal / Cross-department Delay, Technical Issue, Holidays, Others
 - Mô tả lý do chi tiết
+
+**Lưu ý thời gian:** nếu chọn **hôm nay**, không chọn khung giờ đã qua.
 
 **Sau khi gửi:**
 
 - Trạng thái: **Chờ duyệt**
 - Head và Admin nhận thông báo
+- Có thể sửa request khi còn Chờ duyệt
 
 Lúc này **chưa** chọn task. Task gắn sau khi được duyệt.
 
@@ -116,8 +140,15 @@ Lúc này **chưa** chọn task. Task gắn sau khi được duyệt.
 
 **Làm gì:**
 
-- Chọn một project task có sẵn để gắn vào request, hoặc tạo task mới rồi gắn
+- Chọn một **project task** cùng dự án để gắn, hoặc **Tạo task mới** rồi gắn
 - Staff và khung giờ OT đã có từ bước tạo request
+
+**Task được gắn phải:**
+
+- Là project task của đúng dự án OT
+- Chưa Finished / Cancelled
+- Chưa gắn OT request khác
+- Chưa giao cho Staff khác (nếu chưa có người nhận, hệ thống gán Staff OT khi gắn)
 
 **Sau khi gắn:**
 
@@ -130,22 +161,22 @@ Lúc này **chưa** chọn task. Task gắn sau khi được duyệt.
 
 **Làm gì:**
 
-- Nhận thông báo và mở task OT
+- Nhận thông báo và mở task OT (My Tasks / link từ chi tiết OT)
 - Làm việc trong khung giờ đã xin
 - Khi xong, cập nhật trạng thái task thành **Finished**
-- Nhập **giờ OT thực tế** (bắt buộc)
-- Có thể thêm ghi chú
+- Nhập **giờ OT thực tế** (> 0) — **bắt buộc**
+- Nhập **ghi chú** — **bắt buộc** với task OT
 
 **Sau khi Finished:**
 
 - Request chuyển **Chờ review**
-- Người xin OT và Head nhận thông báo
+- Người xin OT và Head/Admin nhận thông báo
 
 Không có form báo cáo OT riêng. Finish task kèm giờ thực tế chính là bước báo cáo.
 
 ### Bước 5: Head / Admin review kết quả
 
-**Ai:** chỉ Head hoặc Admin (không phải PM/CM)
+**Ai:** chỉ Head hoặc Admin (không phải PM/CM/CH)
 
 **Nếu duyệt kết quả:**
 
@@ -154,13 +185,14 @@ Không có form báo cáo OT riêng. Finish task kèm giờ thực tế chính l
 
 **Nếu từ chối kết quả:**
 
-- Có thể kèm ghi chú
+- **Phải** nhập ghi chú / lý do
 - Request quay lại **Đang làm**
-- Giờ thực tế đã nhập bị xóa để Staff cập nhật lại
+- Giờ thực tế và ghi chú staff trên OT bị xóa
+- Task OT về **Chưa cập nhật** để Staff làm và nộp lại
 
 ---
 
-## 5. Dashboard và xuất dữ liệu
+## 6. Dashboard và xuất dữ liệu
 
 Vào **Overtime** trong menu. Có tab danh sách request và tab Dashboard.
 
@@ -169,13 +201,15 @@ Vào **Overtime** trong menu. Có tab danh sách request và tab Dashboard.
 - Tổng giờ ước tính và giờ thực tế theo tháng đang chọn
 - Theo từng người
 - Theo từng dự án
+- Xu hướng theo tuần trong tháng
 - Cảnh báo khi OT vượt ngưỡng tuần
 
 ### Cảnh báo ngưỡng
 
-- Mặc định khoảng **20 giờ ước tính / tuần** (có thể đổi trong Settings)
+- Mặc định **20 giờ ước tính / tuần** (đổi trong **Settings → Overtime alerts**)
 - Chỉ để nhắc, **không chặn** tạo hay duyệt OT
-- Tính trên giờ ước tính của các request đang được đếm trên dashboard
+- Chỉ tính request **Đã duyệt / Đang làm / Chờ review / Hoàn thành** (không tính Chờ duyệt và Từ chối)
+- Gom theo nhân sự và tuần (Thứ 2 → Chủ nhật)
 
 ### Xuất dữ liệu
 
@@ -186,10 +220,10 @@ Hiện **không** có báo cáo quý riêng hay báo cáo “tỷ lệ duyệt s
 
 ---
 
-## 6. Tóm tắt nhanh
+## 7. Tóm tắt nhanh
 
-1. Xin OT: chọn sẵn Staff, ngày, khung giờ, lý do.
+1. Xin OT: chọn Staff, ngày, khung giờ, lý do (chưa gắn task).
 2. Head/Admin duyệt hoặc từ chối request.
-3. Sau duyệt: gắn project task → Staff làm → Finished kèm giờ thực tế.
-4. Head/Admin review kết quả lần cuối.
+3. Sau duyệt: gắn project task (có sẵn hoặc tạo mới) → Staff làm → Finished kèm giờ thực tế + ghi chú.
+4. Head/Admin review kết quả lần cuối (từ chối thì Staff nộp lại).
 5. Dashboard theo dõi giờ ước tính, giờ thực tế và cảnh báo vượt ngưỡng.
