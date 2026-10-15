@@ -6,7 +6,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Task',
       collapsed: false,
-      items: ['create-task-flow', 'on-time-rate', 'revision-flow'],
+      items: ['create-task-flow', 'on-time-rate', 'revision-flow', 'split-task-flow'],
     },
     {
       type: 'category',

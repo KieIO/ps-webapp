@@ -209,6 +209,8 @@ PM → Creative Head (bổ sung brief + Level) → giao CM → CM giao Staff →
 - **Giao nguyên** cho một Staff, hoặc **chia nhỏ** thành nhiều task con (mỗi phần có brief riêng)
 - **Không** phân loại lại Level (chỉ Admin / CH được đổi Level, và trước khi Staff confirm)
 
+Chi tiết điều kiện, mã `…-S1`, đánh giá và rule: xem [Luồng chia task con](/split-task).
+
 ### PM / Admin trên Creative queue
 
 PM và Admin cũng vào được **Creative queue**, có thể **theo dõi và xử lý assign** như CH/CM (không chỉ xem).

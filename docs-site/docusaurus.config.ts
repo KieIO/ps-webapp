@@ -82,6 +82,10 @@ const config: Config = {
               label: 'Luồng tạo revision',
               to: '/revision',
             },
+            {
+              label: 'Luồng chia task con',
+              to: '/split-task',
+            },
           ],
         },
         {

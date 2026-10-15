@@ -33,6 +33,11 @@
       "source": "/milestone-flow",
       "destination": "/milestone",
       "permanent": true
+    },
+    {
+      "source": "/split-task-flow",
+      "destination": "/split-task",
+      "permanent": true
     }
   ]
 }
