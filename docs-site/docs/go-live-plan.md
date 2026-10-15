@@ -12,20 +12,20 @@ Phạm vi đóng gói đưa lên production theo hai phase. Phase 1 ưu tiên v�
 
 ## I. Go-live Phase 1 (đóng gói trước)
 
-| #   | Hạng mục                            |
-| --- | ----------------------------------- |
-| 1   | Tracker dự án                       |
-| 2   | Quản lý Projects                    |
-| 3   | Quản lý Task                        |
-| 4   | Quản lý Users                       |
-| 5   | Quản lý OT                          |
-| 6   | Cấu hình chức vụ (title management) |
-| 7   | Quản lý phòng ban                   |
-| 8   | Quản lý khách hàng                  |
-| 9   | Quản lý công thức capacity          |
-| 10  | Quản lý điểm của task               |
+| #   | Hạng mục                            | Chức năng liên quan                                                                                                                                           |
+| --- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Tracker dự án                       | Timeline projects; **Còn lại / ngày**; workload ngày (slides, DA); milestones / deadline; Sale, PM, CM; tổng slides; On leave                                 |
+| 2   | Quản lý Projects                    | Tạo project; assign PM; archive; set urgency; Head đánh giá chất lượng project của PM                                                                         |
+| 3   | Quản lý Task                        | PM tạo / assign (Project hoặc Creative); CH nhận / từ chối / giao CM; CM giao Staff (nguyên hoặc chia nhỏ); đánh giá (PM, CH, CM); chỉnh thông tin sau assign |
+| 4   | Quản lý Users                       | Tạo user; assign vị trí (Level, Position code, Job title); trạng thái Active / On leave / Inactive / Invited                                                  |
+| 5   | Quản lý OT                          | Xin OT; duyệt / từ chối; gắn task; Staff làm + nhập giờ; review kết quả; theo dõi giờ ước tính / thực tế                                                      |
+| 6   | Cấu hình chức vụ (title management) | CRUD title / Position code; gắn Level và định mức capacity; đồng bộ khi gán user                                                                              |
+| 7   | Quản lý phòng ban                   | CRUD phòng ban; gắn user; phạm vi quản lý theo phòng                                                                                                          |
+| 8   | Quản lý khách hàng                  | CRUD client; gắn project; ghi chú / knowledge client                                                                                                          |
+| 9   | Quản lý công thức capacity          | Capacity / ngày; tỷ lệ CM / quản lý; điểm task CM; quy đổi slides / DA trên Tracker                                                                           |
+| 10  | Quản lý điểm của task               | Cấu hình điểm / loại điểm task; phục vụ workload / capacity / đánh giá                                                                                        |
 
-Kèm theo: **thông báo / UI nhận việc** xuyên suốt các module trên (chi tiết ngay sau mục Users).
+Kèm theo: **thông báo / UI nhận việc** xuyên suốt các module trên (nhận task / project, confirm / từ chối, Creative queue, Finished / đánh giá, OT, leave). Chi tiết ngay sau mục Users.
 
 ---
 
