@@ -80,3 +80,46 @@ Luôn hiện **title hiện tại**. Hệ thống chưa lưu lịch sử title t
 **Tóm lại**
 
 Task và KPI tháng cũ giữ nguyên. Capacity %, target, ranking khi xem lại tháng cũ theo **title hiện tại**. Cột chức danh trên UI cũng luôn là title hiện tại.
+
+---
+
+## 3. Nghỉ phép nhiều đợt rời nhau thì làm sao?
+
+Ví dụ cần nghỉ 30/09→16/10, rồi 26/10, 20/11, rồi 10/12→20/12. **Mỗi khoảng liên tục phải Schedule leave một lần.** Không gộp các ngày rời thành một kỳ.
+
+**Cách lên lịch**
+
+1. **Users** → chọn nhân viên **Active** → **Leave**, hoặc **User detail** → **Schedule leave**.
+2. Chọn ngày bắt đầu / kết thúc (một khoảng liền), lý do tuỳ chọn.
+3. Xem task trong kỳ → chọn người thay hoặc để trống.
+4. **Confirm leave**.
+
+Muốn thêm đợt khác: Schedule lại khoảng mới (không chồng ngày đã book). Wizard hiện **Already booked** và khoá ngày đã chiếm.
+
+**Quy tắc cần nhớ**
+
+1. Mỗi lần Confirm = **một khoảng liên tục** (từ ngày A đến ngày B).
+2. Có thể đặt **nhiều kỳ**, miễn **không chồng lịch**.
+3. Nghỉ **tương lai**: Confirm xong nhân viên **vẫn Active** đến ngày bắt đầu, rồi mới **On leave**.
+4. Kỳ **cover hôm nay**: Confirm xong → **On leave** ngay.
+5. Trong lúc **On leave**: **không** giao task mới cho người đó.
+6. Hết kỳ đúng hạn: **không** tự về Active. **Chỉ Admin** bấm **Activate employee**. Nếu không Activate, vẫn On leave (kể cả khi còn kỳ tương lai đã lên lịch).
+7. Đi làm sớm hơn ngày kết thúc đã đặt: **Cancel leave** từng kỳ (người có quyền lên lịch), về Active ngay nếu đang On leave vì kỳ đó.
+
+**Luồng ngắn**
+
+```text
+Active
+  → Schedule leave + Confirm
+  → (tới ngày) On leave
+  → hết kỳ
+  → vẫn On leave
+  → Admin Activate
+  → Active
+```
+
+Chi tiết đầy đủ: [Luồng nghỉ phép](/leave).
+
+**Tóm lại**
+
+Ngày nghỉ rời nhau → Schedule từng khoảng. Nhiều kỳ được, không chồng. Hết nghỉ phải Admin Activate mới về Active và nhận task lại.
