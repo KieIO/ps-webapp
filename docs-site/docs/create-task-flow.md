@@ -66,9 +66,13 @@ Mọi task trong hệ thống đều **bắt đầu từ PM**, kể cả task sa
 
 ## 4. Vào đâu để tạo task?
 
-PM mở **Task management → Project Tasks** (hoặc tab **Tasks** trong chi tiết dự án), bấm **Tạo task**.
+| Chỗ                                 | Cách tạo                                                                          |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
+| **Task management → Project Tasks** | Bấm **Tạo task** → drawer **Tạo task mới**                                        |
+| **Chi tiết dự án** → tab Tasks      | Bấm **Tạo task** (project đã chọn sẵn; project đã archive thì không tạo)          |
+| **Overtime** → gắn task OT          | Có thể **Tạo task mới** rồi gắn vào request (form riêng, khóa project / Staff OT) |
 
-Hệ thống mở drawer **“Tạo task mới”** bên phải màn hình.
+Hệ thống mở drawer **“Tạo task mới”** bên phải màn hình (luồng chính bên dưới).
 
 ---
 
@@ -78,7 +82,7 @@ PM chọn một trong hai loại:
 
 ### A. Project Task
 
-- PM **viết brief** và **phân loại độ khó (Level 1 đến 4)**.
+- PM **viết brief** và **phân loại độ khó (Level 1 đến 5)**.
 - Sau đó chọn giao cho **Phòng Project** hoặc **chuyển sang Phòng Creative**.
 
 ### B. Creative Task
@@ -106,7 +110,7 @@ PM nhập:
 | Deadline         | Ngày và giờ hoàn thành                     |
 | Urgency          | Mức ưu tiên (có thể để Auto theo deadline) |
 | Brief            | Mô tả công việc, yêu cầu kỹ thuật          |
-| Phân loại độ khó | 3 tiêu chí, mỗi tiêu chí chọn mức 1 đến 4  |
+| Phân loại độ khó | 3 tiêu chí, mỗi tiêu chí chọn mức 1 đến 5  |
 
 **3 tiêu chí phân loại:**
 
@@ -114,7 +118,7 @@ PM nhập:
 2. **Kỹ thuật**
 3. **Xử lý nội dung**
 
-Hệ thống tự tính **Level task (1 đến 4)** từ trung bình 3 tiêu chí.
+Hệ thống tự tính **Level task (1 đến 5)** từ trung bình 3 tiêu chí (làm tròn).
 
 #### Bước 2: Hướng giao
 
@@ -146,7 +150,7 @@ PM xem lại tóm tắt: loại task, dự án, PM, tên task, brief, Level, s�
 
 ### 6.2. Creative Task: 3 bước trên UI
 
-UI drawer hiện **3 bước**: **Tạo task** → thông tin chuyển Creative → **Hoàn tất**.
+UI drawer hiện **3 bước**: **Tạo task** → **Xác nhận** → **Hoàn tất**.
 
 #### Bước 1: Tạo task
 
@@ -157,7 +161,7 @@ PM nhập:
 
 **Không** nhập brief, **không** nhập số lượng và **không** phân loại Level.
 
-#### Bước 2: Thông tin chuyển Creative
+#### Bước 2: Xác nhận
 
 Hệ thống nhắc: chưa cần brief; CH sẽ bổ sung brief, phân loại Level và giao CM. Mọi CH nhận thông báo.
 
@@ -234,9 +238,9 @@ Người có quyền đánh giá task gồm **PM, Creative Head, Creative Manage
 
 ### Khi giao người nhận
 
-- Không chọn Staff **Overloaded** hoặc **đang nghỉ phép**
-- Hệ thống hiển thị trạng thái workload khi chọn người
-- Capacity ≥ **80%** được coi là Overloaded và không chọn được (áp dụng khi giao Project Staff lẫn Creative)
+- **Không** chọn Staff **đang nghỉ phép** (On leave / Off)
+- Staff **Overloaded** (capacity ≥ **80%**) vẫn chọn được — chỉ là nhãn cảnh báo workload
+- Hệ thống hiển thị trạng thái workload khi chọn người (áp dụng Project Staff lẫn Creative)
 
 ### Thông báo
 

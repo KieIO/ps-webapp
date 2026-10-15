@@ -105,7 +105,7 @@ Form hiện sẵn thông tin task gốc (mã, project, người nhận, số lư
 | ---------------------- | -------------------------------------------------------------- |
 | **Lý do revision**     | Mô tả phần cần sửa hoặc feedback (bắt buộc)                    |
 | **Số lượng làm lại**   | Có thể ít hơn, bằng, hoặc nhiều hơn gốc. Chỉ cần lớn hơn 0     |
-| **Level revision**     | Chọn Level 1 đến 4 (mặc định gần level gốc)                    |
+| **Level revision**     | Chọn Level 1 đến 5 (mặc định gần level gốc)                    |
 | **Ngày tính workload** | Ngày capacity tính cho lần làm lại (độc lập với ngày task gốc) |
 | **Deadline nộp lại**   | Hạn nộp revision. Phải từ ngày tính workload trở đi            |
 
