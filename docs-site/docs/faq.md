@@ -279,3 +279,45 @@ Cancel “1. Slides” → tạo task mới cùng họ → assign người khác
 **Tóm lại**
 
 Cancel task nhỏ được, nhưng phần đó khóa và không mở chỗ tạo phần thay thế giữ tổng. Muốn đổi người hoặc tách việc: **đổi Staff** và / hoặc **chia lại SL** trên phần còn mở.
+
+---
+
+## 8. Task giao trong nội bộ Creative: nhân viên không làm hết, phải giao phần còn lại cho người khác?
+
+Tùy thời điểm: phần đó **còn đang làm** hay đã **Finished** và CM đánh giá nhận ít hơn SL giao.
+
+### 8.1. Phần còn mở (chưa Finished / Cancelled)
+
+Làm được ngay, **không** cần tạo task mới:
+
+1. **Đổi Staff** trên đúng phần đó (cùng phần, cùng SL).
+2. Hoặc **giảm SL** phần của người đang kẹt, **tăng SL** các phần khác còn mở, tổng họ task vẫn khớp.
+
+**Ví dụ:** Tổng 20. A = 8, B = 8, C = 4. Có thể chỉnh A còn 3, B thành 13 (cùng các phần đã có).
+
+Cách này **chưa** tạo người D mới trên một phần “còn lại” tách riêng nếu chưa qua bước đánh giá bên dưới.
+
+### 8.2. Nhân viên làm được một phần, phần còn lại giao người mới (case A còn 4 / 8 → người D)
+
+Đây là case Pokeslide hỏi: cuối ngày A chỉ xong 4, còn 4 phải giao **D**. Chỉ đổi Staff / chia lại giữa A–B–C **không đủ**.
+
+**Cách làm hiện tại**
+
+1. A đánh dấu **Finished** phần mình (hoặc CM xử lý theo quy trình đánh giá).
+2. CM **Evaluate** phần đó: nhận SL đã làm (ví dụ 4), **ít hơn** SL đã giao (8).
+3. Hệ thống tạo **task nhỏ mới** (phần còn lại, ví dụ SL 4) trong cùng họ chia nhỏ.
+4. CM giao task mới đó cho **D**.
+
+Tính năng này nằm ở bước **đánh giá của Creative Manager** theo số lượng chưa nhận hết. Mỗi phần chỉ tách remainder **một lần**.
+
+### 8.3. Phân biệt nhanh
+
+| Tình huống                          | Cách xử lý                                                                 |
+| ----------------------------------- | -------------------------------------------------------------------------- |
+| Đổi người cả phần, chưa Finished    | Đổi Staff trên phần đó                                                     |
+| Gom / san SL giữa các phần đã có    | Phân bổ lại SL, tổng không đổi                                             |
+| Làm dở, phần còn lại giao người mới | Finished → CM Evaluate nhận ít hơn SL giao → task còn lại → giao người mới |
+
+**Tóm lại**
+
+Chưa xong phần: đổi Staff hoặc chia lại SL giữa phần đang mở. Đã làm một phần và cần người mới cho phần còn lại: qua **Evaluate** (nhận SL thấp hơn) để hệ thống tạo task phần còn lại rồi assign.
