@@ -983,11 +983,7 @@ function TimelineBlock({
 
   return (
     <Tooltip
-      title={
-        milestoneCreateOnBar
-          ? `${block.label} · Click để thêm mốc (mở chi tiết qua tên dự án bên trái)`
-          : block.label
-      }
+      title={milestoneCreateOnBar ? `${block.label} · Click để thêm mốc` : block.label}
       mouseEnterDelay={0}
       mouseLeaveDelay={0.04}
       placement="right"
