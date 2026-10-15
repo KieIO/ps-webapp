@@ -250,3 +250,32 @@ Chi tiết luồng chia: [Luồng chia task con](/split-task).
 **Tóm lại**
 
 Sửa scope task nhỏ: **có**, bằng cách phân bổ lại SL các phần còn mở cho khớp tổng đã khóa. Không đổi SL tổng, không sửa phần Finished / Cancelled, chưa thêm / xóa phần sau khi chia. Đổi người được trên phần còn mở; thêm người song song thì dùng đổi Staff hoặc tách phần còn lại qua Evaluate.
+
+---
+
+## 7. Task giao trong nội bộ Creative: cancel task nhỏ rồi tạo task mới (giữ số tổng) được không?
+
+**Luồng “Cancel phần A → tạo phần mới thay thế, vẫn giữ SL tổng” chưa được hỗ trợ đủ.** Không dùng Cancel để “đổi chỗ” một phần trong cùng họ chia nhỏ.
+
+**Cancel một task nhỏ thì sao?**
+
+1. Có thể **Cancel** từng phần trong họ đã chia.
+2. Phần Cancelled **vẫn nằm trong danh sách**, SL bị **khóa**.
+3. Chỉ **Admin** mới mở lại / đổi trạng thái phần đã Cancelled (theo quyền hệ thống).
+4. Cancel **không** tự giải phóng SL để tạo thêm task nhỏ mới trong cùng họ với tổng không đổi.
+
+**Khi Staff không làm tiếp được (đã nhận / Confirmed)**
+
+Làm theo hướng này, **không** cần Cancel rồi tạo mới:
+
+1. **Đổi Staff** trên phần đó (kể cả khi đã Confirmed).
+2. Hoặc **phân bổ lại SL** giữa các phần còn mở cho khớp tổng.
+3. Cần tách một phần (ví dụ 10 slides) cho **hai người**: dùng chỉnh SL / chia phần còn lại / đổi người trên các phần đang mở (xem câu 6). Chưa hỗ trợ “thêm task nhỏ mới” sau lần chia đầu ngoài luồng Evaluate phần còn lại.
+
+**Không nên kỳ vọng**
+
+Cancel “1. Slides” → tạo task mới cùng họ → assign người khác → tổng vẫn 20. Flow này **chưa có**.
+
+**Tóm lại**
+
+Cancel task nhỏ được, nhưng phần đó khóa và không mở chỗ tạo phần thay thế giữ tổng. Muốn đổi người hoặc tách việc: **đổi Staff** và / hoặc **chia lại SL** trên phần còn mở.
