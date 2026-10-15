@@ -77,6 +77,15 @@ const config: Config = {
           ],
         },
         {
+          title: 'Go-live',
+          items: [
+            {
+              label: 'Kế hoạch go-live',
+              to: '/go-live',
+            },
+          ],
+        },
+        {
           title: 'Task',
           items: [
             {

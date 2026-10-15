@@ -43,6 +43,11 @@
       "source": "/faq.md",
       "destination": "/faq",
       "permanent": true
+    },
+    {
+      "source": "/go-live-plan",
+      "destination": "/go-live",
+      "permanent": true
     }
   ]
 }

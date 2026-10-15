@@ -10,6 +10,12 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Go-live',
+      collapsed: false,
+      items: ['go-live-plan'],
+    },
+    {
+      type: 'category',
       label: 'Task',
       collapsed: false,
       // Theo vòng đời: tạo → chia → revision → đo on-time
