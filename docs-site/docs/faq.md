@@ -123,3 +123,41 @@ Chi tiết đầy đủ: [Luồng nghỉ phép](/leave).
 **Tóm lại**
 
 Ngày nghỉ rời nhau → Schedule từng khoảng. Nhiều kỳ được, không chồng. Hết nghỉ phải Admin Activate mới về Active và nhận task lại.
+
+---
+
+## 4. Dòng “Còn lại / ngày” trên Project Tracker tính thế nào?
+
+Đó là ước lượng **output còn lại của cả team theo ngày** (Slides hoặc DA), sau khi trừ workload đã giao. **Không** phải quota cá nhân của một người.
+
+**Nguồn điểm**
+
+Hệ thống lấy **điểm task CM** của mọi nhân viên đang **Active** (không On leave), theo title trong Settings.
+
+```text
+Điểm task CM = Capacity / ngày × tỷ lệ CM / quản lý (%)
+```
+
+1. **PM, Creative Manager:** dùng tỷ lệ theo title (ví dụ PM-5: Capacity / ngày 994, tỷ lệ 30% → điểm task CM = 298).
+2. **Staff thường:** tỷ lệ 100% → điểm task CM = Capacity / ngày.
+
+Trước đây Tracker từng lấy nhầm **Capacity / ngày** (PM-5 ra ~22 S). Hiện lấy **điểm task CM** (PM-5 ra ~6 S).
+
+**Cách quy ra Slides / DA mỗi ngày**
+
+1. Cộng điểm task CM của team Active trong phòng.
+2. Trừ điểm workload đã giao trong ngày đó.
+3. Quy đổi phần còn lại:
+   - Phòng **Project:** điểm còn lại ÷ **45** → số **Slides** (chuẩn Level 3).
+   - Phòng **Creative:** điểm còn lại ÷ **480** → số **DA** (chuẩn Level 2).
+4. Kết quả **làm tròn xuống** (floor).
+
+**Ví dụ:** Chỉ 1 PM-5 Active, chưa có workload → 298 ÷ 45 ≈ 6.62 → Tracker hiện **6 S**.
+
+Hover nhãn **Còn lại / ngày** trên Tracker để xem giả định quy đổi đang dùng.
+
+Định mức Capacity / ngày và tỷ lệ CM xem tại **Settings → Capacity formula**. Capacity cá nhân xem **Capacity → Capacity by employee** (không dùng dòng S trên Tracker để confirm từng người).
+
+**Tóm lại**
+
+Còn lại / ngày = (điểm task CM của team Active − workload ngày đó), rồi ÷ 45 (Project → Slides) hoặc ÷ 480 (Creative → DA), làm tròn xuống. Là capacity **team**, không phải từng người.
