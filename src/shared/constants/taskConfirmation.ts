@@ -15,7 +15,7 @@ export const CONFIRMATION_LABELS: Record<TaskConfirmationStatus, string> = {
   not_updated: 'Chưa cập nhật',
   finished: 'Hoàn thành',
   confirmed: 'Đã xác nhận',
-  decline: 'Từ chối',
+  decline: 'Đã từ chối',
   cancelled: 'Hủy',
 };
 

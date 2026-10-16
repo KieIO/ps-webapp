@@ -77,7 +77,7 @@ test.describe('TASK-64 CH refuse PM creative handoff', () => {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${pmToken}`,
       },
-      body: JSON.stringify({ staffConfirmation: 'decline', staffNote: '' }),
+      body: JSON.stringify({ staffConfirmation: 'decline', staffNote: 'PM cannot refuse' }),
     });
     expect(pmRefuse.ok).toBeFalsy();
 
@@ -92,6 +92,7 @@ test.describe('TASK-64 CH refuse PM creative handoff', () => {
 
     const confirm = page.locator('.ant-modal-confirm').last();
     await expect(confirm.locator('.ant-modal-confirm-title')).toHaveText('Từ chối nhận task này?');
+    await confirm.locator('textarea').fill('Scope không khớp brief');
     await confirm.getByRole('button', { name: 'Từ chối', exact: true }).click();
 
     await expect(page.getByText('Đã từ chối task')).toBeVisible({ timeout: 20_000 });
@@ -103,6 +104,6 @@ test.describe('TASK-64 CH refuse PM creative handoff', () => {
     await page.locator('#my-task-search').fill(taskName);
     const row = page.locator('.ant-table-row').filter({ hasText: taskName }).first();
     await expect(row).toBeVisible({ timeout: 30_000 });
-    await expect(row.getByText(/Từ chối/)).toBeVisible();
+    await expect(row.getByText(/Đã từ chối/)).toBeVisible();
   });
 });

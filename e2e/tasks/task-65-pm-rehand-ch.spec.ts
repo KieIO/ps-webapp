@@ -66,7 +66,10 @@ async function refuseAsCH(token: string, taskId: string): Promise<void> {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ staffConfirmation: 'decline', staffNote: '' }),
+    body: JSON.stringify({
+      staffConfirmation: 'decline',
+      staffNote: 'E2E rehand decline reason',
+    }),
   });
   if (!response.ok) {
     const body = await response.text();
@@ -87,7 +90,7 @@ test.describe('TASK-65 PM rehand CH-refused task', () => {
     await loginAs(page, 'pm');
     await page.goto('/creative/review');
     await expect(page.getByText(taskName)).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText('Đã trả PM')).toBeVisible();
+    await expect(page.getByText('Chờ PM xử lý').first()).toBeVisible();
 
     await page
       .getByRole('button', { name: /Đưa lại CH/ })

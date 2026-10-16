@@ -48,6 +48,29 @@ describe('computeProjectDetailStats', () => {
 
     expect(stats.averageCompletionPercent).toBe(80);
   });
+
+  it('excludes declined and cancelled quantity from slides total', () => {
+    const stats = computeProjectDetailStats([
+      task({ id: 's1', taskName: 'Slides', quantity: 20, completionPercent: 50 }),
+      task({
+        id: 'declined',
+        taskName: 'Slides',
+        quantity: 15,
+        staffConfirmation: 'decline',
+        completionPercent: 0,
+      }),
+      task({
+        id: 'cancelled',
+        taskName: 'Slides',
+        quantity: 9,
+        staffConfirmation: 'cancelled',
+        completionPercent: 0,
+      }),
+    ]);
+
+    expect(stats.taskCount).toBe(3);
+    expect(stats.totalSlides).toBe(20);
+  });
 });
 
 describe('resolveProjectDetailStats', () => {

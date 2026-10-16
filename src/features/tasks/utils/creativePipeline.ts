@@ -22,7 +22,7 @@ export const PIPELINE_STAGE_LABELS: Record<CreativePipelineStage, string> = {
   awaiting_cm: 'Chờ giao Staff',
   assigned_staff: 'Đã giao Staff',
   split: 'Đã chia nhỏ',
-  returned_to_pm: 'Đã trả PM',
+  returned_to_pm: 'Chờ PM xử lý',
 };
 
 /** List/detail badges — keep in sync with Creative edit drawer chips. */
@@ -186,9 +186,13 @@ export const pickPrimaryEditableSplitChild = <
   );
 };
 
-/** Split parents hold a display total — aggregates count children only. */
-export const countsTowardQuantityAggregates = (task: MyTask): boolean =>
-  resolveEffectivePipelineStage(task) !== 'split';
+/** Exclude split parents + declined/cancelled from project slides / qty totals. */
+export const countsTowardQuantityAggregates = (task: MyTask): boolean => {
+  if (task.staffConfirmation === 'decline' || task.staffConfirmation === 'cancelled') {
+    return false;
+  }
+  return resolveEffectivePipelineStage(task) !== 'split';
+};
 
 /** Staff on whole-assigned parent (excludes CM parked on assignees). */
 export const resolveWholeAssignStaff = (task: MyTask): TaskAssignee[] => {

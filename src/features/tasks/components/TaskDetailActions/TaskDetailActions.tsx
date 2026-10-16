@@ -36,6 +36,7 @@ import {
   resolveCreativeDetailPipelineAction,
   shouldUseCreativePipelineEditDrawer,
 } from '../../utils/creativePipeline';
+import { openDeclineReasonModal } from '../../utils/declineReasonModal';
 import { getTaskListPath } from '../../utils/taskDetail';
 import { canEvaluateTaskLayer } from '../../utils/taskEvaluation';
 import {
@@ -132,11 +133,14 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
     });
   };
 
-  const runStaffStatus = (staffConfirmation: 'confirmed' | 'decline') => {
+  const runStaffStatus = (
+    staffConfirmation: 'confirmed' | 'decline',
+    staffNote = task.staffNote ?? '',
+  ) => {
     updateStatus.mutate({
       id: task.id,
       staffConfirmation,
-      staffNote: task.staffNote ?? '',
+      staffNote,
     });
   };
 
@@ -151,39 +155,26 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
   };
 
   const confirmStaffDecline = () => {
-    Modal.confirm({
+    openDeclineReasonModal({
       title: 'Từ chối task này?',
-      content:
-        'Task sẽ trả về Creative Manager để giao lại. Bạn vẫn có thể mở chi tiết task sau đó.',
-      okText: 'Từ chối',
-      okButtonProps: { danger: true },
-      cancelText: 'Quay lại',
-      centered: true,
-      onOk: () => runStaffStatus('decline'),
+      description: 'Task sẽ trả về Creative Manager để giao lại.',
+      onConfirm: (reason) => runStaffStatus('decline', reason),
     });
   };
 
   const confirmCmRefuse = () => {
-    Modal.confirm({
+    openDeclineReasonModal({
       title: 'Từ chối nhận task này?',
-      content: 'Task sẽ trả về hàng chờ Creative Head để giao lại CM.',
-      okText: 'Từ chối',
-      okButtonProps: { danger: true },
-      cancelText: 'Quay lại',
-      centered: true,
-      onOk: () => runStaffStatus('decline'),
+      description: 'Task sẽ trả về hàng chờ Creative Head để giao lại CM.',
+      onConfirm: (reason) => runStaffStatus('decline', reason),
     });
   };
 
   const confirmChRefuse = () => {
-    Modal.confirm({
+    openDeclineReasonModal({
       title: 'Từ chối nhận task này?',
-      content: 'Task sẽ trả về danh sách của PM với trạng thái Từ chối và ra khỏi Creative queue.',
-      okText: 'Từ chối',
-      okButtonProps: { danger: true },
-      cancelText: 'Quay lại',
-      centered: true,
-      onOk: () => runStaffStatus('decline'),
+      description: 'Task sẽ trả về PM với trạng thái Đã từ chối và ra khỏi Creative queue.',
+      onConfirm: (reason) => runStaffStatus('decline', reason),
     });
   };
 

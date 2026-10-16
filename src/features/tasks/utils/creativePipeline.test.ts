@@ -13,6 +13,7 @@ import {
   canRehandCreativeToCH,
   canStaffConfirmOrDeclineCreative,
   countActionableQueueItems,
+  countsTowardQuantityAggregates,
   filterCreativeManagers,
   filterCreativeQueue,
   filterCreativeStaff,
@@ -719,6 +720,19 @@ describe('creative decline helpers', () => {
       filterCreativeQueue([rehanded], 'ch', 'ch-1', ROLES.CREATIVE_HEAD).map((item) => item.id),
     ).toEqual([rehanded.id]);
     expect(countActionableQueueItems([refused], 'ch', 'pm-1', ROLES.PM)).toBe(1);
+  });
+
+  it('excludes decline and cancelled from quantity aggregates', () => {
+    expect(countsTowardQuantityAggregates(task({ quantity: 10 }))).toBe(true);
+    expect(
+      countsTowardQuantityAggregates(task({ quantity: 10, staffConfirmation: 'decline' })),
+    ).toBe(false);
+    expect(
+      countsTowardQuantityAggregates(task({ quantity: 10, staffConfirmation: 'cancelled' })),
+    ).toBe(false);
+    expect(countsTowardQuantityAggregates(task({ quantity: 10, pipelineStage: 'split' }))).toBe(
+      false,
+    );
   });
 
   it('excludes decline from assign-picker workload', () => {

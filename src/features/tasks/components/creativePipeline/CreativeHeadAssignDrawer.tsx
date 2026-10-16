@@ -23,6 +23,7 @@ import {
   needsChBrief,
   resolveAssigneeAvailability,
 } from '../../utils/creativePipeline';
+import { openDeclineReasonModal } from '../../utils/declineReasonModal';
 import { getTaskDeadline } from '../../utils/taskDetail';
 import { normalizeTaskUrgencySetting, resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { ClassificationScale } from '../CreateTaskDrawer/ClassificationScale';
@@ -172,20 +173,16 @@ export function CreativeHeadAssignDrawer({
 
   const handleRefuse = () => {
     if (!task) return;
-    Modal.confirm({
+    openDeclineReasonModal({
       title: 'Từ chối nhận task này?',
-      content: 'Task sẽ trả về danh sách của PM với trạng thái Từ chối và ra khỏi Creative queue.',
-      okText: 'Từ chối',
-      okButtonProps: { danger: true },
-      cancelText: 'Quay lại',
-      centered: true,
-      onOk: () =>
+      description: 'Task sẽ trả về PM với trạng thái Đã từ chối và ra khỏi Creative queue.',
+      onConfirm: (reason) =>
         new Promise<void>((resolve, reject) => {
           updateStatus(
             {
               id: task.id,
               staffConfirmation: 'decline',
-              staffNote: task.staffNote ?? '',
+              staffNote: reason,
             },
             {
               onSuccess: () => {

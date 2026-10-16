@@ -254,9 +254,17 @@ describe('creative CH/CM pipeline', () => {
   });
 
   it('lets PM rehand a CH-refused task back to awaiting_ch for any CH', async () => {
+    await expect(
+      mockUpdateMyTaskStatus(
+        'task-ch-031',
+        { staffConfirmation: 'decline', staffNote: '' },
+        'dev-creative_head',
+      ),
+    ).rejects.toThrow(/lý do/);
+
     const refused = await mockUpdateMyTaskStatus(
       'task-ch-031',
-      { staffConfirmation: 'decline', staffNote: '' },
+      { staffConfirmation: 'decline', staffNote: 'Brief thiếu scope' },
       'dev-creative_head',
     );
     expect(refused.pipelineStage).toBe('returned_to_pm');

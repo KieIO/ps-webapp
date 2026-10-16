@@ -875,6 +875,9 @@ export const mockUpdateMyTaskStatus = async (
   };
 
   if (payload.staffConfirmation === 'decline' && current.staffConfirmation !== 'decline') {
+    if (!String(payload.staffNote ?? '').trim()) {
+      throw new Error('Vui lòng nhập lý do từ chối');
+    }
     updated = applyCreativeDeclineRollback(updated);
   }
 
