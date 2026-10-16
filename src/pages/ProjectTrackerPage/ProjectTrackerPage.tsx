@@ -1,5 +1,4 @@
 import { Alert } from 'antd';
-import { PendingReactivationBanner } from '@/features/leave/components/PendingReactivationBanner/PendingReactivationBanner';
 import { ProjectTrackerView } from '@/features/tracker/components/ProjectTrackerView/ProjectTrackerView';
 import { useTrackerData } from '@/features/tracker/hooks/useTrackerData';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
@@ -12,9 +11,6 @@ export default function ProjectTrackerPage() {
     return (
       <div className={styles.page}>
         <h1 className={styles.pageTitle}>Project Tracker</h1>
-        <div className={styles.bannerWrap}>
-          <PendingReactivationBanner />
-        </div>
         <GlobalLoadingSpinner />
       </div>
     );
@@ -23,15 +19,10 @@ export default function ProjectTrackerPage() {
   return (
     <div className={styles.page}>
       <h1 className={styles.pageTitle}>Project Tracker</h1>
-      <div className={styles.bannerWrap}>
-        <PendingReactivationBanner />
-      </div>
       {isError ? (
         <Alert type="error" showIcon message="Unable to load project tracker data" />
       ) : null}
-      {data ? (
-        <ProjectTrackerView projects={data.projects} offDays={data.offDays} />
-      ) : null}
+      {data ? <ProjectTrackerView projects={data.projects} offDays={data.offDays} /> : null}
     </div>
   );
 }

@@ -60,18 +60,8 @@ export const LeaveRecordSchema = z.object({
   createdAt: z.string(),
 });
 
-export const PendingReactivationSchema = z.object({
-  userId: z.string(),
-  userName: z.string(),
-  leaveId: z.string(),
-  startDate: z.string(),
-  endDate: z.string(),
-  hasUpcomingLeave: z.boolean().optional().default(false),
-});
-
 export type LeaveAffectedTask = z.infer<typeof LeaveAffectedTaskSchema>;
 export type LeavePreviewResponse = z.infer<typeof LeavePreviewResponseSchema>;
 export type CreateLeaveRequest = z.infer<typeof CreateLeaveRequestSchema>;
 export type LeaveRecord = z.infer<typeof LeaveRecordSchema>;
-export type PendingReactivation = z.infer<typeof PendingReactivationSchema>;
 export type LeaveReplacementCandidate = z.infer<typeof LeaveReplacementCandidateSchema>;

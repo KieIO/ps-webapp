@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Alert, Button, DatePicker, Skeleton } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
-import { PendingReactivationBanner } from '@/features/leave/components/PendingReactivationBanner/PendingReactivationBanner';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { useOverallDashboard } from '../../hooks/useOverallDashboard';
@@ -37,8 +36,6 @@ export function HomeDashboard() {
           />
         }
       />
-
-      <PendingReactivationBanner />
 
       {dashboardQuery.isError && (
         <Alert

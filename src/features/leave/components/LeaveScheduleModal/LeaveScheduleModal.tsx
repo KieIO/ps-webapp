@@ -156,8 +156,8 @@ export function LeaveScheduleModal({
     pendingStatus === 'ended'
       ? 'This period has already ended, so it is saved as history and the employee stays Active.'
       : pendingStatus === 'scheduled'
-        ? 'Leave is scheduled. The employee stays Active until the start date, then goes On leave for this period. After it ends, an admin must Activate.'
-        : 'This period covers today, so the employee will be marked On leave. After it ends, an admin must Activate to restore task assignment.';
+        ? 'Leave is scheduled. The employee stays Active until the start date, then goes On leave for this period. When it ends, status returns to Active automatically.'
+        : 'This period covers today, so the employee will be marked On leave. When it ends, status returns to Active automatically.';
 
   const taskColumns: ColumnsType<LeaveAffectedTask> = [
     {

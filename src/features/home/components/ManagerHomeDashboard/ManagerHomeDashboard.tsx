@@ -1,6 +1,5 @@
 import { Alert, Button, Skeleton } from 'antd';
 import { ROLE_LABELS } from '@/config/permissions';
-import { PendingReactivationBanner } from '@/features/leave/components/PendingReactivationBanner/PendingReactivationBanner';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { useManagerHomeData } from '../../hooks/useManagerHomeData';
 import { ManagerActionTasksSection } from '../ManagerActionTasksSection/ManagerActionTasksSection';
@@ -20,8 +19,6 @@ export function ManagerHomeDashboard() {
         title="Home"
         subtitle={`${roleLabel} · projects, task cần xử lý và capacity team`}
       />
-
-      <PendingReactivationBanner />
 
       {isError && (
         <Alert

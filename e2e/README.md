@@ -54,6 +54,9 @@ npm run test:e2e:taskscores
 # Capacity formula UI smoke (CAP-27–30)
 npm run test:e2e:capacity
 
+# Leave smoke (multi-period + login/auto-Active/tracker weekends)
+npm run test:e2e:leave
+
 # Headed / UI mode
 npm run test:e2e:headed
 npm run test:e2e:ui
@@ -92,30 +95,32 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, and de
 
 ## Covered smoke (proof harness)
 
-| Case                                        | Spec                                                       |
-| ------------------------------------------- | ---------------------------------------------------------- | ----- |
-| UM-11 Admin opens `/roles`                  | `um/um-11-roles-page.spec.ts`                              |
-| UM-13 PM blocked from `/roles`              | `um/um-13-pm-roles-blocked.spec.ts`                        |
-| UM-18 Sidebar by role                       | `um/um-18-sidebar-by-role.spec.ts`                         |
-| PM-31 Sidebar Projects by role              | `projects/pm-31-sidebar-projects.spec.ts`                  |
-| PM-39 Urgency via Edit modal                | `projects/pm-39-urgency-edit-modal.spec.ts`                |
-| PM-40 Create button by role                 | `projects/pm-40-create-button-by-role.spec.ts`             |
-| PM-41 Active ↔ Archived nav                | `projects/pm-41-archived-nav.spec.ts`                      |
-| PM-11 / PM-13 Archive + Unarchive click     | `projects/pm-11-archive-unarchive-click.spec.ts`           |
-| PM-24 PM Archive/Delete hidden              | `projects/pm-24-pm-archive-hidden.spec.ts`                 |
-| PM-48 Evaluate project modal                | `projects/pm-48-evaluate-project-modal.spec.ts`            |
-| PM-52 Evaluate hidden (Employee)            | `projects/pm-52-evaluate-hidden-by-role.spec.ts`           |
-| PM-53 Head My Tasks → project eval          | `tasks/pm-53-head-edit-project-evaluation.spec.ts`         |
-| TASK-64 CH refuse PM creative handoff       | `tasks/task-64-ch-refuse-pm-handoff.spec.ts` (+ manual md) |
-| TASK-66 Split evaluate remainder + SL edit  | `tasks/task-66-split-evaluate-remainder.spec.ts`           |
-| DEPT-30 Sidebar Department management       | `departments/dept-30-sidebar-departments.spec.ts`          |
-| DEPT-31 Admin opens `/settings/departments` | `departments/dept-31-admin-page.spec.ts`                   |
-| DEPT-32 PM blocked from departments page    | `departments/dept-32-pm-page-blocked.spec.ts`              |
-| TITLE-36 Sidebar Capacity formula           | `titles/title-36-sidebar-capacity-formula.spec.ts`         |
-| TITLE-37 PM/Employee blocked                | `titles/title-37-pm-titles-blocked.spec.ts`                |
-| TITLE-38 Tabs + create chrome               | `titles/title-38-tabs-create-chrome.spec.ts`               |
-| TITLE-39 Capacity page no-create            | `titles/title-39-capacity-page-no-create.spec.ts`          |
-| Variable                                    | Default                                                    | Notes |
-| CAP-28 PM blocked from formula page         | `capacity-formula/cap-28-pm-formula-blocked.spec.ts`       |
-| CAP-29 Employee blocked from formula page   | `capacity-formula/cap-29-employee-formula-blocked.spec.ts` |
-| CAP-30 Formula page chrome                  | `capacity-formula/cap-30-page-chrome.spec.ts`              |
+| Case                                           | Spec                                                       |
+| ---------------------------------------------- | ---------------------------------------------------------- | ----- |
+| UM-11 Admin opens `/roles`                     | `um/um-11-roles-page.spec.ts`                              |
+| UM-13 PM blocked from `/roles`                 | `um/um-13-pm-roles-blocked.spec.ts`                        |
+| UM-18 Sidebar by role                          | `um/um-18-sidebar-by-role.spec.ts`                         |
+| PM-31 Sidebar Projects by role                 | `projects/pm-31-sidebar-projects.spec.ts`                  |
+| PM-39 Urgency via Edit modal                   | `projects/pm-39-urgency-edit-modal.spec.ts`                |
+| PM-40 Create button by role                    | `projects/pm-40-create-button-by-role.spec.ts`             |
+| PM-41 Active ↔ Archived nav                   | `projects/pm-41-archived-nav.spec.ts`                      |
+| PM-11 / PM-13 Archive + Unarchive click        | `projects/pm-11-archive-unarchive-click.spec.ts`           |
+| PM-24 PM Archive/Delete hidden                 | `projects/pm-24-pm-archive-hidden.spec.ts`                 |
+| PM-48 Evaluate project modal                   | `projects/pm-48-evaluate-project-modal.spec.ts`            |
+| PM-52 Evaluate hidden (Employee)               | `projects/pm-52-evaluate-hidden-by-role.spec.ts`           |
+| PM-53 Head My Tasks → project eval             | `tasks/pm-53-head-edit-project-evaluation.spec.ts`         |
+| TASK-64 CH refuse PM creative handoff          | `tasks/task-64-ch-refuse-pm-handoff.spec.ts` (+ manual md) |
+| TASK-66 Split evaluate remainder + SL edit     | `tasks/task-66-split-evaluate-remainder.spec.ts`           |
+| DEPT-30 Sidebar Department management          | `departments/dept-30-sidebar-departments.spec.ts`          |
+| DEPT-31 Admin opens `/settings/departments`    | `departments/dept-31-admin-page.spec.ts`                   |
+| DEPT-32 PM blocked from departments page       | `departments/dept-32-pm-page-blocked.spec.ts`              |
+| TITLE-36 Sidebar Capacity formula              | `titles/title-36-sidebar-capacity-formula.spec.ts`         |
+| TITLE-37 PM/Employee blocked                   | `titles/title-37-pm-titles-blocked.spec.ts`                |
+| TITLE-38 Tabs + create chrome                  | `titles/title-38-tabs-create-chrome.spec.ts`               |
+| TITLE-39 Capacity page no-create               | `titles/title-39-capacity-page-no-create.spec.ts`          |
+| Variable                                       | Default                                                    | Notes |
+| CAP-28 PM blocked from formula page            | `capacity-formula/cap-28-pm-formula-blocked.spec.ts`       |
+| CAP-29 Employee blocked from formula page      | `capacity-formula/cap-29-employee-formula-blocked.spec.ts` |
+| CAP-30 Formula page chrome                     | `capacity-formula/cap-30-page-chrome.spec.ts`              |
+| Leave-01 Multi-period schedule + overlap       | `leave/leave-01-multi-period-schedule.spec.ts`             |
+| Leave-02 Login on leave, auto Active, weekends | `leave/leave-02-login-auto-active-tracker.spec.ts`         |

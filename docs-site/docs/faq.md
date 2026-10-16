@@ -88,17 +88,17 @@ Ví dụ 30/09→16/10, rồi 26/10, 20/11, rồi 10/12→20/12. **Mỗi khoản
 2. Nhiều kỳ được, miễn **không chồng lịch**.
 3. Nghỉ **tương lai**: vẫn **Active** đến ngày bắt đầu, rồi mới **On leave**.
 4. Kỳ **cover hôm nay**: **On leave** ngay sau Confirm.
-5. Đang **On leave**: **không** giao task mới.
-6. Hết kỳ đúng hạn: **không** tự Active. **Chỉ Admin** bấm **Activate employee**. Không Activate thì vẫn On leave (kể cả còn kỳ tương lai đã lên lịch).
+5. Đang **On leave**: vẫn **login được**; **không** giao task mới. Tracker **không** hiện tên nghỉ T7/CN.
+6. Hết kỳ đúng hạn: **tự Active** (không cần Admin Activate). Kỳ tương lai đã lên lịch vẫn giữ.
 7. Đi làm sớm: **Cancel leave** từng kỳ → Active ngay nếu đang On leave vì kỳ đó.
 
 ```text
-Active → Schedule + Confirm → (tới ngày) On leave → hết kỳ → vẫn On leave → Admin Activate → Active
+Active → Schedule + Confirm → (tới ngày) On leave → hết kỳ → tự Active
 ```
 
 Chi tiết: [Luồng nghỉ phép](/leave).
 
-**Tóm lại:** Ngày rời nhau → Schedule từng khoảng. Hết nghỉ phải Admin Activate mới nhận task lại.
+**Tóm lại:** Ngày rời nhau → Schedule từng khoảng. Hết nghỉ hệ thống tự Active; On leave vẫn login được.
 
 ---
 

@@ -132,14 +132,6 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
       return;
     }
 
-    if (values.status === 'active' && user.status === 'on_leave') {
-      message.warning(
-        'Use the Activate employee button in the Leave section to reactivate this user.',
-      );
-      form.setFieldValue('status', user.status);
-      return;
-    }
-
     const jobLevelId = form.getFieldValue('jobLevelId') || values.jobLevelId;
     const jobTitleId = form.getFieldValue('jobTitleId') || values.jobTitleId || user.jobTitleId;
 
@@ -456,7 +448,7 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
           )}
         </CardWrapper>
 
-        {(canManageLeave || can('REACTIVATE_USER') || canEdit) && (
+        {(canManageLeave || canEdit) && (
           <UserLeaveSection
             userId={userId}
             userStatus={user.status}

@@ -3,6 +3,7 @@ import type { TrackerOffDay } from '../types';
 /**
  * Mock leave markers — one entry per calendar day (matches live GET /tracker).
  * Spans come from leave_requests start/end, not "today" or inactive users.
+ * Weekends (Sat/Sun) are omitted when expanding markers.
  */
 export const TRACKER_OFF_DAYS: TrackerOffDay[] = [
   {

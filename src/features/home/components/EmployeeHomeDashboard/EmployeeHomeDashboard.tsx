@@ -1,6 +1,5 @@
 import { Alert, Button, Skeleton } from 'antd';
 import { ROLE_LABELS } from '@/config/permissions';
-import { PendingReactivationBanner } from '@/features/leave/components/PendingReactivationBanner/PendingReactivationBanner';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { useEmployeeHomeData } from '../../hooks/useEmployeeHomeData';
 import { EmployeeEvaluationsSection } from '../EmployeeEvaluationsSection/EmployeeEvaluationsSection';
@@ -17,8 +16,6 @@ export function EmployeeHomeDashboard() {
   return (
     <div className={styles.root}>
       <PageHeader title="Home" subtitle={`${roleLabel} · task hôm nay, productivity và đánh giá`} />
-
-      <PendingReactivationBanner />
 
       {isError && (
         <Alert

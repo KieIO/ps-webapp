@@ -55,36 +55,6 @@ export const useOpenLeaves = (userId: string) =>
     queryFn: () => leaveApi.listOpen(userId),
   });
 
-export const useActiveLeave = (userId: string) =>
-  useQuery({
-    queryKey: ['leave', 'active', userId],
-    queryFn: () => leaveApi.getActive(userId),
-  });
-
-export const usePendingReactivations = (enabled = true) =>
-  useQuery({
-    queryKey: ['leave', 'pending-reactivations'],
-    queryFn: () => leaveApi.listPendingReactivations(),
-    enabled,
-  });
-
-export const useReactivateUser = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (userId: string) => leaveApi.reactivate(userId),
-    onSuccess: (_data, userId) => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['users', userId] });
-      queryClient.invalidateQueries({ queryKey: ['leave'] });
-      message.success('User reactivated successfully');
-    },
-    onError: (error: Error) => {
-      message.error(error.message || 'Failed to reactivate user');
-    },
-  });
-};
-
 export const useCancelLeave = () => {
   const queryClient = useQueryClient();
 
