@@ -65,7 +65,7 @@ describe('buildFallbackTaskHistory', () => {
 
     const events = buildFallbackTaskHistory(task);
     expect(events.map((event) => event.description)).toEqual([
-      'Task created — Nguyen Duong Tri',
+      'Task created',
       'Bui Thi Hoa assigned',
       'Status: Đã xác nhận',
       'Deadline',

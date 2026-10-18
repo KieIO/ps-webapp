@@ -76,7 +76,8 @@ export const buildFallbackTaskHistory = (task: MyTask): TaskHistoryEvent[] => {
     {
       id: `${task.id}-created`,
       occurredAt: getTaskStartDate(task),
-      description: `Task created — ${task.projectManager.name}`,
+      // Creator name comes from API history; mock fallback must not invent PM as creator.
+      description: 'Task created',
       completed: true,
       kind: 'event',
     },
