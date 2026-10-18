@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
-import { Alert, Badge, Tabs } from 'antd';
+import { Alert, Badge, Button, Result, Tabs } from 'antd';
 import dayjs from 'dayjs';
-import { useSearchParams } from 'react-router-dom';
-import { DATE_FORMAT } from '@/config/constants';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { buildMyTaskDetailPath, DATE_FORMAT, ROUTES } from '@/config/constants';
+import { isApiForbiddenError } from '@/shared/api/apiError';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
 import { useOvertimeDetail } from '@/features/overtime/hooks/useOvertime';
 import { TaskDetailHistoryPanel } from '../TaskDetailHistoryPanel/TaskDetailHistoryPanel';
@@ -22,14 +23,22 @@ type DetailTabKey = 'details' | 'revision' | 'evaluation';
 const isDetailTabKey = (value: string | null): value is DetailTabKey =>
   value === 'details' || value === 'revision' || value === 'evaluation';
 
+const resolveFromTaskId = (raw: string | null, currentTaskId: string): string | null => {
+  const from = raw?.trim();
+  if (!from || from === currentTaskId) return null;
+  return from;
+};
+
 export function TaskDetailView({ taskId }: TaskDetailViewProps) {
-  const { data: task, isLoading, isError } = useMyTask(taskId);
+  const navigate = useNavigate();
+  const { data: task, isLoading, isError, error } = useMyTask(taskId);
   const otQuery = useOvertimeDetail(
     task?.overtimeRequestId ?? null,
     Boolean(task?.overtimeRequestId),
   );
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
+  const fromTaskId = resolveFromTaskId(searchParams.get('from'), taskId);
   const [activeTab, setActiveTab] = useState<DetailTabKey>(
     isDetailTabKey(tabFromUrl) ? tabFromUrl : 'details',
   );
@@ -68,12 +77,27 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
   }
 
   if (isError || !task) {
+    const forbidden = isApiForbiddenError(error);
     return (
-      <Alert
-        type="error"
-        showIcon
-        message="Unable to load task"
-        description="The task may have been removed or you may not have access."
+      <Result
+        status={forbidden ? 403 : 'error'}
+        title={forbidden ? 'Không có quyền xem task' : 'Không tải được task'}
+        subTitle={
+          forbidden
+            ? 'Bạn không có quyền truy cập task này. Task cha đã chia nhỏ chỉ dành cho CM / quản lý.'
+            : 'Task có thể đã bị xóa hoặc bạn không có quyền truy cập.'
+        }
+        extra={
+          fromTaskId ? (
+            <Button type="primary" onClick={() => navigate(buildMyTaskDetailPath(fromTaskId))}>
+              Quay về task chi tiết
+            </Button>
+          ) : (
+            <Button type="primary" onClick={() => navigate(ROUTES.PROJECT_TASKS)}>
+              Về danh sách Project Tasks
+            </Button>
+          )
+        }
       />
     );
   }

@@ -1,5 +1,19 @@
 import axios from 'axios';
 
+export const isApiForbiddenError = (error: unknown): boolean => {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    const code = (error.response?.data as { code?: string } | undefined)?.code;
+    if (status === 403 || code === 'FORBIDDEN') return true;
+  }
+  if (error instanceof Error) {
+    return /permission|không có quyền|do not have (permission|access)|FORBIDDEN/i.test(
+      error.message,
+    );
+  }
+  return false;
+};
+
 export const getApiErrorMessage = (error: unknown, fallback = 'Request failed'): string => {
   if (axios.isAxiosError(error)) {
     const message = error.response?.data?.message;

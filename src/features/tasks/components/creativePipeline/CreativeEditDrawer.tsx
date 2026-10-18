@@ -532,7 +532,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
             {splitChild && task.parentTaskId ? (
               <p className={styles.contextMeta}>
                 Task cha:{' '}
-                <Link to={buildMyTaskDetailPath(task.parentTaskId)}>
+                <Link to={buildMyTaskDetailPath(task.parentTaskId, { from: task.id })}>
                   {inferParentTaskCodeFromSplit(task.taskCode) ?? 'mở task gốc'}
                 </Link>
               </p>

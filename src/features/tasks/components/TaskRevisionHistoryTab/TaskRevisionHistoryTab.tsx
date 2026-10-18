@@ -40,7 +40,7 @@ export function TaskRevisionHistoryTab({ task }: TaskRevisionHistoryTabProps) {
             task.parentTaskId ? (
               <span>
                 Đây là revision của{' '}
-                <Link to={buildMyTaskDetailPath(task.parentTaskId)}>
+                <Link to={buildMyTaskDetailPath(task.parentTaskId, { from: task.id })}>
                   {parentCode ?? 'task gốc'}
                 </Link>
                 . Lịch sử đầy đủ nằm trên task gốc.

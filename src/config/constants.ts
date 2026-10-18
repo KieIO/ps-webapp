@@ -99,11 +99,14 @@ export const buildProjectTasksPath = (options?: {
 export const buildClientDetailPath = (id: string) => `/clients/${id}`;
 export const buildMyTaskDetailPath = (
   id: string,
-  options?: { tab?: 'revision' | 'evaluation' },
+  options?: { tab?: 'revision' | 'evaluation'; from?: string },
 ) => {
-  const base = `/tasks/detail/${id}`;
-  if (!options?.tab) return base;
-  return `${base}?tab=${options.tab}`;
+  const params = new URLSearchParams();
+  if (options?.tab) params.set('tab', options.tab);
+  const from = options?.from?.trim();
+  if (from && from !== id) params.set('from', from);
+  const query = params.toString();
+  return query ? `/tasks/detail/${id}?${query}` : `/tasks/detail/${id}`;
 };
 export const buildTaskEditPath = (id: string) => `/tasks/${id}/edit`;
 export const buildUserDetailPath = (id: string) => `/users/${id}`;

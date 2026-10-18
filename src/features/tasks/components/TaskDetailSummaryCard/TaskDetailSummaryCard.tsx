@@ -152,13 +152,17 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
           {revision && task.parentTaskId ? (
             <p className={styles.parentLink}>
               Revision của{' '}
-              <Link to={buildMyTaskDetailPath(task.parentTaskId)}>{parentCode ?? 'task gốc'}</Link>
+              <Link to={buildMyTaskDetailPath(task.parentTaskId, { from: task.id })}>
+                {parentCode ?? 'task gốc'}
+              </Link>
             </p>
           ) : null}
           {splitChild && task.parentTaskId ? (
             <p className={styles.parentLink}>
               Task cha:{' '}
-              <Link to={buildMyTaskDetailPath(task.parentTaskId)}>{parentCode ?? 'task gốc'}</Link>
+              <Link to={buildMyTaskDetailPath(task.parentTaskId, { from: task.id })}>
+                {parentCode ?? 'task gốc'}
+              </Link>
             </p>
           ) : null}
           {remainderId && remainderCode ? (
