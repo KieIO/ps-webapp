@@ -224,27 +224,28 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
           <p className={styles.metaValue}>{formatTaskQuantity(task)}</p>
         </div>
 
-        <div className={styles.metaItem}>
-          <p className={styles.metaLabel}>{showCreativeDeadline ? 'Deadline PM' : 'Deadline'}</p>
-          <p className={`${styles.metaValue} ${styles.deadline}`}>
-            {formatTaskDateTime(getTaskDeadline(task))}
-          </p>
-        </div>
-
-        {showCreativeDeadline ? (
+        <div className={showCreativeDeadline ? styles.metaStack : styles.metaItem}>
           <div className={styles.metaItem}>
-            <p className={styles.metaLabel}>{MY_TASK_COLUMN_HEADERS.creativeDeadline}</p>
-            <p
-              className={
-                task.creativeDeadline
-                  ? `${styles.metaValue} ${styles.deadline}`
-                  : `${styles.metaValue} ${styles.metaEmpty}`
-              }
-            >
-              {task.creativeDeadline ? formatTaskDateTime(task.creativeDeadline) : 'Chưa có'}
+            <p className={styles.metaLabel}>{showCreativeDeadline ? 'Deadline PM' : 'Deadline'}</p>
+            <p className={`${styles.metaValue} ${styles.deadline}`}>
+              {formatTaskDateTime(getTaskDeadline(task))}
             </p>
           </div>
-        ) : null}
+          {showCreativeDeadline ? (
+            <div className={styles.metaItem}>
+              <p className={styles.metaLabel}>{MY_TASK_COLUMN_HEADERS.creativeDeadline}</p>
+              <p
+                className={
+                  task.creativeDeadline
+                    ? `${styles.metaValue} ${styles.deadline}`
+                    : `${styles.metaValue} ${styles.metaEmpty}`
+                }
+              >
+                {task.creativeDeadline ? formatTaskDateTime(task.creativeDeadline) : 'Chưa có'}
+              </p>
+            </div>
+          ) : null}
+        </div>
       </div>
     </section>
   );
