@@ -23,3 +23,22 @@ export const canEditCreativeScheduleMeta = (role: Role | undefined): boolean =>
  */
 export const canEditCreativeDeadline = (role: Role | undefined): boolean =>
   role === ROLES.ADMIN || role === ROLES.PM || role === ROLES.CREATIVE_MANAGER;
+
+/** Short hint when Deadline Creative is visible but locked for this user. */
+export const CREATIVE_DEADLINE_META_EDIT_HINT = 'Chỉ Admin / Head / người tạo task được sửa.';
+
+/**
+ * Who may change Deadline Creative on an existing task (generic edit).
+ * Admin/Head always; otherwise task creator with a CD-edit role (PM / CM).
+ * CM ownership on pipeline tasks is gated separately in CreativeEditDrawer.
+ */
+export const canEditCreativeDeadlineMeta = (
+  role: Role | undefined,
+  userId: string | undefined,
+  createdById: string | null | undefined,
+): boolean => {
+  if (!role) return false;
+  if (role === ROLES.ADMIN || role === ROLES.HEAD) return true;
+  if (!userId || !createdById || userId !== createdById) return false;
+  return canEditCreativeDeadline(role);
+};

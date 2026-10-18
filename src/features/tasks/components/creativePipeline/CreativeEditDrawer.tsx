@@ -55,6 +55,7 @@ import {
 import {
   canEditCreativeDeadline,
   canEditCreativeScheduleMeta,
+  CREATIVE_DEADLINE_META_EDIT_HINT,
 } from '../../utils/creativeVisibility';
 import { getTaskDeadline } from '../../utils/taskDetail';
 import { normalizeTaskUrgencySetting, resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
@@ -850,13 +851,13 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                     label="Creative deadline"
                     className={styles.deadlineField}
                     extra={
-                      !canEditCreativeDeadline(role)
-                        ? 'Không có quyền sửa.'
-                        : !canEditCreativeDl
+                      !canEditCreativeDl
+                        ? role === ROLES.CREATIVE_MANAGER
                           ? 'CM chỉ sửa creative deadline sau khi đã giao Staff.'
-                          : canEditSchedule
-                            ? undefined
-                            : 'CM quyết deadline nội bộ.'
+                          : CREATIVE_DEADLINE_META_EDIT_HINT
+                        : canEditSchedule
+                          ? undefined
+                          : 'CM quyết deadline nội bộ.'
                     }
                   >
                     <DatePicker

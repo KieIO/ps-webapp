@@ -52,6 +52,8 @@ const cleanApiValidationMessage = (message: string): string => {
       'Chỉ đổi CM khi task đang chờ Creative Manager xử lý.',
     'chỉ Creative Head / Admin được đổi CM': 'Chỉ Creative Head / Admin được đổi CM.',
     'description is required before assigning CM': 'Cần fill brief trước khi assign CM.',
+    'chỉ Admin / Head / người tạo task được sửa creative deadline':
+      'Chỉ Admin / Head / người tạo task được sửa Deadline Creative.',
   };
   return known[trimmed] ?? trimmed;
 };

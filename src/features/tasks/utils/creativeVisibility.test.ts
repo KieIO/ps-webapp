@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ROLES } from '@/config/permissions';
 import {
   canEditCreativeDeadline,
+  canEditCreativeDeadlineMeta,
   canEditCreativeScheduleMeta,
   canViewCreativeDeadline,
 } from './creativeVisibility';
@@ -29,5 +30,15 @@ describe('creativeVisibility', () => {
     expect(canEditCreativeDeadline(ROLES.CREATIVE_MANAGER)).toBe(true);
     expect(canEditCreativeDeadline(ROLES.CREATIVE_HEAD)).toBe(false);
     expect(canEditCreativeDeadline(ROLES.EMPLOYEE)).toBe(false);
+  });
+
+  it('gates Deadline Creative meta to Admin/Head/creator', () => {
+    expect(canEditCreativeDeadlineMeta(ROLES.ADMIN, 'anyone', 'creator')).toBe(true);
+    expect(canEditCreativeDeadlineMeta(ROLES.HEAD, 'anyone', 'creator')).toBe(true);
+    expect(canEditCreativeDeadlineMeta(ROLES.PM, 'creator', 'creator')).toBe(true);
+    expect(canEditCreativeDeadlineMeta(ROLES.PM, 'other', 'creator')).toBe(false);
+    expect(canEditCreativeDeadlineMeta(ROLES.CREATIVE_MANAGER, 'creator', 'creator')).toBe(true);
+    expect(canEditCreativeDeadlineMeta(ROLES.CREATIVE_MANAGER, 'other', 'creator')).toBe(false);
+    expect(canEditCreativeDeadlineMeta(ROLES.CREATIVE_HEAD, 'creator', 'creator')).toBe(false);
   });
 });

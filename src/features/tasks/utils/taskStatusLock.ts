@@ -21,6 +21,7 @@ export const canCancelTask = (role: Role | undefined): boolean =>
 
 /**
  * Meta edit (deadline, brief, …): Admin (incl. finished/cancelled), Head, PM, or creator.
+ * Deadline Creative is narrower (Admin / Head / creator) — see canEditCreativeDeadlineMeta.
  * Non-admin roles stay locked on finished/cancelled. CH/CM use pipeline drawers.
  */
 export const canEditTaskMeta = (

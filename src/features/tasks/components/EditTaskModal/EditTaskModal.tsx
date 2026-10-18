@@ -5,6 +5,7 @@ import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import type { Role } from '@/config/permissions';
 import { ROLES } from '@/config/permissions';
 import { getDepartmentLabel } from '@/features/departments/hooks/useDepartmentOptions';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import {
   CLASSIFICATION_LEVEL_LABELS,
   CLASSIFICATION_LEVEL_OPTIONS,
@@ -17,7 +18,11 @@ import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
 import { useUpdateMyTask } from '../../hooks/useUpdateMyTask';
 import { useUpdateMyTaskPmEvaluation } from '../../hooks/useUpdateMyTaskPmEvaluation';
 import { computeTaskLevel } from '../../utils/taskLevel';
-import { canEditCreativeDeadline as canEditCreativeDeadlineRole } from '../../utils/creativeVisibility';
+import {
+  canEditCreativeDeadline as canEditCreativeDeadlineRole,
+  canEditCreativeDeadlineMeta,
+  CREATIVE_DEADLINE_META_EDIT_HINT,
+} from '../../utils/creativeVisibility';
 import {
   getEditTaskFieldsForRole,
   requiresStaffOnGenericEdit,
@@ -62,6 +67,7 @@ const hasField = (fields: Set<EditTaskField>, key: EditTaskField) => fields.has(
 
 export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTaskModalProps) {
   const [form] = Form.useForm<EditTaskFormValues>();
+  const userId = useAppSelector((state) => state.auth.user?.id);
   const { mutate: updateTask, isPending: isTaskPending } = useUpdateMyTask();
   const { mutate: updateEvaluation, isPending: isEvaluationPending } =
     useUpdateMyTaskPmEvaluation();
@@ -91,7 +97,8 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
 
   const showLevelPreview = showsTaskLevelPreview(effectiveRole);
   const showEvaluationReadOnly = showsEvaluationReadOnly(effectiveRole, canEvaluate);
-  const canEditCreativeDeadline = canEditCreativeDeadlineRole(effectiveRole);
+  const showCreativeDeadline = canEditCreativeDeadlineRole(effectiveRole);
+  const canEditCreativeDl = canEditCreativeDeadlineMeta(effectiveRole, userId, task?.createdById);
   const showClassification =
     hasField(editableFields, 'designThinking') ||
     hasField(editableFields, 'technical') ||
@@ -190,11 +197,11 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
       staffConfirmation: nextConfirmation,
       staffNote: hasField(editableFields, 'staffNote') ? (values.staffNote ?? '') : task.staffNote,
       urgency: hasField(editableFields, 'urgency') ? values.urgency : task.urgency,
-      creativeDeadline: canEditCreativeDeadline
+      creativeDeadline: canEditCreativeDl
         ? values.creativeDeadline
           ? toTaskDeadline(values.creativeDeadline)
           : undefined
-        : (task.creativeDeadline ?? undefined),
+        : undefined,
     };
 
     const saveEvaluation = showEvaluationEditable
@@ -375,10 +382,11 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
                     ) : null}
                   </div>
                 ) : null}
-                {canEditCreativeDeadline ? (
+                {showCreativeDeadline ? (
                   <Form.Item
                     name="creativeDeadline"
                     label={MY_TASK_COLUMN_HEADERS.creativeDeadline}
+                    extra={!canEditCreativeDl ? CREATIVE_DEADLINE_META_EDIT_HINT : undefined}
                   >
                     <DatePicker
                       showTime={{
@@ -387,6 +395,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
                       }}
                       format={DATETIME_SHORT_FORMAT}
                       style={{ width: '100%' }}
+                      disabled={!canEditCreativeDl}
                       showNow={false}
                     />
                   </Form.Item>

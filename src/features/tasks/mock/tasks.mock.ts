@@ -57,7 +57,11 @@ import {
   resolveCreatePipelineStage,
   resolveEffectivePipelineStage,
 } from '../utils/creativePipeline';
-import { canEditCreativeDeadline, canEditCreativeScheduleMeta } from '../utils/creativeVisibility';
+import {
+  canEditCreativeDeadline,
+  canEditCreativeDeadlineMeta,
+  canEditCreativeScheduleMeta,
+} from '../utils/creativeVisibility';
 import {
   buildEvaluationRemainderAutoNote,
   canSpawnEvaluationRemainder,
@@ -692,6 +696,13 @@ export const mockUpdateMyTask = async (
     throw new Error('You do not have permission to edit this task');
   }
   assertCanChangeCancelledStatus(current, payload.staffConfirmation, editorUserId);
+
+  if (
+    payload.creativeDeadline !== undefined &&
+    !canEditCreativeDeadlineMeta(resolveEditorRole(editorUserId), editorUserId, current.createdById)
+  ) {
+    throw new Error('chỉ Admin / Head / người tạo task được sửa creative deadline');
+  }
 
   if (current.pipelineStage === 'awaiting_ch' && current.briefOwner === 'pm') {
     if (
