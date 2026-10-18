@@ -1,9 +1,14 @@
 import { Alert, Spin, Table, Tag } from 'antd';
 import { Link } from 'react-router-dom';
 import { buildMyTaskDetailPath } from '@/config/constants';
+import { ROLES } from '@/config/permissions';
+import { usePermission } from '@/shared/hooks/usePermission';
+import { MY_TASK_COLUMN_HEADERS } from '../../constants';
 import { useCreativeSplitChildren } from '../../hooks/useCreativeSplitChildren';
 import type { MyTask } from '../../schemas/task.schema';
 import { isSplitParentTask, SPLIT_CHILD_BADGE_LABEL } from '../../utils/creativePipeline';
+import { canViewCreativeDeadline } from '../../utils/creativeVisibility';
+import { formatTaskDateTime } from '../../utils/taskDates';
 import { formatTaskQuantity } from '../../utils/taskDetail';
 import { TaskConfirmationBadge } from '../TaskConfirmationBadge/TaskConfirmationBadge';
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
@@ -14,6 +19,8 @@ interface TaskDetailSplitChildrenProps {
 }
 
 export function TaskDetailSplitChildren({ task }: TaskDetailSplitChildrenProps) {
+  const { role } = usePermission();
+  const showCreativeDeadline = canViewCreativeDeadline(role ?? ROLES.EMPLOYEE, task.department);
   const isSplitParent = isSplitParentTask(task);
   const {
     data: children = [],
@@ -84,6 +91,21 @@ export function TaskDetailSplitChildren({ task }: TaskDetailSplitChildrenProps) 
               ellipsis: true,
               render: (_: unknown, row: MyTask) => <TaskStaffNameCell staff={row.staff} />,
             },
+            ...(showCreativeDeadline
+              ? [
+                  {
+                    title: MY_TASK_COLUMN_HEADERS.creativeDeadline,
+                    key: 'creativeDeadline',
+                    width: 150,
+                    render: (_: unknown, row: MyTask) =>
+                      row.creativeDeadline ? (
+                        formatTaskDateTime(row.creativeDeadline)
+                      ) : (
+                        <span className={styles.emptyMuted}>Chưa có</span>
+                      ),
+                  },
+                ]
+              : []),
             {
               title: 'Status',
               key: 'status',

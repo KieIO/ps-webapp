@@ -1,12 +1,15 @@
 import { Alert, Tag, Tooltip } from 'antd';
 import { Link } from 'react-router-dom';
 import { buildMyTaskDetailPath } from '@/config/constants';
+import { ROLES } from '@/config/permissions';
 import { getDepartmentLabel } from '@/features/departments/hooks/useDepartmentOptions';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { ClassificationLevelBadge } from '../ClassificationLevelBadge/ClassificationLevelBadge';
 import { TaskConfirmationBadge } from '../TaskConfirmationBadge/TaskConfirmationBadge';
 import { TaskDetailActions } from '../TaskDetailActions/TaskDetailActions';
 import { TaskNameBadge } from '../TaskNameBadge/TaskNameBadge';
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
+import { MY_TASK_COLUMN_HEADERS } from '../../constants';
 import { formatTaskDateTime } from '../../utils/taskDates';
 import {
   TASK_CATEGORY_DEPARTMENT_LABELS,
@@ -22,6 +25,7 @@ import {
   SPLIT_CHILD_BADGE_LABEL,
   SPLIT_PARENT_BADGE_LABEL,
 } from '../../utils/creativePipeline';
+import { canViewCreativeDeadline } from '../../utils/creativeVisibility';
 import {
   EVALUATED_BADGE_LABEL,
   formatEvaluationAcceptedLabel,
@@ -53,6 +57,8 @@ function formatTaskDepartment(task: MyTask): string {
 }
 
 export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSummaryCardProps) {
+  const { role } = usePermission();
+  const showCreativeDeadline = canViewCreativeDeadline(role ?? ROLES.EMPLOYEE, task.department);
   const revision = isRevisionTask(task);
   const splitChild = isSplitChildTask(task);
   const splitParent = isSplitParentTask(task);
@@ -219,11 +225,26 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
         </div>
 
         <div className={styles.metaItem}>
-          <p className={styles.metaLabel}>Deadline</p>
+          <p className={styles.metaLabel}>{showCreativeDeadline ? 'Deadline PM' : 'Deadline'}</p>
           <p className={`${styles.metaValue} ${styles.deadline}`}>
             {formatTaskDateTime(getTaskDeadline(task))}
           </p>
         </div>
+
+        {showCreativeDeadline ? (
+          <div className={styles.metaItem}>
+            <p className={styles.metaLabel}>{MY_TASK_COLUMN_HEADERS.creativeDeadline}</p>
+            <p
+              className={
+                task.creativeDeadline
+                  ? `${styles.metaValue} ${styles.deadline}`
+                  : `${styles.metaValue} ${styles.metaEmpty}`
+              }
+            >
+              {task.creativeDeadline ? formatTaskDateTime(task.creativeDeadline) : 'Chưa có'}
+            </p>
+          </div>
+        ) : null}
       </div>
     </section>
   );
