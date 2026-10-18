@@ -32,11 +32,23 @@ describe('creativeVisibility', () => {
     expect(canEditCreativeDeadline(ROLES.EMPLOYEE)).toBe(false);
   });
 
-  it('gates Deadline Creative meta to Admin/Head/creator', () => {
+  it('gates Deadline Creative meta to Admin/Head/creator/project PM', () => {
     expect(canEditCreativeDeadlineMeta(ROLES.ADMIN, 'anyone', 'creator')).toBe(true);
     expect(canEditCreativeDeadlineMeta(ROLES.HEAD, 'anyone', 'creator')).toBe(true);
     expect(canEditCreativeDeadlineMeta(ROLES.PM, 'creator', 'creator')).toBe(true);
-    expect(canEditCreativeDeadlineMeta(ROLES.PM, 'other', 'creator')).toBe(false);
+    expect(
+      canEditCreativeDeadlineMeta(ROLES.PM, 'pm-1', {
+        createdById: 'someone-else',
+        projectManagerUserId: 'pm-1',
+      }),
+    ).toBe(true);
+    expect(
+      canEditCreativeDeadlineMeta(ROLES.PM, 'other', {
+        createdById: 'creator',
+        projectManagerUserId: 'pm-1',
+      }),
+    ).toBe(false);
+    expect(canEditCreativeDeadlineMeta(ROLES.PM, 'pm-1', { createdById: null })).toBe(true);
     expect(canEditCreativeDeadlineMeta(ROLES.CREATIVE_MANAGER, 'creator', 'creator')).toBe(true);
     expect(canEditCreativeDeadlineMeta(ROLES.CREATIVE_MANAGER, 'other', 'creator')).toBe(false);
     expect(canEditCreativeDeadlineMeta(ROLES.CREATIVE_HEAD, 'creator', 'creator')).toBe(false);

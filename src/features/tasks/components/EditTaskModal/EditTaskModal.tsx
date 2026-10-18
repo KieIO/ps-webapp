@@ -98,7 +98,10 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
   const showLevelPreview = showsTaskLevelPreview(effectiveRole);
   const showEvaluationReadOnly = showsEvaluationReadOnly(effectiveRole, canEvaluate);
   const showCreativeDeadline = canEditCreativeDeadlineRole(effectiveRole);
-  const canEditCreativeDl = canEditCreativeDeadlineMeta(effectiveRole, userId, task?.createdById);
+  const canEditCreativeDl = canEditCreativeDeadlineMeta(effectiveRole, userId, {
+    createdById: task?.createdById,
+    projectManagerUserId: task?.projectManager?.userId,
+  });
   const showClassification =
     hasField(editableFields, 'designThinking') ||
     hasField(editableFields, 'technical') ||

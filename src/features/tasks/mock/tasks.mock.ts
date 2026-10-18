@@ -699,9 +699,12 @@ export const mockUpdateMyTask = async (
 
   if (
     payload.creativeDeadline !== undefined &&
-    !canEditCreativeDeadlineMeta(resolveEditorRole(editorUserId), editorUserId, current.createdById)
+    !canEditCreativeDeadlineMeta(resolveEditorRole(editorUserId), editorUserId, {
+      createdById: current.createdById,
+      projectManagerUserId: current.projectManager?.userId,
+    })
   ) {
-    throw new Error('chỉ Admin / Head / người tạo task được sửa creative deadline');
+    throw new Error('chỉ Admin / Head / PM của task hoặc người tạo được sửa creative deadline');
   }
 
   if (current.pipelineStage === 'awaiting_ch' && current.briefOwner === 'pm') {
