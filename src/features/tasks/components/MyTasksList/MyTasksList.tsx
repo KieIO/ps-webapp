@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, message } from 'antd';
+import { Alert, message, Segmented } from 'antd';
 import { useSearchParams } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 import dayjs from 'dayjs';
@@ -25,7 +25,16 @@ import { shouldUseCreativePipelineEditDrawer } from '../../utils/creativePipelin
 import { canDeleteTask, canEditTaskMeta } from '../../utils/taskStatusLock';
 import { computeTaskConfirmationSummary } from '../../utils/taskConfirmationSummary';
 import { canEvaluateTaskLayer } from '../../utils/taskEvaluation';
-import { filterTasksForViewerRole } from '../../utils/taskListVisibility';
+import {
+  CM_PROJECT_TASK_SCOPE_HINTS,
+  CM_PROJECT_TASK_SCOPE_LABELS,
+  CM_PROJECT_TASK_SCOPE_PARAM,
+  countCmProjectTaskScopes,
+  filterTasksForCmProjectScope,
+  filterTasksForViewerRole,
+  parseCmProjectTaskScope,
+  type CmProjectTaskScope,
+} from '../../utils/taskListVisibility';
 import {
   parseWorkDateParam,
   shouldDefaultWorkDate,
@@ -121,6 +130,8 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
   const canDelete = canDeleteTask(role);
 
   const canEditRow = (task: MyTask) => canEditTaskMeta(task, role, userId);
+  const showCmScopeToggle = role === ROLES.CREATIVE_MANAGER && taskCategory === 'project';
+  const cmScope = parseCmProjectTaskScope(searchParams.get(CM_PROJECT_TASK_SCOPE_PARAM));
 
   const editingUsesCreativeDrawer = Boolean(
     editingTask && shouldUseCreativePipelineEditDrawer(editingTask, role, userId),
@@ -137,6 +148,24 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
       ...readUrlFilters(searchParams, taskCategory, defaultTodayEnabled),
     }));
   }, [searchParams, setSearchParams, taskCategory, defaultTodayEnabled]);
+
+  useEffect(() => {
+    if (showCmScopeToggle) return;
+    if (!searchParams.has(CM_PROJECT_TASK_SCOPE_PARAM)) return;
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete(CM_PROJECT_TASK_SCOPE_PARAM);
+    setSearchParams(nextSearchParams, { replace: true });
+  }, [showCmScopeToggle, searchParams, setSearchParams]);
+
+  const handleCmScopeChange = (nextScope: CmProjectTaskScope) => {
+    const nextSearchParams = new URLSearchParams(searchParams);
+    if (nextScope === 'received') {
+      nextSearchParams.delete(CM_PROJECT_TASK_SCOPE_PARAM);
+    } else {
+      nextSearchParams.set(CM_PROJECT_TASK_SCOPE_PARAM, nextScope);
+    }
+    setSearchParams(nextSearchParams, { replace: true });
+  };
 
   const handleFiltersChange = (nextFilters: MyTaskListFilters) => {
     setFilters(nextFilters);
@@ -197,7 +226,7 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
 
   const { data, isLoading, isError, error } = useMyTaskList(queryFilters);
 
-  const displayItems = useMemo(() => {
+  const roleFilteredItems = useMemo(() => {
     let items = filterTasksForViewerRole(data?.items ?? [], role);
     if (filters.otOnly) {
       items = items.filter((task) => Boolean(task.overtimeRequestId));
@@ -205,10 +234,22 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
     return items;
   }, [data?.items, filters.otOnly, role]);
 
+  const cmScopeCounts = useMemo(
+    () => (showCmScopeToggle ? countCmProjectTaskScopes(roleFilteredItems) : null),
+    [showCmScopeToggle, roleFilteredItems],
+  );
+
+  const displayItems = useMemo(() => {
+    if (!showCmScopeToggle) return roleFilteredItems;
+    return filterTasksForCmProjectScope(roleFilteredItems, cmScope);
+  }, [showCmScopeToggle, roleFilteredItems, cmScope]);
+
   const confirmationSummary = useMemo(
     () => computeTaskConfirmationSummary(displayItems),
     [displayItems],
   );
+
+  const tableTotal = filters.otOnly || showCmScopeToggle ? displayItems.length : (data?.total ?? 0);
   const {
     mutate: deleteTask,
     isPending: isDeleting,
@@ -286,12 +327,33 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
         />
       ) : null}
 
+      {showCmScopeToggle && cmScopeCounts ? (
+        <div className={styles.cmScopeBlock}>
+          <Segmented
+            className={styles.cmScopeToggle}
+            value={cmScope}
+            onChange={(value) => handleCmScopeChange(value as CmProjectTaskScope)}
+            options={[
+              {
+                label: `${CM_PROJECT_TASK_SCOPE_LABELS.received} (${cmScopeCounts.received})`,
+                value: 'received',
+              },
+              {
+                label: `${CM_PROJECT_TASK_SCOPE_LABELS.staff} (${cmScopeCounts.staff})`,
+                value: 'staff',
+              },
+            ]}
+          />
+          <p className={styles.cmScopeHint}>{CM_PROJECT_TASK_SCOPE_HINTS[cmScope]}</p>
+        </div>
+      ) : null}
+
       <TaskConfirmationSummaryBar summary={confirmationSummary} />
 
       <MyTaskTable
         tasks={displayItems}
         loading={isLoading}
-        total={filters.otOnly ? displayItems.length : (data?.total ?? 0)}
+        total={tableTotal}
         onEdit={setEditingTask}
         canEditTask={canEditRow}
         onAssign={setAssigningTask}
