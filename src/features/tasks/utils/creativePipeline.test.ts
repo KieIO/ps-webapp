@@ -8,6 +8,7 @@ import {
   canChRefuseCreativeHandoff,
   canCmRefuseCreativeAssignment,
   canEditCreativePipelineTask,
+  canOpenCreativePipelineEdit,
   canReassignCreativeManager,
   canReassignCreativeStaff,
   canRehandCreativeToCH,
@@ -448,6 +449,12 @@ describe('creativePipeline helpers', () => {
     expect(canEditCreativePipelineTask(assigned, ROLES.CREATIVE_MANAGER, 'other')).toBe(false);
     expect(shouldUseCreativePipelineEditDrawer(assigned, ROLES.PM, 'other-pm')).toBe(false);
     expect(shouldUseCreativePipelineEditDrawer(assigned, ROLES.PM, 'pm-1')).toBe(true);
+    // Finished: still open drawer (read-only), but writes stay locked for non-admin.
+    const finished = { ...assigned, staffConfirmation: 'finished' as const };
+    expect(canEditCreativePipelineTask(finished, ROLES.PM, 'pm-1')).toBe(false);
+    expect(canOpenCreativePipelineEdit(finished, ROLES.PM, 'pm-1')).toBe(true);
+    expect(shouldUseCreativePipelineEditDrawer(finished, ROLES.PM, 'pm-1')).toBe(true);
+    expect(canEditCreativePipelineTask(finished, ROLES.ADMIN, 'admin')).toBe(true);
     expect(
       shouldUseCreativePipelineEditDrawer(
         {

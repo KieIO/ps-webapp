@@ -30,6 +30,7 @@ import type { MyTask } from '../../schemas/task.schema';
 import {
   canChRefuseCreativeHandoff,
   canCmRefuseCreativeAssignment,
+  canOpenCreativePipelineEdit,
   canProcessChQueue,
   canProcessCmQueue,
   canStaffConfirmOrDeclineCreative,
@@ -47,7 +48,12 @@ import {
   PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION,
   REQUEST_REVISION_BLOCK_MESSAGES,
 } from '../../utils/taskRevision';
-import { canChangeTaskStatus, canDeleteTask, canEditTaskMeta } from '../../utils/taskStatusLock';
+import {
+  canChangeTaskStatus,
+  canDeleteTask,
+  canEditTaskMeta,
+  canOpenTaskMetaEdit,
+} from '../../utils/taskStatusLock';
 import styles from './TaskDetailActions.module.scss';
 
 interface TaskDetailActionsProps {
@@ -61,6 +67,8 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
   const userId = useAppSelector((state) => state.auth.user?.id);
   const canEvaluate = can('EVALUATE_TASK') && canEvaluateTaskLayer(role, task);
   const canEdit = canEditTaskMeta(task, role, userId);
+  const canOpenEdit =
+    canOpenTaskMetaEdit(task, role, userId) || canOpenCreativePipelineEdit(task, role, userId);
   const canDelete = canDeleteTask(role);
   const updateStatus = useUpdateMyTaskStatus();
   const isAssignee = Boolean(userId && task.staff.some((member) => member.userId === userId));
@@ -203,7 +211,8 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
 
   const useCreativeEditDrawer = shouldUseCreativePipelineEditDrawer(task, role, userId);
   /** Hide duplicate Edit when primary CTA already opens CreativeEditDrawer. */
-  const showGenericEditButton = canEdit && pipelineAction?.action !== 'edit';
+  const showGenericEditButton = canOpenEdit && pipelineAction?.action !== 'edit';
+  const editReadOnly = canOpenEdit && !canEdit;
 
   const openAssignCm = pipelineOpen && pipelineAction?.action === 'assign_cm';
   const openAssignStaff = pipelineOpen && pipelineAction?.action === 'assign_staff';
@@ -391,15 +400,21 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
         ) : null}
       </div>
 
-      {canEdit && role === ROLES.HEAD ? (
-        <EditHeadTaskModal open={editOpen} task={task} onClose={handleCloseEdit} />
+      {canOpenEdit && role === ROLES.HEAD ? (
+        <EditHeadTaskModal
+          open={editOpen}
+          task={task}
+          readOnly={editReadOnly}
+          onClose={handleCloseEdit}
+        />
       ) : null}
-      {canEdit && role !== ROLES.HEAD && !useCreativeEditDrawer ? (
+      {canOpenEdit && role !== ROLES.HEAD && !useCreativeEditDrawer ? (
         <EditTaskModal
           open={editOpen}
           task={task}
           role={role ?? ROLES.EMPLOYEE}
           canEvaluate={canEvaluate}
+          readOnly={editReadOnly}
           onClose={handleCloseEdit}
         />
       ) : null}

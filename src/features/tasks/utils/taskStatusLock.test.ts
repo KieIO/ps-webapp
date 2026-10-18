@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { ROLES } from '@/config/permissions';
-import { canCancelTask, canDeleteTask, canEditTask, canEditTaskMeta } from './taskStatusLock';
+import {
+  canCancelTask,
+  canDeleteTask,
+  canEditTask,
+  canEditTaskMeta,
+  canOpenTaskMetaEdit,
+  TASK_META_EDIT_STATUS_LOCKED_MESSAGE,
+} from './taskStatusLock';
 
 describe('canEditTaskMeta', () => {
   const base = {
@@ -30,6 +37,27 @@ describe('canEditTaskMeta', () => {
   it('allows creator CH when not Admin/Head/PM', () => {
     expect(canEditTaskMeta(base, ROLES.CREATIVE_HEAD, 'usr-creator')).toBe(true);
     expect(canEditTaskMeta(base, ROLES.CREATIVE_HEAD, 'other')).toBe(false);
+  });
+});
+
+describe('canOpenTaskMetaEdit', () => {
+  const base = {
+    staffConfirmation: 'confirmed' as const,
+    createdById: 'usr-creator',
+  };
+
+  it('still opens for PM/Head/creator when finished (read-only)', () => {
+    const finished = { ...base, staffConfirmation: 'finished' as const };
+    expect(canOpenTaskMetaEdit(finished, ROLES.PM, 'other')).toBe(true);
+    expect(canOpenTaskMetaEdit(finished, ROLES.HEAD, 'anyone')).toBe(true);
+    expect(canOpenTaskMetaEdit(finished, ROLES.CREATIVE_HEAD, 'usr-creator')).toBe(true);
+    expect(canOpenTaskMetaEdit(finished, ROLES.CREATIVE_HEAD, 'other')).toBe(false);
+    expect(canOpenTaskMetaEdit(finished, ROLES.EMPLOYEE, 'usr-creator')).toBe(true);
+  });
+
+  it('describes status lock for banners', () => {
+    expect(TASK_META_EDIT_STATUS_LOCKED_MESSAGE('finished')).toContain('Hoàn thành');
+    expect(TASK_META_EDIT_STATUS_LOCKED_MESSAGE('cancelled')).toContain('Hủy');
   });
 });
 

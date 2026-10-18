@@ -300,17 +300,20 @@ export const isEditableCreativePipelineStage = (task: MyTask): boolean => {
   return stage === 'awaiting_cm' || stage === 'assigned_staff' || stage === 'split';
 };
 
-export const canEditCreativePipelineTask = (
+/**
+ * Who may open CreativeEditDrawer (including read-only when finished/cancelled).
+ * Write access still goes through canEditCreativePipelineTask.
+ */
+export const canOpenCreativePipelineEdit = (
   task: MyTask,
   role: Role | undefined,
   userId: string | undefined,
 ): boolean => {
   if (!canEditCreativePipelineRole(role) || !isEditableCreativePipelineStage(task)) return false;
-  // Admin break-glass: edit even when finished/cancelled.
+  // Admin break-glass.
   if (role === ROLES.ADMIN) return true;
-  if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
 
-  // Head / creator / project PM: full meta edit after assign/confirm.
+  // Head / creator / project PM: full meta after assign/confirm.
   if (role === ROLES.HEAD) return true;
   if (userId && task.createdById && userId === task.createdById) return true;
   if (
@@ -337,15 +340,28 @@ export const canEditCreativePipelineTask = (
   return false;
 };
 
+export const canEditCreativePipelineTask = (
+  task: MyTask,
+  role: Role | undefined,
+  userId: string | undefined,
+): boolean => {
+  if (!canOpenCreativePipelineEdit(task, role, userId)) return false;
+  // Admin break-glass: edit even when finished/cancelled.
+  if (role === ROLES.ADMIN) return true;
+  if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
+  return true;
+};
+
 /**
  * Prefer CreativeEditDrawer over generic EditTaskModal for in-pipeline creative tasks
  * (awaiting_cm / assigned_staff / split) so deadline edits do not force Staff re-select.
+ * Includes finished/cancelled so Edit still opens in read-only.
  */
 export const shouldUseCreativePipelineEditDrawer = (
   task: MyTask,
   role: Role | undefined,
   userId: string | undefined,
-): boolean => canEditCreativePipelineTask(task, role, userId);
+): boolean => canOpenCreativePipelineEdit(task, role, userId);
 
 export const canReassignCreativeStaff = (task: MyTask, role: Role | undefined): boolean =>
   resolveEffectivePipelineStage(task) === 'assigned_staff' && canEditCreativePipelineRole(role);

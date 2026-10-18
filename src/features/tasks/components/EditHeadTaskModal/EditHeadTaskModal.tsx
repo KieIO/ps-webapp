@@ -36,7 +36,9 @@ import {
   canChangeTaskStatus,
   confirmCancelTask,
   getTaskStatusOptionsForRole,
+  isTaskMetaEditLockedByStatus,
   isTransitioningToCancelled,
+  TASK_META_EDIT_STATUS_LOCKED_MESSAGE,
   TASK_STATUS_LOCKED_MESSAGE,
 } from '../../utils/taskStatusLock';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
@@ -45,6 +47,8 @@ import styles from '../EditTaskModal/EditTaskModal.module.scss';
 interface EditHeadTaskModalProps {
   open: boolean;
   task: MyTask | null;
+  /** Finished/cancelled: fields disabled, no save. */
+  readOnly?: boolean;
   onClose: () => void;
 }
 
@@ -67,13 +71,25 @@ type HeadTaskFormValues = {
   urgency: ProjectUrgency;
 };
 
-export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProps) {
+export function EditHeadTaskModal({
+  open,
+  task,
+  readOnly = false,
+  onClose,
+}: EditHeadTaskModalProps) {
   const [form] = Form.useForm<HeadTaskFormValues>();
   const { role } = usePermission();
   const { mutateAsync: updateProjectAsync, isPending: isProjectPending } = useUpdateProject();
   const { mutateAsync: updateHeadTaskAsync, isPending: isTaskPending } = useUpdateHeadMyTask();
   const { mutateAsync: updateTaskAsync, isPending: isTaskUrgencyPending } = useUpdateMyTask();
   const { data: linkedProject } = useProject(task?.projectId ?? '');
+
+  const statusLockedBanner =
+    readOnly && task && isTaskMetaEditLockedByStatus(task.staffConfirmation)
+      ? TASK_META_EDIT_STATUS_LOCKED_MESSAGE(task.staffConfirmation)
+      : readOnly
+        ? 'Bạn chỉ có thể xem task này.'
+        : null;
 
   const saveViaProject =
     task?.taskCategory === 'project' && task.projectId != null && linkedProject != null;
@@ -120,7 +136,7 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
   };
 
   const handleFinish = async (values: HeadTaskFormValues) => {
-    if (!task) return;
+    if (!task || readOnly) return;
 
     if (!canChangeTaskStatus(task, role) && values.staffConfirmation !== task.staffConfirmation) {
       return;
@@ -250,16 +266,27 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
 
   return (
     <Modal
-      title={task ? `Edit task — ${task.taskCode}` : 'Edit task'}
+      title={
+        task
+          ? `${readOnly ? 'Xem task' : 'Edit task'} — ${task.taskCode}`
+          : readOnly
+            ? 'Xem task'
+            : 'Edit task'
+      }
       open={open}
       onCancel={handleClose}
-      onOk={() => form.submit()}
+      onOk={readOnly ? undefined : () => form.submit()}
       okText="Save changes"
+      okButtonProps={readOnly ? { style: { display: 'none' } } : undefined}
+      cancelText={readOnly ? 'Đóng' : 'Cancel'}
       confirmLoading={isProjectPending || isTaskPending || isTaskUrgencyPending}
       destroyOnHidden
       width={720}
       styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
     >
+      {statusLockedBanner ? (
+        <Alert type="warning" showIcon message={statusLockedBanner} style={{ marginBottom: 16 }} />
+      ) : null}
       {task && (
         <div className={styles.contextCard}>
           <div className={styles.contextItem}>
@@ -288,7 +315,7 @@ export function EditHeadTaskModal({ open, task, onClose }: EditHeadTaskModalProp
         layout="vertical"
         onFinish={handleFinish}
         requiredMark={false}
-        disabled={!task}
+        disabled={!task || readOnly}
       >
         <section className={styles.section}>
           <p className={styles.sectionTitle}>Schedule</p>

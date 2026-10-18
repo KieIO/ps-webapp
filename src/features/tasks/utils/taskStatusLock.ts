@@ -15,9 +15,30 @@ export const isCancelledTask = (task: Pick<MyTask, 'staffConfirmation'>): boolea
 export const isTaskMetaEditLockedByStatus = (status: TaskConfirmationStatus | undefined): boolean =>
   status === 'finished' || status === 'cancelled';
 
+/** Banner when opening Edit on a finished/cancelled task (read-only). */
+export const TASK_META_EDIT_STATUS_LOCKED_MESSAGE = (status: TaskConfirmationStatus): string =>
+  status === 'cancelled'
+    ? 'Task đã Hủy — không thể chỉnh sửa.'
+    : 'Task đã Hoàn thành — không thể chỉnh sửa.';
+
 /** Employees cannot set a task to cancelled; PM+ (and Head/Admin) can. */
 export const canCancelTask = (role: Role | undefined): boolean =>
   role != null && role !== ROLES.EMPLOYEE;
+
+/**
+ * Who may open the Edit UI (including read-only on finished/cancelled).
+ * Write access still goes through canEditTaskMeta.
+ */
+export const canOpenTaskMetaEdit = (
+  task: Pick<MyTask, 'staffConfirmation' | 'createdById'> | null | undefined,
+  role: Role | undefined,
+  userId: string | undefined,
+): boolean => {
+  if (!role || !task) return false;
+  if (role === ROLES.ADMIN || role === ROLES.HEAD || role === ROLES.PM) return true;
+  if (userId && task.createdById && userId === task.createdById) return true;
+  return false;
+};
 
 /**
  * Meta edit (deadline, brief, …): Admin (incl. finished/cancelled), Head, PM, or creator.
@@ -29,12 +50,10 @@ export const canEditTaskMeta = (
   role: Role | undefined,
   userId: string | undefined,
 ): boolean => {
-  if (!role || !task) return false;
+  if (!canOpenTaskMetaEdit(task, role, userId)) return false;
   if (role === ROLES.ADMIN) return true;
-  if (isTaskMetaEditLockedByStatus(task.staffConfirmation)) return false;
-  if (role === ROLES.HEAD || role === ROLES.PM) return true;
-  if (userId && task.createdById && userId === task.createdById) return true;
-  return false;
+  if (!task || isTaskMetaEditLockedByStatus(task.staffConfirmation)) return false;
+  return true;
 };
 
 /** @deprecated Prefer canEditTaskMeta(task, role, userId). Role-only check kept for delete gating. */

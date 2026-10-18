@@ -58,6 +58,10 @@ import {
   CREATIVE_DEADLINE_META_EDIT_HINT,
 } from '../../utils/creativeVisibility';
 import { getTaskDeadline } from '../../utils/taskDetail';
+import {
+  isTaskMetaEditLockedByStatus,
+  TASK_META_EDIT_STATUS_LOCKED_MESSAGE,
+} from '../../utils/taskStatusLock';
 import { normalizeTaskUrgencySetting, resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { ClassificationScale } from '../CreateTaskDrawer/ClassificationScale';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
@@ -119,6 +123,13 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   } = useAssignPickerCapacity(task, open, capacityDeadlineOverride);
 
   const canEdit = Boolean(task && canEditCreativePipelineTask(task, role, userId));
+  const statusLocked = Boolean(
+    task && isTaskMetaEditLockedByStatus(task.staffConfirmation) && role !== ROLES.ADMIN,
+  );
+  const readOnlyMessage =
+    statusLocked && task
+      ? TASK_META_EDIT_STATUS_LOCKED_MESSAGE(task.staffConfirmation)
+      : 'Bạn chỉ có thể xem task này.';
   const isCreator = Boolean(userId && task?.createdById && userId === task.createdById);
   const canEditSchedule =
     canEdit && (canEditCreativeScheduleMeta(role) || isCreator || role === ROLES.HEAD);
@@ -503,7 +514,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
 
   return (
     <Drawer
-      title="Sửa / Đổi giao task Creative"
+      title={canEdit ? 'Sửa / Đổi giao task Creative' : 'Xem task Creative'}
       open={open}
       onClose={handleCloseRequest}
       width={520}
@@ -573,9 +584,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
             </div>
           </div>
 
-          {!canEdit ? (
-            <Alert type="warning" showIcon message="Bạn chỉ có thể xem task này." />
-          ) : null}
+          {!canEdit ? <Alert type="warning" showIcon message={readOnlyMessage} /> : null}
 
           <Form
             form={form}

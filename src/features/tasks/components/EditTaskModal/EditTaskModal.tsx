@@ -39,7 +39,9 @@ import {
   canChangeTaskStatus,
   confirmCancelTask,
   getTaskStatusOptionsForRole,
+  isTaskMetaEditLockedByStatus,
   isTransitioningToCancelled,
+  TASK_META_EDIT_STATUS_LOCKED_MESSAGE,
   TASK_STATUS_LOCKED_MESSAGE,
 } from '../../utils/taskStatusLock';
 import type { ClassificationLevel, MyTask, UpdateMyTaskRequest } from '../../schemas/task.schema';
@@ -51,6 +53,8 @@ interface EditTaskModalProps {
   task: MyTask | null;
   role: Role;
   canEvaluate: boolean;
+  /** Finished/cancelled (non-admin): fields disabled, no save. */
+  readOnly?: boolean;
   onClose: () => void;
 }
 
@@ -65,7 +69,14 @@ type EditTaskFormValues = Omit<UpdateMyTaskRequest, 'date' | 'staff' | 'creative
 
 const hasField = (fields: Set<EditTaskField>, key: EditTaskField) => fields.has(key);
 
-export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTaskModalProps) {
+export function EditTaskModal({
+  open,
+  task,
+  role,
+  canEvaluate,
+  readOnly = false,
+  onClose,
+}: EditTaskModalProps) {
   const [form] = Form.useForm<EditTaskFormValues>();
   const userId = useAppSelector((state) => state.auth.user?.id);
   const { mutate: updateTask, isPending: isTaskPending } = useUpdateMyTask();
@@ -73,6 +84,12 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
     useUpdateMyTaskPmEvaluation();
 
   const effectiveRole = role ?? ROLES.EMPLOYEE;
+  const statusLockedBanner =
+    readOnly && task && isTaskMetaEditLockedByStatus(task.staffConfirmation)
+      ? TASK_META_EDIT_STATUS_LOCKED_MESSAGE(task.staffConfirmation)
+      : readOnly
+        ? 'Bạn chỉ có thể xem task này.'
+        : null;
   const editableFields = useMemo(
     () => getEditTaskFieldsForRole(effectiveRole, canEvaluate),
     [effectiveRole, canEvaluate],
@@ -149,7 +166,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
   };
 
   const handleFinish = async (values: EditTaskFormValues) => {
-    if (!task) return;
+    if (!task || readOnly) return;
 
     const nextConfirmation = hasField(editableFields, 'confirmation')
       ? values.staffConfirmation
@@ -249,16 +266,27 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
 
   return (
     <Modal
-      title={task ? `Edit task — ${task.taskCode}` : 'Edit task'}
+      title={
+        task
+          ? `${readOnly ? 'Xem task' : 'Edit task'} — ${task.taskCode}`
+          : readOnly
+            ? 'Xem task'
+            : 'Edit task'
+      }
       open={open}
       onCancel={handleClose}
-      onOk={() => form.submit()}
+      onOk={readOnly ? undefined : () => form.submit()}
       okText="Save changes"
+      okButtonProps={readOnly ? { style: { display: 'none' } } : undefined}
+      cancelText={readOnly ? 'Đóng' : 'Cancel'}
       confirmLoading={isTaskPending || isEvaluationPending}
       destroyOnHidden
       width={720}
       styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
     >
+      {statusLockedBanner ? (
+        <Alert type="warning" showIcon message={statusLockedBanner} style={{ marginBottom: 16 }} />
+      ) : null}
       {task && (
         <>
           <div className={styles.contextCard}>
@@ -316,7 +344,7 @@ export function EditTaskModal({ open, task, role, canEvaluate, onClose }: EditTa
         layout="vertical"
         onFinish={handleFinish}
         requiredMark={false}
-        disabled={!task}
+        disabled={!task || readOnly}
       >
         {hasField(editableFields, 'description') ||
         hasField(editableFields, 'taskName') ||
