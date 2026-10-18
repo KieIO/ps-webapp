@@ -449,6 +449,17 @@ describe('creativePipeline helpers', () => {
     expect(shouldUseCreativePipelineEditDrawer(assigned, ROLES.PM, 'other-pm')).toBe(false);
     expect(shouldUseCreativePipelineEditDrawer(assigned, ROLES.PM, 'pm-1')).toBe(true);
     expect(
+      shouldUseCreativePipelineEditDrawer(
+        {
+          ...assigned,
+          createdById: 'someone-else',
+          projectManager: { code: 'PM', name: 'Long', userId: 'project-pm' },
+        },
+        ROLES.PM,
+        'project-pm',
+      ),
+    ).toBe(true);
+    expect(
       shouldUseCreativePipelineEditDrawer(task({ pipelineStage: 'awaiting_ch' }), ROLES.PM, 'pm-1'),
     ).toBe(false);
     expect(canReassignCreativeStaff(assigned, ROLES.CREATIVE_HEAD)).toBe(true);

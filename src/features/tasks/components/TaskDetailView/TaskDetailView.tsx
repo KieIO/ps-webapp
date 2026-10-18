@@ -6,6 +6,7 @@ import { DATE_FORMAT } from '@/config/constants';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
 import { useOvertimeDetail } from '@/features/overtime/hooks/useOvertime';
 import { TaskDetailHistoryPanel } from '../TaskDetailHistoryPanel/TaskDetailHistoryPanel';
+import { TaskDetailSplitChildren } from '../TaskDetailSplitChildren/TaskDetailSplitChildren';
 import { TaskDetailSummaryCard } from '../TaskDetailSummaryCard/TaskDetailSummaryCard';
 import { TaskRevisionHistoryTab } from '../TaskRevisionHistoryTab/TaskRevisionHistoryTab';
 import { useMyTask } from '../../hooks/useMyTask';
@@ -136,6 +137,8 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
                     <p className={styles.sectionTitle}>Attachments</p>
                     <div className={styles.emptyBlock}>No attachments for this task.</div>
+
+                    <TaskDetailSplitChildren task={task} />
                   </>
                 ),
               },

@@ -310,9 +310,17 @@ export const canEditCreativePipelineTask = (
   if (role === ROLES.ADMIN) return true;
   if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
 
-  // Head / creator: full meta edit after assign/confirm.
+  // Head / creator / project PM: full meta edit after assign/confirm.
   if (role === ROLES.HEAD) return true;
   if (userId && task.createdById && userId === task.createdById) return true;
+  if (
+    role === ROLES.PM &&
+    userId &&
+    task.projectManager?.userId &&
+    userId === task.projectManager.userId
+  ) {
+    return true;
+  }
 
   // CM: operational edits on owned tasks (Staff / creative deadline).
   if (role === ROLES.CREATIVE_MANAGER) {
@@ -325,7 +333,7 @@ export const canEditCreativePipelineTask = (
     return resolveEffectivePipelineStage(task) === 'awaiting_cm';
   }
 
-  // PM who did not create: no meta edit (assign drawers stay role-based).
+  // Other PMs (not creator / not project PM): no pipeline meta edit.
   return false;
 };
 
