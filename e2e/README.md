@@ -57,6 +57,9 @@ npm run test:e2e:capacity
 # Leave smoke (multi-period + login/auto-Active/tracker weekends)
 npm run test:e2e:leave
 
+# Milestone tracker UI smoke (MS-03/05/09/11/19)
+npm run test:e2e:milestones
+
 # Headed / UI mode
 npm run test:e2e:headed
 npm run test:e2e:ui
@@ -88,10 +91,11 @@ e2e/
   clients/            # Client-mgmt UI cases (CLIENT-41, 42, 43, …)
   task-scores/        # Task types & scores UI cases (TSCORE-39, 40, …)
   capacity-formula/        # Capacity formula UI cases (CAP-27–30)
+  milestones/              # Tracker milestone UI cases (MS-03/05/09/11/19)
   README.md
 ```
 
-Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, and department specs under `e2e/departments/`; reuse `loginAs` / sidebar helpers.
+Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, department specs under `e2e/departments/`, and milestone specs under `e2e/milestones/`; reuse `loginAs` / sidebar helpers.
 
 ## Covered smoke (proof harness)
 
