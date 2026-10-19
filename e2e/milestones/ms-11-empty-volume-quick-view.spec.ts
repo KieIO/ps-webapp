@@ -1,18 +1,27 @@
 import { test, expect } from '../fixtures/auth';
-import { createEmptyVolumeMilestone, loginAndOpenTracker, milestoneMarker } from './helpers';
+import {
+  clearMilestoneProjectViaApi,
+  createEmptyVolumeMilestone,
+  loginAndOpenTracker,
+  milestoneMarker,
+} from './helpers';
 
 /**
  * MS-11 (UI) — Non-DA/Slides quick view shows `Tên mốc - Ghi chú`.
  * API: TestMilestone_MS11_EmptyVolumeOK in ps-be.
  */
 test.describe('MS-11 Empty-volume quick view', () => {
+  test.beforeEach(async () => {
+    await clearMilestoneProjectViaApi();
+  });
+
   test('hover popover shows name - note without khối lượng line', async ({ page }) => {
     const stamp = Date.now();
     const name = `E2E Kickoff ${stamp}`;
     const note = `Họp nội bộ ${stamp}`;
 
     await loginAndOpenTracker(page, 'admin');
-    await createEmptyVolumeMilestone(page, { name, note });
+    await createEmptyVolumeMilestone(page, { name, note, dayOffset: 3 });
 
     const marker = milestoneMarker(page, name);
     await marker.hover();
