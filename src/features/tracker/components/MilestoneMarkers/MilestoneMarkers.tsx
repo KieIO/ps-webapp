@@ -2,7 +2,12 @@ import { Popover } from 'antd';
 import classNames from 'classnames';
 import { useState } from 'react';
 import type { ProjectMilestone } from '@/features/projects/schemas/milestone.schema';
-import { formatMilestoneQuantity, groupMilestonesByDate } from '../../utils/milestoneMarkers';
+import {
+  formatMilestoneNameNote,
+  formatMilestoneQuantity,
+  groupMilestonesByDate,
+  isMilestoneGroupCompleted,
+} from '../../utils/milestoneMarkers';
 import { getDayIndex } from '../../utils/calendar';
 import type { CalendarDay } from '../../types';
 import { getBlockTop } from '../../utils/blockLanes';
@@ -42,28 +47,34 @@ export function MilestoneMarkers({
         if (dayIndex < 0) return null;
 
         const count = group.milestones.length;
+        const completed = isMilestoneGroupCompleted(group.milestones);
         const content = (
           <div className={styles.milestonePopover}>
-            {group.milestones.map((milestone) => (
-              <div key={milestone.id} className={styles.milestonePopoverItem}>
-                <div className={styles.milestonePopoverName}>{milestone.name}</div>
-                <div>Khối lượng: {formatMilestoneQuantity(milestone)}</div>
-                <div>Hạn nộp: {group.dateKey.split('-').reverse().join('/')}</div>
-                {milestone.note ? <div>Ghi chú: {milestone.note}</div> : null}
-                {canManage ? (
-                  <button
-                    type="button"
-                    className={styles.milestonePopoverEdit}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openEdit(milestone);
-                    }}
-                  >
-                    Sửa
-                  </button>
-                ) : null}
-              </div>
-            ))}
+            {group.milestones.map((milestone) => {
+              const quantityLabel = formatMilestoneQuantity(milestone);
+              return (
+                <div key={milestone.id} className={styles.milestonePopoverItem}>
+                  <div className={styles.milestonePopoverName}>
+                    {quantityLabel ? milestone.name : formatMilestoneNameNote(milestone)}
+                  </div>
+                  {quantityLabel ? <div>Khối lượng: {quantityLabel}</div> : null}
+                  <div>Hạn nộp: {group.dateKey.split('-').reverse().join('/')}</div>
+                  {quantityLabel && milestone.note ? <div>Ghi chú: {milestone.note}</div> : null}
+                  {canManage ? (
+                    <button
+                      type="button"
+                      className={styles.milestonePopoverEdit}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openEdit(milestone);
+                      }}
+                    >
+                      Sửa
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         );
 
@@ -81,7 +92,9 @@ export function MilestoneMarkers({
             <button
               type="button"
               className={classNames(styles.milestoneDot, {
+                [styles.milestoneDotCompleted]: completed,
                 [styles.milestoneDotStacked]: count > 1,
+                [styles.milestoneDotInteractive]: canManage,
               })}
               style={{
                 left: dayIndex * dayWidth + dayWidth / 2,

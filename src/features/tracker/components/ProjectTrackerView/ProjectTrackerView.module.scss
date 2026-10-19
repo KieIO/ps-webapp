@@ -953,6 +953,15 @@ $row-alt: #f9fafb;
   }
 }
 
+.milestoneDotCompleted {
+  background: #16a34a;
+  box-shadow: 0 0 0 1px rgb(20 83 45 / 25%);
+}
+
+.milestoneDotInteractive {
+  cursor: pointer;
+}
+
 .milestoneDotStacked {
   cursor: pointer;
 }
@@ -971,6 +980,10 @@ $row-alt: #f9fafb;
   font-weight: 700;
   line-height: 14px;
   text-align: center;
+}
+
+.milestoneDotCompleted .milestoneDotBadge {
+  background: #14532d;
 }
 
 .milestonePopover {
@@ -1017,5 +1030,15 @@ $row-alt: #f9fafb;
   background: #dc2626;
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px #fecaca;
+  flex-shrink: 0;
+}
+
+.legendMilestoneDotCompleted {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #16a34a;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #bbf7d0;
   flex-shrink: 0;
 }

@@ -28,14 +28,20 @@ const normalizeStoredMilestones = (
   if (!check.ok) {
     throw new Error(check.message);
   }
-  return list.map((item) => ({
-    id: item.id?.trim() || `ms-${crypto.randomUUID().slice(0, 8)}`,
-    name: item.name.trim(),
-    deadlineDate: toMilestoneDateKey(item.deadlineDate),
-    quantity: item.quantity,
-    unit: item.unit,
-    note: item.note?.trim() ?? '',
-  }));
+  return list.map((item) => {
+    const unit = item.unit === 'slides' || item.unit === 'da' ? item.unit : '';
+    const completed = Boolean(item.completed);
+    return {
+      id: item.id?.trim() || `ms-${crypto.randomUUID().slice(0, 8)}`,
+      name: item.name.trim(),
+      deadlineDate: toMilestoneDateKey(item.deadlineDate),
+      quantity: unit ? (item.quantity ?? null) : null,
+      unit,
+      note: item.note?.trim() ?? '',
+      completed,
+      completedAt: completed ? new Date().toISOString() : undefined,
+    };
+  });
 };
 
 const codeFromEmail = (email: string): string => {

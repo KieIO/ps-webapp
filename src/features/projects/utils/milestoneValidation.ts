@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import type { MilestoneUnit, ProjectMilestoneInput } from '../schemas/milestone.schema';
+import { type MilestoneUnit, type ProjectMilestoneInput } from '../schemas/milestone.schema';
 
 export type MilestoneValidationContext = {
   startDate: string;
@@ -15,11 +15,16 @@ const toDay = (value: string) => dayjs(value).startOf('day');
 export const sumMilestoneQuantityByUnit = (
   milestones: readonly Pick<ProjectMilestoneInput, 'quantity' | 'unit'>[],
   unit: MilestoneUnit,
-): number => milestones.reduce((sum, item) => (item.unit === unit ? sum + item.quantity : sum), 0);
+): number =>
+  milestones.reduce((sum, item) => {
+    if (item.unit !== unit || item.quantity == null) return sum;
+    return sum + item.quantity;
+  }, 0);
 
 /**
  * Hard rules:
  * - deadline must fall within [startDate, endDate] (inclusive, by calendar day)
+ * - volume: unit slides|da requires quantity > 0; empty unit allows null quantity
  * - when totalSlides > 0, sum of slides milestones must be ≤ totalSlides
  */
 export const validateMilestones = (
@@ -38,9 +43,22 @@ export const validateMilestones = (
     if (!name) {
       return { ok: false, message: 'Tên mốc là bắt buộc' };
     }
-    if (!milestone.quantity || milestone.quantity <= 0) {
-      return { ok: false, message: `Mốc "${name}": khối lượng phải lớn hơn 0` };
+
+    const unit = milestone.unit ?? '';
+    if (unit !== '' && unit !== 'slides' && unit !== 'da') {
+      return {
+        ok: false,
+        message: `Mốc "${name}": đơn vị phải là Slides, DA hoặc trống`,
+      };
     }
+    if (unit === 'slides' || unit === 'da') {
+      if (milestone.quantity == null || milestone.quantity <= 0) {
+        return { ok: false, message: `Mốc "${name}": khối lượng phải lớn hơn 0` };
+      }
+    } else if (milestone.quantity != null && milestone.quantity < 0) {
+      return { ok: false, message: `Mốc "${name}": khối lượng không được âm` };
+    }
+
     const deadline = toDay(milestone.deadlineDate);
     if (!deadline.isValid()) {
       return { ok: false, message: `Mốc "${name}": ngày deadline không hợp lệ` };
@@ -71,3 +89,29 @@ export const toMilestoneDateKey = (value: string): string => {
   const parsed = dayjs(value);
   return parsed.isValid() ? parsed.format('YYYY-MM-DD') : value.slice(0, 10);
 };
+
+/**
+ * Map UI milestones to replace-all / project-save payload (BE contract).
+ * - `quantity: number | null`
+ * - `unit: "slides" | "da" | ""`
+ * - `completed: boolean`
+ * Keeps `id` when present (BE hard-deletes before insert).
+ */
+export const toReplaceMilestonePayload = (
+  milestones: readonly ProjectMilestoneInput[],
+): ProjectMilestoneInput[] =>
+  milestones.map((item) => {
+    const unit = item.unit === 'slides' || item.unit === 'da' ? item.unit : '';
+    const payload: ProjectMilestoneInput = {
+      name: item.name.trim(),
+      deadlineDate: toMilestoneDateKey(item.deadlineDate),
+      quantity: unit ? (item.quantity ?? null) : null,
+      unit,
+      note: item.note?.trim() ?? '',
+      completed: Boolean(item.completed),
+    };
+    if (item.id?.trim()) {
+      payload.id = item.id.trim();
+    }
+    return payload;
+  });
