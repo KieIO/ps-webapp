@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { ProjectMilestone } from '@/features/projects/schemas/milestone.schema';
 import {
   filterMilestonesInMonth,
+  formatMilestoneNameNote,
   formatMilestoneQuantity,
   groupMilestonesByDate,
+  isMilestoneGroupCompleted,
 } from './milestoneMarkers';
 
 const m = (
@@ -13,6 +15,7 @@ const m = (
   quantity: 10,
   unit: 'slides',
   note: '',
+  completed: false,
   ...overrides,
 });
 
@@ -48,5 +51,60 @@ describe('formatMilestoneQuantity', () => {
     expect(
       formatMilestoneQuantity(m({ id: '2', deadlineDate: '2026-09-10', quantity: 3, unit: 'da' })),
     ).toBe('3 DA');
+  });
+
+  it('returns null when volume is empty', () => {
+    expect(
+      formatMilestoneQuantity(m({ id: '3', deadlineDate: '2026-09-10', quantity: null, unit: '' })),
+    ).toBeNull();
+  });
+});
+
+describe('formatMilestoneNameNote', () => {
+  it('joins name and note for empty-volume quick view', () => {
+    expect(
+      formatMilestoneNameNote(
+        m({
+          id: '1',
+          deadlineDate: '2026-09-10',
+          name: 'Kickoff',
+          note: 'Họp nội bộ',
+          quantity: null,
+          unit: '',
+        }),
+      ),
+    ).toBe('Kickoff - Họp nội bộ');
+  });
+
+  it('returns name only when note is empty', () => {
+    expect(
+      formatMilestoneNameNote(
+        m({
+          id: '1',
+          deadlineDate: '2026-09-10',
+          name: 'Kickoff',
+          note: '  ',
+          quantity: null,
+          unit: '',
+        }),
+      ),
+    ).toBe('Kickoff');
+  });
+});
+
+describe('isMilestoneGroupCompleted', () => {
+  it('is green only when every milestone in the day group is completed', () => {
+    expect(
+      isMilestoneGroupCompleted([
+        m({ id: '1', deadlineDate: '2026-09-10', completed: true }),
+        m({ id: '2', deadlineDate: '2026-09-10', completed: true }),
+      ]),
+    ).toBe(true);
+    expect(
+      isMilestoneGroupCompleted([
+        m({ id: '1', deadlineDate: '2026-09-10', completed: true }),
+        m({ id: '2', deadlineDate: '2026-09-10', completed: false }),
+      ]),
+    ).toBe(false);
   });
 });

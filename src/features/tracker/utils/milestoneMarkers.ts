@@ -1,5 +1,8 @@
 import type { ProjectMilestone } from '@/features/projects/schemas/milestone.schema';
-import { MILESTONE_UNIT_LABELS } from '@/features/projects/schemas/milestone.schema';
+import {
+  MILESTONE_UNIT_LABELS,
+  hasMilestoneVolume,
+} from '@/features/projects/schemas/milestone.schema';
 import { toMilestoneDateKey } from '@/features/projects/utils/milestoneValidation';
 
 export type MilestoneDayGroup = {
@@ -25,8 +28,26 @@ export const groupMilestonesByDate = (
     .map(([dateKey, items]) => ({ dateKey, milestones: items }));
 };
 
-export const formatMilestoneQuantity = (milestone: ProjectMilestone): string =>
-  `${milestone.quantity} ${MILESTONE_UNIT_LABELS[milestone.unit]}`;
+export const formatMilestoneQuantity = (milestone: ProjectMilestone): string | null => {
+  if (!hasMilestoneVolume(milestone) || milestone.quantity == null) {
+    return null;
+  }
+  if (milestone.unit !== 'slides' && milestone.unit !== 'da') {
+    return null;
+  }
+  return `${milestone.quantity} ${MILESTONE_UNIT_LABELS[milestone.unit]}`;
+};
+
+/** Quick-view primary line when volume is empty: `Tên mốc - Ghi chú` (name only if no note). */
+export const formatMilestoneNameNote = (milestone: ProjectMilestone): string => {
+  const name = milestone.name.trim();
+  const note = milestone.note?.trim() ?? '';
+  return note ? `${name} - ${note}` : name;
+};
+
+/** Same-day stack: red if any incomplete; green only when all completed. */
+export const isMilestoneGroupCompleted = (milestones: readonly ProjectMilestone[]): boolean =>
+  milestones.length > 0 && milestones.every((item) => Boolean(item.completed));
 
 /** Milestones visible in the selected month (by deadline date). */
 export const filterMilestonesInMonth = (

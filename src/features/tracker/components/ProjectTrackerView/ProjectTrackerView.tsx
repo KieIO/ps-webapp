@@ -117,7 +117,11 @@ function TrackerLegendContent() {
         <ul className={styles.legendPopoverList}>
           <li className={styles.legendPopoverItem}>
             <span className={styles.legendMilestoneDot} />
-            Deadline point (ngày giao)
+            Chưa hoàn thành
+          </li>
+          <li className={styles.legendPopoverItem}>
+            <span className={styles.legendMilestoneDotCompleted} />
+            Đã hoàn thành
           </li>
         </ul>
       </div>
@@ -941,7 +945,7 @@ function TimelineBlock({
   if (!position) return null;
 
   const isProjectBar = isProjectTimelineBar(block, project.name);
-  /** Admin/Head: bar click adds a milestone; open detail via project name on the left. */
+  /** Managers (PM/CM/Head/Admin): bar click adds a milestone; open detail via project name. */
   const milestoneCreateOnBar = isProjectBar && canManageMilestones;
   const taskName = isProjectBar
     ? undefined

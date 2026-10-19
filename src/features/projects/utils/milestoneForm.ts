@@ -10,24 +10,33 @@ export const milestonesToFormRows = (
     id: milestone.id,
     name: milestone.name,
     deadlineDate: dayjs(milestone.deadlineDate),
-    quantity: milestone.quantity,
-    unit: milestone.unit,
+    quantity: milestone.quantity ?? undefined,
+    unit: milestone.unit === 'slides' || milestone.unit === 'da' ? milestone.unit : undefined,
     note: milestone.note ?? '',
+    completed: Boolean(milestone.completed),
   }));
 
 export const formRowsToMilestoneInputs = (
   rows: readonly MilestoneFormRow[] | undefined,
 ): ProjectMilestoneInput[] =>
-  (rows ?? []).map((row) => ({
-    id: row.id,
-    name: row.name.trim(),
-    deadlineDate: toMilestoneDateKey(
-      dayjs.isDayjs(row.deadlineDate) ? row.deadlineDate.toISOString() : String(row.deadlineDate),
-    ),
-    quantity: Number(row.quantity),
-    unit: row.unit,
-    note: row.note?.trim() ?? '',
-  }));
+  (rows ?? []).map((row) => {
+    const unit = row.unit === 'slides' || row.unit === 'da' ? row.unit : '';
+    const quantity =
+      unit && row.quantity != null && !Number.isNaN(Number(row.quantity))
+        ? Number(row.quantity)
+        : null;
+    return {
+      id: row.id,
+      name: row.name.trim(),
+      deadlineDate: toMilestoneDateKey(
+        dayjs.isDayjs(row.deadlineDate) ? row.deadlineDate.toISOString() : String(row.deadlineDate),
+      ),
+      quantity,
+      unit,
+      note: row.note?.trim() ?? '',
+      completed: Boolean(row.completed),
+    };
+  });
 
 export const resolveMilestoneFormBounds = (
   start: Dayjs | undefined,

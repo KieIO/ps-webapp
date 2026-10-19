@@ -24,7 +24,7 @@ import {
   type MilestoneFormRow,
 } from '../ProjectMilestonesFields/ProjectMilestonesFields';
 import { formRowsToMilestoneInputs } from '../../utils/milestoneForm';
-import { validateMilestones } from '../../utils/milestoneValidation';
+import { toReplaceMilestonePayload, validateMilestones } from '../../utils/milestoneValidation';
 import { canManageProjectMilestones } from '../../utils/milestoneAuth';
 import styles from '../EditProjectModal/EditProjectModal.module.scss';
 
@@ -190,7 +190,7 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
         message.error(check.message);
         return;
       }
-      payload.milestones = milestoneInputs;
+      payload.milestones = toReplaceMilestonePayload(milestoneInputs);
     }
 
     mutate(payload, {

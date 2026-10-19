@@ -1,4 +1,4 @@
-import { DatePicker, Form, Input, InputNumber, Modal, Select, message } from 'antd';
+import { Checkbox, DatePicker, Form, Input, InputNumber, Modal, Select, message } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
@@ -10,8 +10,11 @@ import {
   type MilestoneUnit,
 } from '@/features/projects/schemas/milestone.schema';
 import { useReplaceProjectMilestones } from '@/features/projects/hooks/useReplaceProjectMilestones';
-import { validateMilestones } from '@/features/projects/utils/milestoneValidation';
-import { toMilestoneDateKey } from '@/features/projects/utils/milestoneValidation';
+import {
+  toMilestoneDateKey,
+  toReplaceMilestonePayload,
+  validateMilestones,
+} from '@/features/projects/utils/milestoneValidation';
 
 export type MilestoneQuickMode = 'create' | 'edit';
 
@@ -37,14 +40,26 @@ interface MilestoneQuickModalProps {
 type FormValues = {
   name: string;
   deadlineDate: Dayjs;
-  quantity: number;
-  unit: MilestoneUnit;
+  quantity?: number | null;
+  unit?: MilestoneUnit | null;
   note?: string;
+  completed?: boolean;
 };
+
+const toInputFromExisting = (item: ProjectMilestone): ProjectMilestoneInput => ({
+  id: item.id,
+  name: item.name,
+  deadlineDate: toMilestoneDateKey(item.deadlineDate),
+  quantity: item.quantity,
+  unit: item.unit === 'slides' || item.unit === 'da' ? item.unit : '',
+  note: item.note ?? '',
+  completed: Boolean(item.completed),
+});
 
 export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProps) {
   const [form] = Form.useForm<FormValues>();
   const { mutate, isPending } = useReplaceProjectMilestones();
+  const watchedUnit = Form.useWatch('unit', form);
 
   useEffect(() => {
     if (!target) return;
@@ -56,9 +71,10 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
     form.setFieldsValue({
       name: existing?.name ?? '',
       deadlineDate: dayjs(existing?.deadlineDate ?? target.deadlineDate),
-      quantity: existing?.quantity ?? 10,
-      unit: existing?.unit ?? 'slides',
+      quantity: existing?.quantity ?? undefined,
+      unit: existing?.unit === 'slides' || existing?.unit === 'da' ? existing.unit : undefined,
       note: existing?.note ?? '',
+      completed: Boolean(existing?.completed),
     });
   }, [target, form]);
 
@@ -70,14 +86,23 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
   const handleFinish = (values: FormValues) => {
     if (!target) return;
 
+    const unit = values.unit === 'slides' || values.unit === 'da' ? values.unit : '';
+    const quantity =
+      unit && values.quantity != null && !Number.isNaN(Number(values.quantity))
+        ? Number(values.quantity)
+        : null;
+
     const nextItem: ProjectMilestoneInput = {
-      id: target.mode === 'edit' ? target.milestoneId : undefined,
       name: values.name.trim(),
       deadlineDate: toMilestoneDateKey(values.deadlineDate.toISOString()),
-      quantity: Number(values.quantity),
-      unit: values.unit,
+      quantity,
+      unit,
       note: values.note?.trim() ?? '',
+      completed: target.mode === 'edit' ? Boolean(values.completed) : false,
     };
+    if (target.mode === 'edit' && target.milestoneId) {
+      nextItem.id = target.milestoneId;
+    }
 
     const withoutEdited =
       target.mode === 'edit' && target.milestoneId
@@ -85,14 +110,7 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
         : target.milestones;
 
     const nextMilestones: ProjectMilestoneInput[] = [
-      ...withoutEdited.map((item) => ({
-        id: item.id,
-        name: item.name,
-        deadlineDate: toMilestoneDateKey(item.deadlineDate),
-        quantity: item.quantity,
-        unit: item.unit,
-        note: item.note ?? '',
-      })),
+      ...withoutEdited.map(toInputFromExisting),
       nextItem,
     ];
 
@@ -109,7 +127,7 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
     mutate(
       {
         projectId: target.projectId,
-        milestones: nextMilestones,
+        milestones: toReplaceMilestonePayload(nextMilestones),
         successMessage:
           target.mode === 'create' ? 'Đã thêm mốc bàn giao' : 'Đã cập nhật mốc bàn giao',
       },
@@ -124,14 +142,7 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
 
     const nextMilestones: ProjectMilestoneInput[] = target.milestones
       .filter((item) => item.id !== target.milestoneId)
-      .map((item) => ({
-        id: item.id,
-        name: item.name,
-        deadlineDate: toMilestoneDateKey(item.deadlineDate),
-        quantity: item.quantity,
-        unit: item.unit,
-        note: item.note ?? '',
-      }));
+      .map(toInputFromExisting);
 
     const check = validateMilestones(nextMilestones, {
       startDate: target.startDate,
@@ -146,7 +157,7 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
     mutate(
       {
         projectId: target.projectId,
-        milestones: nextMilestones,
+        milestones: toReplaceMilestonePayload(nextMilestones),
         successMessage: 'Đã xóa mốc bàn giao',
       },
       {
@@ -157,6 +168,7 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
 
   const start = target ? dayjs(target.startDate) : null;
   const end = target ? dayjs(target.endDate) : null;
+  const volumeRequired = Boolean(watchedUnit);
 
   return (
     <Modal
@@ -227,26 +239,44 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
           <Form.Item
             name="quantity"
             label="Khối lượng"
-            rules={[{ required: true, message: 'Khối lượng là bắt buộc' }]}
+            rules={
+              volumeRequired
+                ? [{ required: true, message: 'Khối lượng là bắt buộc khi chọn đơn vị' }]
+                : undefined
+            }
           >
-            <InputNumber min={0.1} step={1} style={{ width: '100%' }} />
+            <InputNumber
+              min={0.1}
+              step={1}
+              style={{ width: '100%' }}
+              placeholder="Tuỳ chọn"
+              disabled={!volumeRequired}
+            />
           </Form.Item>
-          <Form.Item
-            name="unit"
-            label="Đơn vị"
-            rules={[{ required: true, message: 'Đơn vị là bắt buộc' }]}
-          >
+          <Form.Item name="unit" label="Đơn vị">
             <Select
+              allowClear
+              placeholder="Slides / DA (tuỳ chọn)"
               options={MILESTONE_UNITS.map((unit) => ({
                 value: unit,
                 label: MILESTONE_UNIT_LABELS[unit],
               }))}
+              onChange={(value) => {
+                if (!value) {
+                  form.setFieldValue('quantity', null);
+                }
+              }}
             />
           </Form.Item>
         </div>
         <Form.Item name="note" label="Ghi chú">
           <Input.TextArea rows={2} placeholder="Không bắt buộc" />
         </Form.Item>
+        {target?.mode === 'edit' ? (
+          <Form.Item name="completed" valuePropName="checked">
+            <Checkbox>Hoàn thành</Checkbox>
+          </Form.Item>
+        ) : null}
       </Form>
     </Modal>
   );

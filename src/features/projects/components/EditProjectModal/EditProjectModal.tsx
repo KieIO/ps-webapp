@@ -15,6 +15,7 @@ import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProje
 import { useUpdateProject } from '../../hooks/useUpdateProject';
 import { canManageProjectMilestones } from '../../utils/milestoneAuth';
 import { formRowsToMilestoneInputs, milestonesToFormRows } from '../../utils/milestoneForm';
+import { toReplaceMilestonePayload } from '../../utils/milestoneValidation';
 import { validateMilestones } from '../../utils/milestoneValidation';
 import { computeProjectLevel } from '../../utils/projectLevel';
 import {
@@ -181,7 +182,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
         message.error(check.message);
         return;
       }
-      payload.milestones = milestoneInputs;
+      payload.milestones = toReplaceMilestonePayload(milestoneInputs);
     }
 
     mutate(

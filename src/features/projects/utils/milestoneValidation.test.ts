@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { validateMilestones, sumMilestoneQuantityByUnit } from './milestoneValidation';
+import {
+  sumMilestoneQuantityByUnit,
+  toReplaceMilestonePayload,
+  validateMilestones,
+} from './milestoneValidation';
 
 const ctx = {
   startDate: '2026-09-01',
@@ -13,6 +17,7 @@ const base = {
   quantity: 10,
   unit: 'slides' as const,
   note: '',
+  completed: false,
 };
 
 describe('validateMilestones', () => {
@@ -66,19 +71,104 @@ describe('validateMilestones', () => {
     const result = validateMilestones([{ ...base, name: '  ' }], ctx);
     expect(result.ok).toBe(false);
   });
+
+  it('allows empty volume when unit is empty and quantity is null', () => {
+    expect(
+      validateMilestones(
+        [
+          {
+            name: 'Kickoff',
+            deadlineDate: '2026-09-10',
+            quantity: null,
+            unit: '',
+            note: 'Họp nội bộ',
+            completed: false,
+          },
+        ],
+        ctx,
+      ),
+    ).toEqual({ ok: true });
+  });
+
+  it('rejects slides unit without quantity', () => {
+    const result = validateMilestones(
+      [
+        {
+          name: 'Bad',
+          deadlineDate: '2026-09-10',
+          quantity: null,
+          unit: 'slides',
+          note: '',
+          completed: false,
+        },
+      ],
+      ctx,
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.message).toMatch(/khối lượng phải lớn hơn 0/i);
+    }
+  });
 });
 
 describe('sumMilestoneQuantityByUnit', () => {
-  it('sums only matching unit', () => {
+  it('sums only matching unit and ignores empty-volume rows', () => {
     expect(
       sumMilestoneQuantityByUnit(
         [
           { quantity: 10, unit: 'slides' },
           { quantity: 5, unit: 'da' },
           { quantity: 7, unit: 'slides' },
+          { quantity: null, unit: '' },
         ],
         'slides',
       ),
     ).toBe(17);
+  });
+});
+
+describe('toReplaceMilestonePayload', () => {
+  it('keeps ids and normalizes empty volume to quantity null + unit ""', () => {
+    expect(
+      toReplaceMilestonePayload([
+        {
+          id: 'keep-me',
+          name: 'A',
+          deadlineDate: '2026-09-10T12:00:00.000Z',
+          quantity: 10,
+          unit: 'slides',
+          note: ' x ',
+          completed: true,
+        },
+        {
+          id: 'empty',
+          name: 'B',
+          deadlineDate: '2026-09-11',
+          quantity: null,
+          unit: '',
+          note: '',
+          completed: false,
+        },
+      ]),
+    ).toEqual([
+      {
+        id: 'keep-me',
+        name: 'A',
+        deadlineDate: '2026-09-10',
+        quantity: 10,
+        unit: 'slides',
+        note: 'x',
+        completed: true,
+      },
+      {
+        id: 'empty',
+        name: 'B',
+        deadlineDate: '2026-09-11',
+        quantity: null,
+        unit: '',
+        note: '',
+        completed: false,
+      },
+    ]);
   });
 });
