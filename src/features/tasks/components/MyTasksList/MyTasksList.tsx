@@ -201,6 +201,12 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
       nextSearchParams.delete('outputMonth');
     }
     writeWorkDateParam(nextSearchParams, nextFilters.workDate, taskCategory);
+    // Keep CM scope sticky when filters change (search onChange can race tab URL updates).
+    if (showCmScopeToggle && cmScope === 'staff') {
+      nextSearchParams.set(CM_PROJECT_TASK_SCOPE_PARAM, 'staff');
+    } else {
+      nextSearchParams.delete(CM_PROJECT_TASK_SCOPE_PARAM);
+    }
     setSearchParams(nextSearchParams, { replace: true });
   };
 

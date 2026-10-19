@@ -122,4 +122,80 @@ describe('CM Project Tasks scope (option C)', () => {
     expect(matchesCmProjectTaskScope(projectStaff, 'received')).toBe(true);
     expect(matchesCmProjectTaskScope(projectStaff, 'staff')).toBe(false);
   });
+
+  it('keeps awaiting_ch and returned_to_pm parents on Task nhận', () => {
+    const awaitingCh = task({ id: 'ch', pipelineStage: 'awaiting_ch', staff: [] });
+    const returned = task({ id: 'ret', pipelineStage: 'returned_to_pm', staff: [] });
+    expect(matchesCmProjectTaskScope(awaitingCh, 'received')).toBe(true);
+    expect(matchesCmProjectTaskScope(awaitingCh, 'staff')).toBe(false);
+    expect(matchesCmProjectTaskScope(returned, 'received')).toBe(true);
+    expect(matchesCmProjectTaskScope(returned, 'staff')).toBe(false);
+  });
+
+  it('puts revision children on Task giao Staff', () => {
+    const revision = task({
+      id: 'rev',
+      parentTaskId: 'parent',
+      taskKind: 'revision',
+      revisionRound: 1,
+      department: 'creative',
+    });
+    expect(matchesCmProjectTaskScope(revision, 'staff')).toBe(true);
+    expect(matchesCmProjectTaskScope(revision, 'received')).toBe(false);
+  });
+
+  it('keeps finished whole-assign on Staff and finished split parent on Task nhận', () => {
+    const finishedWhole = task({
+      id: 'fw',
+      pipelineStage: 'assigned_staff',
+      staffConfirmation: 'finished',
+      staff: [{ userId: 's1', code: 'S1', name: 'Staff', role: ROLES.EMPLOYEE }],
+    });
+    const finishedSplitParent = task({
+      id: 'fsp',
+      pipelineStage: 'split',
+      staffConfirmation: 'finished',
+      staff: [],
+    });
+    expect(matchesCmProjectTaskScope(finishedWhole, 'staff')).toBe(true);
+    expect(matchesCmProjectTaskScope(finishedWhole, 'received')).toBe(false);
+    expect(matchesCmProjectTaskScope(finishedSplitParent, 'received')).toBe(true);
+    expect(matchesCmProjectTaskScope(finishedSplitParent, 'staff')).toBe(false);
+  });
+
+  it('partitions creative pipeline rows into exactly one scope', () => {
+    const items = [
+      task({ id: 'awaiting', pipelineStage: 'awaiting_cm', staff: [] }),
+      task({ id: 'split-parent', pipelineStage: 'split', staff: [] }),
+      task({
+        id: 'whole',
+        pipelineStage: 'assigned_staff',
+        staff: [{ userId: 's1', code: 'S1', name: 'Staff', role: ROLES.EMPLOYEE }],
+      }),
+      task({
+        id: 'child',
+        parentTaskId: 'split-parent',
+        taskKind: 'split',
+        pipelineStage: 'assigned_staff',
+      }),
+      task({
+        id: 'rev',
+        parentTaskId: 'whole',
+        taskKind: 'revision',
+        revisionRound: 1,
+      }),
+      task({ id: 'returned', pipelineStage: 'returned_to_pm', staff: [] }),
+    ];
+
+    for (const item of items) {
+      const inReceived = matchesCmProjectTaskScope(item, 'received');
+      const inStaff = matchesCmProjectTaskScope(item, 'staff');
+      expect(inReceived !== inStaff).toBe(true);
+    }
+
+    const received = filterTasksForCmProjectScope(items, 'received');
+    const staff = filterTasksForCmProjectScope(items, 'staff');
+    expect(received.length + staff.length).toBe(items.length);
+    expect(new Set([...received, ...staff].map((item) => item.id)).size).toBe(items.length);
+  });
 });

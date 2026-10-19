@@ -35,8 +35,8 @@ export const CM_PROJECT_TASK_SCOPE_LABELS: Record<CmProjectTaskScope, string> = 
 
 /** Management-oriented hints — distinct from Creative Queue inbox copy. */
 export const CM_PROJECT_TASK_SCOPE_HINTS: Record<CmProjectTaskScope, string> = {
-  received: 'Gói việc CH giao cho bạn — theo dõi và xem đánh giá từ CH.',
-  staff: 'Việc đã giao Staff (nguyên hoặc task nhỏ) — quản lý và đánh giá nhân viên.',
+  received: 'Gói việc CH giao cho bạn - theo dõi và xem đánh giá từ CH.',
+  staff: 'Việc đã giao Staff (nguyên hoặc task nhỏ) - quản lý và đánh giá nhân viên.',
 };
 
 export const parseCmProjectTaskScope = (value: string | null | undefined): CmProjectTaskScope =>
