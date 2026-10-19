@@ -1,49 +1,64 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { loginAs, SEED_ACCOUNTS } from '../fixtures/auth';
-import { apiLogin, patchStatus, setupSplitFamily } from './helpers/splitFamilyApi';
+import { apiLogin, apiJson, patchStatus, setupSplitFamily } from './helpers/splitFamilyApi';
 
 /**
  * TASK-68 — Split parent access + finished Edit read-only (UI smoke).
  * 1) Creative staff on a child cannot open Task cha (403 screen + Quay về).
  * 2) PM can open Edit on finished split parent in read-only mode.
+ *
+ * Local seed has no yen.hoang / thao.nguyen — use employee@ + another staff-option.
  */
 
-/** Seed creative staff (same password as other seed-dev accounts). */
-const CREATIVE_STAFF_EMAIL = process.env.E2E_CREATIVE_STAFF_EMAIL ?? 'yen.hoang@pokeslide.com';
-const CREATIVE_STAFF_PASSWORD =
-  process.env.E2E_CREATIVE_STAFF_PASSWORD ?? SEED_ACCOUNTS.employee.password;
-
-async function loginWithCredentials(page: Page, email: string, password: string): Promise<void> {
-  await page.goto('/login');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+async function resolveStaffPairForEmployee(): Promise<{
+  employee: { token: string; user: { id: string } };
+  staffAUserId: string;
+  staffBUserId: string;
+}> {
+  const employee = await apiLogin(SEED_ACCOUNTS.employee.email, SEED_ACCOUNTS.employee.password);
+  const cm = await apiLogin(
+    SEED_ACCOUNTS.creative_manager.email,
+    SEED_ACCOUNTS.creative_manager.password,
+  );
+  type StaffOption = { userId?: string };
+  const { data: staffOptions } = await apiJson<StaffOption[]>(
+    'GET',
+    '/tasks/my/staff-options',
+    cm.token,
+  );
+  const ids = (staffOptions ?? [])
+    .map((entry) => entry.userId)
+    .filter((id): id is string => Boolean(id));
+  const staffBUserId = ids.find((id) => id !== employee.user.id);
+  if (!staffBUserId) {
+    throw new Error('need another staff-option besides employee for split');
+  }
+  return {
+    employee,
+    staffAUserId: employee.user.id,
+    staffBUserId,
+  };
 }
 
 test.describe('TASK-68 split parent access + finished Edit read-only', () => {
   test('staff Task cha link shows no-permission screen and Quay về', async ({ page }) => {
-    const staff = await apiLogin(CREATIVE_STAFF_EMAIL, CREATIVE_STAFF_PASSWORD);
-    const otherStaff = await apiLogin(
-      process.env.E2E_CREATIVE_STAFF_B_EMAIL ?? 'thao.nguyen@pokeslide.com',
-      process.env.E2E_CREATIVE_STAFF_B_PASSWORD ?? CREATIVE_STAFF_PASSWORD,
-    );
+    const { employee, staffAUserId, staffBUserId } = await resolveStaffPairForEmployee();
 
     const taskName = `E2E Split Access ${Date.now()}`;
     const { parent, children } = await setupSplitFamily({
       taskName,
       qtyA: 6,
       qtyB: 6,
-      staffAUserId: staff.user.id,
-      staffBUserId: otherStaff.user.id,
+      staffAUserId,
+      staffBUserId,
     });
 
     const mine = children.find((child) =>
-      (child.staff ?? []).some((member) => member.userId === staff.user.id),
+      (child.staff ?? []).some((member) => member.userId === employee.user.id),
     );
     const child = mine ?? children[0]!;
 
-    await loginWithCredentials(page, CREATIVE_STAFF_EMAIL, CREATIVE_STAFF_PASSWORD);
+    await loginAs(page, 'employee');
     await page.goto(`/tasks/detail/${child.id}`);
     await expect(page.getByText(child.taskName, { exact: false }).first()).toBeVisible({
       timeout: 30_000,
@@ -86,7 +101,8 @@ test.describe('TASK-68 split parent access + finished Edit read-only', () => {
     });
     await expect(page.getByText('Đã chia nhỏ')).toBeVisible();
 
-    await page.getByRole('button', { name: /^Edit task$/ }).click();
+    // Ant icon expands accessible name beyond exact "Edit task".
+    await page.getByRole('button', { name: /Edit task/ }).click();
     const drawer = page.getByRole('dialog', { name: /Xem task Creative|Sửa \/ Đổi giao/ });
     await expect(drawer.getByText(/Xem task Creative|Sửa \/ Đổi giao task Creative/)).toBeVisible();
     await expect(drawer.getByText(/Task đã Hoàn thành — không thể chỉnh sửa/)).toBeVisible();

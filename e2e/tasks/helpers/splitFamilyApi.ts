@@ -70,12 +70,17 @@ export async function apiJson<T>(
   return { status: response.status, data: parsed.data as T };
 }
 
-export async function createCreativeHandoff(token: string, taskName: string): Promise<TaskDto> {
+export async function createCreativeHandoff(
+  token: string,
+  taskName: string,
+  quantity = 1,
+): Promise<TaskDto> {
   const { data } = await apiJson<TaskDto>('POST', '/tasks/my', token, {
     projectName: process.env.E2E_PROJECT_NAME ?? 'SG Multibrand SEP',
     projectManager: { code: 'PM.DEV', name: 'Dev PM' },
     taskName,
-    quantity: 1,
+    // Split assign requires parent qty === sum(subtask qty); seed qty up front.
+    quantity,
     date: new Date().toISOString().slice(0, 10),
     description: 'E2E brief for split family',
     designThinking: 2,
@@ -187,17 +192,12 @@ export async function setupSplitFamily(opts: {
 
   const staffA = opts.staffAUserId ?? ids[0]!;
   const staffB = opts.staffBUserId ?? ids.find((id) => id !== staffA) ?? ids[1]!;
+  const qtyA = opts.qtyA ?? 8;
+  const qtyB = opts.qtyB ?? 8;
 
-  const created = await createCreativeHandoff(pm.token, opts.taskName);
+  const created = await createCreativeHandoff(pm.token, opts.taskName, qtyA + qtyB);
   await assignCm(ch.token, created.id, cm.user.id);
-  const parent = await splitAssign(
-    cm.token,
-    created.id,
-    staffA,
-    staffB,
-    opts.qtyA ?? 8,
-    opts.qtyB ?? 8,
-  );
+  const parent = await splitAssign(cm.token, created.id, staffA, staffB, qtyA, qtyB);
 
   let children = await listSplitChildren(cm.token, parent.id);
   if (children.length < 2) {
