@@ -287,7 +287,9 @@ Phần còn lại **sau khi làm dở**: dùng Evaluate (câu 8), không phải 
 
 ## Technical debt (theo dõi làm sau)
 
-Rà từ 10 câu FAQ trên. Chỉ liệt kê **khoảng trống sản phẩm** (chưa làm / làm một phần), không gồm thứ đã có workaround ổn.
+Rà từ FAQ và feedback sản phẩm. Chỉ liệt kê **khoảng trống** (chưa làm / làm một phần), không gồm thứ đã có workaround ổn.
+
+Phần **Tracker / mốc giao** bên dưới: Goware có thể hỗ trợ sau **go-live** (chưa nằm trong phạm vi đóng gói hiện tại).
 
 ### Task giao trong nội bộ Creative (câu 6–10)
 
@@ -307,6 +309,13 @@ Rà từ 10 câu FAQ trên. Chỉ liệt kê **khoảng trống sản phẩm** (
 | --- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- | ----- |
 | 8   | **Lịch sử chức danh theo kỳ** (profile / Capacity / tính Capacity % tháng cũ) | UI và Capacity % luôn theo title hiện tại; KPI tháng cũ thì giữ. | Câu 2 |
 
-**Không xếp vào debt ở đây** (đã có hoặc đúng thiết kế hiện tại): đổi Staff / chia lại SL phần còn mở; **đổi SL tổng** sau khi chia (trong giới hạn phần đã khóa); Evaluate tạo phần còn lại khi làm dở; Decline CH từ PM; nghỉ nhiều kỳ + Activate; Tracker dùng điểm task CM.
+### Tracker / mốc giao (milestone), sau go-live
 
-Khi làm xong một mục, team Dev cập nhật FAQ liên quan và gạch mục tương ứng trong bảng này.
+| #   | Khoảng trống                                                                               | Ghi chú ngắn                                                                                                                                                                                                                               | Nguồn                          |
+| --- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
+| 9   | **Giờ cụ thể + thứ tự hiển thị** trên Tracker cho case urgent                              | Ví dụ tên / ghi chú: `Full V1 - 3pm FR`, `Full V1 - 5pm HCM` (giờ có thể để trong ghi chú). PM muốn sắp thứ tự project trên Tracker (deadline sớm lên đầu, EOD để sau) để dễ quan sát và quản lý. Hiện chưa tối ưu đủ theo pain point này. | Feedback Pokeslide (milestone) |
+| 10  | **Chấm mốc linh hoạt ngoài timeline project** (ngày nhận feedback, todo, note ngoài range) | Đôi khi dùng chấm mốc để note ngày feedback / todo / việc khác. Khi đó chấm có thể nằm **ngoài** timeline project. Cần chỉnh để linh hoạt hơn, không cứng trong range project.                                                             | Feedback Pokeslide (milestone) |
+
+**Không xếp vào debt ở đây** (đã có hoặc đúng thiết kế hiện tại): đổi Staff / chia lại SL phần còn mở; **đổi SL tổng** sau khi chia (trong giới hạn phần đã khóa); Evaluate tạo phần còn lại khi làm dở; Decline CH từ PM; nghỉ nhiều kỳ + Activate; Tracker dùng điểm task CM; CRUD mốc giao cơ bản trên form Project / Tracker ([Mốc giao](/milestone)).
+
+Khi làm xong một mục, team Dev cập nhật FAQ / doc liên quan và gạch mục tương ứng trong bảng này.
