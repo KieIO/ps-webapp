@@ -11,63 +11,64 @@ Companion to [`task-mgmt-test-cases.md`](./task-mgmt-test-cases.md).
 
 ## 1. What can be automated today vs needs e2e
 
-| Case       | Flow                                                       | Automate **without** browser? | How                                                                                       |
-| ---------- | ---------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------- |
-| TASK-01    | Create project (Admin)                                     | **Yes**                       | API: login → `POST /tasks/my` → 201                                                       |
-| TASK-02    | Create project (PM)                                        | **Yes**                       | API as `pm@…`                                                                             |
-| TASK-03    | Create non_project                                         | **Yes**                       | API `taskCategory=non_project`                                                            |
-| TASK-04    | Derived level                                              | **Yes**                       | Assert level from DT/tech/content                                                         |
-| TASK-05    | Staff required                                             | **Yes**                       | API empty staff → 422                                                                     |
-| TASK-06    | Creative awaiting_ch                                       | **Yes**                       | API `department=creative` + empty staff (+ dept/staff asserts)                            |
-| TASK-07–13 | Edit / locks                                               | **Yes**                       | API `PATCH` + assert 200/403/422                                                          |
-| TASK-14–17 | Status / cancel rules                                      | **Yes**                       | API `PATCH …/status`                                                                      |
-| TASK-18–21 | Soft delete + role delete                                  | **Yes**                       | `DELETE` → 204/403; `GET` → 404                                                           |
-| TASK-22–26 | Filters                                                    | **Yes**                       | API query params                                                                          |
-| TASK-27–31 | Role create + visibility                                   | **Yes**                       | API expect 403 / scoped list                                                              |
-| TASK-32–33 | Switch-user (API slice)                                    | **Partial**                   | Login each role + assert create 403/200                                                   |
-| TASK-34    | Sidebar tasks                                              | **E2E / manual**              | Playwright                                                                                |
-| TASK-35    | PM evaluate                                                | **Yes** + **E2E**             | API + Playwright Evaluate modal                                                           |
-| TASK-36    | Employee cannot evaluate                                   | **Yes** + **E2E**             | API 403 + Playwright Evaluate hidden                                                      |
-| TASK-37–38 | Assign / leave                                             | **Yes**                       | API assign                                                                                |
-| TASK-39–42 | Validation                                                 | **Yes**                       | API expect 4xx                                                                            |
-| TASK-43    | Urgency                                                    | **Yes**                       | API meta PATCH urgency                                                                    |
-| TASK-44    | Create button chrome                                       | **E2E / manual**              | Playwright                                                                                |
-| TASK-45    | Project ↔ Non-project nav                                 | **E2E / manual**              | Playwright                                                                                |
-| TASK-46    | Filter Reset chrome                                        | **E2E / manual**              | Playwright (API covers filter logic)                                                      |
-| TASK-47    | CH assign-cm                                               | **Yes** + **E2E**             | API + Playwright Giao CM drawer                                                           |
-| TASK-48    | Non-CH assign-cm forbidden                                 | **Yes**                       | API 403                                                                                   |
-| TASK-49    | assign-cm validation                                       | **Yes**                       | API 422                                                                                   |
-| TASK-50    | CM whole assign-staff                                      | **Yes**                       | API `mode=whole`                                                                          |
-| TASK-51    | CM split assign-staff                                      | **Yes**                       | API `mode=split` + children                                                               |
-| TASK-52    | assign-staff authz                                         | **Yes**                       | API 403                                                                                   |
-| TASK-53    | Qty before split                                           | **Yes**                       | API creative-edit quantity                                                                |
-| TASK-54    | Qty after split / childQuantities                          | **Yes**                       | API lock + redistribute                                                                   |
-| TASK-55    | Reassign CM                                                | **Yes**                       | API creative-edit `cmUserId`                                                              |
-| TASK-56    | Split list visibility                                      | **Yes**                       | API list Admin vs CM                                                                      |
-| TASK-57    | Stage happy path                                           | **Yes**                       | API create → assign-cm → whole                                                            |
-| TASK-58    | assign-staff validation                                    | **Yes**                       | API 422                                                                                   |
-| TASK-59    | Reassign Staff                                             | **Yes**                       | API creative-edit `staffUserId`                                                           |
-| TASK-60    | Confirmed child qty lock                                   | **Yes**                       | API status + childQuantities                                                              |
-| TASK-61    | Create dept=project + staff                                | **Yes**                       | API `department=project` → `assigned_staff`                                               |
-| TASK-62    | Create dept=creative + staff                               | **Yes**                       | API creative+staff → `assigned_staff`                                                     |
-| TASK-63    | Dept contrast side-by-side                                 | **Yes**                       | Same payload except department                                                            |
-| TASK-80    | Create-task **Add** unknown project → Create project modal | **E2E**                       | Playwright `task-80-81-…` (UI only; create project still API-covered elsewhere)           |
-| TASK-81    | PM no inline Add (no `CREATE_PROJECT`)                     | **E2E**                       | Same spec — free-text kept, no Add button                                                 |
-| TASK-64    | CM decline → awaiting_ch                                   | **Yes** + **E2E**             | API + Playwright Từ chối nhận chrome                                                      |
-| TASK-65    | Staff decline → awaiting_cm                                | **Yes** + **E2E**             | API + Playwright Từ chối chrome                                                           |
-| TASK-66    | Decline awaiting_ch rejected                               | **Yes**                       | API 422 (no CH reject-inbox) — no UI                                                      |
-| TASK-67    | PM eval creative-handoff parent                            | **Yes**                       | API only (modal chrome = TASK-35 UI)                                                      |
-| TASK-68    | CH eval creative parent                                    | **Yes** + **E2E**             | API + Playwright CH Evaluate modal                                                        |
-| TASK-69    | CH eval project parent                                     | **Yes** + **E2E**             | API + same CH Evaluate modal spec                                                         |
-| TASK-70    | CH deny split child eval                                   | **Yes**                       | API 422 — no UI                                                                           |
-| TASK-71    | CM eval whole assigned_staff                               | **Yes** + **E2E**             | API + Playwright CM Evaluate modal                                                        |
-| TASK-72    | CM eval split child; deny parent                           | **Yes**                       | API 200 child / 422 parent — no UI                                                        |
-| TASK-73    | Assign then edit full matrix                               | **Yes** + **E2E**             | API assign → `PATCH /{id}` + Playwright Edit modal                                        |
-| TASK-74    | Edit while confirmed                                       | **Yes**                       | API status confirmed → meta PATCH still 200                                               |
-| TASK-75    | Creative assigned_staff meta                               | **Yes** + **E2E**             | API creative-edit + Playwright CreativeEditDrawer                                         |
-| TASK-76    | Creative taskName path                                     | **Yes**                       | API creative-edit ignores name; generic PATCH renames (drawer chrome asserted in TASK-75) |
-| TASK-77    | Creative-edit finished/cancelled lock                      | **Yes**                       | API 422/403 — no UI (pure lock)                                                           |
-| TASK-78    | Post-assign role denial                                    | **Yes**                       | API employee + non-creator PM 403 — no UI (pure lock)                                     |
+| Case       | Flow                                                          | Automate **without** browser? | How                                                                                       |
+| ---------- | ------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------- |
+| TASK-01    | Create project (Admin)                                        | **Yes**                       | API: login → `POST /tasks/my` → 201                                                       |
+| TASK-02    | Create project (PM)                                           | **Yes**                       | API as `pm@…`                                                                             |
+| TASK-03    | Create non_project                                            | **Yes**                       | API `taskCategory=non_project`                                                            |
+| TASK-04    | Derived level                                                 | **Yes**                       | Assert level from DT/tech/content                                                         |
+| TASK-05    | Staff required                                                | **Yes**                       | API empty staff → 422                                                                     |
+| TASK-06    | Creative awaiting_ch                                          | **Yes**                       | API `department=creative` + empty staff (+ dept/staff asserts)                            |
+| TASK-07–13 | Edit / locks                                                  | **Yes**                       | API `PATCH` + assert 200/403/422                                                          |
+| TASK-14–17 | Status / cancel rules                                         | **Yes**                       | API `PATCH …/status`                                                                      |
+| TASK-18–21 | Soft delete + role delete                                     | **Yes**                       | `DELETE` → 204/403; `GET` → 404                                                           |
+| TASK-22–26 | Filters                                                       | **Yes**                       | API query params                                                                          |
+| TASK-27–31 | Role create + visibility                                      | **Yes**                       | API expect 403 / scoped list                                                              |
+| TASK-32–33 | Switch-user (API slice)                                       | **Partial**                   | Login each role + assert create 403/200                                                   |
+| TASK-34    | Sidebar tasks                                                 | **E2E / manual**              | Playwright                                                                                |
+| TASK-35    | PM evaluate                                                   | **Yes** + **E2E**             | API + Playwright Evaluate modal                                                           |
+| TASK-36    | Employee cannot evaluate                                      | **Yes** + **E2E**             | API 403 + Playwright Evaluate hidden                                                      |
+| TASK-37–38 | Assign / leave                                                | **Yes**                       | API assign                                                                                |
+| TASK-39–42 | Validation                                                    | **Yes**                       | API expect 4xx                                                                            |
+| TASK-43    | Urgency                                                       | **Yes**                       | API meta PATCH urgency                                                                    |
+| TASK-44    | Create button chrome                                          | **E2E / manual**              | Playwright                                                                                |
+| TASK-45    | Project ↔ Non-project nav                                    | **E2E / manual**              | Playwright                                                                                |
+| TASK-46    | Filter Reset chrome                                           | **E2E / manual**              | Playwright (API covers filter logic)                                                      |
+| TASK-47    | CH assign-cm                                                  | **Yes** + **E2E**             | API + Playwright Giao CM drawer                                                           |
+| TASK-48    | Non-CH assign-cm forbidden                                    | **Yes**                       | API 403                                                                                   |
+| TASK-49    | assign-cm validation                                          | **Yes**                       | API 422                                                                                   |
+| TASK-50    | CM whole assign-staff                                         | **Yes**                       | API `mode=whole`                                                                          |
+| TASK-51    | CM split assign-staff                                         | **Yes**                       | API `mode=split` + children                                                               |
+| TASK-52    | assign-staff authz                                            | **Yes**                       | API 403                                                                                   |
+| TASK-53    | Qty before split                                              | **Yes**                       | API creative-edit quantity                                                                |
+| TASK-54    | Qty after split / childQuantities                             | **Yes**                       | API lock + redistribute                                                                   |
+| TASK-55    | Reassign CM                                                   | **Yes**                       | API creative-edit `cmUserId`                                                              |
+| TASK-56    | Split list visibility                                         | **Yes**                       | API list Admin vs CM                                                                      |
+| TASK-57    | Stage happy path                                              | **Yes**                       | API create → assign-cm → whole                                                            |
+| TASK-58    | assign-staff validation                                       | **Yes**                       | API 422                                                                                   |
+| TASK-59    | Reassign Staff                                                | **Yes**                       | API creative-edit `staffUserId`                                                           |
+| TASK-60    | Confirmed child qty lock                                      | **Yes**                       | API status + childQuantities                                                              |
+| TASK-61    | Create dept=project + staff                                   | **Yes**                       | API `department=project` → `assigned_staff`                                               |
+| TASK-62    | Create dept=creative + staff                                  | **Yes**                       | API creative+staff → `assigned_staff`                                                     |
+| TASK-63    | Dept contrast side-by-side                                    | **Yes**                       | Same payload except department                                                            |
+| TASK-80    | Create-task **Add** unknown project (incl. empty filter list) | **E2E**                       | Playwright `task-80-81-…`                                                                 |
+| TASK-81    | PM no inline Add (no `CREATE_PROJECT`)                        | **E2E**                       | Same spec — free-text kept, no Add button                                                 |
+| TASK-82    | Deadline disabled/clamped outside project start–end           | **Unit**                      | `taskDates.test.ts`                                                                       |
+| TASK-64    | CM decline → awaiting_ch                                      | **Yes** + **E2E**             | API + Playwright Từ chối nhận chrome                                                      |
+| TASK-65    | Staff decline → awaiting_cm                                   | **Yes** + **E2E**             | API + Playwright Từ chối chrome                                                           |
+| TASK-66    | Decline awaiting_ch rejected                                  | **Yes**                       | API 422 (no CH reject-inbox) — no UI                                                      |
+| TASK-67    | PM eval creative-handoff parent                               | **Yes**                       | API only (modal chrome = TASK-35 UI)                                                      |
+| TASK-68    | CH eval creative parent                                       | **Yes** + **E2E**             | API + Playwright CH Evaluate modal                                                        |
+| TASK-69    | CH eval project parent                                        | **Yes** + **E2E**             | API + same CH Evaluate modal spec                                                         |
+| TASK-70    | CH deny split child eval                                      | **Yes**                       | API 422 — no UI                                                                           |
+| TASK-71    | CM eval whole assigned_staff                                  | **Yes** + **E2E**             | API + Playwright CM Evaluate modal                                                        |
+| TASK-72    | CM eval split child; deny parent                              | **Yes**                       | API 200 child / 422 parent — no UI                                                        |
+| TASK-73    | Assign then edit full matrix                                  | **Yes** + **E2E**             | API assign → `PATCH /{id}` + Playwright Edit modal                                        |
+| TASK-74    | Edit while confirmed                                          | **Yes**                       | API status confirmed → meta PATCH still 200                                               |
+| TASK-75    | Creative assigned_staff meta                                  | **Yes** + **E2E**             | API creative-edit + Playwright CreativeEditDrawer                                         |
+| TASK-76    | Creative taskName path                                        | **Yes**                       | API creative-edit ignores name; generic PATCH renames (drawer chrome asserted in TASK-75) |
+| TASK-77    | Creative-edit finished/cancelled lock                         | **Yes**                       | API 422/403 — no UI (pure lock)                                                           |
+| TASK-78    | Post-assign role denial                                       | **Yes**                       | API employee + non-creator PM 403 — no UI (pure lock)                                     |
 
 **Rough split**
 

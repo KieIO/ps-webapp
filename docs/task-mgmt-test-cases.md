@@ -116,12 +116,12 @@ v1: **soft delete** (`DELETE` → GORM `DeletedAt`); **no task archive** (projec
 
 ### TASK-80 — Create task: Add unknown project → Create project modal
 
-|                   |                                                                                                                                                                                                                                                                          |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Preconditions** | Admin (`CREATE_TASK` + `CREATE_PROJECT`); seed client e.g. SANOFI                                                                                                                                                                                                        |
-| **Steps**         | 1. `/tasks/project` → **Tạo task** → Project Task<br>2. Gõ tên project **chưa có** trong catalog<br>3. Dropdown → **Add "…"** → modal **Create project** (tên prefill)<br>4. Chọn Client + Dept. head + PM → Create project<br>5. Quay lại drawer: tên dự án + PM đã gắn |
-| **Expected**      | Project mới trong catalog; form create-task đã điền name/PM; tạo task sau đó có `projectId` → link xanh Project/PM                                                                                                                                                       |
-| **Automation**    | E2E `task-80-81-create-task-add-project.spec.ts`                                                                                                                                                                                                                         |
+|                   |                                                                                                                                                                                                                                                                                                    |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Preconditions** | Admin (`CREATE_TASK` + `CREATE_PROJECT`); seed client e.g. SANOFI                                                                                                                                                                                                                                  |
+| **Steps**         | 1. `/tasks/project` → **Tạo task** → Project Task<br>2. Gõ tên **không substring-match** project nào (vd. `phan…` / unique) — dropdown có thể empty list<br>3. Vẫn thấy **Add "…"** → modal **Create project** (tên prefill)<br>4. Client + Dept. head + PM → Create<br>5. Drawer: tên + PM đã gắn |
+| **Expected**      | **Add** hiện cả khi không còn option khớp filter; project mới + form điền name/PM; tạo task có `projectId` → link xanh                                                                                                                                                                             |
+| **Automation**    | E2E `task-80-81-create-task-add-project.spec.ts`                                                                                                                                                                                                                                                   |
 
 ### TASK-81 — Create task: PM cannot Add project inline
 
@@ -131,6 +131,15 @@ v1: **soft delete** (`DELETE` → GORM `DeletedAt`); **no task archive** (projec
 | **Steps**         | Gõ tên project chưa có trên Create Task drawer                                                 |
 | **Expected**      | **Không** hiện **Add "…"**; giá trị free-text vẫn giữ (label ad-hoc, không tạo `projects` row) |
 | **Automation**    | E2E cùng file task-80-81                                                                       |
+
+### TASK-82 — Create task: Deadline limited to project date range
+
+|                   |                                                                                                                                           |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Preconditions** | Project catalog có `startDate` / `endDate` (vd. goware project)                                                                           |
+| **Steps**         | Create Task → chọn đúng tên project catalog → mở Deadline picker                                                                          |
+| **Expected**      | Chỉ chọn được ngày trong khoảng project; ngoài khoảng disabled; hint khoảng ngày dưới field; deadline đang ngoài range bị clamp vào trong |
+| **Automation**    | Unit `taskDates.test.ts`; E2E chưa bắt buộc                                                                                               |
 
 ---
 
@@ -801,7 +810,7 @@ Project path: `PATCH /tasks/my/{id}`. Creative path: `PATCH …/creative-edit` (
 5. TASK-32 → TASK-33 → TASK-44
 6. TASK-39 → TASK-40 → TASK-38
 7. TASK-47 → TASK-50 → TASK-51 → TASK-54 → TASK-57
-8. TASK-61 → TASK-06 → TASK-63 → TASK-80 → TASK-81
+8. TASK-61 → TASK-06 → TASK-63 → TASK-80 → TASK-81 → TASK-82
 9. TASK-64 → TASK-65 → TASK-67 → TASK-68 → TASK-71 → TASK-72
 10. TASK-73 → TASK-74 → TASK-75 → TASK-76 → TASK-77 → TASK-78
 

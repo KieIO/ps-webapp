@@ -32,10 +32,11 @@ export function ProjectNameSelectField({
   const { can } = usePermission();
   const canCreate = can('CREATE_PROJECT');
   const [search, setSearch] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
 
-  const trimmedSearch = search.trim();
-  const typed = trimmedSearch || (value ?? '').trim();
+  // Prefer live search text; fall back to committed value (e.g. after blur).
+  const typed = (search.trim() || (value ?? '').trim()).trim();
 
   const exactMatch = useMemo(
     () => options.some((name) => name.trim().toLowerCase() === typed.toLowerCase()),
@@ -43,6 +44,13 @@ export function ProjectNameSelectField({
   );
 
   const canShowAdd = canCreate && typed.length > 0 && !exactMatch && !disabled;
+
+  const filteredOptions = useMemo(() => {
+    const query = typed.toLowerCase();
+    return options
+      .filter((name) => !query || name.trim().toLowerCase().includes(query))
+      .map((name) => ({ value: name }));
+  }, [options, typed]);
 
   const applyByName = (rawName: string | undefined) => {
     const name = (rawName ?? '').trim();
@@ -54,6 +62,11 @@ export function ProjectNameSelectField({
     if (match) onProjectApplied?.(match);
   };
 
+  const openCreate = () => {
+    setDropdownOpen(false);
+    setCreateOpen(true);
+  };
+
   const handleCreated = (project: Project) => {
     onChange?.(project.name);
     onProjectApplied?.(project);
@@ -61,40 +74,58 @@ export function ProjectNameSelectField({
     setCreateOpen(false);
   };
 
+  const addButton = canShowAdd ? (
+    <Button
+      type="link"
+      icon={<PlusOutlined />}
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={openCreate}
+      style={{ paddingInline: 0 }}
+    >
+      Add &quot;{typed}&quot;
+    </Button>
+  ) : null;
+
   return (
     <>
       <AutoComplete
         id={id}
         value={value}
         disabled={disabled}
-        options={options.map((name) => ({ value: name }))}
+        open={dropdownOpen}
+        options={filteredOptions}
         placeholder={placeholder}
-        onChange={(next) => onChange?.(next)}
-        onSearch={setSearch}
-        onSelect={(next) => applyByName(next)}
+        filterOption={false}
+        onDropdownVisibleChange={setDropdownOpen}
+        onChange={(next) => {
+          onChange?.(next);
+          setSearch(next);
+          setDropdownOpen(true);
+        }}
+        onSearch={(next) => {
+          setSearch(next);
+          setDropdownOpen(true);
+        }}
+        onSelect={(next) => {
+          applyByName(next);
+          setSearch(next);
+          setDropdownOpen(false);
+        }}
         onBlur={() => applyByName(value)}
-        filterOption={(input, option) =>
-          String(option?.value ?? '')
-            .toLowerCase()
-            .includes(input.trim().toLowerCase())
+        notFoundContent={
+          canShowAdd ? (
+            <div style={{ padding: '4px 0' }}>{addButton}</div>
+          ) : (
+            'Không có project phù hợp'
+          )
         }
         dropdownRender={(menu) => (
           <>
             {menu}
-            {canShowAdd ? (
+            {canShowAdd && filteredOptions.length > 0 ? (
               <>
                 <Divider style={{ margin: '8px 0' }} />
-                <Space style={{ padding: '0 8px 4px' }}>
-                  <Button
-                    type="link"
-                    icon={<PlusOutlined />}
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => setCreateOpen(true)}
-                    style={{ paddingInline: 0 }}
-                  >
-                    Add &quot;{typed}&quot;
-                  </Button>
-                </Space>
+                <Space style={{ padding: '0 8px 4px' }}>{addButton}</Space>
               </>
             ) : null}
           </>

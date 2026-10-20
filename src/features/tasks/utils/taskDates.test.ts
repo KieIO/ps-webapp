@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   calendarDateFromTaskDeadline,
+  clampDeadlineToProjectRange,
   defaultTaskDeadline,
   formatTaskDateTime,
   fromTaskDeadline,
+  isOutsideProjectDateRange,
   normalizeTaskDateEnd,
   normalizeTaskDateStart,
   toTaskDateOnly,
@@ -49,5 +51,23 @@ describe('taskDates', () => {
     expect(calendarDateFromTaskDeadline('2026-09-25T17:08:00Z')).toBe('2026-09-25');
     expect(calendarDateFromTaskDeadline('2026-09-25T00:00:00.000Z')).toBe('2026-09-25');
     expect(calendarDateFromTaskDeadline('not-a-date')).toBeNull();
+  });
+
+  it('disables dates outside inclusive project start/end', () => {
+    expect(isOutsideProjectDateRange(dayjs('2026-10-19'), '2026-10-20', '2026-11-03')).toBe(true);
+    expect(isOutsideProjectDateRange(dayjs('2026-10-20'), '2026-10-20', '2026-11-03')).toBe(false);
+    expect(isOutsideProjectDateRange(dayjs('2026-11-03'), '2026-10-20', '2026-11-03')).toBe(false);
+    expect(isOutsideProjectDateRange(dayjs('2026-11-04'), '2026-10-20', '2026-11-03')).toBe(true);
+    expect(isOutsideProjectDateRange(dayjs('2026-10-01'), null, null)).toBe(false);
+  });
+
+  it('clamps deadline calendar day into project range while keeping time', () => {
+    const before = dayjs('2026-10-15T23:53:00');
+    const clampedStart = clampDeadlineToProjectRange(before, '2026-10-20', '2026-11-03');
+    expect(clampedStart.format('YYYY-MM-DD HH:mm')).toBe('2026-10-20 23:53');
+
+    const after = dayjs('2026-11-10T09:00:00');
+    const clampedEnd = clampDeadlineToProjectRange(after, '2026-10-20', '2026-11-03');
+    expect(clampedEnd.format('YYYY-MM-DD HH:mm')).toBe('2026-11-03 09:00');
   });
 });

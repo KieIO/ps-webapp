@@ -21,6 +21,38 @@ export const fromTaskDeadline = (value: string): Dayjs =>
 /** Default create-task deadline: now (minute precision). */
 export const defaultTaskDeadline = (): Dayjs => dayjs().second(0).millisecond(0);
 
+/** True when `current` calendar day is outside inclusive project [startDate, endDate]. */
+export const isOutsideProjectDateRange = (
+  current: Dayjs | null | undefined,
+  startDate?: string | null,
+  endDate?: string | null,
+): boolean => {
+  if (!current?.isValid()) return false;
+  const start = startDate ? dayjs(startDate) : null;
+  const end = endDate ? dayjs(endDate) : null;
+  if (start?.isValid() && current.isBefore(start, 'day')) return true;
+  if (end?.isValid() && current.isAfter(end, 'day')) return true;
+  return false;
+};
+
+/** Clamp deadline to project range (keep time-of-day; fallback end-of-start-day noon-ish via start). */
+export const clampDeadlineToProjectRange = (
+  deadline: Dayjs,
+  startDate?: string | null,
+  endDate?: string | null,
+): Dayjs => {
+  if (!deadline.isValid()) return deadline;
+  const start = startDate ? dayjs(startDate) : null;
+  const end = endDate ? dayjs(endDate) : null;
+  if (start?.isValid() && deadline.isBefore(start, 'day')) {
+    return deadline.year(start.year()).month(start.month()).date(start.date());
+  }
+  if (end?.isValid() && deadline.isAfter(end, 'day')) {
+    return deadline.year(end.year()).month(end.month()).date(end.date());
+  }
+  return deadline;
+};
+
 /** UTC start-of-day ISO for an existing task date string. */
 export const normalizeTaskDateStart = (value: string): string =>
   `${value.slice(0, 10)}T00:00:00.000Z`;

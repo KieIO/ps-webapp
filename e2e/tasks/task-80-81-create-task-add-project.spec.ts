@@ -17,9 +17,11 @@ test.describe('TASK-80/81 create-task Add project', () => {
     const drawer = await openProjectCreateDrawer(page);
     await drawer.getByRole('button', { name: /Project Task/ }).click();
 
-    const projectName = `E2E AddProj ${Date.now()}`;
+    // Name must not substring-match catalog rows (e.g. "p" still matches "goware project").
+    const projectName = `zzphan-${Date.now()}`;
     await typeUnknownProjectName(page, drawer, projectName);
 
+    // Empty filtered list must still show Add (notFoundContent), not only when partial matches exist.
     const addBtn = page.getByRole('button', { name: new RegExp(`Add ["“]?${projectName}["”]?`) });
     await expect(addBtn).toBeVisible({ timeout: 10_000 });
     await addBtn.click();

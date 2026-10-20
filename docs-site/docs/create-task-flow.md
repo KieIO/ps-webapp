@@ -107,7 +107,7 @@ PM nhập:
 | PM               | Người quản lý dự án                                                                                                                            |
 | Tên task         | Chọn từ danh mục task (catalog)                                                                                                                |
 | Số lượng         | Số slide / đơn vị công việc                                                                                                                    |
-| Deadline         | Ngày và giờ hoàn thành                                                                                                                         |
+| Deadline         | Ngày và giờ hoàn thành; project trong catalog → chỉ chọn trong `startDate`–`endDate`                                                           |
 | Urgency          | Mức ưu tiên (có thể để Auto theo deadline)                                                                                                     |
 | Brief            | Mô tả công việc, yêu cầu kỹ thuật                                                                                                              |
 | Phân loại độ khó | 3 tiêu chí, mỗi tiêu chí chọn mức 1 đến 5                                                                                                      |

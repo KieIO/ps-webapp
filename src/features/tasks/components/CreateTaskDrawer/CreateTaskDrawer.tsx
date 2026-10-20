@@ -14,7 +14,7 @@ import {
 import dayjs, { type Dayjs } from 'dayjs';
 import { FolderKanban, Palette } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { DATETIME_SHORT_FORMAT } from '@/config/constants';
+import { DATE_FORMAT, DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { ROLES, type Role } from '@/config/permissions';
 import { ProjectNameSelectField } from '@/features/projects/components/ProjectNameSelectField/ProjectNameSelectField';
 import { useProjectList } from '@/features/projects/hooks/useProjectList';
@@ -40,7 +40,12 @@ import {
   snapshotCreateTaskDraft,
   type CreateTaskDraftSnapshot,
 } from '../../utils/createTaskDraft';
-import { defaultTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
+import {
+  clampDeadlineToProjectRange,
+  defaultTaskDeadline,
+  isOutsideProjectDateRange,
+  toTaskDeadline,
+} from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import {
   isStaffAssignable,
@@ -241,6 +246,13 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
         userId: project.pm.userId,
       });
     }
+    const currentDate = form.getFieldValue('date') as Dayjs | undefined;
+    if (currentDate) {
+      form.setFieldValue(
+        'date',
+        clampDeadlineToProjectRange(currentDate, project.startDate, project.endDate),
+      );
+    }
   };
 
   const taskScoreName = Form.useWatch('taskScoreName', form);
@@ -254,6 +266,32 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
   const description = Form.useWatch('description', form);
   const projectName = Form.useWatch('projectName', form);
   const projectManager = Form.useWatch('projectManager', form);
+
+  const selectedCatalogProject = useMemo(() => {
+    const typed = (projectName ?? '').trim().toLowerCase();
+    if (!typed) return undefined;
+    return catalogProjectItems.find((project) => project.name.trim().toLowerCase() === typed);
+  }, [catalogProjectItems, projectName]);
+
+  const projectDateRangeHint = useMemo(() => {
+    if (!selectedCatalogProject?.startDate || !selectedCatalogProject?.endDate) return undefined;
+    const start = dayjs(selectedCatalogProject.startDate);
+    const end = dayjs(selectedCatalogProject.endDate);
+    if (!start.isValid() || !end.isValid()) return undefined;
+    return `Trong thời gian dự án: ${start.format(DATE_FORMAT)} – ${end.format(DATE_FORMAT)}`;
+  }, [selectedCatalogProject]);
+
+  useEffect(() => {
+    if (!selectedCatalogProject || !date) return;
+    const clamped = clampDeadlineToProjectRange(
+      date,
+      selectedCatalogProject.startDate,
+      selectedCatalogProject.endDate,
+    );
+    if (!clamped.isSame(date)) {
+      form.setFieldValue('date', clamped);
+    }
+  }, [selectedCatalogProject, date, form]);
 
   const scoreItems = useMemo(() => scoreList?.items ?? [], [scoreList?.items]);
   const scoreDepartment = workflowKind === 'creative' ? 'creative' : 'project';
@@ -579,7 +617,6 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                   name="projectName"
                   label="Tên dự án"
                   rules={[{ required: true, message: 'Nhập tên dự án' }]}
-                  extra="Chọn project có sẵn, hoặc Add để mở form Create project — rồi tên / PM mới thành link xanh."
                 >
                   <ProjectNameSelectField
                     options={projectOptions}
@@ -641,6 +678,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                       name="date"
                       label="Deadline"
                       rules={[{ required: true, message: 'Chọn deadline' }]}
+                      extra={projectDateRangeHint}
                     >
                       <DatePicker
                         showTime={{
@@ -651,6 +689,13 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                         style={{ width: '100%' }}
                         placeholder="Ngày & giờ"
                         showNow={false}
+                        disabledDate={(current) =>
+                          isOutsideProjectDateRange(
+                            current,
+                            selectedCatalogProject?.startDate,
+                            selectedCatalogProject?.endDate,
+                          )
+                        }
                       />
                     </Form.Item>
                     <Form.Item
@@ -707,6 +752,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                     name="date"
                     label="Deadline"
                     rules={[{ required: true, message: 'Chọn deadline' }]}
+                    extra={projectDateRangeHint}
                   >
                     <DatePicker
                       showTime={{
@@ -717,6 +763,13 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                       style={{ width: '100%' }}
                       placeholder="Ngày & giờ"
                       showNow={false}
+                      disabledDate={(current) =>
+                        isOutsideProjectDateRange(
+                          current,
+                          selectedCatalogProject?.startDate,
+                          selectedCatalogProject?.endDate,
+                        )
+                      }
                     />
                   </Form.Item>
                   <Form.Item
