@@ -36,6 +36,14 @@ const volumePairRefine = (
         message: 'Khối lượng phải lớn hơn 0',
         path: ['quantity'],
       });
+      return;
+    }
+    if (!Number.isInteger(value.quantity)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Khối lượng phải là số nguyên',
+        path: ['quantity'],
+      });
     }
     return;
   }

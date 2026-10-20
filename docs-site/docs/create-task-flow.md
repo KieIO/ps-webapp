@@ -101,16 +101,16 @@ PM chọn một trong hai loại:
 
 PM nhập:
 
-| Trường           | Mô tả                                      |
-| ---------------- | ------------------------------------------ |
-| Tên dự án        | Chọn hoặc nhập tên dự án                   |
-| PM               | Người quản lý dự án                        |
-| Tên task         | Chọn từ danh mục task (catalog)            |
-| Số lượng         | Số slide / đơn vị công việc                |
-| Deadline         | Ngày và giờ hoàn thành                     |
-| Urgency          | Mức ưu tiên (có thể để Auto theo deadline) |
-| Brief            | Mô tả công việc, yêu cầu kỹ thuật          |
-| Phân loại độ khó | 3 tiêu chí, mỗi tiêu chí chọn mức 1 đến 5  |
+| Trường           | Mô tả                                                                                                                                          |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tên dự án        | Chọn project có sẵn; hoặc (Admin/Head) **Add "…"** mở Create project rồi gắn lại. Free-text không tạo project mới — chỉ label, không link xanh |
+| PM               | Người quản lý dự án                                                                                                                            |
+| Tên task         | Chọn từ danh mục task (catalog)                                                                                                                |
+| Số lượng         | Số slide / đơn vị công việc                                                                                                                    |
+| Deadline         | Ngày và giờ hoàn thành                                                                                                                         |
+| Urgency          | Mức ưu tiên (có thể để Auto theo deadline)                                                                                                     |
+| Brief            | Mô tả công việc, yêu cầu kỹ thuật                                                                                                              |
+| Phân loại độ khó | 3 tiêu chí, mỗi tiêu chí chọn mức 1 đến 5                                                                                                      |
 
 **3 tiêu chí phân loại:**
 

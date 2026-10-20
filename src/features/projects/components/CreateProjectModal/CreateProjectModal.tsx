@@ -16,6 +16,7 @@ import type {
   CreateProjectRequest,
   EvaluationLevel,
   PersonWithCode,
+  Project,
   ProjectUrgency,
 } from '../../schemas/project.schema';
 import { ClientSelectField } from '../ClientSelectField/ClientSelectField';
@@ -34,6 +35,12 @@ const DEPT_HEAD_AUTO_SELECT_ROLES: readonly Role[] = [ROLES.ADMIN, ROLES.HEAD];
 interface CreateProjectModalProps {
   open: boolean;
   onClose: () => void;
+  /** Prefill project name when opened from create-task "+ Add". */
+  initialName?: string;
+  /** Called after a successful create (before close). */
+  onCreated?: (project: Project) => void;
+  /** Raise above Drawer (1000) when nested in Create Task. */
+  zIndex?: number;
 }
 
 /** Create form omits API fields that are defaulted server-side / at submit (not collected in UI). */
@@ -47,9 +54,9 @@ type CreateProjectFormValues = Omit<
   milestones?: MilestoneFormRow[];
 };
 
-const buildDefaultValues = (): CreateProjectFormValues => ({
+const buildDefaultValues = (initialName?: string): CreateProjectFormValues => ({
   clientId: '',
-  name: '',
+  name: initialName?.trim() ?? '',
   startDate: dayjs(),
   endDate: dayjs().add(2, 'week'),
   urgency: 'auto',
@@ -64,7 +71,13 @@ const buildDefaultValues = (): CreateProjectFormValues => ({
   milestones: [],
 });
 
-export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
+export function CreateProjectModal({
+  open,
+  onClose,
+  initialName,
+  onCreated,
+  zIndex,
+}: CreateProjectModalProps) {
   const [form] = Form.useForm<CreateProjectFormValues>();
   const { mutate, isPending } = useCreateProject();
   const { data: headOptions = [] } = useProjectHeadOptions();
@@ -97,8 +110,8 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
   // Reset the form only when the modal opens — not when head options finish loading.
   useEffect(() => {
     if (!open) return;
-    form.setFieldsValue(buildDefaultValues());
-  }, [open, form]);
+    form.setFieldsValue(buildDefaultValues(initialName));
+  }, [open, form, initialName]);
 
   // Prefill dept. head without wiping fields the user may already have entered.
   useEffect(() => {
@@ -165,8 +178,9 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
       ...CREATE_PROJECT_DEFAULTS,
       clientId: values.clientId,
       name: values.name,
-      startDate: values.startDate.toISOString(),
-      endDate: values.endDate.toISOString(),
+      // Calendar dates in VN (YYYY-MM-DD) — avoid toISOString UTC day-shift on Tracker.
+      startDate: values.startDate.format('YYYY-MM-DD'),
+      endDate: values.endDate.format('YYYY-MM-DD'),
       department,
       departmentHead,
       brief: values.brief ?? '',
@@ -182,8 +196,8 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
     if (canEditMilestones) {
       const milestoneInputs = formRowsToMilestoneInputs(values.milestones);
       const check = validateMilestones(milestoneInputs, {
-        startDate: values.startDate.toISOString(),
-        endDate: values.endDate.toISOString(),
+        startDate: values.startDate.format('YYYY-MM-DD'),
+        endDate: values.endDate.format('YYYY-MM-DD'),
         totalSlides: 0,
       });
       if (!check.ok) {
@@ -194,8 +208,9 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
     }
 
     mutate(payload, {
-      onSuccess: () => {
+      onSuccess: (project) => {
         form.resetFields();
+        onCreated?.(project);
         onClose();
       },
     });
@@ -211,6 +226,7 @@ export function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
       confirmLoading={isPending}
       destroyOnHidden
       width={720}
+      zIndex={zIndex}
       styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
     >
       <Form form={form} layout="vertical" onFinish={handleFinish} requiredMark={false}>

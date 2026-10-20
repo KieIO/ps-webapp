@@ -1,6 +1,5 @@
 import {
   Alert,
-  AutoComplete,
   Avatar,
   Button,
   DatePicker,
@@ -17,8 +16,9 @@ import { FolderKanban, Palette } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { ROLES, type Role } from '@/config/permissions';
+import { ProjectNameSelectField } from '@/features/projects/components/ProjectNameSelectField/ProjectNameSelectField';
 import { useProjectList } from '@/features/projects/hooks/useProjectList';
-import type { ProjectUrgency } from '@/features/projects/schemas/project.schema';
+import type { Project, ProjectUrgency } from '@/features/projects/schemas/project.schema';
 import { useTaskScoreList } from '@/features/task-scores/hooks/useTaskScoreList';
 import { resolveTaskType } from '@/features/task-scores/utils/resolveTaskType';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
@@ -232,19 +232,13 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
     return [...names].sort((a, b) => a.localeCompare(b));
   }, [catalogProjectItems, historicProjectNames]);
 
-  const applyCatalogProject = (rawName: string | undefined) => {
-    const typed = (rawName ?? '').trim();
-    if (!typed) return;
-    const match = catalogProjectItems.find(
-      (project) => project.name.trim().toLowerCase() === typed.toLowerCase(),
-    );
-    if (!match) return;
-    form.setFieldValue('projectName', match.name);
-    if (match.pm?.code && match.pm?.name) {
+  const applyCatalogProject = (project: Project) => {
+    form.setFieldValue('projectName', project.name);
+    if (project.pm?.code && project.pm?.name) {
       form.setFieldValue('projectManager', {
-        code: match.pm.code,
-        name: match.pm.name,
-        userId: match.pm.userId,
+        code: project.pm.code,
+        name: project.pm.name,
+        userId: project.pm.userId,
       });
     }
   };
@@ -585,17 +579,14 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                   name="projectName"
                   label="Tên dự án"
                   rules={[{ required: true, message: 'Nhập tên dự án' }]}
-                  extra="Chọn project có trong danh sách Projects để tên dự án / PM thành link xanh."
+                  extra="Chọn project có sẵn, hoặc Add để mở form Create project — rồi tên / PM mới thành link xanh."
                 >
-                  <AutoComplete
-                    options={projectOptions.map((name) => ({ value: name }))}
-                    placeholder="Chọn project từ danh sách"
+                  <ProjectNameSelectField
+                    options={projectOptions}
+                    catalogProjects={catalogProjectItems}
+                    placeholder="Chọn hoặc thêm project"
                     disabled={Boolean(preset?.lockProject)}
-                    filterOption={(input, option) =>
-                      (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
-                    }
-                    onSelect={(value) => applyCatalogProject(value)}
-                    onBlur={() => applyCatalogProject(form.getFieldValue('projectName'))}
+                    onProjectApplied={applyCatalogProject}
                   />
                 </Form.Item>
 

@@ -236,23 +236,6 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
           />
         </Form.Item>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Form.Item
-            name="quantity"
-            label="Khối lượng"
-            rules={
-              volumeRequired
-                ? [{ required: true, message: 'Khối lượng là bắt buộc khi chọn đơn vị' }]
-                : undefined
-            }
-          >
-            <InputNumber
-              min={0.1}
-              step={1}
-              style={{ width: '100%' }}
-              placeholder="Tuỳ chọn"
-              disabled={!volumeRequired}
-            />
-          </Form.Item>
           <Form.Item name="unit" label="Đơn vị">
             <Select
               allowClear
@@ -266,6 +249,31 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
                   form.setFieldValue('quantity', null);
                 }
               }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="quantity"
+            label="Khối lượng"
+            rules={
+              volumeRequired
+                ? [
+                    { required: true, message: 'Khối lượng là bắt buộc khi chọn đơn vị' },
+                    {
+                      type: 'integer',
+                      min: 1,
+                      message: 'Khối lượng phải là số nguyên ≥ 1',
+                    },
+                  ]
+                : undefined
+            }
+          >
+            <InputNumber
+              min={1}
+              step={1}
+              precision={0}
+              style={{ width: '100%' }}
+              placeholder="Số nguyên"
+              disabled={!volumeRequired}
             />
           </Form.Item>
         </div>

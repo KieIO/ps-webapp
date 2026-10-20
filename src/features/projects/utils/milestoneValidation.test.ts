@@ -109,6 +109,14 @@ describe('validateMilestones', () => {
       expect(result.message).toMatch(/khối lượng phải lớn hơn 0/i);
     }
   });
+
+  it('rejects non-integer quantity', () => {
+    const result = validateMilestones([{ ...base, quantity: 3.1, unit: 'da' }], ctx);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.message).toMatch(/số nguyên/i);
+    }
+  });
 });
 
 describe('sumMilestoneQuantityByUnit', () => {

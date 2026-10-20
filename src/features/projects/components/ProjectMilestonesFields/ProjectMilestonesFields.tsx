@@ -25,12 +25,15 @@ interface ProjectMilestonesFieldsProps {
   startDate?: Dayjs | null;
   endDate?: Dayjs | null;
   disabled?: boolean;
+  /** Only Edit Project / edit milestone — hide on Create project. */
+  showCompleted?: boolean;
 }
 
 export function ProjectMilestonesFields({
   startDate,
   endDate,
   disabled,
+  showCompleted = false,
 }: ProjectMilestonesFieldsProps) {
   return (
     <section className={styles.section}>
@@ -45,6 +48,7 @@ export function ProjectMilestonesFields({
                 startDate={startDate}
                 endDate={endDate}
                 disabled={disabled}
+                showCompleted={showCompleted}
                 onRemove={() => remove(field.name)}
               />
             ))}
@@ -78,12 +82,14 @@ function MilestoneRow({
   startDate,
   endDate,
   disabled,
+  showCompleted,
   onRemove,
 }: {
   field: { key: number; name: number };
   startDate?: Dayjs | null;
   endDate?: Dayjs | null;
   disabled?: boolean;
+  showCompleted: boolean;
   onRemove: () => void;
 }) {
   const form = Form.useFormInstance();
@@ -122,23 +128,6 @@ function MilestoneRow({
         </Form.Item>
       </div>
       <div className={styles.rowThree}>
-        <Form.Item
-          name={[field.name, 'quantity']}
-          label="Khối lượng"
-          rules={
-            volumeRequired
-              ? [{ required: true, message: 'Khối lượng là bắt buộc khi chọn đơn vị' }]
-              : undefined
-          }
-        >
-          <InputNumber
-            min={0.1}
-            step={1}
-            style={{ width: '100%' }}
-            disabled={disabled || !volumeRequired}
-            placeholder="Tuỳ chọn"
-          />
-        </Form.Item>
         <Form.Item name={[field.name, 'unit']} label="Đơn vị">
           <Select
             allowClear
@@ -155,13 +144,40 @@ function MilestoneRow({
             }}
           />
         </Form.Item>
+        <Form.Item
+          name={[field.name, 'quantity']}
+          label="Khối lượng"
+          rules={
+            volumeRequired
+              ? [
+                  { required: true, message: 'Khối lượng là bắt buộc khi chọn đơn vị' },
+                  {
+                    type: 'integer',
+                    min: 1,
+                    message: 'Khối lượng phải là số nguyên ≥ 1',
+                  },
+                ]
+              : undefined
+          }
+        >
+          <InputNumber
+            min={1}
+            step={1}
+            precision={0}
+            style={{ width: '100%' }}
+            disabled={disabled || !volumeRequired}
+            placeholder="Số nguyên"
+          />
+        </Form.Item>
         <Form.Item name={[field.name, 'note']} label="Ghi chú">
           <Input placeholder="Không bắt buộc" disabled={disabled} />
         </Form.Item>
       </div>
-      <Form.Item name={[field.name, 'completed']} valuePropName="checked">
-        <Checkbox disabled={disabled}>Hoàn thành</Checkbox>
-      </Form.Item>
+      {showCompleted ? (
+        <Form.Item name={[field.name, 'completed']} valuePropName="checked">
+          <Checkbox disabled={disabled}>Hoàn thành</Checkbox>
+        </Form.Item>
+      ) : null}
       <Form.Item name={[field.name, 'id']} hidden>
         <Input />
       </Form.Item>

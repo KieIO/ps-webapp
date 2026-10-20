@@ -55,6 +55,9 @@ export const validateMilestones = (
       if (milestone.quantity == null || milestone.quantity <= 0) {
         return { ok: false, message: `Mốc "${name}": khối lượng phải lớn hơn 0` };
       }
+      if (!Number.isInteger(milestone.quantity)) {
+        return { ok: false, message: `Mốc "${name}": khối lượng phải là số nguyên` };
+      }
     } else if (milestone.quantity != null && milestone.quantity < 0) {
       return { ok: false, message: `Mốc "${name}": khối lượng không được âm` };
     }

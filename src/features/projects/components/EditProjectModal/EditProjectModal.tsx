@@ -154,8 +154,9 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
     const payload: UpdateProjectRequest = {
       clientId: values.clientId,
       name: values.name,
-      startDate: values.startDate.toISOString(),
-      endDate: values.endDate.toISOString(),
+      // Calendar dates in VN (YYYY-MM-DD) — avoid toISOString UTC day-shift on Tracker.
+      startDate: values.startDate.format('YYYY-MM-DD'),
+      endDate: values.endDate.format('YYYY-MM-DD'),
       // Department is owned by tasks (task score group); keep existing project value.
       department: project.department,
       departmentHead,
@@ -174,8 +175,8 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
     if (canEditMilestones) {
       const milestoneInputs = formRowsToMilestoneInputs(values.milestones);
       const check = validateMilestones(milestoneInputs, {
-        startDate: values.startDate.toISOString(),
-        endDate: values.endDate.toISOString(),
+        startDate: values.startDate.format('YYYY-MM-DD'),
+        endDate: values.endDate.format('YYYY-MM-DD'),
         totalSlides: project.totalSlides,
       });
       if (!check.ok) {
@@ -369,7 +370,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
         </section>
 
         {canEditMilestones ? (
-          <ProjectMilestonesFields startDate={watchedStart} endDate={watchedEnd} />
+          <ProjectMilestonesFields startDate={watchedStart} endDate={watchedEnd} showCompleted />
         ) : null}
       </Form>
     </Modal>
