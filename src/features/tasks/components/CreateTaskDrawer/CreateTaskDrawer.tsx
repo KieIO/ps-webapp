@@ -17,6 +17,7 @@ import { FolderKanban, Palette } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { ROLES, type Role } from '@/config/permissions';
+import { useProjectList } from '@/features/projects/hooks/useProjectList';
 import type { ProjectUrgency } from '@/features/projects/schemas/project.schema';
 import { useTaskScoreList } from '@/features/task-scores/hooks/useTaskScoreList';
 import { resolveTaskType } from '@/features/task-scores/utils/resolveTaskType';
@@ -211,12 +212,42 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
   const isProjectWorkflow = workflowKind === 'project';
   const hasKind = workflowKind != null;
 
-  const { data: projectOptions = [] } = useCreateTaskProjectOptions('project', open);
+  const { data: historicProjectNames = [] } = useCreateTaskProjectOptions('project', open);
+  const { data: catalogProjects } = useProjectList({}, { enabled: open });
   const { data: pmOptions = [] } = useCreateTaskPmOptions(open);
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
   const { data: scoreList, isLoading: scoresLoading } = useTaskScoreList(EMPTY_SCORE_FILTERS, {
     enabled: open,
   });
+
+  const catalogProjectItems = catalogProjects?.items ?? [];
+  const projectOptions = useMemo(() => {
+    const names = new Set<string>();
+    for (const project of catalogProjectItems) {
+      if (project.name.trim()) names.add(project.name);
+    }
+    for (const name of historicProjectNames) {
+      if (name.trim()) names.add(name);
+    }
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, [catalogProjectItems, historicProjectNames]);
+
+  const applyCatalogProject = (rawName: string | undefined) => {
+    const typed = (rawName ?? '').trim();
+    if (!typed) return;
+    const match = catalogProjectItems.find(
+      (project) => project.name.trim().toLowerCase() === typed.toLowerCase(),
+    );
+    if (!match) return;
+    form.setFieldValue('projectName', match.name);
+    if (match.pm?.code && match.pm?.name) {
+      form.setFieldValue('projectManager', {
+        code: match.pm.code,
+        name: match.pm.name,
+        userId: match.pm.userId,
+      });
+    }
+  };
 
   const taskScoreName = Form.useWatch('taskScoreName', form);
   const designThinking = Form.useWatch('designThinking', form);
@@ -554,14 +585,17 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                   name="projectName"
                   label="Tên dự án"
                   rules={[{ required: true, message: 'Nhập tên dự án' }]}
+                  extra="Chọn project có trong danh sách Projects để tên dự án / PM thành link xanh."
                 >
                   <AutoComplete
                     options={projectOptions.map((name) => ({ value: name }))}
-                    placeholder="Chọn hoặc nhập tên dự án"
+                    placeholder="Chọn project từ danh sách"
                     disabled={Boolean(preset?.lockProject)}
                     filterOption={(input, option) =>
                       (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
                     }
+                    onSelect={(value) => applyCatalogProject(value)}
+                    onBlur={() => applyCatalogProject(form.getFieldValue('projectName'))}
                   />
                 </Form.Item>
 
