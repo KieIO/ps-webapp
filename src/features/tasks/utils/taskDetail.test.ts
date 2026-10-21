@@ -82,7 +82,7 @@ describe('buildFallbackTaskHistory', () => {
       projectManager: { code: 'PM', name: 'PM' },
       staff: [{ code: 'S', name: 'Huy Hoang' }],
       staffConfirmation: 'not_updated',
-    } as MyTask;
+    } as unknown as MyTask;
     const creative = {
       id: 'task-creative',
       date: '2026-06-10T00:00:00.000Z',
@@ -90,7 +90,7 @@ describe('buildFallbackTaskHistory', () => {
       projectManager: { code: 'PM', name: 'PM' },
       staff: [],
       staffConfirmation: 'not_updated',
-    } as MyTask;
+    } as unknown as MyTask;
 
     expect(buildFallbackTaskHistory(project).map((event) => event.description)).toContain(
       'Giao phòng Project — Huy Hoang',
