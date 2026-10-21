@@ -20,6 +20,7 @@ import {
 } from '../../utils/taskDetail';
 import {
   inferParentTaskCodeFromSplit,
+  isCreativeDeptTask,
   isSplitChildTask,
   isSplitParentTask,
   SPLIT_CHILD_BADGE_LABEL,
@@ -58,7 +59,8 @@ function formatTaskDepartment(task: MyTask): string {
 
 export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSummaryCardProps) {
   const { role } = usePermission();
-  const showCreativeDeadline = canViewCreativeDeadline(role ?? ROLES.EMPLOYEE, task.department);
+  const showCreativeDeadline =
+    isCreativeDeptTask(task) && canViewCreativeDeadline(role ?? ROLES.EMPLOYEE, task.department);
   const revision = isRevisionTask(task);
   const splitChild = isSplitChildTask(task);
   const splitParent = isSplitParentTask(task);

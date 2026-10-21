@@ -33,7 +33,7 @@ import {
 import { mergeStaffSelectOptions, resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
 import { fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
 import { getTaskDeadline } from '../../utils/taskDetail';
-import { resolveWholeAssignStaff } from '../../utils/creativePipeline';
+import { isCreativeDeptTask, resolveWholeAssignStaff } from '../../utils/creativePipeline';
 import {
   canCancelTask,
   canChangeTaskStatus,
@@ -114,7 +114,8 @@ export function EditTaskModal({
 
   const showLevelPreview = showsTaskLevelPreview(effectiveRole);
   const showEvaluationReadOnly = showsEvaluationReadOnly(effectiveRole, canEvaluate);
-  const showCreativeDeadline = canEditCreativeDeadlineRole(effectiveRole);
+  const showCreativeDeadline =
+    Boolean(task && isCreativeDeptTask(task)) && canEditCreativeDeadlineRole(effectiveRole);
   const canEditCreativeDl = canEditCreativeDeadlineMeta(effectiveRole, userId, {
     createdById: task?.createdById,
     projectManagerUserId: task?.projectManager?.userId,
@@ -217,11 +218,12 @@ export function EditTaskModal({
       staffConfirmation: nextConfirmation,
       staffNote: hasField(editableFields, 'staffNote') ? (values.staffNote ?? '') : task.staffNote,
       urgency: hasField(editableFields, 'urgency') ? values.urgency : task.urgency,
-      creativeDeadline: canEditCreativeDl
-        ? values.creativeDeadline
-          ? toTaskDeadline(values.creativeDeadline)
-          : undefined
-        : undefined,
+      creativeDeadline:
+        showCreativeDeadline && canEditCreativeDl
+          ? values.creativeDeadline
+            ? toTaskDeadline(values.creativeDeadline)
+            : undefined
+          : undefined,
     };
 
     const saveEvaluation = showEvaluationEditable
