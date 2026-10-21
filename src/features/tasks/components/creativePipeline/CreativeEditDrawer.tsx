@@ -705,11 +705,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                 </div>
               ) : (
                 <div className={styles.formSectionStack}>
-                  <CreativeAssignModeSection
-                    task={task}
-                    allTasks={allTasks}
-                    showReassignHint={canReassign}
-                  />
+                  <CreativeAssignModeSection task={task} allTasks={allTasks} />
                   <Form.Item
                     name="quantity"
                     label="Số lượng"

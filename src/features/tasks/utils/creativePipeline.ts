@@ -124,11 +124,6 @@ export const isAwaitingCh = (task: MyTask): boolean =>
 export const isAwaitingCm = (task: MyTask): boolean =>
   resolveEffectivePipelineStage(task) === 'awaiting_cm';
 
-export const CREATIVE_ASSIGN_MODE_OPTIONS: { label: string; value: CreativeAssignMode }[] = [
-  { label: 'Giao nguyên task', value: 'whole' },
-  { label: 'Chia thành task nhỏ', value: 'split' },
-];
-
 /** Locked assign shape after CM giao Staff — not editable via Sửa / Đổi giao. */
 export const resolveCreativeAssignMode = (task: MyTask): CreativeAssignMode | null => {
   const stage = resolveEffectivePipelineStage(task);
@@ -309,6 +304,8 @@ export const canOpenCreativePipelineEdit = (
   role: Role | undefined,
   userId: string | undefined,
 ): boolean => {
+  // Project-staff tasks share pipelineStage `assigned_staff` but are not a creative handoff.
+  if (!isCreativeDeptTask(task)) return false;
   if (!canEditCreativePipelineRole(role) || !isEditableCreativePipelineStage(task)) return false;
   // Admin break-glass.
   if (role === ROLES.ADMIN) return true;
@@ -364,7 +361,9 @@ export const shouldUseCreativePipelineEditDrawer = (
 ): boolean => canOpenCreativePipelineEdit(task, role, userId);
 
 export const canReassignCreativeStaff = (task: MyTask, role: Role | undefined): boolean =>
-  resolveEffectivePipelineStage(task) === 'assigned_staff' && canEditCreativePipelineRole(role);
+  isCreativeDeptTask(task) &&
+  resolveEffectivePipelineStage(task) === 'assigned_staff' &&
+  canEditCreativePipelineRole(role);
 
 /** CH / Admin may change CM only while the task is still awaiting CM (before Staff assign). */
 export const canReassignCreativeManager = (task: MyTask, role: Role | undefined): boolean => {

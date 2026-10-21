@@ -472,6 +472,17 @@ describe('creativePipeline helpers', () => {
     expect(canReassignCreativeStaff(assigned, ROLES.CREATIVE_HEAD)).toBe(true);
   });
 
+  it('keeps project-department tasks off the creative edit drawer', () => {
+    const projectTask = task({
+      department: 'project',
+      pipelineStage: 'assigned_staff',
+      staff: [assignee({ userId: 'staff-1', name: 'Huy Hoang' })],
+    });
+    expect(shouldUseCreativePipelineEditDrawer(projectTask, ROLES.ADMIN, 'admin')).toBe(false);
+    expect(canOpenCreativePipelineEdit(projectTask, ROLES.ADMIN, 'admin')).toBe(false);
+    expect(canReassignCreativeStaff(projectTask, ROLES.ADMIN)).toBe(false);
+  });
+
   it('allows CH/Admin to reassign CM only while awaiting_cm', () => {
     const awaitingCm = task({
       pipelineStage: 'awaiting_cm',

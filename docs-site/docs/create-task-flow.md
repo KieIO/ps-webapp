@@ -259,3 +259,9 @@ Người có quyền đánh giá task gồm **PM, Creative Head, Creative Manage
 ### Đóng form giữa chừng
 
 - Nếu đã nhập dữ liệu mà đóng drawer, hệ thống hỏi xác nhận hủy. Dữ liệu chưa lưu sẽ mất.
+
+### Sửa task đã Hoàn thành hoặc Hủy
+
+PM, Head, Creative Head, Creative Manager và người tạo task mở form sửa ở chế độ chỉ xem. Drawer hiện **“Task đã Hoàn thành — không thể chỉnh sửa.”** (hoặc câu tương ứng khi task đã Hủy).
+
+**Admin** vẫn sửa được task đã Hoàn thành hoặc Hủy: số lượng, brief, yêu cầu bổ sung, ghi chú, deadline, urgency, và Staff khi task đã giao Staff. Level vẫn khóa sau khi Hoàn thành. Số lượng từng phần Finished / Cancelled trong task đã chia vẫn khóa.
