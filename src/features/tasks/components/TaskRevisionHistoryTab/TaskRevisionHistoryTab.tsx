@@ -4,11 +4,13 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { Link } from 'react-router-dom';
 import { buildMyTaskDetailPath, DATE_FORMAT } from '@/config/constants';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { TaskConfirmationBadge } from '../TaskConfirmationBadge/TaskConfirmationBadge';
 import { useTaskRevisions } from '../../hooks/useTaskRevisions';
 import type { MyTask } from '../../schemas/task.schema';
 import { formatTaskDateTime } from '../../utils/taskDates';
 import { formatTaskStaffNames } from '../../utils/staff';
+import { canEvaluateTaskLayer } from '../../utils/taskEvaluation';
 import {
   ACTIVE_REVISION_CONFIRMATIONS,
   formatRevisionLabel,
@@ -24,12 +26,19 @@ interface TaskRevisionHistoryTabProps {
 }
 
 export function TaskRevisionHistoryTab({ task }: TaskRevisionHistoryTabProps) {
+  const { can, role } = usePermission();
+  const canRequest = can('EVALUATE_TASK') && canEvaluateTaskLayer(role, task);
   const isRevision = isRevisionTask(task);
   const revisionsQuery = useTaskRevisions(task.id, { enabled: !isRevision });
   const revisionItems = revisionsQuery.data?.items ?? [];
 
   if (isRevision) {
     const parentCode = inferParentTaskCodeFromRevision(task.taskCode);
+    const parentLink = task.parentTaskId ? (
+      <Link to={buildMyTaskDetailPath(task.parentTaskId, { from: task.id })}>
+        {parentCode ?? 'task gốc'}
+      </Link>
+    ) : null;
     return (
       <div className={styles.root}>
         <Alert
@@ -37,16 +46,19 @@ export function TaskRevisionHistoryTab({ task }: TaskRevisionHistoryTabProps) {
           showIcon
           message={`${formatRevisionLabel(task)} · ${task.taskCode}`}
           description={
-            task.parentTaskId ? (
+            canRequest ? (
+              parentLink ? (
+                <span>Đây là revision của {parentLink}. Lịch sử đầy đủ nằm trên task gốc.</span>
+              ) : (
+                'Đây là revision subtask. Lịch sử đầy đủ nằm trên task gốc.'
+              )
+            ) : parentLink ? (
               <span>
-                Đây là revision của{' '}
-                <Link to={buildMyTaskDetailPath(task.parentTaskId, { from: task.id })}>
-                  {parentCode ?? 'task gốc'}
-                </Link>
-                . Lịch sử đầy đủ nằm trên task gốc.
+                Đây là lần làm lại của {parentLink}. Bạn xác nhận, làm việc và đánh dấu hoàn thành
+                trên task này. Danh sách các lần revision nằm trên task gốc.
               </span>
             ) : (
-              'Đây là revision subtask. Lịch sử đầy đủ nằm trên task gốc.'
+              'Đây là task làm lại. Bạn xác nhận, làm việc và đánh dấu hoàn thành trên task này. Danh sách các lần revision nằm trên task gốc.'
             )
           }
         />
@@ -65,8 +77,9 @@ export function TaskRevisionHistoryTab({ task }: TaskRevisionHistoryTabProps) {
       <header className={styles.header}>
         <h3 className={styles.sectionTitle}>Danh sách revision</h3>
         <p className={styles.hint}>
-          Mỗi lần yêu cầu tạo một task làm lại riêng: người nhận giữ nguyên, có deadline và workload
-          riêng. Cập nhật trạng thái / số lượng / đánh giá trên revision con.
+          {canRequest
+            ? 'Mỗi lần yêu cầu tạo một task làm lại riêng: người nhận giữ nguyên, có deadline và workload riêng. Cập nhật trạng thái / số lượng / đánh giá trên revision con.'
+            : 'Khi quản lý cần bạn làm lại, hệ thống tạo một task revision riêng. Người nhận giữ nguyên. Deadline và workload tính riêng cho lần làm lại. Bạn xác nhận, làm việc và đánh dấu hoàn thành trên task revision đó.'}
         </p>
       </header>
 
@@ -80,7 +93,13 @@ export function TaskRevisionHistoryTab({ task }: TaskRevisionHistoryTabProps) {
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>Chưa có revision</p>
           <p className={styles.emptyBody}>
-            Dùng nút <strong>Yêu cầu revision</strong> để tạo lần làm lại đầu tiên.
+            {canRequest ? (
+              <>
+                Dùng nút <strong>Yêu cầu revision</strong> để tạo lần làm lại đầu tiên.
+              </>
+            ) : (
+              'Khi quản lý yêu cầu làm lại, task revision sẽ hiện ở đây để bạn xác nhận và hoàn thành.'
+            )}
           </p>
         </div>
       ) : (
