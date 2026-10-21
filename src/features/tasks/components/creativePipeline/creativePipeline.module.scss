@@ -42,6 +42,24 @@
   padding: 2px 0;
 }
 
+.identityLink {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .identityCode,
+  &:hover .identityName {
+    color: var(--color-primary);
+  }
+
+  &:hover .identityName {
+    text-decoration: underline;
+  }
+}
+
 .identityCode {
   font-size: 11px;
   line-height: 1.3;

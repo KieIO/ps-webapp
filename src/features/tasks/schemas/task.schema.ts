@@ -140,6 +140,14 @@ export const MyTaskSchema = z.object({
   activeRevisionChildCount: z.number().int().min(0).optional(),
   /** User who clicked Create — used for post-confirm meta edit authz. */
   createdById: z.string().nullish(),
+  /** Who last handed this task to the current assignee. Detail responses only. */
+  assignedBy: z
+    .object({
+      userId: z.string(),
+      name: z.string(),
+      role: z.string(),
+    })
+    .nullish(),
   creativeManager: TaskPersonSchema.optional(),
   /** Set when the task is handed to a staff member (15-minute confirm SLA). */
   assignedAt: z.string().nullish(),

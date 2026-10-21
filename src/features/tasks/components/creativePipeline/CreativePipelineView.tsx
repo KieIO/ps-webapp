@@ -3,6 +3,8 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { buildMyTaskDetailPath, ROUTES } from '@/config/constants';
 import { ROLES } from '@/config/permissions';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
@@ -137,9 +139,16 @@ export function CreativePipelineView() {
           const parentCode = splitChild ? inferParentTaskCodeFromSplit(record.taskCode) : null;
           return (
             <div className={styles.identityCell}>
-              <span className={styles.identityCode}>{record.taskCode}</span>
               <Tooltip title={record.taskName}>
-                <span className={styles.identityName}>{record.taskName}</span>
+                <Link
+                  to={buildMyTaskDetailPath(record.id)}
+                  state={{ backTo: ROUTES.CREATIVE_REVIEW, backLabel: 'Back to Creative queue' }}
+                  className={styles.identityLink}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <span className={styles.identityCode}>{record.taskCode}</span>
+                  <span className={styles.identityName}>{record.taskName}</span>
+                </Link>
               </Tooltip>
               {splitChild ? (
                 <span className={styles.identityBadges}>

@@ -282,8 +282,12 @@ export const resolveTaskManagementSelectedPath = (
 ): string | undefined => {
   if (!pathname.startsWith(MY_TASK_DETAIL_PATH_PREFIX)) return undefined;
 
-  const from = (locationState as { from?: 'project' | 'non_project' } | null)?.from;
-  return from === 'non_project' ? ROUTES.NON_PROJECT_TASKS : ROUTES.PROJECT_TASKS;
+  const state = locationState as {
+    from?: 'project' | 'non_project';
+    backTo?: string;
+  } | null;
+  if (state?.backTo === ROUTES.CREATIVE_REVIEW) return ROUTES.CREATIVE_REVIEW;
+  return state?.from === 'non_project' ? ROUTES.NON_PROJECT_TASKS : ROUTES.PROJECT_TASKS;
 };
 
 /** Map client detail URL to the active sidebar child path (Client management). */

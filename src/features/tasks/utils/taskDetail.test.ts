@@ -73,6 +73,32 @@ describe('buildFallbackTaskHistory', () => {
     expect(events[2]?.occurredAt).toBe('2026-06-12T18:39:00.000Z');
     expect(events[3]?.occurredAt).toBe('2026-06-10T23:59:59.000Z');
   });
+
+  it('distinguishes project and creative handoff when department is known', () => {
+    const project = {
+      id: 'task-project',
+      date: '2026-06-10T00:00:00.000Z',
+      department: 'project',
+      projectManager: { code: 'PM', name: 'PM' },
+      staff: [{ code: 'S', name: 'Huy Hoang' }],
+      staffConfirmation: 'not_updated',
+    } as MyTask;
+    const creative = {
+      id: 'task-creative',
+      date: '2026-06-10T00:00:00.000Z',
+      department: 'creative',
+      projectManager: { code: 'PM', name: 'PM' },
+      staff: [],
+      staffConfirmation: 'not_updated',
+    } as MyTask;
+
+    expect(buildFallbackTaskHistory(project).map((event) => event.description)).toContain(
+      'Giao phòng Project — Huy Hoang',
+    );
+    expect(buildFallbackTaskHistory(creative).map((event) => event.description)).toContain(
+      'Gửi phòng Creative',
+    );
+  });
 });
 
 describe('formatTaskCodeShort', () => {

@@ -4,6 +4,7 @@ import { buildMyTaskDetailPath } from '@/config/constants';
 import { ROLES } from '@/config/permissions';
 import { getDepartmentLabel } from '@/features/departments/hooks/useDepartmentOptions';
 import { usePermission } from '@/shared/hooks/usePermission';
+import { UserNameLink } from '@/shared/ui/UserNameLink/UserNameLink';
 import { ClassificationLevelBadge } from '../ClassificationLevelBadge/ClassificationLevelBadge';
 import { TaskConfirmationBadge } from '../TaskConfirmationBadge/TaskConfirmationBadge';
 import { TaskDetailActions } from '../TaskDetailActions/TaskDetailActions';
@@ -48,6 +49,19 @@ import styles from './TaskDetailSummaryCard.module.scss';
 interface TaskDetailSummaryCardProps {
   task: MyTask;
   onOpenRevisionTab?: () => void;
+}
+
+const ASSIGNED_BY_ROLE_LABELS: Record<string, string> = {
+  [ROLES.EMPLOYEE]: 'Staff',
+  [ROLES.PM]: 'PM',
+  [ROLES.CREATIVE_MANAGER]: 'Creative Manager',
+  [ROLES.CREATIVE_HEAD]: 'Creative Head',
+  [ROLES.HEAD]: 'Head',
+  [ROLES.ADMIN]: 'Admin',
+};
+
+function assignedByRoleLabel(role: string): string {
+  return ASSIGNED_BY_ROLE_LABELS[role] ?? '';
 }
 
 function formatTaskDepartment(task: MyTask): string {
@@ -212,6 +226,22 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
             <TaskStaffNameCell staff={task.staff} showAvatarForFirst />
           </p>
         </div>
+
+        {task.assignedBy?.name ? (
+          <div className={styles.metaItem}>
+            <p className={styles.metaLabel}>Assigned by</p>
+            <p className={styles.metaValue}>
+              <UserNameLink
+                name={task.assignedBy.name}
+                userId={task.assignedBy.userId}
+                showAvatar
+              />
+              {assignedByRoleLabel(task.assignedBy.role) ? (
+                <span> ({assignedByRoleLabel(task.assignedBy.role)})</span>
+              ) : null}
+            </p>
+          </div>
+        ) : null}
 
         <div className={styles.metaItem}>
           <p className={styles.metaLabel}>Start date</p>

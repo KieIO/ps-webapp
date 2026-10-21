@@ -13,6 +13,8 @@ import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 
 interface TaskDetailLocationState {
   from?: TaskCategory;
+  backTo?: string;
+  backLabel?: string;
 }
 
 export default function MyTaskDetailPage() {
@@ -23,8 +25,8 @@ export default function MyTaskDetailPage() {
   const { data: task } = useMyTask(id ?? '');
 
   const listCategory = locationState?.from ?? task?.taskCategory ?? 'project';
-  const listPath = getTaskListPath(listCategory);
-  const backLabel = getTaskListBackLabel(listCategory);
+  const listPath = locationState?.backTo || getTaskListPath(listCategory);
+  const backLabel = locationState?.backLabel || getTaskListBackLabel(listCategory);
 
   const title = task
     ? `Task Detail — ${task.taskCode || formatTaskDisplayId(task)}`

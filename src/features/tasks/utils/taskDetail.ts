@@ -70,6 +70,27 @@ export const formatTaskHistoryDateLabel = (
   return dayjs(occurredAt).format('DD/MM HH:mm');
 };
 
+const isCreativeDepartment = (department: string | null | undefined): boolean => {
+  const value = department?.trim().toLowerCase() ?? '';
+  return value === 'creative' || value.startsWith('creative_');
+};
+
+const isCreativeHandoff = (task: MyTask): boolean =>
+  isCreativeDepartment(task.department) && task.staff.length === 0;
+
+/** Create-time handoff line. Unknown departments keep the older assignee wording. */
+const assignmentHistoryLine = (task: MyTask): string | null => {
+  const names = task.staff.map((member) => member.name).filter(Boolean);
+  if (isCreativeDepartment(task.department)) {
+    return names.length > 0 ? `Giao phòng Creative — ${names.join(', ')}` : 'Gửi phòng Creative';
+  }
+  if (task.department?.trim().toLowerCase() === 'project' && names.length > 0) {
+    return `Giao phòng Project — ${names.join(', ')}`;
+  }
+  if (names.length === 0) return null;
+  return `${names.join(', ')} assigned`;
+};
+
 /** Fallback timeline for mock mode when audit history is unavailable. */
 export const buildFallbackTaskHistory = (task: MyTask): TaskHistoryEvent[] => {
   const events: TaskHistoryEvent[] = [
@@ -83,15 +104,17 @@ export const buildFallbackTaskHistory = (task: MyTask): TaskHistoryEvent[] => {
     },
   ];
 
-  if (task.staff.length > 0) {
-    const names = task.staff.map((member) => member.name).join(', ');
-    events.push({
-      id: `${task.id}-assigned`,
-      occurredAt: task.updatedAt ?? task.date,
-      description: `${names} assigned`,
-      completed: true,
-      kind: 'event',
-    });
+  if (task.staff.length > 0 || isCreativeHandoff(task)) {
+    const description = assignmentHistoryLine(task);
+    if (description) {
+      events.push({
+        id: `${task.id}-assigned`,
+        occurredAt: task.updatedAt ?? task.date,
+        description,
+        completed: true,
+        kind: 'event',
+      });
+    }
   }
 
   if (task.staffConfirmation !== 'not_updated') {
