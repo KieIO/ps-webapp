@@ -130,6 +130,7 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
       <div className={styles.body}>
         <div className={styles.main}>
+          <TaskDetailSplitChildren task={task} />
           <Tabs
             activeKey={activeTab}
             onChange={handleTabChange}
@@ -161,8 +162,6 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
                     <p className={styles.sectionTitle}>Attachments</p>
                     <div className={styles.emptyBlock}>No attachments for this task.</div>
-
-                    <TaskDetailSplitChildren task={task} />
                   </>
                 ),
               },

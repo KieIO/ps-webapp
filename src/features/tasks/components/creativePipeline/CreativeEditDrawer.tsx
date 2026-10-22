@@ -915,12 +915,12 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                             message="Staff đã confirm. Không đổi Level được."
                           />
                         ) : null}
-                        {!canEditLevel ? (
+                        {!canEditLevel && !levelLocked ? (
                           <Alert
                             type="info"
                             showIcon
                             className={styles.banner}
-                            message="Creative Manager không được đổi Level."
+                            message="Creative Manager không được đổi Level. Admin, Creative Head hoặc Head đổi được."
                           />
                         ) : null}
                         <Form.Item

@@ -40,10 +40,7 @@ export const getTaskListLabel = (taskCategory: TaskCategory): string =>
 export const getTaskListBackLabel = (taskCategory: TaskCategory): string =>
   taskCategory === 'non_project' ? 'Back to non-project tasks' : 'Back to project tasks';
 
-export const formatTaskQuantity = (task: MyTask): string => {
-  const unit = task.taskName.toLowerCase();
-  return `${task.quantity} ${unit}`;
-};
+export const formatTaskQuantity = (task: Pick<MyTask, 'quantity'>): string => String(task.quantity);
 
 /** UTC start of the task calendar day (00:00:00). */
 export const getTaskStartDate = (task: MyTask): string => normalizeTaskDateStart(task.date);
