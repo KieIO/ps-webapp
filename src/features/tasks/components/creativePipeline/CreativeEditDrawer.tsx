@@ -26,6 +26,7 @@ import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateCreativePipeline } from '../../hooks/useUpdateCreativePipeline';
 import type { MyTask } from '../../schemas/task.schema';
 import { formatTaskDateTime, fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
+import { wholeTaskQuantityRule } from '../../utils/taskQuantity';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import {
   canChangeCreativeLevelRole,
@@ -617,13 +618,11 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                   <Form.Item
                     name="quantity"
                     label="SL tổng"
-                    rules={[
-                      { required: true, message: 'Nhập SL tổng' },
-                      { type: 'number', min: 0.01, message: 'SL tổng > 0' },
-                    ]}
+                    rules={[{ required: true, message: 'Nhập SL tổng' }, wholeTaskQuantityRule]}
                   >
                     <InputNumber
-                      min={0.01}
+                      min={1}
+                      precision={0}
                       step={1}
                       style={{ width: '100%' }}
                       disabled={!canEdit || isPending}
@@ -668,13 +667,15 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                           <div className={styles.allocationQty}>
                             <Form.Item
                               name={['childQuantities', child.id]}
-                              rules={[
-                                { required: true, message: 'Nhập SL' },
-                                { type: 'number', min: 0.01, message: 'SL > 0' },
-                              ]}
+                              rules={
+                                qtyLocked
+                                  ? undefined
+                                  : [{ required: true, message: 'Nhập SL' }, wholeTaskQuantityRule]
+                              }
                             >
                               <InputNumber
-                                min={0.01}
+                                min={qtyLocked ? undefined : 1}
+                                precision={qtyLocked ? undefined : 0}
                                 step={1}
                                 style={{ width: '100%' }}
                                 disabled={!canEdit || qtyLocked || isPending}
@@ -711,10 +712,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                     label="Số lượng"
                     rules={
                       quantityRequired
-                        ? [
-                            { required: true, message: 'CM nhập số lượng' },
-                            { type: 'number', min: 0.01, message: 'Số lượng phải lớn hơn 0' },
-                          ]
+                        ? [{ required: true, message: 'CM nhập số lượng' }, wholeTaskQuantityRule]
                         : undefined
                     }
                     extra={
@@ -724,7 +722,8 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                     }
                   >
                     <InputNumber
-                      min={0.01}
+                      min={1}
+                      precision={0}
                       step={1}
                       style={{ width: '100%' }}
                       disabled={!canEdit || isPending}

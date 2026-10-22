@@ -30,6 +30,7 @@ import {
   REVISION_DEADLINE_BEFORE_WORK_DATE_MESSAGE,
   revisionQuantityExpandedCapacityHint,
 } from '../../utils/taskRevision';
+import { wholeTaskQuantityRule } from '../../utils/taskQuantity';
 import editStyles from '../EditTaskModal/EditTaskModal.module.scss';
 import styles from './RequestRevisionDrawer.module.scss';
 
@@ -234,19 +235,10 @@ export function RequestRevisionDrawer({
               <Form.Item
                 name="quantity"
                 label="Số lượng làm lại"
-                rules={[
-                  { required: true, message: 'Nhập số lượng' },
-                  {
-                    validator: async (_, value: unknown) => {
-                      if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
-                        throw new Error('Số lượng phải lớn hơn 0');
-                      }
-                    },
-                  },
-                ]}
+                rules={[{ required: true, message: 'Nhập số lượng' }, wholeTaskQuantityRule]}
                 extra={formatRevisionQuantityExtra(task.quantity)}
               >
-                <InputNumber min={0.01} step={1} style={{ width: '100%' }} />
+                <InputNumber min={1} precision={0} step={1} style={{ width: '100%' }} />
               </Form.Item>
 
               <Form.Item

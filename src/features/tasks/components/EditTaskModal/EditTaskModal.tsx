@@ -18,6 +18,7 @@ import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
 import { useUpdateMyTask } from '../../hooks/useUpdateMyTask';
 import { useUpdateMyTaskPmEvaluation } from '../../hooks/useUpdateMyTaskPmEvaluation';
 import { computeTaskLevel } from '../../utils/taskLevel';
+import { wholeTaskQuantityRule } from '../../utils/taskQuantity';
 import {
   canEditCreativeDeadline as canEditCreativeDeadlineRole,
   canEditCreativeDeadlineMeta,
@@ -373,9 +374,12 @@ export function EditTaskModal({
                   <Form.Item
                     name="quantity"
                     label={MY_TASK_COLUMN_HEADERS.quantity}
-                    rules={[{ required: true, message: 'Quantity is required' }]}
+                    rules={[
+                      { required: true, message: 'Quantity is required' },
+                      wholeTaskQuantityRule,
+                    ]}
                   >
-                    <InputNumber min={0} style={{ width: '100%' }} />
+                    <InputNumber min={1} precision={0} step={1} style={{ width: '100%' }} />
                   </Form.Item>
                 ) : null}
                 {hasField(editableFields, 'date') || hasField(editableFields, 'urgency') ? (

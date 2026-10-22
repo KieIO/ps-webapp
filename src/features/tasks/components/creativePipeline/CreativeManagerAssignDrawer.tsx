@@ -32,6 +32,7 @@ import {
 import { openDeclineReasonModal } from '../../utils/declineReasonModal';
 import { fromTaskDeadline, formatTaskDateTime, toTaskDeadline } from '../../utils/taskDates';
 import { getTaskDeadline } from '../../utils/taskDetail';
+import { wholeTaskQuantityRule } from '../../utils/taskQuantity';
 import { resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
 import { CreativeAssignModeSection } from './CreativeAssignModeSection';
@@ -406,11 +407,7 @@ export function CreativeManagerAssignDrawer({
                       label="Số lượng"
                       rules={[
                         { required: true, message: 'CM nhập số lượng trước khi giao' },
-                        {
-                          type: 'number',
-                          min: 0.01,
-                          message: 'Số lượng phải lớn hơn 0',
-                        },
+                        wholeTaskQuantityRule,
                       ]}
                       extra={
                         task.quantity > 0
@@ -419,7 +416,8 @@ export function CreativeManagerAssignDrawer({
                       }
                     >
                       <InputNumber
-                        min={0.01}
+                        min={1}
+                        precision={0}
                         step={1}
                         style={{ width: '100%' }}
                         placeholder={task.quantity > 0 ? `VD: ${task.quantity}` : 'VD: 24'}
@@ -513,14 +511,15 @@ export function CreativeManagerAssignDrawer({
                                   label="Số lượng"
                                   rules={[
                                     { required: true, message: 'Nhập số lượng' },
-                                    {
-                                      type: 'number',
-                                      min: 0.01,
-                                      message: 'Số lượng phải lớn hơn 0',
-                                    },
+                                    wholeTaskQuantityRule,
                                   ]}
                                 >
-                                  <InputNumber min={0.01} step={1} style={{ width: '100%' }} />
+                                  <InputNumber
+                                    min={1}
+                                    precision={0}
+                                    step={1}
+                                    style={{ width: '100%' }}
+                                  />
                                 </Form.Item>
                               </div>
                               <Form.Item

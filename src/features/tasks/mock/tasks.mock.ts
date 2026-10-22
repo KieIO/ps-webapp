@@ -1410,12 +1410,14 @@ export const mockUpdateCreativePipeline = async (
         throw new Error('childQuantities chứa task nhỏ không thuộc task này');
       }
       const sibling = siblings.find((child) => child.id === row.id)!;
-      if (row.quantity <= 0) {
-        throw new Error('Số lượng task nhỏ phải lớn hơn 0');
-      }
       const qtyUnchanged = Math.abs(row.quantity - sibling.quantity) <= 1e-6;
-      if (!qtyUnchanged && isSplitChildQuantityLocked(sibling)) {
-        throw new Error('Không đổi SL task nhỏ đã finish / huỷ');
+      if (!qtyUnchanged) {
+        if (!Number.isInteger(row.quantity) || row.quantity < 1) {
+          throw new Error('Số lượng phải là số nguyên lớn hơn 0');
+        }
+        if (isSplitChildQuantityLocked(sibling)) {
+          throw new Error('Không đổi SL task nhỏ đã finish / huỷ');
+        }
       }
       nextQty.set(row.id, row.quantity);
     }
@@ -1453,9 +1455,9 @@ export const mockUpdateCreativePipeline = async (
       .filter((child) => isSplitChildQuantityLocked(child))
       .reduce((total, child) => total + child.quantity, 0);
     const editable = siblings.filter((child) => !isSplitChildQuantityLocked(child));
-    if (payload.quantity + 1e-6 < lockedSum + editable.length * 0.01) {
+    if (payload.quantity + 1e-6 < lockedSum + editable.length) {
       throw new Error(
-        `SL tổng tối thiểu ${lockedSum + editable.length * 0.01} (phần đã finish/huỷ + các phần còn mở)`,
+        `SL tổng tối thiểu ${lockedSum + editable.length} (phần đã finish/huỷ + các phần còn mở)`,
       );
     }
     const primary = pickPrimaryEditableSplitChild(editable);

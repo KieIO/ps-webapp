@@ -47,6 +47,7 @@ import {
   toTaskDeadline,
 } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
+import { wholeTaskQuantityRule } from '../../utils/taskQuantity';
 import {
   isStaffAssignable,
   STAFF_AVAILABILITY_LABELS,
@@ -670,9 +671,9 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                     <Form.Item
                       name="quantity"
                       label="Số lượng"
-                      rules={[{ required: true, message: 'Nhập số lượng' }]}
+                      rules={[{ required: true, message: 'Nhập số lượng' }, wholeTaskQuantityRule]}
                     >
-                      <InputNumber min={0} style={{ width: '100%' }} />
+                      <InputNumber min={1} precision={0} step={1} style={{ width: '100%' }} />
                     </Form.Item>
                     <Form.Item
                       name="date"

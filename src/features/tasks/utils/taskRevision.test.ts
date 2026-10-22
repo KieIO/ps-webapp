@@ -225,11 +225,11 @@ describe('revision quantity policy (Option A)', () => {
     expect(compareRevisionQuantityToParent(14, 1)).toBe('expanded');
   });
 
-  it('only rejects non-positive quantity', () => {
+  it('rejects zero, negative, and fractional quantity', () => {
     expect(() => assertRevisionQuantity(14)).not.toThrow();
-    expect(() => assertRevisionQuantity(0.5)).not.toThrow();
-    expect(() => assertRevisionQuantity(0)).toThrow(/lớn hơn 0/);
-    expect(() => assertRevisionQuantity(-1)).toThrow(/lớn hơn 0/);
+    expect(() => assertRevisionQuantity(0.5)).toThrow(/số nguyên/);
+    expect(() => assertRevisionQuantity(0)).toThrow(/số nguyên/);
+    expect(() => assertRevisionQuantity(-1)).toThrow(/số nguyên/);
   });
 
   it('shows capacity hint only when expanded', () => {

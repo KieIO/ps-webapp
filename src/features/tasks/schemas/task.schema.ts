@@ -98,7 +98,7 @@ export const MyTaskSchema = z.object({
   projectManager: TaskPersonSchema,
   taskName: z.string(),
   level: z.coerce.number().min(1).max(5),
-  /** Backend stores quantity as float64 (partial slides/units allowed). */
+  /** Stored number. New writes must be a whole unit; older rows may still be fractional. */
   quantity: z.number().min(0),
   /** SL giao trước khi CM tách phần còn lại (spawn evaluation remainder). */
   originalAssignedQuantity: z.number().min(0).nullish(),
@@ -257,8 +257,8 @@ export const CreateQualityReviewRequestSchema = z.object({
 export const CreateRevisionRequestSchema = z
   .object({
     revisionReason: z.string().trim().min(1, 'Nhập lý do / nội dung revision'),
-    /** Rework scope units — independent of parent quantity (can be partial or expanded). */
-    quantity: z.number().positive('Số lượng phải lớn hơn 0'),
+    /** Rework scope units — a whole number, independent of parent quantity. */
+    quantity: z.number().int().positive('Số lượng phải là số nguyên lớn hơn 0'),
     level: z.number().int().min(1).max(5),
     /** Calendar day used for capacity workload (YYYY-MM-DD or ISO). */
     date: z.string().min(1, 'Chọn ngày tính capacity'),
@@ -281,7 +281,7 @@ export const CreateMyTaskRequestSchema = z.object({
   projectManager: TaskPersonSchema,
   taskName: z.string().min(1, 'Task name is required'),
   level: z.number().int().min(1).max(5),
-  quantity: z.number().min(0),
+  quantity: z.number().int().min(0),
   date: z.string(),
   description: z.string(),
   department: z.string().min(1).optional(),
@@ -351,7 +351,7 @@ export const AssignCreativeHeadRequestSchema = z.object({
 export const CreativeManagerSubtaskSchema = z.object({
   name: z.string().min(1, 'Tên task nhỏ is required'),
   staffUserId: z.string().min(1, 'Chọn Staff'),
-  quantity: z.number().positive('Nhập số lượng > 0'),
+  quantity: z.number().int().positive('Số lượng phải là số nguyên lớn hơn 0'),
   description: z.string().min(1, 'Nhập brief cho task nhỏ'),
   /** Optional CM creative deadline for this part. */
   creativeDeadline: z.string().optional(),
@@ -363,7 +363,7 @@ export const AssignCreativeManagerRequestSchema = z
     staffUserId: z.string().optional(),
     staffNote: z.string().optional(),
     /** Required when mode=whole — CM fills quantity when assigning. */
-    quantity: z.number().positive('Nhập số lượng > 0').optional(),
+    quantity: z.number().int().positive('Số lượng phải là số nguyên lớn hơn 0').optional(),
     /** Optional CM creative deadline for whole assign. */
     creativeDeadline: z.string().optional(),
     subtasks: z.array(CreativeManagerSubtaskSchema).optional(),
@@ -396,7 +396,7 @@ export const UpdateCreativePipelineRequestSchema = z
   .object({
     description: z.string().optional(),
     additionalFactors: z.string().optional(),
-    quantity: z.number().min(0).optional(),
+    quantity: z.number().int().min(0).optional(),
     /** PM deadline (InternalDeadline) — Admin/PM only. */
     deadline: z.string().nullish(),
     creativeDeadline: z.string().nullish(),
@@ -444,7 +444,7 @@ export const UpdateCreativePipelineRequestSchema = z
 
 export const UpdateMyTaskRequestSchema = z.object({
   taskName: z.string().min(1, 'Task name is required'),
-  quantity: z.number().min(0),
+  quantity: z.number().int().min(0),
   date: z.string(),
   description: z.string(),
   designThinking: z.number().int().min(1).max(5),

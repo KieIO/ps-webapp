@@ -195,8 +195,8 @@ export function compareRevisionQuantityToParent(
 }
 
 export function assertRevisionQuantity(quantity: number): void {
-  if (!Number.isFinite(quantity) || quantity <= 0) {
-    throw new Error('Số lượng phải lớn hơn 0');
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    throw new Error('Số lượng phải là số nguyên lớn hơn 0');
   }
 }
 
