@@ -28,11 +28,19 @@
   top: 16px;
 }
 
+.detailStack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 4px;
+}
+
 .sectionTitle {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--color-text);
-  margin: 0 0 8px;
+  margin: 0 0 6px;
 }
 
 .description {
@@ -43,8 +51,15 @@
   white-space: pre-wrap;
 }
 
+.emptyText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
 .noteAlert {
-  margin-top: 16px;
+  margin: 0;
 }
 
 .emptyBlock {

@@ -139,11 +139,17 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
                 key: 'details',
                 label: 'Details & description',
                 children: (
-                  <>
-                    <p className={styles.sectionTitle}>Task description</p>
-                    <p className={styles.description}>{task.description}</p>
+                  <div className={styles.detailStack}>
+                    <section>
+                      <p className={styles.sectionTitle}>Task description</p>
+                      <p
+                        className={task.description.trim() ? styles.description : styles.emptyText}
+                      >
+                        {task.description.trim() || 'Không có'}
+                      </p>
+                    </section>
 
-                    {task.pmNote ? (
+                    {task.pmNote.trim() ? (
                       <Alert
                         className={styles.noteAlert}
                         type="warning"
@@ -153,16 +159,25 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
                       />
                     ) : null}
 
-                    {task.additionalFactors ? (
-                      <>
+                    {task.additionalFactors.trim() ? (
+                      <section>
                         <p className={styles.sectionTitle}>Additional factors</p>
                         <p className={styles.description}>{task.additionalFactors}</p>
-                      </>
+                      </section>
                     ) : null}
 
-                    <p className={styles.sectionTitle}>Attachments</p>
-                    <div className={styles.emptyBlock}>No attachments for this task.</div>
-                  </>
+                    <section>
+                      <p className={styles.sectionTitle}>Ghi chú</p>
+                      <p className={task.staffNote.trim() ? styles.description : styles.emptyText}>
+                        {task.staffNote.trim() || 'Không có'}
+                      </p>
+                    </section>
+
+                    <section>
+                      <p className={styles.sectionTitle}>Attachments</p>
+                      <p className={styles.emptyText}>No attachments for this task.</p>
+                    </section>
+                  </div>
                 ),
               },
               {
