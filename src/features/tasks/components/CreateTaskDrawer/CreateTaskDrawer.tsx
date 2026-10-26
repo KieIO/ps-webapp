@@ -41,6 +41,10 @@ import {
   type CreateTaskDraftSnapshot,
 } from '../../utils/createTaskDraft';
 import {
+  isCreateTaskPmLockedToSelf,
+  pmOptionsForCreateTask,
+} from '../../utils/createTaskPmOptions';
+import {
   clampDeadlineToProjectRange,
   defaultTaskDeadline,
   isOutsideProjectDateRange,
@@ -221,6 +225,11 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
   const { data: historicProjectNames = [] } = useCreateTaskProjectOptions('project', open);
   const { data: catalogProjects } = useProjectList({}, { enabled: open });
   const { data: pmOptions = [] } = useCreateTaskPmOptions(open);
+  const pmLockedToSelf = isCreateTaskPmLockedToSelf(currentUser?.role);
+  const visiblePmOptions = useMemo(
+    () => pmOptionsForCreateTask(pmOptions, currentUser),
+    [currentUser, pmOptions],
+  );
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
   const { data: scoreList, isLoading: scoresLoading } = useTaskScoreList(EMPTY_SCORE_FILTERS, {
     enabled: open,
@@ -240,7 +249,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
 
   const applyCatalogProject = (project: Project) => {
     form.setFieldValue('projectName', project.name);
-    if (project.pm?.code && project.pm?.name) {
+    if (!pmLockedToSelf && project.pm?.code && project.pm?.name) {
       form.setFieldValue('projectManager', {
         code: project.pm.code,
         name: project.pm.name,
@@ -327,7 +336,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
     if (!currentUser?.id || !currentUser.role) return undefined;
     if (!PM_NAME_AUTO_SELECT_ROLES.includes(currentUser.role as Role)) return undefined;
 
-    const match = pmOptions.find(
+    const match = visiblePmOptions.find(
       (entry) =>
         entry.userId === currentUser.id ||
         entry.name.trim().toLowerCase() === currentUser.name.trim().toLowerCase(),
@@ -340,10 +349,10 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
       name: currentUser.name,
       userId: currentUser.id,
     };
-  }, [currentUser, pmOptions]);
+  }, [currentUser, visiblePmOptions]);
 
   const pmSelectOptions = useMemo(() => {
-    const options = pmOptions.map((pm) => ({
+    const options = visiblePmOptions.map((pm) => ({
       value: pm.code,
       label: pm.name,
     }));
@@ -357,7 +366,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
       });
     }
     return options;
-  }, [pmOptions, defaultProjectManager]);
+  }, [visiblePmOptions, defaultProjectManager]);
 
   const projectStaffOptions = useMemo(
     () =>
@@ -396,13 +405,14 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
       ...DEFAULT_VALUES,
       date: preset?.date ?? defaultTaskDeadline(),
       projectName: preset?.projectName ?? DEFAULT_VALUES.projectName,
-      projectManager:
-        preset?.projectManager ?? defaultProjectManager ?? DEFAULT_VALUES.projectManager,
+      projectManager: pmLockedToSelf
+        ? (defaultProjectManager ?? DEFAULT_VALUES.projectManager)
+        : (preset?.projectManager ?? defaultProjectManager ?? DEFAULT_VALUES.projectManager),
       description: preset?.description ?? DEFAULT_VALUES.description,
       assignDirection: undefined,
     });
     captureDraftBaseline();
-  }, [open, form, preset, defaultProjectManager]);
+  }, [open, form, preset, defaultProjectManager, pmLockedToSelf]);
 
   useEffect(() => {
     if (!open) return;
@@ -440,7 +450,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
       return;
     }
     const pm =
-      pmOptions.find((entry) => entry.code === pmCode) ??
+      visiblePmOptions.find((entry) => entry.code === pmCode) ??
       (defaultProjectManager?.code === pmCode ? defaultProjectManager : undefined);
     if (pm) {
       form.setFieldValue('projectManager', {
@@ -481,7 +491,14 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
             'technical',
             'contentProcessing',
           ]
-        : ['projectName', ['projectManager', 'code'], 'taskScoreName', 'date', 'urgency'];
+        : [
+            'projectName',
+            ['projectManager', 'code'],
+            'taskScoreName',
+            'quantity',
+            'date',
+            'urgency',
+          ];
     }
     if (current === 1 && isProjectWorkflow) {
       return assignDirection === 'project_staff'
@@ -634,7 +651,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                   rules={[{ required: true, message: 'Chọn PM' }]}
                 >
                   <Select
-                    allowClear
+                    allowClear={!pmLockedToSelf}
                     placeholder="Chọn PM"
                     onChange={handlePmSelect}
                     options={pmSelectOptions}
@@ -748,39 +765,49 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                   </div>
                 </>
               ) : (
-                <div className={styles.row}>
-                  <Form.Item
-                    name="date"
-                    label="Deadline"
-                    rules={[{ required: true, message: 'Chọn deadline' }]}
-                    extra={projectDateRangeHint}
-                  >
-                    <DatePicker
-                      showTime={{
-                        format: 'HH:mm',
-                        defaultValue: dayjs().second(0).millisecond(0),
-                      }}
-                      format={DATETIME_SHORT_FORMAT}
-                      style={{ width: '100%' }}
-                      placeholder="Ngày & giờ"
-                      showNow={false}
-                      disabledDate={(current) =>
-                        isOutsideProjectDateRange(
-                          current,
-                          selectedCatalogProject?.startDate,
-                          selectedCatalogProject?.endDate,
-                        )
-                      }
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    name="urgency"
-                    label={MY_TASK_COLUMN_HEADERS.urgency}
-                    rules={[{ required: true, message: 'Chọn mức ưu tiên' }]}
-                  >
-                    <TaskUrgencySelect />
-                  </Form.Item>
-                </div>
+                <>
+                  <div className={styles.row}>
+                    <Form.Item
+                      name="quantity"
+                      label="Số lượng"
+                      rules={[{ required: true, message: 'Nhập số lượng' }, wholeTaskQuantityRule]}
+                      extra="SL task cha. Tổng các task con không được vượt quá số này."
+                    >
+                      <InputNumber min={1} precision={0} step={1} style={{ width: '100%' }} />
+                    </Form.Item>
+                    <Form.Item
+                      name="date"
+                      label="Deadline"
+                      rules={[{ required: true, message: 'Chọn deadline' }]}
+                      extra={projectDateRangeHint}
+                    >
+                      <DatePicker
+                        showTime={{
+                          format: 'HH:mm',
+                          defaultValue: dayjs().second(0).millisecond(0),
+                        }}
+                        format={DATETIME_SHORT_FORMAT}
+                        style={{ width: '100%' }}
+                        placeholder="Ngày & giờ"
+                        showNow={false}
+                        disabledDate={(current) =>
+                          isOutsideProjectDateRange(
+                            current,
+                            selectedCatalogProject?.startDate,
+                            selectedCatalogProject?.endDate,
+                          )
+                        }
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      name="urgency"
+                      label={MY_TASK_COLUMN_HEADERS.urgency}
+                      rules={[{ required: true, message: 'Chọn mức ưu tiên' }]}
+                    >
+                      <TaskUrgencySelect />
+                    </Form.Item>
+                  </div>
+                </>
               )}
             </div>
 
@@ -897,10 +924,16 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                     </div>
                   </>
                 ) : (
-                  <div>
-                    <dt>Brief</dt>
-                    <dd>Chưa có — Creative Head sẽ bổ sung</dd>
-                  </div>
+                  <>
+                    <div>
+                      <dt>Số lượng</dt>
+                      <dd>{quantity ?? '—'}</dd>
+                    </div>
+                    <div>
+                      <dt>Brief</dt>
+                      <dd>Chưa có — Creative Head sẽ bổ sung</dd>
+                    </div>
+                  </>
                 )}
                 <div>
                   <dt>Deadline</dt>

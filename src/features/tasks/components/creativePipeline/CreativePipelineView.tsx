@@ -3,7 +3,7 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { buildMyTaskDetailPath, ROUTES } from '@/config/constants';
 import { ROLES } from '@/config/permissions';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
@@ -55,6 +55,7 @@ const formatQueueDeadline = (iso: string | null | undefined): string => {
 };
 
 export function CreativePipelineView() {
+  const navigate = useNavigate();
   const user = useAppSelector((state) => state.auth.user);
   const role = user?.role;
   const [view, setView] = useState<CreativeQueueView>(defaultCreativeQueueView(role));
@@ -102,11 +103,17 @@ export function CreativePipelineView() {
       confirmRehandToCH(task);
       return;
     }
+    if (view === 'ch' && isAwaitingCh(task) && !canProcessChQueue(role)) {
+      navigate(buildMyTaskDetailPath(task.id), {
+        state: { backTo: ROUTES.CREATIVE_REVIEW, backLabel: 'Back to Creative queue' },
+      });
+      return;
+    }
     setSelected(task);
   };
   const closeDrawer = () => setSelected(null);
 
-  const openHeadAssign = Boolean(selected && view === 'ch' && isAwaitingCh(selected));
+  const openHeadAssign = Boolean(selected && chEnabled && view === 'ch' && isAwaitingCh(selected));
   const openManagerAssign = Boolean(
     selected && view === 'cm' && cmFrame === 'intake' && isAwaitingCm(selected),
   );
@@ -348,7 +355,9 @@ export function CreativePipelineView() {
           showIcon
           message={
             view === 'ch'
-              ? `${actionableCount} task cần xử lý và giao cho CM`
+              ? chEnabled
+                ? `${actionableCount} task cần xử lý và giao cho CM`
+                : `${actionableCount} task CH đã trả về — đưa lại hàng chờ CH`
               : cmFrame === 'intake'
                 ? `${actionableCount} task cần giao cho Staff`
                 : `${actionableCount} task Staff chưa cập nhật`

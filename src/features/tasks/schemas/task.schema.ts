@@ -158,6 +158,10 @@ export const MyTaskSchema = z.object({
   completionPercent: z.number().min(0).max(100).nullish(),
   pmEvaluation: z.string(),
   pmNote: z.string(),
+  /** CH/PM/Head score of the CM package. Only set on creative whole-assigned tasks. */
+  handoffCompletionPercent: z.number().min(0).max(100).nullish(),
+  handoffEvaluation: z.string().optional(),
+  handoffNote: z.string().optional(),
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
   staffNote: z.string(),
   /** Linked overtime request when this task was created from OT assign-task. */
@@ -309,6 +313,8 @@ export const UpdateMyTaskPmEvaluationRequestSchema = z.object({
   completionPercent: z.number().min(0).max(100),
   pmEvaluation: z.string(),
   pmNote: z.string(),
+  /** Whole-assign only. Omitted on every other task. */
+  layer: z.enum(['staff', 'handoff']).optional(),
 });
 
 /** CM: accept partial quantity on a finished split child → spawn remainder sibling. */
@@ -350,8 +356,8 @@ export const AssignCreativeHeadRequestSchema = z.object({
 
 export const CreativeManagerSubtaskSchema = z.object({
   name: z.string().min(1, 'Tên task nhỏ is required'),
-  staffUserId: z.string().min(1, 'Chọn Staff'),
-  quantity: z.number().int().positive('Số lượng phải là số nguyên lớn hơn 0'),
+  staffUserId: z.string().optional(),
+  quantity: z.number().int().min(0, 'Số lượng không được âm'),
   description: z.string().min(1, 'Nhập brief cho task nhỏ'),
   /** Optional CM creative deadline for this part. */
   creativeDeadline: z.string().optional(),
@@ -418,10 +424,12 @@ export const UpdateCreativePipelineRequestSchema = z
       .array(
         z.object({
           id: z.string().min(1),
-          quantity: z.number().positive(),
+          quantity: z.number().int().min(0),
         }),
       )
       .optional(),
+    /** PM/Admin add split children. Quantity may be 0. Staff may be omitted. */
+    addSubtasks: z.array(CreativeManagerSubtaskSchema).optional(),
   })
   .superRefine((value, ctx) => {
     const levelFields = [value.designThinking, value.technical, value.contentProcessing];

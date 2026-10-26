@@ -12,6 +12,8 @@ import { TaskDetailSummaryCard } from '../TaskDetailSummaryCard/TaskDetailSummar
 import { TaskRevisionHistoryTab } from '../TaskRevisionHistoryTab/TaskRevisionHistoryTab';
 import { useMyTask } from '../../hooks/useMyTask';
 import { formatHasRevisionChildrenLabel, hasRevisionChildren } from '../../utils/taskRevision';
+import { isCreativeWholeAssigned } from '../../utils/taskEvaluation';
+import { hasCmEvaluation } from '../../utils/evaluationRemainder';
 import styles from './TaskDetailView.module.scss';
 
 interface TaskDetailViewProps {
@@ -22,6 +24,43 @@ type DetailTabKey = 'details' | 'revision' | 'evaluation';
 
 const isDetailTabKey = (value: string | null): value is DetailTabKey =>
   value === 'details' || value === 'revision' || value === 'evaluation';
+
+function EvaluationScoreGrid({
+  title,
+  percent,
+  score,
+  note,
+}: {
+  title: string;
+  percent?: number | null;
+  score?: string | null;
+  note?: string | null;
+}) {
+  const recorded = percent != null || Boolean(score?.trim()) || Boolean(note?.trim());
+  return (
+    <section>
+      <p className={styles.sectionTitle}>{title}</p>
+      {recorded ? (
+        <div className={styles.evalGrid}>
+          <div className={styles.evalItem}>
+            <span className={styles.evalLabel}>Completion</span>
+            <span className={styles.evalValue}>{percent != null ? `${percent}%` : '—'}</span>
+          </div>
+          <div className={styles.evalItem}>
+            <span className={styles.evalLabel}>Evaluation</span>
+            <span className={styles.evalValue}>{score?.trim() || '—'}</span>
+          </div>
+          <div className={styles.evalItem}>
+            <span className={styles.evalLabel}>Note</span>
+            <span className={styles.evalValue}>{note?.trim() || '—'}</span>
+          </div>
+        </div>
+      ) : (
+        <div className={styles.emptyBlock}>Chưa có đánh giá.</div>
+      )}
+    </section>
+  );
+}
 
 const resolveFromTaskId = (raw: string | null, currentTaskId: string): string | null => {
   const from = raw?.trim();
@@ -200,27 +239,41 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
               {
                 key: 'evaluation',
                 label: 'Evaluation',
-                children:
-                  task.pmEvaluation || task.completionPercent != null ? (
-                    <div className={styles.evalGrid}>
-                      <div className={styles.evalItem}>
-                        <span className={styles.evalLabel}>Completion</span>
-                        <span className={styles.evalValue}>
-                          {task.completionPercent != null ? `${task.completionPercent}%` : '—'}
-                        </span>
-                      </div>
-                      <div className={styles.evalItem}>
-                        <span className={styles.evalLabel}>Evaluation</span>
-                        <span className={styles.evalValue}>{task.pmEvaluation || '—'}</span>
-                      </div>
-                      <div className={styles.evalItem}>
-                        <span className={styles.evalLabel}>PM note</span>
-                        <span className={styles.evalValue}>{task.pmNote || '—'}</span>
-                      </div>
+                children: isCreativeWholeAssigned(task) ? (
+                  <div className={styles.detailStack}>
+                    <EvaluationScoreGrid
+                      title="Đánh giá của Creative Head"
+                      percent={task.handoffCompletionPercent}
+                      score={task.handoffEvaluation}
+                      note={task.handoffNote}
+                    />
+                    <EvaluationScoreGrid
+                      title="Đánh giá kết quả Staff"
+                      percent={task.completionPercent}
+                      score={task.pmEvaluation}
+                      note={task.pmNote}
+                    />
+                  </div>
+                ) : hasCmEvaluation(task) ? (
+                  <div className={styles.evalGrid}>
+                    <div className={styles.evalItem}>
+                      <span className={styles.evalLabel}>Completion</span>
+                      <span className={styles.evalValue}>
+                        {task.completionPercent != null ? `${task.completionPercent}%` : '—'}
+                      </span>
                     </div>
-                  ) : (
-                    <div className={styles.emptyBlock}>No evaluation recorded yet.</div>
-                  ),
+                    <div className={styles.evalItem}>
+                      <span className={styles.evalLabel}>Evaluation</span>
+                      <span className={styles.evalValue}>{task.pmEvaluation || '—'}</span>
+                    </div>
+                    <div className={styles.evalItem}>
+                      <span className={styles.evalLabel}>PM note</span>
+                      <span className={styles.evalValue}>{task.pmNote || '—'}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.emptyBlock}>No evaluation recorded yet.</div>
+                ),
               },
             ]}
           />

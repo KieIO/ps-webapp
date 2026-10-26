@@ -59,6 +59,7 @@ import {
   getDayIndex,
   getInitialScrollLeft,
   getMonthScrollLeft,
+  resolveBarClickDate,
 } from '../../utils/calendar';
 import { exportTrackerToCsv } from '../../utils/exportTracker';
 import {
@@ -777,7 +778,7 @@ function EmptyTimelineRow({
 
 interface TimelineRowProps {
   project: TrackerProject;
-  /** Unscoped project — full milestones + totalSlides for validation. */
+  /** Unscoped project — full milestone list for replace-all. */
   sourceProject: TrackerProject;
   blocks: LaidOutBlock[];
   days: CalendarDay[];
@@ -829,7 +830,6 @@ function TimelineRow({
       projectName: sourceProject.name,
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
-      totalSlides: sourceProject.totalSlides,
       milestones: sourceProject.milestones ?? [],
       mode: 'create',
       deadlineDate,
@@ -843,7 +843,6 @@ function TimelineRow({
       projectName: sourceProject.name,
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
-      totalSlides: sourceProject.totalSlides,
       milestones: sourceProject.milestones ?? [],
       mode: 'edit',
       deadlineDate: milestone.deadlineDate,
@@ -923,13 +922,7 @@ function resolveClickedDayOnBar(
 ): string | null {
   const rect = event.currentTarget.getBoundingClientRect();
   const offsetX = Math.max(0, event.clientX - rect.left);
-  const dayOffset = Math.min(
-    Math.max(0, Math.floor(offsetX / dayWidth)),
-    Math.max(0, Math.round(barWidthPx / dayWidth) - 1),
-  );
-  const barStartIndex = getDayIndex(days, barStart);
-  if (barStartIndex < 0) return null;
-  return days[barStartIndex + dayOffset]?.date ?? null;
+  return resolveBarClickDate(days, barStart, offsetX, dayWidth, barWidthPx);
 }
 
 function TimelineBlock({

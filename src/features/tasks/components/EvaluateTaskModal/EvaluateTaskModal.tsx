@@ -1,8 +1,10 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Form, Input, InputNumber, Modal, Select } from 'antd';
+import { Button, Form, Input, InputNumber, Modal, Segmented, Select } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { buildMyTaskDetailPath } from '@/config/constants';
+import { ROLES } from '@/config/permissions';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import {
   EVALUATE_TASK_ASSIGNED_QUANTITY_LABEL,
   EVALUATE_TASK_COMPLETED_QUANTITY_LABEL,
@@ -26,6 +28,7 @@ import {
   computeAcceptedRemainderQuantity,
 } from '../../utils/evaluationRemainder';
 import { formatTaskStaffNames } from '../../utils/staff';
+import { isCreativeWholeAssigned, type EvaluationWriteLayer } from '../../utils/taskEvaluation';
 import editStyles from '../EditTaskModal/EditTaskModal.module.scss';
 import styles from './EvaluateTaskModal.module.scss';
 
@@ -49,6 +52,7 @@ type RemainderLink = {
 
 export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProps) {
   const [form] = Form.useForm<EvaluateTaskFormValues>();
+  const role = useAppSelector((state) => state.auth.user?.role);
   const { mutate, isPending } = useUpdateMyTaskPmEvaluation();
   const { mutate: spawnRemainder, isPending: isSpawning } = useSpawnEvaluationRemainder();
   const [workingTask, setWorkingTask] = useState<MyTask | null>(task);
@@ -56,6 +60,16 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
   /** SL giao lúc mở modal — giữ sau spawn để UI không nhảy theo quantity đã thu nhỏ. */
   const [originalAssignedQuantity, setOriginalAssignedQuantity] = useState(0);
   const [acceptedAtSpawn, setAcceptedAtSpawn] = useState<number | null>(null);
+  const [adminLayer, setAdminLayer] = useState<EvaluationWriteLayer>('handoff');
+  const wholeAssigned = Boolean(task && isCreativeWholeAssigned(task));
+  const lockedLayer: EvaluationWriteLayer | null = !wholeAssigned
+    ? 'staff'
+    : role === ROLES.CREATIVE_MANAGER
+      ? 'staff'
+      : role === ROLES.ADMIN
+        ? null
+        : 'handoff';
+  const layer = lockedLayer ?? adminLayer;
 
   useEffect(() => {
     if (!open) {
@@ -73,6 +87,16 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
           ? Math.round(task.originalAssignedQuantity)
           : Math.round(task.quantity ?? 0);
       setOriginalAssignedQuantity(originalAssigned);
+
+      if (layer === 'handoff') {
+        form.setFieldsValue({
+          completedQuantity: 0,
+          completionPercent: task.handoffCompletionPercent ?? 0,
+          pmEvaluation: task.handoffEvaluation ?? '',
+          pmNote: task.handoffNote ?? '',
+        });
+        return;
+      }
 
       if (task.evaluationRemainderTaskId && task.evaluationRemainderTaskCode) {
         const accepted = Math.round(task.quantity ?? 0);
@@ -102,7 +126,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
         pmNote: task.pmNote,
       });
     }
-  }, [open, task, form, remainderLink]);
+  }, [open, task, form, remainderLink, layer]);
 
   const watchedCompleted = Form.useWatch('completedQuantity', form);
   const assignedQuantity = originalAssignedQuantity;
@@ -111,7 +135,8 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
   );
   const remainderQuantity = computeAcceptedRemainderQuantity(assignedQuantity, completedQuantity);
   const showRemainderAction = Boolean(
-    workingTask &&
+    layer === 'staff' &&
+      workingTask &&
       canSpawnEvaluationRemainder(
         { ...workingTask, quantity: assignedQuantity },
         completedQuantity,
@@ -211,6 +236,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
           completionPercent,
           pmEvaluation: values.pmEvaluation ?? '',
           pmNote,
+          ...(wholeAssigned ? { layer } : {}),
         },
       },
       {
@@ -228,7 +254,13 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
 
   return (
     <Modal
-      title="Evaluate task"
+      title={
+        layer === 'handoff'
+          ? 'Đánh giá gói của CM'
+          : wholeAssigned
+            ? 'Đánh giá kết quả Staff'
+            : 'Evaluate task'
+      }
       open={open}
       onCancel={handleClose}
       onOk={() => form.submit()}
@@ -254,13 +286,15 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
               {formatTaskStaffNames(workingTask.staff, '—')}
             </span>
           </div>
-          <div className={editStyles.contextItem}>
-            <span className={editStyles.readOnlyLabel}>
-              {EVALUATE_TASK_ASSIGNED_QUANTITY_LABEL}
-            </span>
-            <span className={editStyles.contextValue}>{assignedQuantity}</span>
-          </div>
-          {remainderSummary ? (
+          {layer === 'staff' ? (
+            <div className={editStyles.contextItem}>
+              <span className={editStyles.readOnlyLabel}>
+                {EVALUATE_TASK_ASSIGNED_QUANTITY_LABEL}
+              </span>
+              <span className={editStyles.contextValue}>{assignedQuantity}</span>
+            </div>
+          ) : null}
+          {layer === 'staff' && remainderSummary ? (
             <div className={editStyles.contextItem}>
               <span className={editStyles.readOnlyLabel}>Tóm tắt</span>
               <span className={editStyles.contextValue}>{remainderSummary}</span>
@@ -277,54 +311,77 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
         requiredMark={false}
         disabled={isPending || isSpawning}
       >
-        <div className={editStyles.row}>
-          <Form.Item
-            name="completedQuantity"
-            label={EVALUATE_TASK_COMPLETED_QUANTITY_LABEL}
-            rules={[
-              { required: true, message: 'Nhập số lượng đạt' },
-              {
-                type: 'integer',
-                message: 'Số lượng phải là số nguyên',
-              },
-            ]}
-            extra={
-              assignedQuantity > 0
-                ? remainderLink
-                  ? `Đã tách phần còn lại · giữ ${completedQuantity} / ${assignedQuantity}`
-                  : `Tối đa ${assignedQuantity}`
-                : undefined
-            }
-          >
-            <InputNumber
-              min={0}
-              max={assignedQuantity > 0 ? assignedQuantity : undefined}
-              precision={0}
-              step={1}
-              disabled={Boolean(remainderLink) || isPending || isSpawning}
-              style={{ width: '100%' }}
+        {lockedLayer == null ? (
+          <Form.Item label="Lớp đánh giá">
+            <Segmented
+              block
+              value={layer}
+              onChange={(value) => setAdminLayer(value as EvaluationWriteLayer)}
+              options={[
+                { label: 'Gói của CM', value: 'handoff' },
+                { label: 'Kết quả Staff', value: 'staff' },
+              ]}
             />
           </Form.Item>
+        ) : null}
+        {layer === 'staff' ? (
+          <div className={editStyles.row}>
+            <Form.Item
+              name="completedQuantity"
+              label={EVALUATE_TASK_COMPLETED_QUANTITY_LABEL}
+              rules={[
+                { required: true, message: 'Nhập số lượng đạt' },
+                {
+                  type: 'integer',
+                  message: 'Số lượng phải là số nguyên',
+                },
+              ]}
+              extra={
+                assignedQuantity > 0
+                  ? remainderLink
+                    ? `Đã tách phần còn lại · giữ ${completedQuantity} / ${assignedQuantity}`
+                    : `Tối đa ${assignedQuantity}`
+                  : undefined
+              }
+            >
+              <InputNumber
+                min={0}
+                max={assignedQuantity > 0 ? assignedQuantity : undefined}
+                precision={0}
+                step={1}
+                disabled={Boolean(remainderLink) || isPending || isSpawning}
+                style={{ width: '100%' }}
+              />
+            </Form.Item>
+            <Form.Item
+              name="completionPercent"
+              label={MY_TASK_COLUMN_HEADERS.completion}
+              rules={[{ required: true, message: 'Nhập % hoàn thành' }]}
+              extra={
+                remainderLink
+                  ? 'Theo SL giao ban đầu (đạt / giao) — phần còn lại đã tách sang task mới.'
+                  : undefined
+              }
+            >
+              <InputNumber
+                min={0}
+                max={100}
+                precision={0}
+                addonAfter="%"
+                disabled={Boolean(remainderLink) || isPending || isSpawning}
+                style={{ width: '100%' }}
+              />
+            </Form.Item>
+          </div>
+        ) : (
           <Form.Item
             name="completionPercent"
             label={MY_TASK_COLUMN_HEADERS.completion}
             rules={[{ required: true, message: 'Nhập % hoàn thành' }]}
-            extra={
-              remainderLink
-                ? 'Theo SL giao ban đầu (đạt / giao) — phần còn lại đã tách sang task mới.'
-                : undefined
-            }
           >
-            <InputNumber
-              min={0}
-              max={100}
-              precision={0}
-              addonAfter="%"
-              disabled={Boolean(remainderLink) || isPending || isSpawning}
-              style={{ width: '100%' }}
-            />
+            <InputNumber min={0} max={100} precision={0} addonAfter="%" style={{ width: '100%' }} />
           </Form.Item>
-        </div>
+        )}
         <Form.Item name="pmEvaluation" label={MY_TASK_COLUMN_HEADERS.evaluation}>
           <Select allowClear placeholder="—" options={[...PROJECT_EVALUATION_SCORE_OPTIONS]} />
         </Form.Item>

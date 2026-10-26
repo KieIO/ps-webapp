@@ -96,7 +96,7 @@ describe('buildCreateTaskPayload', () => {
     expect(payload.description).toBe('');
     expect(payload.staff).toEqual([]);
     expect(payload.department).toBe('creative');
-    expect(payload.quantity).toBe(0);
+    expect(payload.quantity).toBe(3);
   });
 
   it('allows overloaded staff and rejects on-leave staff', () => {

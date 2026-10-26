@@ -31,7 +31,7 @@ Câu hỏi thường gặp khi dùng PokeSlide.
 1. **Users**: Code và Job title cùng level.
 2. **Capacity → Capacity by employee**: đúng title / level mới.
 3. Định mức điểm / ngày: **Settings → Capacity formula**.
-4. **Tracker**: dòng **S** / **Còn lại** là capacity **team theo ngày**, không phải quota một người. Xem thêm câu 4.
+4. **Tracker**: dòng **S** / **Còn lại** là capacity **team theo ngày**, không phải quota một người. Xem thêm câu 5.
 
 | Title | Điểm / ngày (khoảng) | Quy ra slides (điểm ÷ 45) |
 | ----- | -------------------- | ------------------------- |
@@ -102,7 +102,26 @@ Chi tiết: [Luồng nghỉ phép](/leave).
 
 ---
 
-## 4. Dòng “Còn lại / ngày” trên Project Tracker tính thế nào?
+## 4. PM làm được gì trên Project Tracker?
+
+Trên **Project Tracker**, **PM** được quyền gần giống **Admin** cho các thao tác vận hành project trên timeline:
+
+| Việc                                                     | PM  | Ghi chú                              |
+| -------------------------------------------------------- | :-: | ------------------------------------ |
+| Đổi **urgency** (chấm ưu tiên)                           |  ✓  | Click chấm urgency trên hàng project |
+| Thêm / sửa / xóa / tick hoàn thành **mốc giao**          |  ✓  | Cùng quyền với CM / Head / Admin     |
+| Sửa **ngày bắt đầu / kết thúc** (timeline thanh project) |  ✓  | Qua **Edit Project**                 |
+| Archive / xóa project, quản lý Client                    |  ✗  | Vẫn chỉ Head / Admin                 |
+
+**Ngày trên Tracker** (timeline + mốc) dùng **múi giờ Việt Nam**. Deadline **16/10** phải khớp cột **16/10** trên thanh — không lệch sớm một ngày vì UTC.
+
+Xem thêm: [Mốc giao](/milestone).
+
+**Tóm lại:** PM sửa urgency / mốc / timeline trên Tracker; không mở rộng sang archive hay Client.
+
+---
+
+## 5. Dòng “Còn lại / ngày” trên Project Tracker tính thế nào?
 
 Ước lượng **output còn lại của cả team theo ngày** (Slides hoặc DA) sau khi trừ việc đã giao. **Không** phải quota một người.
 
@@ -132,7 +151,7 @@ Hover nhãn **Còn lại / ngày** để xem giả định quy đổi. Định m
 
 ---
 
-## 5. Decline Creative Task hoạt động thế nào?
+## 6. Decline Creative Task hoạt động thế nào?
 
 Luồng **Creative Head từ chối task PM đã chuyển sang Creative**, khác với từ chối nội bộ trong phòng Creative.
 
@@ -160,7 +179,7 @@ PM chuyển Creative → CH nhận
 
 ---
 
-## Task giao trong nội bộ Creative (câu 6–10)
+## Task giao trong nội bộ Creative (câu 7–11)
 
 Sau khi CM **chia nhỏ** task Creative. Chi tiết luồng chia: [Luồng chia task con](/split-task).
 
@@ -168,22 +187,22 @@ Sau khi CM **chia nhỏ** task Creative. Chi tiết luồng chia: [Luồng chia 
 
 Quy tắc chung sau khi chia:
 
-1. **SL tổng** và tổng SL các phần phải **khớp**. Có thể **đổi SL tổng** sau khi chia (form sửa): hệ thống điều chỉnh phần còn mở; phần Finished / Cancelled giữ nguyên. Tổng mới không được nhỏ hơn tổng các phần đã khóa.
-2. Mỗi phần một **Staff**. Có thể đổi Staff / deadline / SL trên phần còn mở.
+1. **SL tổng** do PM nhập lúc tạo task (**> 0**) và **không** bị ghi đè bằng tổng các phần. Tổng SL các phần **không được lớn hơn** SL tổng. **Đổi SL tổng** sau khi chia chỉ **người tạo task (PM)** hoặc **Admin** làm được. **Creative Manager không sửa SL tổng** và **không tạo task con**. CM chỉ phân bổ lại SL các phần còn mở trong giới hạn SL tổng.
+2. Mỗi phần **có thể chưa gán Staff** và **số lượng có thể bằng 0**. Có Staff thì một người một phần. Có thể đổi Staff / deadline / SL trên phần còn mở.
 3. Phần **Finished** hoặc **Cancelled**: SL khóa.
 4. **Không** thêm / xóa phần tùy ý sau lần chia đầu (trừ tách phần còn lại khi Evaluate, câu 8).
 
 ---
 
-## 6. Sửa lại scope các task nhỏ được không?
+## 7. Sửa lại scope các task nhỏ được không?
 
-**Được một phần:** đổi SL tổng và / hoặc phân bổ lại SL giữa các phần còn mở; tổng các phần phải khớp SL tổng.
+**Được một phần:** người tạo task (PM) hoặc Admin đổi SL tổng; PM hoặc Admin thêm task con (kể cả SL 0, chưa gán Staff). CM, người tạo task và Admin phân bổ lại SL giữa các phần còn mở. Tổng các phần không được lớn hơn SL tổng. CM không sửa SL tổng và không tạo task con.
 
 **Làm được**
 
 1. Mở task gốc đã chia (form **Sửa / Task nhỏ**).
-2. Đổi **SL tổng** (ví dụ 20 → 25); hệ thống điều chỉnh phần còn mở cho khớp.
-3. Chia lại **số lượng** các phần còn mở; tổng = SL tổng.
+2. Người tạo task hoặc Admin đổi **SL tổng** (ví dụ 20 → 25); hệ thống điều chỉnh phần còn mở cho khớp. CM không làm bước này.
+3. Chia lại **số lượng** các phần còn mở; tổng không vượt SL tổng.
 4. Đổi **Staff** / **deadline** trên phần còn mở.
 
 **Không làm được**
@@ -192,15 +211,15 @@ Quy tắc chung sau khi chia:
 2. Thêm / xóa task nhỏ tùy ý sau lần chia đầu.
 3. Đổi SL tổng xuống thấp hơn tổng các phần đã khóa (Finished / Cancelled).
 
-**Ví dụ:** Tổng 20. Phần 1 Finished = 8 (khóa). Có thể tăng SL tổng lên 25 (phần còn mở nhận thêm). Có thể chia lại 12 còn lại giữa phần 2 và 3. Không giảm tổng xuống dưới 8 + phần mở tối thiểu.
+**Ví dụ:** Tổng 20. Phần 1 Finished = 8 (khóa). Người tạo task hoặc Admin có thể tăng SL tổng lên 25 (phần còn mở nhận thêm). CM có thể chia lại 12 còn lại giữa phần 2 và 3. Không giảm tổng xuống dưới 8 + phần mở tối thiểu.
 
 Muốn hai người cùng làm phần còn lại: đổi Staff, chia lại SL giữa phần đã có, hoặc tách phần còn lại qua Evaluate (câu 8). QA riêng **chưa trong scope**.
 
-**Tóm lại:** Sửa scope = đổi SL tổng (kèm điều chỉnh phần mở) và / hoặc chia lại SL phần còn mở cho khớp tổng. Không sửa Finished / Cancelled, chưa thêm / xóa phần tùy ý.
+**Tóm lại:** Sửa scope = người tạo task hoặc Admin đổi SL tổng, và / hoặc thêm task con, và / hoặc CM chia lại SL phần còn mở trong giới hạn SL tổng. Không sửa Finished / Cancelled.
 
 ---
 
-## 7. Cancel task nhỏ rồi tạo task mới (giữ số tổng) được không?
+## 8. Cancel task nhỏ rồi tạo task mới (giữ số tổng) được không?
 
 **Chưa hỗ trợ đủ.** Không dùng Cancel để “đổi chỗ” một phần trong cùng họ.
 
@@ -218,7 +237,7 @@ Muốn hai người cùng làm phần còn lại: đổi Staff, chia lại SL gi
 
 ---
 
-## 8. Nhân viên không làm hết, phải giao phần còn lại cho người khác?
+## 9. Nhân viên không làm hết, phải giao phần còn lại cho người khác?
 
 Tùy phần đó **còn mở** hay đã **Finished** và CM nhận ít hơn SL giao.
 
@@ -250,7 +269,7 @@ Mỗi phần chỉ tách phần còn lại **một lần** khi Evaluate.
 
 ---
 
-## 9. Giảm scope người này, tăng người kia (hoặc thêm người hỗ trợ)?
+## 10. Giảm scope người này, tăng người kia (hoặc thêm người hỗ trợ)?
 
 **Giảm SL phần người này, tăng phần người kia** trên phần còn mở hoặc Confirmed: **được**, tổng khớp (cùng cách câu 6 và phần “Còn mở” ở câu 8). Không lấy SL từ Finished / Cancelled.
 
@@ -263,25 +282,21 @@ Mỗi phần chỉ tách phần còn lại **một lần** khi Evaluate.
 | Tách phần còn lại sau khi làm dở          | Evaluate (câu 8) |
 | Thêm task nhỏ / QA tùy ý sau lần chia đầu | **Chưa**         |
 
-**Tóm lại:** San scope giữa phần mở được. Thêm người ngoài phần đã có: chủ yếu Evaluate; chưa thêm task / QA tùy ý.
+**Tóm lại:** San scope giữa phần mở được. PM hoặc Admin có thể thêm task con sau, trong giới hạn SL task cha.
 
 ---
 
-## 10. Plan trước một phần (ví dụ 10/20), phần còn lại plan sau?
+## 11. Plan trước một phần (ví dụ 10/20), phần còn lại plan sau?
 
-**Chưa hỗ trợ.** Có thể bổ sung sau.
+**Được.** PM nhập SL task cha > 0 trước. Khi chia, tổng các phần không được lớn hơn SL đó, và SL task cha không bị ghi đè.
 
-Khi chia nhỏ phải **giao đủ các phần ngay**. Mỗi phần **bắt buộc chọn Staff** (UI: “Chọn Staff”; hệ thống không cho tạo phần trống người nhận). SL tổng khóa theo tổng phần đã tạo. Sau đó chỉ chia lại SL / đổi người trong phần **đã có**.
+Có thể tạo task con với **số lượng 0** và **chưa gán Staff**. Brief vẫn bắt buộc. Phần chưa dùng hết SL có thể thêm sau: PM hoặc Admin mở form sửa và bấm **Thêm task con**.
 
-**Không** giữ “10 chưa plan” trên tổng 20 rồi bổ sung phần sau.
+**Ví dụ:** SL cha 20. Lần đầu tạo hai phần 10 và 0 (phần 0 chưa gán Staff). Sau đó thêm một phần 10 khi đã biết người làm. Tổng 20, không vượt cha.
 
-**Workaround “tạo phần chưa assign, sau mới giao”?** **Không.** Không tạo được task nhỏ mà bỏ trống người nhận.
+Creative Manager không tạo task con. CM vẫn giao nguyên và sửa SL các phần đã có.
 
-Workaround gần nhất (không phải plan dở đúng nghĩa): lúc chia vẫn phải chọn người cho mọi phần. Có thể **giao tạm** một người (kể cả CM tự nhận), sau đó **đổi Staff** trên phần còn mở khi đã biết ai làm. Phần đó vẫn đã chiếm SL trong tổng khóa; không phải slot “chưa plan”.
-
-Phần còn lại **sau khi làm dở**: dùng Evaluate (câu 8), không phải chừa phần chưa giao từ đầu.
-
-**Tóm lại:** Plan dở 10/20 trên cùng tổng đã chốt: chưa làm được. Không tạo phần không có Staff. Chỉ giao tạm rồi đổi người sau, hoặc Evaluate khi làm dở.
+**Tóm lại:** Plan dở trong giới hạn SL task cha: PM hoặc Admin tạo phần trước, kể cả SL 0 và chưa có Staff, rồi thêm phần sau.
 
 ---
 
@@ -289,39 +304,40 @@ Phần còn lại **sau khi làm dở**: dùng Evaluate (câu 8), không phải 
 
 Rà từ FAQ và feedback sản phẩm. Chỉ liệt kê **khoảng trống** (chưa làm / làm một phần), không gồm thứ đã có workaround ổn.
 
+Cột **Ngày bổ sung**: ngày ghi nhận item vào bảng này (`DD/MM/YYYY`). Mục cũ chưa truy được ngày gốc để `—`.
+
 Phần **Tracker / mốc giao** bên dưới: Goware có thể hỗ trợ sau **go-live** (chưa nằm trong phạm vi đóng gói hiện tại).
 
-### Task giao trong nội bộ Creative (câu 6–10)
+### Task giao trong nội bộ Creative (câu 7–11)
 
-| #   | Khoảng trống                                                                 | Ghi chú ngắn                                                                                                                                                         | Nguồn       |
-| --- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| 1   | Thêm / xóa task nhỏ **tùy ý** sau lần chia đầu                               | Hiện chỉ tách phần còn lại khi CM Evaluate nhận SL thấp hơn (câu 8). Không thêm phần hỗ trợ tự do.                                                                   | Câu 6, 8, 9 |
-| 2   | Task nhỏ loại **QA** (hoặc loại hỗ trợ riêng) trong họ chia                  | Chưa có loại / luồng QA trước khi trả PM.                                                                                                                            | Câu 6, 9    |
-| 3   | Tạo task nhỏ **chưa gán Staff**, assign sau                                  | Mỗi phần bắt buộc chọn Staff lúc chia.                                                                                                                               | Câu 10      |
-| 4   | **Plan dở** trên SL tổng đã chốt (ví dụ giao 10/20, phần còn lại plan sau)   | Phải giao đủ phần ngay; không giữ slot “chưa plan”.                                                                                                                  | Câu 10      |
-| 5   | **Cancel** một phần rồi **tạo phần mới thay thế**, vẫn giữ SL tổng           | Cancel khóa phần đó, không giải phóng SL để tạo phần thay.                                                                                                           | Câu 7       |
-| 6   | Lấy SL từ phần **Finished / Cancelled** chuyển sang người khác bằng form sửa | Form sửa không bớt SL phần đã xong / đã hủy để chuyển người khác. Chỉ chỉnh được các phần **chưa** Finished / Cancelled (hoặc tăng SL tổng rồi đẩy vào các phần đó). | Câu 6, 8, 9 |
-| 7   | Một task nhỏ giao **nhiều Staff** cùng lúc                                   | Mỗi phần một người.                                                                                                                                                  | Câu 6, 9    |
+| #   | Khoảng trống                                                                 | Ghi chú ngắn                                                                                                                                                         | Nguồn        | Ngày bổ sung |
+| --- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------ |
+| 1   | Xóa task nhỏ tùy ý sau khi đã chia                                           | Thêm task con: PM/Admin làm được (câu 11). Xóa phần đã tạo thì chưa.                                                                                                 | Câu 7, 9, 10 | —            |
+| 2   | Task nhỏ loại **QA** (hoặc loại hỗ trợ riêng) trong họ chia                  | Chưa có loại / luồng QA trước khi trả PM.                                                                                                                            | Câu 7, 10    | —            |
+| 3   | **Cancel** một phần rồi **tạo phần mới thay thế**, vẫn giữ SL tổng           | Cancel khóa phần đó, không giải phóng SL để tạo phần thay.                                                                                                           | Câu 8        | —            |
+| 4   | Lấy SL từ phần **Finished / Cancelled** chuyển sang người khác bằng form sửa | Form sửa không bớt SL phần đã xong / đã hủy để chuyển người khác. Chỉ chỉnh được các phần **chưa** Finished / Cancelled (hoặc tăng SL tổng rồi đẩy vào các phần đó). | Câu 7, 9, 10 | —            |
+| 5   | Một task nhỏ giao **nhiều Staff** cùng lúc                                   | Mỗi phần một người.                                                                                                                                                  | Câu 7, 10    | —            |
 
 ### Khác (ngoài Creative split)
 
-| #   | Khoảng trống                                                                  | Ghi chú ngắn                                                     | Nguồn |
-| --- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- | ----- |
-| 8   | **Lịch sử chức danh theo kỳ** (profile / Capacity / tính Capacity % tháng cũ) | UI và Capacity % luôn theo title hiện tại; KPI tháng cũ thì giữ. | Câu 2 |
+| #   | Khoảng trống                                                                          | Ghi chú ngắn                                                                                                                                                                                                                                                                               | Nguồn                                       | Ngày bổ sung |
+| --- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- | ------------ |
+| 8   | **Lịch sử chức danh theo kỳ** (profile / Capacity / tính Capacity % tháng cũ)         | UI và Capacity % luôn theo title hiện tại; KPI tháng cũ thì giữ.                                                                                                                                                                                                                           | Câu 2                                       | —            |
+| 9   | Task tạo **chưa gán Staff** (gán sau): hiện Tracker nhưng **chưa đọc trước Capacity** | Nghiệp vụ: tạo task có thể để trống người nhận, gán sau — vẫn lên Tracker và trừ / ghi nhận Capacity trước khi có NV. Hiện: Tracker có hiện; Capacity % / «Còn lại» chỉ tính task đã có assignee và loại `awaiting_ch` / `awaiting_cm` / `split`. Project dept vẫn bắt buộc Staff lúc tạo. | Feedback nghiệp vụ (create-task / Capacity) | 20/10/2026   |
 
 ### Tracker / mốc giao (milestone), sau go-live
 
-| #   | Khoảng trống                                                                               | Ghi chú ngắn                                                                                                                                                                                                                               | Nguồn                          |
-| --- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
-| 9   | **Giờ cụ thể + thứ tự hiển thị** trên Tracker cho case urgent                              | Ví dụ tên / ghi chú: `Full V1 - 3pm FR`, `Full V1 - 5pm HCM` (giờ có thể để trong ghi chú). PM muốn sắp thứ tự project trên Tracker (deadline sớm lên đầu, EOD để sau) để dễ quan sát và quản lý. Hiện chưa tối ưu đủ theo pain point này. | Feedback Pokeslide (milestone) |
-| 10  | **Chấm mốc linh hoạt ngoài timeline project** (ngày nhận feedback, todo, note ngoài range) | Đôi khi dùng chấm mốc để note ngày feedback / todo / việc khác. Khi đó chấm có thể nằm **ngoài** timeline project. Cần chỉnh để linh hoạt hơn, không cứng trong range project.                                                             | Feedback Pokeslide (milestone) |
+| #   | Khoảng trống                                                                               | Ghi chú ngắn                                                                                                                                                                                                                               | Nguồn                          | Ngày bổ sung |
+| --- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ | ------------ |
+| 10  | **Giờ cụ thể + thứ tự hiển thị** trên Tracker cho case urgent                              | Ví dụ tên / ghi chú: `Full V1 - 3pm FR`, `Full V1 - 5pm HCM` (giờ có thể để trong ghi chú). PM muốn sắp thứ tự project trên Tracker (deadline sớm lên đầu, EOD để sau) để dễ quan sát và quản lý. Hiện chưa tối ưu đủ theo pain point này. | Feedback Pokeslide (milestone) | —            |
+| 11  | **Chấm mốc linh hoạt ngoài timeline project** (ngày nhận feedback, todo, note ngoài range) | Đôi khi dùng chấm mốc để note ngày feedback / todo / việc khác. Khi đó chấm có thể nằm **ngoài** timeline project. Cần chỉnh để linh hoạt hơn, không cứng trong range project.                                                             | Feedback Pokeslide (milestone) | —            |
 
 ### Creative queue
 
-| #   | Khoảng trống                                                  | Ghi chú ngắn                                                                                                                            | Nguồn                       |
-| --- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| 11  | **Bộ lọc trên Creative queue** (cùng kiểu trang Quản lý task) | Creative queue chưa lọc được như Quản lý task. Cần xem task nào đã chia, chia ngày nào, tình trạng đánh giá, và các thông tin tương tự. | Feedback khách (26/10/2026) |
+| #   | Khoảng trống                                                  | Ghi chú ngắn                                                                                                                            | Nguồn          | Ngày bổ sung |
+| --- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ------------ |
+| 12  | **Bộ lọc trên Creative queue** (cùng kiểu trang Quản lý task) | Creative queue chưa lọc được như Quản lý task. Cần xem task nào đã chia, chia ngày nào, tình trạng đánh giá, và các thông tin tương tự. | Feedback khách | 26/10/2026   |
 
-**Không xếp vào debt ở đây** (đã có hoặc đúng thiết kế hiện tại): đổi Staff / chia lại SL phần còn mở; **đổi SL tổng** sau khi chia (trong giới hạn phần đã khóa); Evaluate tạo phần còn lại khi làm dở; Decline CH từ PM; nghỉ nhiều kỳ + Activate; Tracker dùng điểm task CM; CRUD mốc giao cơ bản trên form Project / Tracker ([Mốc giao](/milestone)).
+**Không xếp vào debt ở đây** (đã có hoặc đúng thiết kế hiện tại): PM/Admin tạo task con (SL có thể 0, Staff có thể trống, thêm phần sau, tổng không vượt SL cha); đổi Staff / chia lại SL phần còn mở; **đổi SL tổng** sau khi chia (chỉ người tạo task hoặc Admin); Evaluate tạo phần còn lại khi làm dở; Decline CH từ PM; nghỉ nhiều kỳ + Activate; Tracker dùng điểm task CM; CRUD mốc giao cơ bản trên form Project / Tracker ([Mốc giao](/milestone)).
 
 Khi làm xong một mục, team Dev cập nhật FAQ / doc liên quan và gạch mục tương ứng trong bảng này.

@@ -150,7 +150,7 @@ export async function fillAndSubmitCreateMilestone(
   if (opts.note != null) {
     await dialog.getByLabel('Ghi chú').fill(opts.note);
   }
-  // Leave Đơn vị empty → non-volume milestone (MS-11).
+  // Default unit is Others and quantity stays empty → non-volume milestone (MS-11).
   await dialog.getByRole('button', { name: 'Thêm mốc' }).click();
   await expect(page.getByText('Đã thêm mốc bàn giao')).toBeVisible({ timeout: 15_000 });
   await expect(dialog).toHaveCount(0);

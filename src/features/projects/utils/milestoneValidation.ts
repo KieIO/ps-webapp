@@ -1,31 +1,20 @@
 import dayjs from 'dayjs';
-import { type MilestoneUnit, type ProjectMilestoneInput } from '../schemas/milestone.schema';
+import { isSlidesOrDaUnit, type ProjectMilestoneInput } from '../schemas/milestone.schema';
 
 export type MilestoneValidationContext = {
   startDate: string;
   endDate: string;
-  /** Task-derived project slide total. When 0, slides-sum check is skipped. */
-  totalSlides: number;
 };
 
 export type MilestoneValidationResult = { ok: true } | { ok: false; message: string };
 
 const toDay = (value: string) => dayjs(value).startOf('day');
 
-export const sumMilestoneQuantityByUnit = (
-  milestones: readonly Pick<ProjectMilestoneInput, 'quantity' | 'unit'>[],
-  unit: MilestoneUnit,
-): number =>
-  milestones.reduce((sum, item) => {
-    if (item.unit !== unit || item.quantity == null) return sum;
-    return sum + item.quantity;
-  }, 0);
-
 /**
  * Hard rules:
  * - deadline must fall within [startDate, endDate] (inclusive, by calendar day)
  * - volume: unit slides|da requires quantity > 0; empty unit allows null quantity
- * - when totalSlides > 0, sum of slides milestones must be ≤ totalSlides
+ * - milestone slide totals are not capped by the project's totalSlides
  */
 export const validateMilestones = (
   milestones: readonly ProjectMilestoneInput[],
@@ -45,13 +34,13 @@ export const validateMilestones = (
     }
 
     const unit = milestone.unit ?? '';
-    if (unit !== '' && unit !== 'slides' && unit !== 'da') {
+    if (unit !== '' && unit !== 'slides' && unit !== 'da' && unit !== 'others') {
       return {
         ok: false,
-        message: `Mốc "${name}": đơn vị phải là Slides, DA hoặc trống`,
+        message: `Mốc "${name}": đơn vị phải là Others, Slides, DA hoặc trống`,
       };
     }
-    if (unit === 'slides' || unit === 'da') {
+    if (isSlidesOrDaUnit(unit) || (unit === 'others' && milestone.quantity != null)) {
       if (milestone.quantity == null || milestone.quantity <= 0) {
         return { ok: false, message: `Mốc "${name}": khối lượng phải lớn hơn 0` };
       }
@@ -70,16 +59,6 @@ export const validateMilestones = (
       return {
         ok: false,
         message: `Mốc "${name}": deadline phải nằm trong thời gian dự án`,
-      };
-    }
-  }
-
-  if (ctx.totalSlides > 0) {
-    const slidesSum = sumMilestoneQuantityByUnit(milestones, 'slides');
-    if (slidesSum > ctx.totalSlides) {
-      return {
-        ok: false,
-        message: `Tổng slides các mốc (${slidesSum}) vượt totalSlides của dự án (${ctx.totalSlides})`,
       };
     }
   }
@@ -104,7 +83,8 @@ export const toReplaceMilestonePayload = (
   milestones: readonly ProjectMilestoneInput[],
 ): ProjectMilestoneInput[] =>
   milestones.map((item) => {
-    const unit = item.unit === 'slides' || item.unit === 'da' ? item.unit : '';
+    const unit =
+      item.unit === 'slides' || item.unit === 'da' || item.unit === 'others' ? item.unit : '';
     const payload: ProjectMilestoneInput = {
       name: item.name.trim(),
       deadlineDate: toMilestoneDateKey(item.deadlineDate),

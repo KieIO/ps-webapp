@@ -21,4 +21,11 @@ describe('canEditProjectMeta', () => {
       canEditProjectMeta({ ...base, archivedAt: '2026-01-01T00:00:00Z' }, ROLES.ADMIN, 'anyone'),
     ).toBe(false);
   });
+
+  it('allows PM and Head on active projects (tracker timeline)', () => {
+    expect(canEditProjectMeta(base, ROLES.PM, 'anyone')).toBe(true);
+    expect(canEditProjectMeta(base, ROLES.HEAD, 'anyone')).toBe(true);
+    expect(canEditProjectMeta(base, ROLES.EMPLOYEE, 'usr-creator')).toBe(true);
+    expect(canEditProjectMeta(base, ROLES.EMPLOYEE, 'other')).toBe(false);
+  });
 });

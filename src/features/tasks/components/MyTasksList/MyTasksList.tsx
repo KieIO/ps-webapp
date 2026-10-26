@@ -369,6 +369,7 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
         canAssign={canAssign}
         canEvaluate={canEvaluate}
         deletingTaskId={isDeleting ? (deletingVariables ?? null) : null}
+        evaluationScope={showCmScopeToggle ? cmScope : undefined}
       />
 
       <AssignTaskModal

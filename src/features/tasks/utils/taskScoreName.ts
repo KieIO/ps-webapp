@@ -29,3 +29,11 @@ export function parseTaskScoreName(scoreName: string): {
     level: Number(match[2]),
   };
 }
+
+/**
+ * Default name for a split child. Uses the parent task type
+ * (`Slides 2` → `Slides`, `DA` → `DA`) so the child keeps that type.
+ */
+export function defaultSplitChildName(parentTaskName: string): string {
+  return parseTaskScoreName(parentTaskName).baseName;
+}

@@ -6,6 +6,7 @@ import {
   computeAcceptedRemainderQuantity,
   formatEvaluationAcceptedLabel,
   formatEvaluationBadgeLabel,
+  formatFinishedQuantitySummary,
   hasCmEvaluation,
   nextSplitChildTaskCode,
 } from './evaluationRemainder';
@@ -78,6 +79,42 @@ describe('evaluation display helpers', () => {
     expect(hasCmEvaluation({ completionPercent: 100, pmEvaluation: '' })).toBe(true);
     expect(hasCmEvaluation({ completionPercent: null, pmEvaluation: 'A' })).toBe(true);
     expect(hasCmEvaluation({ completionPercent: null, pmEvaluation: '' })).toBe(false);
+  });
+});
+
+describe('formatFinishedQuantitySummary', () => {
+  const whole = (overrides: Partial<MyTask> = {}): MyTask =>
+    ({
+      id: 'whole-1',
+      taskCode: 'PM-GOWARE-001',
+      taskName: 'Slides',
+      quantity: 23,
+      staffConfirmation: 'finished',
+      completionPercent: 13,
+      pipelineStage: 'assigned_staff',
+      staff: [],
+      ...overrides,
+    }) as MyTask;
+
+  it('shows accepted vs assigned for a finished whole task', () => {
+    expect(formatFinishedQuantitySummary(whole())).toBe('Hoàn thành 3/23 (còn 20)');
+  });
+
+  it('keeps the plain quantity when acceptance is full, unevaluated, or not finished', () => {
+    expect(formatFinishedQuantitySummary(whole({ completionPercent: 100 }))).toBeNull();
+    expect(formatFinishedQuantitySummary(whole({ completionPercent: null }))).toBeNull();
+    expect(formatFinishedQuantitySummary(whole({ staffConfirmation: 'confirmed' }))).toBeNull();
+  });
+
+  it('does not rewrite split-family quantities', () => {
+    expect(formatFinishedQuantitySummary(baseChild({ quantity: 23, completionPercent: 13 }))).toBe(
+      null,
+    );
+    expect(
+      formatFinishedQuantitySummary(
+        whole({ pipelineStage: 'split', parentTaskId: undefined, completionPercent: 13 }),
+      ),
+    ).toBeNull();
   });
 });
 

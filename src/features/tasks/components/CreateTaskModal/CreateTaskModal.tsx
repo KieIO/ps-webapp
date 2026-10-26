@@ -19,6 +19,10 @@ import {
 } from '../../hooks/useCreateTaskOptions';
 import { useCreateMyTask } from '../../hooks/useCreateMyTask';
 import { mergeStaffSelectOptions, resolveStaffFromUserId } from '../../utils/staff';
+import {
+  isCreateTaskPmLockedToSelf,
+  pmOptionsForCreateTask,
+} from '../../utils/createTaskPmOptions';
 import { defaultTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import type {
@@ -114,6 +118,11 @@ export function CreateTaskModal({
   const currentUser = useAppSelector((state) => state.auth.user);
   const { data: projectOptions = [] } = useCreateTaskProjectOptions(taskCategory, open);
   const { data: pmOptions = [] } = useCreateTaskPmOptions(open);
+  const pmLockedToSelf = isCreateTaskPmLockedToSelf(currentUser?.role);
+  const visiblePmOptions = useMemo(
+    () => pmOptionsForCreateTask(pmOptions, currentUser),
+    [currentUser, pmOptions],
+  );
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
   const { options: departmentOptions, isLoading: departmentLoading } = useDepartmentOptions({
     enabled: open,
@@ -158,7 +167,7 @@ export function CreateTaskModal({
     if (!currentUser?.id || !currentUser.role) return undefined;
     if (!PM_NAME_AUTO_SELECT_ROLES.includes(currentUser.role as Role)) return undefined;
 
-    const match = pmOptions.find(
+    const match = visiblePmOptions.find(
       (entry) =>
         entry.userId === currentUser.id ||
         entry.name.trim().toLowerCase() === currentUser.name.trim().toLowerCase(),
@@ -176,10 +185,10 @@ export function CreateTaskModal({
       name: currentUser.name,
       userId: currentUser.id,
     };
-  }, [currentUser, pmOptions]);
+  }, [currentUser, visiblePmOptions]);
 
   const pmSelectOptions = useMemo(() => {
-    const options = pmOptions.map((pm) => ({
+    const options = visiblePmOptions.map((pm) => ({
       value: pm.code,
       label: pm.name,
     }));
@@ -193,7 +202,7 @@ export function CreateTaskModal({
       });
     }
     return options;
-  }, [pmOptions, defaultProjectManager]);
+  }, [visiblePmOptions, defaultProjectManager]);
 
   const normalizedTaskDepartment = normalizeDepartment(formDepartment);
   const isCreativeTask = normalizedTaskDepartment === 'creative';
@@ -239,8 +248,9 @@ export function CreateTaskModal({
         ...DEFAULT_VALUES,
         date: preset?.date ?? defaultTaskDeadline(),
         projectName: preset?.projectName ?? DEFAULT_VALUES.projectName,
-        projectManager:
-          preset?.projectManager ?? defaultProjectManager ?? DEFAULT_VALUES.projectManager,
+        projectManager: pmLockedToSelf
+          ? (defaultProjectManager ?? DEFAULT_VALUES.projectManager)
+          : (preset?.projectManager ?? defaultProjectManager ?? DEFAULT_VALUES.projectManager),
         staffUserId: preset?.staffUserId,
         description: preset?.description ?? DEFAULT_VALUES.description,
       });
@@ -254,6 +264,7 @@ export function CreateTaskModal({
     preset?.date,
     preset?.description,
     defaultProjectManager,
+    pmLockedToSelf,
   ]);
 
   useEffect(() => {
@@ -340,7 +351,7 @@ export function CreateTaskModal({
       return;
     }
     const pm =
-      pmOptions.find((entry) => entry.code === pmCode) ??
+      visiblePmOptions.find((entry) => entry.code === pmCode) ??
       (defaultProjectManager?.code === pmCode ? defaultProjectManager : undefined);
     if (pm) {
       form.setFieldValue('projectManager', {
@@ -434,7 +445,7 @@ export function CreateTaskModal({
             rules={[{ required: true, message: 'Project manager is required' }]}
           >
             <Select
-              allowClear
+              allowClear={!pmLockedToSelf}
               placeholder="Select PM"
               onChange={handlePmSelect}
               options={pmSelectOptions}

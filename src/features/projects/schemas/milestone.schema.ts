@@ -1,19 +1,23 @@
 import { z } from 'zod';
 
-export const MILESTONE_UNITS = ['slides', 'da'] as const;
+export const MILESTONE_UNITS = ['others', 'slides', 'da'] as const;
 export type MilestoneUnit = (typeof MILESTONE_UNITS)[number];
 
-/** Wire unit: volume units or empty string for non-volume milestones (BE contract). */
-export const MILESTONE_WIRE_UNITS = ['slides', 'da', ''] as const;
+/** Wire unit: Others / Slides / DA, or empty string for older non-volume rows. */
+export const MILESTONE_WIRE_UNITS = ['others', 'slides', 'da', ''] as const;
 export type MilestoneWireUnit = (typeof MILESTONE_WIRE_UNITS)[number];
 
 export const MILESTONE_UNIT_LABELS: Record<MilestoneUnit, string> = {
+  others: 'Others',
   slides: 'Slides',
   da: 'DA',
 };
 
+export const isSlidesOrDaUnit = (unit: string | null | undefined): unit is 'slides' | 'da' =>
+  unit === 'slides' || unit === 'da';
+
 const normalizeUnit = (value: unknown): MilestoneWireUnit => {
-  if (value === 'slides' || value === 'da') return value;
+  if (value === 'slides' || value === 'da' || value === 'others') return value;
   return '';
 };
 
@@ -28,8 +32,8 @@ const volumePairRefine = (
   ctx: z.RefinementCtx,
 ) => {
   const unit = value.unit ?? '';
-  const hasVolumeUnit = unit === 'slides' || unit === 'da';
-  if (hasVolumeUnit) {
+  const hasVolumeUnit = isSlidesOrDaUnit(unit);
+  if (hasVolumeUnit || (unit === 'others' && value.quantity != null)) {
     if (value.quantity == null || value.quantity <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -47,10 +51,10 @@ const volumePairRefine = (
     }
     return;
   }
-  if (unit !== '') {
+  if (unit !== '' && unit !== 'others') {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'Đơn vị phải là Slides, DA hoặc trống',
+      message: 'Đơn vị phải là Others, Slides, DA hoặc trống',
       path: ['unit'],
     });
   }
@@ -65,7 +69,7 @@ export const ProjectMilestoneSchema = z
     deadlineDate: z.string().min(1),
     /** Null when unit is empty (non-volume milestone). */
     quantity: z.preprocess(normalizeQuantity, z.number().positive().nullable()),
-    /** `slides` | `da` | `""` */
+    /** `others` | `slides` | `da` | `""` */
     unit: z.preprocess(normalizeUnit, z.enum(MILESTONE_WIRE_UNITS)),
     note: z.string().optional().default(''),
     completed: z.boolean().optional().default(false),
@@ -95,8 +99,8 @@ export type ProjectMilestone = z.infer<typeof ProjectMilestoneSchema>;
 export type ProjectMilestoneInput = z.infer<typeof ProjectMilestoneInputSchema>;
 export type ReplaceProjectMilestonesRequest = z.infer<typeof ReplaceProjectMilestonesRequestSchema>;
 
-/** True when the milestone carries a slides/DA volume. */
+/** True when the milestone has a quantity to show (Slides, DA, or Others). */
 export const hasMilestoneVolume = (
   milestone: Pick<ProjectMilestoneInput, 'quantity' | 'unit'>,
 ): boolean =>
-  (milestone.unit === 'slides' || milestone.unit === 'da') && milestone.quantity != null;
+  (isSlidesOrDaUnit(milestone.unit) || milestone.unit === 'others') && milestone.quantity != null;

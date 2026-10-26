@@ -160,6 +160,28 @@ export const getBlockPosition = (
   };
 };
 
+/**
+ * Date under a click on a bar. The bar may be clipped to the visible month, so
+ * the visual left edge is the first visible day on or after `barStart`.
+ */
+export const resolveBarClickDate = (
+  days: CalendarDay[],
+  barStart: string,
+  offsetX: number,
+  dayWidth: number,
+  barWidthPx: number,
+): string | null => {
+  if (days.length === 0 || dayWidth <= 0) return null;
+  const dayOffset = Math.min(
+    Math.max(0, Math.floor(offsetX / dayWidth)),
+    Math.max(0, Math.round(barWidthPx / dayWidth) - 1),
+  );
+  const exactIndex = getDayIndex(days, barStart);
+  const originIndex = exactIndex >= 0 ? exactIndex : days.findIndex((day) => day.date >= barStart);
+  if (originIndex < 0) return null;
+  return days[originIndex + dayOffset]?.date ?? null;
+};
+
 export const formatRangeSubtitle = (start: string, end: string): string => {
   const startLabel = dayjs(start);
   const endLabel = dayjs(end);

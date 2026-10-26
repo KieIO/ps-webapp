@@ -26,8 +26,12 @@ import type {
   TaskHistoryListResponse,
 } from '../schemas/task.schema';
 import { UNASSIGNED_STAFF_LABEL } from '../constants';
-import { buildFallbackTaskHistory } from '../utils/taskDetail';
-import { normalizeTaskDateEnd, normalizeTaskDateStart } from '../utils/taskDates';
+import { buildFallbackTaskHistory, getTaskDeadline } from '../utils/taskDetail';
+import {
+  assertCreativeDeadlineNotAfterPm,
+  normalizeTaskDateEnd,
+  normalizeTaskDateStart,
+} from '../utils/taskDates';
 import { isTaskActiveOnWorkDate } from '../utils/taskWorkDate';
 import { computeTaskLevel } from '../utils/taskLevel';
 import { isStaffAssignable } from '../utils/staffAvailability';
@@ -37,6 +41,7 @@ import {
   applyCreativeRehandToCH,
   canChangeCreativeLevelRole,
   canEditCreativePipelineTask,
+  canEditSplitParentTotal,
   canProcessChQueue,
   canProcessCmQueue,
   canReassignCreativeManager,
@@ -67,7 +72,8 @@ import {
   canSpawnEvaluationRemainder,
   nextSplitChildTaskCode,
 } from '../utils/evaluationRemainder';
-import { canEvaluateTaskLayer } from '../utils/taskEvaluation';
+import { canEvaluateTaskLayer, resolveEvaluationWriteLayer } from '../utils/taskEvaluation';
+import { defaultSplitChildName } from '../utils/taskScoreName';
 import { shouldHideSplitChildFromTaskList } from '../utils/taskListVisibility';
 import { normalizeTaskUrgencySetting } from '../utils/taskUrgency';
 import {
@@ -597,6 +603,13 @@ export const mockCreateMyTask = async (
   if (role && !roleHasDefaultPermission(role, 'CREATE_TASK')) {
     throw new Error('Only a Project Manager or Admin can create tasks');
   }
+  if (
+    role === ROLES.PM &&
+    payload.projectManager.userId &&
+    payload.projectManager.userId !== creatorUserId
+  ) {
+    throw new Error('PM chỉ được tạo task cho chính mình');
+  }
 
   if (payload.assignDirection === 'project_staff' && payload.staff.length !== 1) {
     throw new Error('Select an assignable staff member');
@@ -732,6 +745,13 @@ export const mockUpdateMyTask = async (
     payload.technical,
     payload.contentProcessing,
   );
+  const department = current.department?.toLowerCase() ?? '';
+  if (
+    payload.creativeDeadline &&
+    (department === 'creative' || department.startsWith('creative'))
+  ) {
+    assertCreativeDeadlineNotAfterPm(payload.creativeDeadline, payload.date);
+  }
 
   const updated: MyTask = {
     ...current,
@@ -922,11 +942,30 @@ export const mockUpdateMyTaskPmEvaluation = async (
   }
 
   const role = editorUserId ? deriveDevRoleFromUserId(editorUserId) : undefined;
-  if (role && !canEvaluateTaskLayer(role, tasks[index])) {
-    throw new Error('Bạn không được đánh giá task ở tầng này');
+  let layer: 'staff' | 'handoff' = 'staff';
+  try {
+    layer = resolveEvaluationWriteLayer(role, tasks[index], payload.layer);
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? error.message : 'Bạn không được đánh giá task ở tầng này',
+    );
   }
 
   const current = tasks[index];
+  if (layer === 'handoff') {
+    const updated: MyTask = {
+      ...current,
+      handoffCompletionPercent: payload.completionPercent,
+      handoffEvaluation: payload.pmEvaluation,
+      handoffNote: payload.pmNote,
+      updatedAt: new Date().toISOString(),
+    };
+    const next = [...tasks];
+    next[index] = updated;
+    setMockTasksStore(next);
+    return updated;
+  }
+
   let pmNote = payload.pmNote;
   if (
     !String(pmNote ?? '').trim() &&
@@ -1090,7 +1129,7 @@ export const mockAssignCreativeHead = async (
 
   const role = resolveEditorRole(editorUserId);
   if (!canProcessChQueue(role)) {
-    throw new Error('Chỉ Creative Head mới assign task cho Creative Manager');
+    throw new Error('Chỉ Creative Head hoặc Admin được giao task cho Creative Manager');
   }
 
   const tasks = getMockTasksStore();
@@ -1139,6 +1178,10 @@ export const mockAssignCreativeHead = async (
     if (payload.urgency != null) {
       urgency = payload.urgency;
     }
+  }
+
+  if (payload.creativeDeadline) {
+    assertCreativeDeadlineNotAfterPm(payload.creativeDeadline, getTaskDeadline(current));
   }
 
   const updated: MyTask = {
@@ -1215,6 +1258,9 @@ export const mockAssignCreativeManager = async (
     if (payload.quantity == null || payload.quantity <= 0) {
       throw new Error('CM nhập số lượng trước khi giao');
     }
+    if (payload.creativeDeadline) {
+      assertCreativeDeadlineNotAfterPm(payload.creativeDeadline, getTaskDeadline(current));
+    }
 
     const updated: MyTask = {
       ...current,
@@ -1238,27 +1284,52 @@ export const mockAssignCreativeManager = async (
   if (subtasks.length < 2) {
     throw new Error('Chia nhỏ cần ít nhất 2 task');
   }
+  if (role === ROLES.CREATIVE_MANAGER) {
+    throw new Error('chỉ PM hoặc Admin được tạo task con');
+  }
+  if (current.quantity < 1) {
+    throw new Error('task cha phải có số lượng lớn hơn 0');
+  }
   for (const subtask of subtasks) {
     if (!subtask.description?.trim()) {
       throw new Error('Mỗi task nhỏ cần brief');
     }
+    if (!Number.isInteger(subtask.quantity) || subtask.quantity < 0) {
+      throw new Error('Số lượng phải là số nguyên từ 0');
+    }
+  }
+  const childSum = subtasks.reduce((sum, subtask) => sum + subtask.quantity, 0);
+  if (childSum > current.quantity) {
+    throw new Error(
+      `tổng SL các phần (${childSum}) không được lớn hơn SL task cha (${current.quantity})`,
+    );
   }
 
   const children: MyTask[] = subtasks.map((subtask, offset) => {
-    const staff = resolveStaffFromUserId(subtask.staffUserId, staffPool);
+    const staff = subtask.staffUserId?.trim()
+      ? resolveStaffFromUserId(subtask.staffUserId, staffPool)
+      : [];
     const assignee = staff[0];
-    if (!assignee) {
+    if (subtask.staffUserId?.trim() && !assignee) {
       throw new Error('Mỗi task nhỏ cần một Staff hợp lệ');
     }
-    if (!isStaffAssignable(assignee.availability)) {
+    if (assignee && !isStaffAssignable(assignee.availability)) {
       throw new Error('Không thể giao cho nhân viên đang nghỉ phép');
+    }
+    if (subtask.creativeDeadline) {
+      assertCreativeDeadlineNotAfterPm(subtask.creativeDeadline, getTaskDeadline(current));
+    }
+
+    const name = subtask.name?.trim() || defaultSplitChildName(current.taskName);
+    if (!name) {
+      throw new Error('Mỗi task nhỏ cần tên');
     }
 
     return enrichMockTaskWithProjectContext({
       ...current,
       id: `task-${Date.now()}-${offset}`,
       taskCode: `${current.taskCode}-S${offset + 1}`,
-      taskName: subtask.name.trim(),
+      taskName: name,
       description: subtask.description?.trim() ?? current.description,
       quantity: subtask.quantity,
       staff,
@@ -1289,7 +1360,7 @@ export const mockAssignCreativeManager = async (
 
   const parent: MyTask = {
     ...current,
-    quantity: children.reduce((sum, child) => sum + child.quantity, 0),
+    quantity: current.quantity,
     pipelineStage: 'split',
     staff: uniqueChildStaff,
     assignedAt: undefined,
@@ -1387,6 +1458,14 @@ export const mockUpdateCreativePipeline = async (
 
   const stage = resolveEffectivePipelineStage(current);
   const isSplitChild = isSplitChildTask(current);
+  if (
+    payload.quantity != null &&
+    (stage === 'awaiting_cm' || stage === 'awaiting_ch') &&
+    Math.abs(payload.quantity - current.quantity) > 1e-6 &&
+    !canEditSplitParentTotal(editorRole, editorUserId, current)
+  ) {
+    throw new Error('chỉ người tạo task hoặc Admin được sửa SL tổng');
+  }
 
   if (payload.quantity != null && isSplitChild) {
     throw new Error('Đổi SL task nhỏ qua childQuantities (đủ các phần, tổng khớp SL gốc)');
@@ -1412,8 +1491,8 @@ export const mockUpdateCreativePipeline = async (
       const sibling = siblings.find((child) => child.id === row.id)!;
       const qtyUnchanged = Math.abs(row.quantity - sibling.quantity) <= 1e-6;
       if (!qtyUnchanged) {
-        if (!Number.isInteger(row.quantity) || row.quantity < 1) {
-          throw new Error('Số lượng phải là số nguyên lớn hơn 0');
+        if (!Number.isInteger(row.quantity) || row.quantity < 0) {
+          throw new Error('Số lượng phải là số nguyên từ 0');
         }
         if (isSplitChildQuantityLocked(sibling)) {
           throw new Error('Không đổi SL task nhỏ đã finish / huỷ');
@@ -1422,14 +1501,25 @@ export const mockUpdateCreativePipeline = async (
       nextQty.set(row.id, row.quantity);
     }
     const sum = [...nextQty.values()].reduce((total, qty) => total + qty, 0);
-    const targetParentQty = payload.quantity != null ? payload.quantity : sum;
-    if (Math.abs(sum - targetParentQty) > 1e-6) {
-      throw new Error(`Tổng SL các phần (${sum}) phải bằng SL tổng (${targetParentQty})`);
+    const wantsParentQty = payload.quantity != null;
+    if (
+      wantsParentQty &&
+      Math.abs(payload.quantity! - parent.quantity) > 1e-6 &&
+      !canEditSplitParentTotal(editorRole, editorUserId, parent)
+    ) {
+      throw new Error('chỉ người tạo task hoặc Admin được sửa SL tổng');
+    }
+    const cap =
+      wantsParentQty && canEditSplitParentTotal(editorRole, editorUserId, parent)
+        ? payload.quantity!
+        : parent.quantity;
+    if (sum > cap) {
+      throw new Error(`tổng SL các phần (${sum}) không được lớn hơn SL task cha (${cap})`);
     }
     const nowIso = new Date().toISOString();
     const next = [...tasks];
-    for (const [id, quantity] of nextQty) {
-      const idx = next.findIndex((entry) => entry.id === id);
+    for (const [childId, quantity] of nextQty) {
+      const idx = next.findIndex((entry) => entry.id === childId);
       if (idx < 0) continue;
       if (next[idx].quantity === quantity) continue;
       next[idx] = {
@@ -1438,16 +1528,24 @@ export const mockUpdateCreativePipeline = async (
         updatedAt: nowIso,
       };
     }
-    const parentIdx = next.findIndex((entry) => entry.id === parentId);
-    if (parentIdx >= 0 && Math.abs(next[parentIdx].quantity - targetParentQty) > 1e-6) {
-      next[parentIdx] = {
-        ...next[parentIdx],
-        quantity: targetParentQty,
-        updatedAt: nowIso,
-      };
+    if (wantsParentQty && canEditSplitParentTotal(editorRole, editorUserId, parent)) {
+      const parentIdx = next.findIndex((entry) => entry.id === parentId);
+      if (parentIdx >= 0 && Math.abs(next[parentIdx].quantity - payload.quantity!) > 1e-6) {
+        next[parentIdx] = {
+          ...next[parentIdx],
+          quantity: payload.quantity!,
+          updatedAt: nowIso,
+        };
+      }
     }
     setMockTasksStore(next);
   } else if (payload.quantity != null && stage === 'split') {
+    if (
+      Math.abs(payload.quantity - current.quantity) > 1e-6 &&
+      !canEditSplitParentTotal(editorRole, editorUserId, current)
+    ) {
+      throw new Error('chỉ người tạo task hoặc Admin được sửa SL tổng');
+    }
     const siblings = tasks.filter(
       (entry) => entry.parentTaskId === current.id && entry.taskKind !== 'revision',
     );
@@ -1455,10 +1553,8 @@ export const mockUpdateCreativePipeline = async (
       .filter((child) => isSplitChildQuantityLocked(child))
       .reduce((total, child) => total + child.quantity, 0);
     const editable = siblings.filter((child) => !isSplitChildQuantityLocked(child));
-    if (payload.quantity + 1e-6 < lockedSum + editable.length) {
-      throw new Error(
-        `SL tổng tối thiểu ${lockedSum + editable.length} (phần đã finish/huỷ + các phần còn mở)`,
-      );
+    if (payload.quantity + 1e-6 < lockedSum) {
+      throw new Error(`SL tổng tối thiểu ${lockedSum} (các phần đã finish/huỷ)`);
     }
     const primary = pickPrimaryEditableSplitChild(editable);
     if (!primary) {
@@ -1466,7 +1562,7 @@ export const mockUpdateCreativePipeline = async (
     }
     const editableSum = editable.reduce((total, child) => total + child.quantity, 0);
     const nextPrimaryQty = payload.quantity - lockedSum - (editableSum - primary.quantity);
-    if (nextPrimaryQty <= 0) {
+    if (nextPrimaryQty < 0) {
       throw new Error('Không điều chỉnh được SL tổng với các phần đã khoá');
     }
     const nowIso = new Date().toISOString();
@@ -1483,14 +1579,75 @@ export const mockUpdateCreativePipeline = async (
   }
 
   const storeAfterQty = getMockTasksStore();
-  const indexAfterQty = storeAfterQty.findIndex((entry) => entry.id === id);
-  const currentAfterQty = indexAfterQty >= 0 ? storeAfterQty[indexAfterQty] : current;
+  if (payload.addSubtasks?.length) {
+    if (editorRole !== ROLES.ADMIN && editorRole !== ROLES.PM) {
+      throw new Error('chỉ PM hoặc Admin được tạo task con');
+    }
+    const parentId = isSplitChild ? current.parentTaskId : current.id;
+    const parent = storeAfterQty.find((entry) => entry.id === parentId);
+    if (!parent || resolveEffectivePipelineStage(parent) !== 'split') {
+      throw new Error('chỉ thêm task con khi task đã được chia nhỏ');
+    }
+    const siblings = storeAfterQty.filter(
+      (entry) => entry.parentTaskId === parentId && entry.taskKind !== 'revision',
+    );
+    let used = siblings.reduce((total, child) => total + child.quantity, 0);
+    const added: MyTask[] = [];
+    payload.addSubtasks.forEach((subtask, offset) => {
+      if (!subtask.description?.trim()) {
+        throw new Error('Mỗi task nhỏ cần brief');
+      }
+      if (!Number.isInteger(subtask.quantity) || subtask.quantity < 0) {
+        throw new Error('Số lượng phải là số nguyên từ 0');
+      }
+      used += subtask.quantity;
+      if (used > parent.quantity) {
+        throw new Error(
+          `tổng SL các phần (${used}) không được lớn hơn SL task cha (${parent.quantity})`,
+        );
+      }
+      const staff = subtask.staffUserId?.trim()
+        ? resolveStaffFromUserId(subtask.staffUserId, [
+            ...MOCK_ASSIGNABLE_STAFF,
+            ...storeAfterQty.flatMap((task) => task.staff),
+          ])
+        : [];
+      const name = subtask.name?.trim() || defaultSplitChildName(parent.taskName);
+      added.push(
+        enrichMockTaskWithProjectContext({
+          ...parent,
+          id: `task-${Date.now()}-add-${offset}`,
+          taskCode: `${parent.taskCode}-S${siblings.length + offset + 1}`,
+          taskName: name,
+          description: subtask.description.trim(),
+          quantity: subtask.quantity,
+          staff,
+          parentTaskId: parent.id,
+          taskKind: 'split',
+          pipelineStage: 'assigned_staff',
+          staffConfirmation: 'not_updated',
+          updatedAt: new Date().toISOString(),
+        }),
+      );
+    });
+    setMockTasksStore([...added, ...getMockTasksStore()]);
+  }
+
+  const storeAfterAdd = getMockTasksStore();
+  const indexAfterQty = storeAfterAdd.findIndex((entry) => entry.id === id);
+  const currentAfterQty = indexAfterQty >= 0 ? storeAfterAdd[indexAfterQty] : current;
 
   // Mirror BE normalizeTaskDates: PM deadline change also moves calendar TaskDate.
   const nextDeadline =
     payload.deadline === undefined || payload.deadline === null || payload.deadline === ''
       ? undefined
       : payload.deadline;
+  if (payload.creativeDeadline) {
+    assertCreativeDeadlineNotAfterPm(
+      payload.creativeDeadline,
+      nextDeadline || getTaskDeadline(currentAfterQty),
+    );
+  }
   const nextDate = nextDeadline ? normalizeTaskDateStart(nextDeadline) : currentAfterQty.date;
 
   const updated: MyTask = {
@@ -1526,7 +1683,7 @@ export const mockUpdateCreativePipeline = async (
     updatedAt: new Date().toISOString(),
   };
 
-  const nextRows = [...storeAfterQty];
+  const nextRows = [...storeAfterAdd];
   nextRows[indexAfterQty >= 0 ? indexAfterQty : index] = updated;
   setMockTasksStore(nextRows);
   return enrichMockTaskWithProjectContext(updated);

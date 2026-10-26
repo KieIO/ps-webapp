@@ -19,17 +19,17 @@ import { getMockProjectsStore, setMockProjectsStore, type StoredProject } from '
 
 const normalizeStoredMilestones = (
   milestones: ProjectMilestoneInput[] | undefined,
-  totalSlides: number,
   startDate: string,
   endDate: string,
 ): NonNullable<StoredProject['milestones']> => {
   const list = milestones ?? [];
-  const check = validateMilestones(list, { startDate, endDate, totalSlides });
+  const check = validateMilestones(list, { startDate, endDate });
   if (!check.ok) {
     throw new Error(check.message);
   }
   return list.map((item) => {
-    const unit = item.unit === 'slides' || item.unit === 'da' ? item.unit : '';
+    const unit =
+      item.unit === 'slides' || item.unit === 'da' || item.unit === 'others' ? item.unit : '';
     const completed = Boolean(item.completed);
     return {
       id: item.id?.trim() || `ms-${crypto.randomUUID().slice(0, 8)}`,
@@ -173,7 +173,7 @@ export const mockCreateProject = async (
 
   const milestones =
     payload.milestones !== undefined
-      ? normalizeStoredMilestones(payload.milestones, 0, payload.startDate, payload.endDate)
+      ? normalizeStoredMilestones(payload.milestones, payload.startDate, payload.endDate)
       : [];
 
   const stored: StoredProject = {
@@ -232,10 +232,6 @@ export const mockUpdateProject = async (
         : current.finishedDate;
   const client = resolveClientRef(payload.clientId);
 
-  const enrichedCurrent = enrichProject(current, getMockTasksStore(), projects, {
-    extraMembers: mockExtraMembersForProject(current.name),
-  });
-
   const updated: StoredProject = {
     ...current,
     clientId: client.id,
@@ -259,12 +255,7 @@ export const mockUpdateProject = async (
     finishedDate,
     milestones:
       payload.milestones !== undefined
-        ? normalizeStoredMilestones(
-            payload.milestones,
-            enrichedCurrent.totalSlides,
-            payload.startDate,
-            payload.endDate,
-          )
+        ? normalizeStoredMilestones(payload.milestones, payload.startDate, payload.endDate)
         : (current.milestones ?? []),
     // Only overwrite when Evaluate (or another caller) explicitly sends a value.
     completionPercent:
@@ -369,18 +360,10 @@ export const mockReplaceProjectMilestones = async (
   }
 
   const current = projects[index];
-  const enriched = enrichProject(current, getMockTasksStore(), projects, {
-    extraMembers: mockExtraMembersForProject(current.name),
-  });
 
   const updated: StoredProject = {
     ...current,
-    milestones: normalizeStoredMilestones(
-      milestones,
-      enriched.totalSlides,
-      current.startDate,
-      current.endDate,
-    ),
+    milestones: normalizeStoredMilestones(milestones, current.startDate, current.endDate),
     updatedAt: new Date().toISOString(),
   };
 

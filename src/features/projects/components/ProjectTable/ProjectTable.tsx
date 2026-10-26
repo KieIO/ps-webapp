@@ -124,7 +124,7 @@ export function ProjectTable({
 }: ProjectTableProps) {
   const { can, role } = usePermission();
   const userId = useAppSelector((state) => state.auth.user?.id);
-  const canEdit = can('EDIT_PROJECT') && !archivedView;
+  const canEdit = (can('EDIT_PROJECT') || can('EDIT_TRACKER_PROJECT')) && !archivedView;
   const canArchive = can('ARCHIVE_PROJECT');
   const canDelete = can('DELETE_PROJECT');
   const canEditMeta = (project: Project) => canEdit && canEditProjectMeta(project, role, userId);

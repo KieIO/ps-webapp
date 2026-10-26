@@ -78,6 +78,10 @@ export const buildCreateTaskPayload = ({
   }
 
   const isCreativeWorkflow = workflowKind === 'creative';
+  const quantity = values.quantity ?? 0;
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    throw new CreateTaskPayloadError('Số lượng phải là số nguyên lớn hơn 0');
+  }
   const assignDirection: AssignDirection = isCreativeWorkflow
     ? 'creative_department'
     : (values.assignDirection ?? 'project_staff');
@@ -127,7 +131,7 @@ export const buildCreateTaskPayload = ({
     level: isCreativeWorkflow
       ? DEFAULT_CLASSIFICATION
       : computeTaskLevel(designThinking, technical, contentProcessing),
-    quantity: isCreativeWorkflow ? 0 : (values.quantity ?? 1),
+    quantity,
     date: toTaskDeadline(values.date),
     description,
     department,

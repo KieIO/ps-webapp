@@ -37,6 +37,7 @@ npm run test:e2e:um
 npm run test:e2e:projects
 
 # Task UI smoke (+ PM-53 Head My Tasks → project evaluation)
+# Coverage index (create/assign/decline/edit/delete): docs/task-flow-test-coverage.md
 npm run test:e2e:tasks
 
 # Department management UI smoke (DEPT-30–32)
@@ -59,6 +60,9 @@ npm run test:e2e:leave
 
 # Milestone tracker UI smoke (MS-03/05/09/11/19)
 npm run test:e2e:milestones
+
+# Tracker PM rights + VN dates (TRK-01…05)
+npm run test:e2e:tracker
 
 # Headed / UI mode
 npm run test:e2e:headed
@@ -92,10 +96,11 @@ e2e/
   task-scores/        # Task types & scores UI cases (TSCORE-39, 40, …)
   capacity-formula/        # Capacity formula UI cases (CAP-27–30)
   milestones/              # Tracker milestone UI cases (MS-03/05/09/11/19)
+  tracker/                 # Tracker PM urgency/timeline/VN dates (TRK-01…05)
   README.md
 ```
 
-Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, department specs under `e2e/departments/`, and milestone specs under `e2e/milestones/`; reuse `loginAs` / sidebar helpers.
+Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, department specs under `e2e/departments/`, milestone specs under `e2e/milestones/`, and tracker specs under `e2e/tracker/`; reuse `loginAs` / sidebar helpers.
 
 ## Covered smoke (proof harness)
 
@@ -113,8 +118,16 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, depart
 | PM-48 Evaluate project modal                   | `projects/pm-48-evaluate-project-modal.spec.ts`            |
 | PM-52 Evaluate hidden (Employee)               | `projects/pm-52-evaluate-hidden-by-role.spec.ts`           |
 | PM-53 Head My Tasks → project eval             | `tasks/pm-53-head-edit-project-evaluation.spec.ts`         |
+| TASK-37/56 Project assign + split list hide    | `tasks/task-37-56-project-assign-visibility.spec.ts`       |
+| TASK-47/50/51/57 Creative assign UI pipe       | `tasks/task-47-57-creative-assign-ui.spec.ts`              |
+| TASK-48/49/52/58 Assign guards (+ TASK-38 ~)   | `tasks/task-48-58-assign-guards.spec.ts`                   |
+| TASK-55/59 Reassign CM / Staff                 | `tasks/task-55-59-reassign-ui.spec.ts`                     |
 | TASK-64 CH refuse PM creative handoff          | `tasks/task-64-ch-refuse-pm-handoff.spec.ts` (+ manual md) |
+| TASK-77 CM refuse → CH queue                   | `tasks/task-77-cm-refuse-to-ch.spec.ts`                    |
+| TASK-78 Staff refuse → CM queue                | `tasks/task-78-staff-refuse-to-cm.spec.ts`                 |
 | TASK-66 Split evaluate remainder + SL edit     | `tasks/task-66-split-evaluate-remainder.spec.ts`           |
+| TASK-70/71 Deadline PM + Creative by role      | `tasks/task-70-71-deadlines-by-role.spec.ts`               |
+| TASK-72–76 Layered eval + visibility           | `tasks/task-72-76-eval-layers-visibility.spec.ts`          |
 | DEPT-30 Sidebar Department management          | `departments/dept-30-sidebar-departments.spec.ts`          |
 | DEPT-31 Admin opens `/settings/departments`    | `departments/dept-31-admin-page.spec.ts`                   |
 | DEPT-32 PM blocked from departments page       | `departments/dept-32-pm-page-blocked.spec.ts`              |
@@ -128,3 +141,7 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, depart
 | CAP-30 Formula page chrome                     | `capacity-formula/cap-30-page-chrome.spec.ts`              |
 | Leave-01 Multi-period schedule + overlap       | `leave/leave-01-multi-period-schedule.spec.ts`             |
 | Leave-02 Login on leave, auto Active, weekends | `leave/leave-02-login-auto-active-tracker.spec.ts`         |
+| TRK-01 PM urgency on Tracker (+ Employee 403)  | `tracker/trk-01-pm-urgency-on-tracker.spec.ts`             |
+| TRK-02/05 PM Edit timeline + YYYY-MM-DD body   | `tracker/trk-02-05-pm-edit-timeline-dateonly.spec.ts`      |
+| TRK-03 PM Add-milestone chrome on Tracker      | `tracker/trk-03-pm-milestone-chrome.spec.ts`               |
+| TRK-04 VN calendar bar end date via /tracker   | `tracker/trk-04-vn-timeline-bar.spec.ts`                   |

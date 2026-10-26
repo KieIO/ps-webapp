@@ -42,6 +42,8 @@ export const PERMISSIONS = {
   // Create / edit project records: Department Head (+ Admin) only.
   CREATE_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
   EDIT_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
+  // Tracker fields (urgency, start/end timeline): PM + Head + Admin (not client CRUD).
+  EDIT_TRACKER_PROJECT: [ROLES.PM, ROLES.HEAD, ROLES.ADMIN],
   ARCHIVE_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
   DELETE_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
   CREATE_TASK: [ROLES.PM, ROLES.ADMIN],

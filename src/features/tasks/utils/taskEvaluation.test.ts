@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { ROLES } from '@/config/permissions';
 import type { MyTask } from '../schemas/task.schema';
-import { canEvaluateTaskLayer } from './taskEvaluation';
+import {
+  canEvaluateTaskLayer,
+  isCreativeWholeAssigned,
+  resolveEvaluationWriteLayer,
+} from './taskEvaluation';
 
 const task = (overrides: Partial<MyTask>): MyTask =>
   ({
@@ -49,5 +53,30 @@ describe('canEvaluateTaskLayer', () => {
     expect(canEvaluateTaskLayer(ROLES.ADMIN, child)).toBe(true);
     expect(canEvaluateTaskLayer(ROLES.ADMIN, parent)).toBe(true);
     expect(canEvaluateTaskLayer(ROLES.EMPLOYEE, parent)).toBe(false);
+  });
+});
+
+describe('whole-assign evaluation layers', () => {
+  const whole = task({ id: 'whole', pipelineStage: 'assigned_staff' });
+  const awaiting = task({ id: 'awaiting', pipelineStage: 'awaiting_cm' });
+
+  it('keeps two write targets only on a creative whole assign', () => {
+    expect(isCreativeWholeAssigned(whole)).toBe(true);
+    expect(isCreativeWholeAssigned(awaiting)).toBe(false);
+    expect(resolveEvaluationWriteLayer(ROLES.CREATIVE_MANAGER, whole)).toBe('staff');
+    expect(resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, whole)).toBe('handoff');
+    expect(resolveEvaluationWriteLayer(ROLES.PM, whole)).toBe('handoff');
+    expect(resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, awaiting)).toBe('staff');
+    expect(() => resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, awaiting, 'other')).toThrow(
+      /không hợp lệ/,
+    );
+    expect(() => resolveEvaluationWriteLayer(ROLES.CREATIVE_MANAGER, whole, 'handoff')).toThrow(
+      /kết quả Staff/,
+    );
+    expect(() => resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, whole, 'staff')).toThrow(
+      /gói của CM/,
+    );
+    expect(() => resolveEvaluationWriteLayer(ROLES.ADMIN, whole)).toThrow(/chọn lớp/);
+    expect(resolveEvaluationWriteLayer(ROLES.ADMIN, whole, 'handoff')).toBe('handoff');
   });
 });

@@ -5,10 +5,12 @@ import { DATE_FORMAT } from '@/config/constants';
 import {
   MILESTONE_UNIT_LABELS,
   MILESTONE_UNITS,
+  isSlidesOrDaUnit,
   type ProjectMilestone,
   type ProjectMilestoneInput,
   type MilestoneUnit,
 } from '@/features/projects/schemas/milestone.schema';
+import { milestoneFieldLabel } from '@/features/projects/utils/milestoneFieldLabel';
 import { useReplaceProjectMilestones } from '@/features/projects/hooks/useReplaceProjectMilestones';
 import {
   toMilestoneDateKey,
@@ -23,7 +25,6 @@ export type MilestoneQuickTarget = {
   projectName: string;
   startDate: string;
   endDate: string;
-  totalSlides: number;
   milestones: ProjectMilestone[];
   mode: MilestoneQuickMode;
   /** Prefill / edit deadline (YYYY-MM-DD). */
@@ -51,7 +52,7 @@ const toInputFromExisting = (item: ProjectMilestone): ProjectMilestoneInput => (
   name: item.name,
   deadlineDate: toMilestoneDateKey(item.deadlineDate),
   quantity: item.quantity,
-  unit: item.unit === 'slides' || item.unit === 'da' ? item.unit : '',
+  unit: isSlidesOrDaUnit(item.unit) || item.unit === 'others' ? item.unit : 'others',
   note: item.note ?? '',
   completed: Boolean(item.completed),
 });
@@ -72,7 +73,10 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
       name: existing?.name ?? '',
       deadlineDate: dayjs(existing?.deadlineDate ?? target.deadlineDate),
       quantity: existing?.quantity ?? undefined,
-      unit: existing?.unit === 'slides' || existing?.unit === 'da' ? existing.unit : undefined,
+      unit:
+        existing && (isSlidesOrDaUnit(existing.unit) || existing.unit === 'others')
+          ? existing.unit
+          : 'others',
       note: existing?.note ?? '',
       completed: Boolean(existing?.completed),
     });
@@ -86,7 +90,7 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
   const handleFinish = (values: FormValues) => {
     if (!target) return;
 
-    const unit = values.unit === 'slides' || values.unit === 'da' ? values.unit : '';
+    const unit = isSlidesOrDaUnit(values.unit) || values.unit === 'others' ? values.unit : 'others';
     const quantity =
       unit && values.quantity != null && !Number.isNaN(Number(values.quantity))
         ? Number(values.quantity)
@@ -117,7 +121,6 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
     const check = validateMilestones(nextMilestones, {
       startDate: target.startDate,
       endDate: target.endDate,
-      totalSlides: target.totalSlides,
     });
     if (!check.ok) {
       message.error(check.message);
@@ -147,7 +150,6 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
     const check = validateMilestones(nextMilestones, {
       startDate: target.startDate,
       endDate: target.endDate,
-      totalSlides: target.totalSlides,
     });
     if (!check.ok) {
       message.error(check.message);
@@ -168,7 +170,7 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
 
   const start = target ? dayjs(target.startDate) : null;
   const end = target ? dayjs(target.endDate) : null;
-  const volumeRequired = Boolean(watchedUnit);
+  const volumeRequired = isSlidesOrDaUnit(watchedUnit);
 
   return (
     <Modal
@@ -211,17 +213,23 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
         </div>
       )}
     >
-      <Form form={form} layout="vertical" onFinish={handleFinish} requiredMark={false}>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleFinish}
+        requiredMark={false}
+        initialValues={{ unit: 'others' }}
+      >
         <Form.Item
           name="name"
-          label="Tên mốc"
+          label={milestoneFieldLabel('Tên mốc', true)}
           rules={[{ required: true, message: 'Tên mốc là bắt buộc' }]}
         >
           <Input placeholder="VD: Nộp nháp, Deadline đợt 1" />
         </Form.Item>
         <Form.Item
           name="deadlineDate"
-          label="Ngày deadline"
+          label={milestoneFieldLabel('Ngày deadline', true)}
           rules={[{ required: true, message: 'Ngày deadline là bắt buộc' }]}
         >
           <DatePicker
@@ -236,24 +244,17 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
           />
         </Form.Item>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Form.Item name="unit" label="Đơn vị">
+          <Form.Item name="unit" label={milestoneFieldLabel('Đơn vị')}>
             <Select
-              allowClear
-              placeholder="Slides / DA (tuỳ chọn)"
               options={MILESTONE_UNITS.map((unit) => ({
                 value: unit,
                 label: MILESTONE_UNIT_LABELS[unit],
               }))}
-              onChange={(value) => {
-                if (!value) {
-                  form.setFieldValue('quantity', null);
-                }
-              }}
             />
           </Form.Item>
           <Form.Item
             name="quantity"
-            label="Khối lượng"
+            label={milestoneFieldLabel('Khối lượng', volumeRequired)}
             rules={
               volumeRequired
                 ? [
@@ -273,7 +274,6 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
               precision={0}
               style={{ width: '100%' }}
               placeholder="Số nguyên"
-              disabled={!volumeRequired}
             />
           </Form.Item>
         </div>

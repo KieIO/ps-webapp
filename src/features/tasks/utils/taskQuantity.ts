@@ -12,3 +12,13 @@ export const wholeTaskQuantityRule = {
     }
   },
 };
+
+/** Split children may be planned at 0 before a quantity is assigned. */
+export const nonNegativeWholeQuantityRule = {
+  validator: async (_: unknown, value: unknown) => {
+    if (value == null || value === '') return;
+    if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+      throw new Error('Số lượng phải là số nguyên từ 0');
+    }
+  },
+};

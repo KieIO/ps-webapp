@@ -32,7 +32,7 @@ export const formatMilestoneQuantity = (milestone: ProjectMilestone): string | n
   if (!hasMilestoneVolume(milestone) || milestone.quantity == null) {
     return null;
   }
-  if (milestone.unit !== 'slides' && milestone.unit !== 'da') {
+  if (milestone.unit !== 'slides' && milestone.unit !== 'da' && milestone.unit !== 'others') {
     return null;
   }
   return `${milestone.quantity} ${MILESTONE_UNIT_LABELS[milestone.unit]}`;

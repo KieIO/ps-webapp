@@ -31,10 +31,20 @@ import {
   showsTaskLevelPreview,
   type EditTaskField,
 } from '../../utils/editTaskFields';
-import { mergeStaffSelectOptions, resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
-import { fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
-import { getTaskDeadline } from '../../utils/taskDetail';
 import { isCreativeDeptTask, resolveWholeAssignStaff } from '../../utils/creativePipeline';
+import {
+  isCreativeWholeAssigned,
+  resolveEvaluationWriteLayerSafe,
+} from '../../utils/taskEvaluation';
+import { mergeStaffSelectOptions, resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
+import {
+  creativeDeadlineDisabledTime,
+  creativeDeadlineNotAfterPmRule,
+  fromTaskDeadline,
+  isCreativeDeadlineDayAfterPm,
+  toTaskDeadline,
+} from '../../utils/taskDates';
+import { getTaskDeadline } from '../../utils/taskDetail';
 import {
   canCancelTask,
   canChangeTaskStatus,
@@ -46,6 +56,7 @@ import {
   TASK_STATUS_LOCKED_MESSAGE,
 } from '../../utils/taskStatusLock';
 import type { ClassificationLevel, MyTask, UpdateMyTaskRequest } from '../../schemas/task.schema';
+import { CreativeDeadlineFieldLabel } from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import styles from './EditTaskModal.module.scss';
 
@@ -102,6 +113,7 @@ export function EditTaskModal({
   const designThinking = Form.useWatch('designThinking', form);
   const technical = Form.useWatch('technical', form);
   const contentProcessing = Form.useWatch('contentProcessing', form);
+  const watchedDate = Form.useWatch('date', form);
 
   const previewLevel: ClassificationLevel | undefined =
     designThinking != null && technical != null && contentProcessing != null
@@ -121,6 +133,11 @@ export function EditTaskModal({
     createdById: task?.createdById,
     projectManagerUserId: task?.projectManager?.userId,
   });
+  const pmDeadlineLimit = watchedDate?.isValid()
+    ? watchedDate
+    : task
+      ? fromTaskDeadline(getTaskDeadline(task))
+      : null;
   const showClassification =
     hasField(editableFields, 'designThinking') ||
     hasField(editableFields, 'technical') ||
@@ -155,12 +172,24 @@ export function EditTaskModal({
         staffConfirmation: task.staffConfirmation,
         staffNote: task.staffNote,
         urgency: task.urgency,
-        completionPercent: task.completionPercent ?? 0,
-        pmEvaluation: task.pmEvaluation,
-        pmNote: task.pmNote,
+        completionPercent:
+          isCreativeWholeAssigned(task) &&
+          resolveEvaluationWriteLayerSafe(effectiveRole, task) === 'handoff'
+            ? (task.handoffCompletionPercent ?? 0)
+            : (task.completionPercent ?? 0),
+        pmEvaluation:
+          isCreativeWholeAssigned(task) &&
+          resolveEvaluationWriteLayerSafe(effectiveRole, task) === 'handoff'
+            ? (task.handoffEvaluation ?? '')
+            : task.pmEvaluation,
+        pmNote:
+          isCreativeWholeAssigned(task) &&
+          resolveEvaluationWriteLayerSafe(effectiveRole, task) === 'handoff'
+            ? (task.handoffNote ?? '')
+            : task.pmNote,
       });
     }
-  }, [task, open, form]);
+  }, [task, open, form, effectiveRole]);
 
   const handleClose = () => {
     form.resetFields();
@@ -240,6 +269,9 @@ export function EditTaskModal({
                   ? (values.pmEvaluation ?? '')
                   : task.pmEvaluation,
                 pmNote: hasField(editableFields, 'pmNote') ? (values.pmNote ?? '') : task.pmNote,
+                ...(isCreativeWholeAssigned(task)
+                  ? { layer: resolveEvaluationWriteLayerSafe(effectiveRole, task) }
+                  : {}),
               },
             },
             {
@@ -422,8 +454,21 @@ export function EditTaskModal({
                 {showCreativeDeadline ? (
                   <Form.Item
                     name="creativeDeadline"
-                    label={MY_TASK_COLUMN_HEADERS.creativeDeadline}
-                    extra={!canEditCreativeDl ? CREATIVE_DEADLINE_META_EDIT_HINT : undefined}
+                    label={
+                      <CreativeDeadlineFieldLabel>
+                        {MY_TASK_COLUMN_HEADERS.creativeDeadline}
+                      </CreativeDeadlineFieldLabel>
+                    }
+                    rules={
+                      canEditCreativeDl
+                        ? [creativeDeadlineNotAfterPmRule(pmDeadlineLimit)]
+                        : undefined
+                    }
+                    extra={
+                      !canEditCreativeDl
+                        ? CREATIVE_DEADLINE_META_EDIT_HINT
+                        : 'Không được sau deadline PM.'
+                    }
                   >
                     <DatePicker
                       showTime={{
@@ -434,6 +479,12 @@ export function EditTaskModal({
                       style={{ width: '100%' }}
                       disabled={!canEditCreativeDl}
                       showNow={false}
+                      disabledDate={(current) =>
+                        isCreativeDeadlineDayAfterPm(current, pmDeadlineLimit)
+                      }
+                      disabledTime={(current) =>
+                        creativeDeadlineDisabledTime(current, pmDeadlineLimit)
+                      }
                     />
                   </Form.Item>
                 ) : null}

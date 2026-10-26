@@ -1,14 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import {
-  sumMilestoneQuantityByUnit,
-  toReplaceMilestonePayload,
-  validateMilestones,
-} from './milestoneValidation';
+import { toReplaceMilestonePayload, validateMilestones } from './milestoneValidation';
 
 const ctx = {
   startDate: '2026-09-01',
   endDate: '2026-09-30',
-  totalSlides: 100,
 };
 
 const base = {
@@ -21,7 +16,7 @@ const base = {
 };
 
 describe('validateMilestones', () => {
-  it('accepts milestones within range under totalSlides', () => {
+  it('accepts milestones within the project date range', () => {
     expect(
       validateMilestones([{ ...base }, { ...base, name: 'Đợt 2', quantity: 20 }], ctx),
     ).toEqual({ ok: true });
@@ -35,41 +30,48 @@ describe('validateMilestones', () => {
     }
   });
 
-  it('hard-blocks when slides sum exceeds totalSlides', () => {
-    const result = validateMilestones(
-      [
-        { ...base, quantity: 60 },
-        { ...base, name: 'Đợt 2', quantity: 50 },
-      ],
-      ctx,
-    );
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.message).toMatch(/vượt totalSlides/);
-    }
-  });
-
-  it('ignores DA quantity when comparing to totalSlides', () => {
+  it('allows slides sum above the project totalSlides', () => {
     expect(
       validateMilestones(
         [
-          { ...base, quantity: 100 },
-          { ...base, name: 'DA', quantity: 50, unit: 'da' },
+          { ...base, quantity: 60 },
+          { ...base, name: 'Đợt 2', quantity: 50 },
+          { ...base, name: 'DA', quantity: 80, unit: 'da' },
         ],
         ctx,
       ),
     ).toEqual({ ok: true });
   });
 
-  it('skips slides-sum check when totalSlides is 0', () => {
-    expect(validateMilestones([{ ...base, quantity: 50 }], { ...ctx, totalSlides: 0 })).toEqual({
-      ok: true,
-    });
-  });
-
   it('rejects empty name', () => {
     const result = validateMilestones([{ ...base, name: '  ' }], ctx);
     expect(result.ok).toBe(false);
+  });
+
+  it('allows Others without quantity, and keeps a quantity when one is entered', () => {
+    expect(
+      validateMilestones(
+        [
+          {
+            name: 'Full',
+            deadlineDate: '2026-09-10',
+            quantity: null,
+            unit: 'others',
+            note: '',
+            completed: false,
+          },
+          {
+            name: 'Full 2',
+            deadlineDate: '2026-09-11',
+            quantity: 100,
+            unit: 'others',
+            note: '',
+            completed: false,
+          },
+        ],
+        ctx,
+      ),
+    ).toEqual({ ok: true });
   });
 
   it('allows empty volume when unit is empty and quantity is null', () => {
@@ -119,22 +121,6 @@ describe('validateMilestones', () => {
   });
 });
 
-describe('sumMilestoneQuantityByUnit', () => {
-  it('sums only matching unit and ignores empty-volume rows', () => {
-    expect(
-      sumMilestoneQuantityByUnit(
-        [
-          { quantity: 10, unit: 'slides' },
-          { quantity: 5, unit: 'da' },
-          { quantity: 7, unit: 'slides' },
-          { quantity: null, unit: '' },
-        ],
-        'slides',
-      ),
-    ).toBe(17);
-  });
-});
-
 describe('toReplaceMilestonePayload', () => {
   it('keeps ids and normalizes empty volume to quantity null + unit ""', () => {
     expect(
@@ -157,6 +143,14 @@ describe('toReplaceMilestonePayload', () => {
           note: '',
           completed: false,
         },
+        {
+          name: 'C',
+          deadlineDate: '2026-09-12',
+          quantity: 8,
+          unit: 'others',
+          note: '',
+          completed: false,
+        },
       ]),
     ).toEqual([
       {
@@ -174,6 +168,14 @@ describe('toReplaceMilestonePayload', () => {
         deadlineDate: '2026-09-11',
         quantity: null,
         unit: '',
+        note: '',
+        completed: false,
+      },
+      {
+        name: 'C',
+        deadlineDate: '2026-09-12',
+        quantity: 8,
+        unit: 'others',
         note: '',
         completed: false,
       },

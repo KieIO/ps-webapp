@@ -28,6 +28,22 @@ export const PIPELINE_STAGE_LABELS: Record<CreativePipelineStage, string> = {
 /** List/detail badges — keep in sync with Creative edit drawer chips. */
 export const SPLIT_PARENT_BADGE_LABEL = 'Đã chia nhỏ';
 export const SPLIT_CHILD_BADGE_LABEL = 'Task nhỏ';
+
+/**
+ * After a split, SL tổng stays locked for CM. Only Admin, or the user who
+ * created the task (the PM), can change it. A PM may still edit when the
+ * creator was never stored.
+ */
+export const canEditSplitParentTotal = (
+  role: Role | undefined,
+  userId: string | undefined,
+  task: Pick<MyTask, 'createdById'> | null | undefined,
+): boolean => {
+  if (!task) return false;
+  if (role === ROLES.ADMIN) return true;
+  if (userId && task.createdById && userId === task.createdById) return true;
+  return role === ROLES.PM && !task.createdById;
+};
 export const SPLIT_PARENT_BADGE_HINT = 'CM đã chia task này thành các task nhỏ';
 export const SPLIT_CHILD_BADGE_HINT = 'Đây là một phần của task cha (sau khi CM chia nhỏ)';
 
@@ -51,8 +67,9 @@ export const canViewCreativeQueue = (role: Role | undefined): boolean =>
 export const canSeeFullCmQueue = (role: Role | undefined): boolean =>
   role === ROLES.ADMIN || role === ROLES.PM;
 
+/** CH assigns CM. Admin may do the same step. PM only follows the queue. */
 export const canProcessChQueue = (role: Role | undefined): boolean =>
-  role === ROLES.CREATIVE_HEAD || role === ROLES.ADMIN || role === ROLES.PM;
+  role === ROLES.CREATIVE_HEAD || role === ROLES.ADMIN;
 
 export const canProcessCmQueue = (role: Role | undefined): boolean =>
   role === ROLES.CREATIVE_MANAGER || role === ROLES.ADMIN || role === ROLES.PM;
@@ -531,9 +548,10 @@ export const countActionableQueueItems = (
   cmFrame: CreativeCmQueueFrame = 'intake',
 ): number => {
   if (view === 'ch') {
-    return filterCreativeQueue(tasks, view, userId, role).filter(
-      (task) => isAwaitingCh(task) || (isReturnedToPm(task) && canRehandCreativeToCH(role)),
-    ).length;
+    return filterCreativeQueue(tasks, view, userId, role).filter((task) => {
+      if (isAwaitingCh(task)) return canProcessChQueue(role);
+      return isReturnedToPm(task) && canRehandCreativeToCH(role);
+    }).length;
   }
   if (cmFrame === 'intake') {
     return filterCreativeQueue(tasks, view, userId, role, 'intake').filter((task) =>
@@ -678,6 +696,7 @@ export const queueActionLabel = (
       return 'Đưa lại CH';
     }
     if (isAwaitingCh(task)) {
+      if (!canProcessChQueue(role)) return 'Xem';
       return needsChBrief(task) ? 'Bổ sung brief' : 'Giao CM';
     }
     if (canEditCreativePipelineTask(task, role, userId)) return 'Sửa';

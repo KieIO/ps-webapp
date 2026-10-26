@@ -23,6 +23,7 @@
     "test:e2e:tasks": "playwright test e2e/tasks",
     "test:e2e:leave": "playwright test e2e/leave",
     "test:e2e:milestones": "playwright test e2e/milestones",
+    "test:e2e:tracker": "playwright test e2e/tracker",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",

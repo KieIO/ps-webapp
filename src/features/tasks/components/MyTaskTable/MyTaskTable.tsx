@@ -31,6 +31,8 @@ import {
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
 import { getMyTaskCompletionProgressStatus, isMyTaskDateAtRisk } from '../../utils/taskDeadline';
 import { getTaskDeadline } from '../../utils/taskDetail';
+import type { CmProjectTaskScope } from '../../utils/taskListVisibility';
+import { hasHandoffEvaluation, isCreativeWholeAssigned } from '../../utils/taskEvaluation';
 import { formatEvaluationBadgeLabel, hasCmEvaluation } from '../../utils/evaluationRemainder';
 import {
   inferParentTaskCodeFromSplit,
@@ -72,6 +74,8 @@ interface MyTaskTableProps {
   canAssign?: boolean;
   canEvaluate?: boolean;
   deletingTaskId?: string | null;
+  /** CM Project Tasks tab. Picks which evaluation badge a whole-assign row shows. */
+  evaluationScope?: CmProjectTaskScope;
 }
 
 const renderLevel = (level: ClassificationLevel) => <ClassificationLevelBadge level={level} />;
@@ -90,7 +94,11 @@ const renderText = (value: string) => {
   );
 };
 
-const renderTaskDetailLink = (label: string, record: MyTask) => {
+const renderTaskDetailLink = (
+  label: string,
+  record: MyTask,
+  evaluationScope?: CmProjectTaskScope,
+) => {
   if (!label) return <span className={styles.empty}>—</span>;
 
   const isRevision = isRevisionTask(record);
@@ -99,6 +107,10 @@ const renderTaskDetailLink = (label: string, record: MyTask) => {
   const parentHasRevisions = hasRevisionChildren(record);
   const parentHasActiveRevision = hasActiveRevisionChildren(record);
   const evaluated = hasCmEvaluation(record);
+  const wholeAssigned = isCreativeWholeAssigned(record);
+  const showStaffBadge = evaluated && !(evaluationScope === 'received' && wholeAssigned);
+  const showHandoffBadge =
+    wholeAssigned && hasHandoffEvaluation(record) && evaluationScope !== 'staff';
   const remainderHint =
     record.evaluationRemainderTaskCode != null
       ? `Đã tách ${record.evaluationRemainderTaskCode}${
@@ -153,10 +165,17 @@ const renderTaskDetailLink = (label: string, record: MyTask) => {
             </Tag>
           </Tooltip>
         ) : null}
-        {evaluated ? (
+        {showStaffBadge ? (
           <Tooltip title={remainderHint ?? 'CM đã evaluate task này'}>
             <Tag color="green" className={styles.otBadge}>
               {formatEvaluationBadgeLabel(record)}
+            </Tag>
+          </Tooltip>
+        ) : null}
+        {showHandoffBadge ? (
+          <Tooltip title="Đánh giá của Creative Head cho gói của CM">
+            <Tag color="gold" className={styles.otBadge}>
+              CH đã đánh giá
             </Tag>
           </Tooltip>
         ) : null}
@@ -217,6 +236,7 @@ export function MyTaskTable({
   canAssign = false,
   canEvaluate = false,
   deletingTaskId = null,
+  evaluationScope,
 }: MyTaskTableProps) {
   const { columnDefs } = useMyTaskColumns();
   const { role } = usePermission();
@@ -234,7 +254,7 @@ export function MyTaskTable({
       renderLevel,
       renderEvaluationLevel,
       renderText,
-      renderTaskName: (name, record) => renderTaskDetailLink(name, record),
+      renderTaskName: (name, record) => renderTaskDetailLink(name, record, evaluationScope),
       renderConfirmation: (status) => <TaskConfirmationBadge status={status} />,
       renderProjectStatus: (status) => <ProjectStatusBadge status={status} />,
       renderProjectName: (record) => (
@@ -366,6 +386,7 @@ export function MyTaskTable({
     canEvaluate,
     columnDefs,
     deletingTaskId,
+    evaluationScope,
     onAssign,
     onDelete,
     onEdit,

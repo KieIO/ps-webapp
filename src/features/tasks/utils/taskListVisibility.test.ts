@@ -100,7 +100,7 @@ describe('CM Project Tasks scope (option C)', () => {
     expect(matchesCmProjectTaskScope(awaiting, 'staff')).toBe(false);
     expect(matchesCmProjectTaskScope(splitParent, 'received')).toBe(true);
     expect(matchesCmProjectTaskScope(splitParent, 'staff')).toBe(false);
-    expect(matchesCmProjectTaskScope(whole, 'received')).toBe(false);
+    expect(matchesCmProjectTaskScope(whole, 'received')).toBe(true);
     expect(matchesCmProjectTaskScope(whole, 'staff')).toBe(true);
     expect(matchesCmProjectTaskScope(child, 'received')).toBe(false);
     expect(matchesCmProjectTaskScope(child, 'staff')).toBe(true);
@@ -109,12 +109,13 @@ describe('CM Project Tasks scope (option C)', () => {
     expect(filterTasksForCmProjectScope(items, 'received').map((item) => item.id)).toEqual([
       'awaiting',
       'split-parent',
+      'whole',
     ]);
     expect(filterTasksForCmProjectScope(items, 'staff').map((item) => item.id)).toEqual([
       'whole',
       'child',
     ]);
-    expect(countCmProjectTaskScopes(items)).toEqual({ received: 2, staff: 2 });
+    expect(countCmProjectTaskScopes(items)).toEqual({ received: 3, staff: 2 });
   });
 
   it('keeps non-creative tasks on Task nhận only', () => {
@@ -158,7 +159,7 @@ describe('CM Project Tasks scope (option C)', () => {
       staff: [],
     });
     expect(matchesCmProjectTaskScope(finishedWhole, 'staff')).toBe(true);
-    expect(matchesCmProjectTaskScope(finishedWhole, 'received')).toBe(false);
+    expect(matchesCmProjectTaskScope(finishedWhole, 'received')).toBe(true);
     expect(matchesCmProjectTaskScope(finishedSplitParent, 'received')).toBe(true);
     expect(matchesCmProjectTaskScope(finishedSplitParent, 'staff')).toBe(false);
   });
@@ -190,12 +191,16 @@ describe('CM Project Tasks scope (option C)', () => {
     for (const item of items) {
       const inReceived = matchesCmProjectTaskScope(item, 'received');
       const inStaff = matchesCmProjectTaskScope(item, 'staff');
+      if (item.id === 'whole') {
+        expect(inReceived && inStaff).toBe(true);
+        continue;
+      }
       expect(inReceived !== inStaff).toBe(true);
     }
 
     const received = filterTasksForCmProjectScope(items, 'received');
     const staff = filterTasksForCmProjectScope(items, 'staff');
-    expect(received.length + staff.length).toBe(items.length);
+    expect(received.length + staff.length).toBe(items.length + 1);
     expect(new Set([...received, ...staff].map((item) => item.id)).size).toBe(items.length);
   });
 });

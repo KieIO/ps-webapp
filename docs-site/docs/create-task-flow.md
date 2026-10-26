@@ -213,7 +213,9 @@ Chi tiết điều kiện, mã `…-S1`, đánh giá và rule: xem [Luồng chia
 
 ### PM / Admin trên Creative queue
 
-PM và Admin cũng vào được **Creative queue**, có thể **theo dõi và xử lý assign** như CH/CM (không chỉ xem).
+PM vào **Creative queue** để theo dõi task đã chuyển Creative, và để **đưa lại CH** khi CH từ chối. PM **không** giao CM. Nút trên hàng chờ CH với task đang chờ là **Xem**, mở trang chi tiết, không mở form giao CM.
+
+**Chỉ Creative Head** nhận task từ hàng chờ CH rồi giao CM. **Admin** làm được cùng bước giao CM này. Sau khi đã giao, đổi CM vẫn là Creative Head hoặc Admin, khi task còn chờ CM.
 
 ### Đánh giá sau khi hoàn thành
 

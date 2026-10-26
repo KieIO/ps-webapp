@@ -521,11 +521,11 @@ Stages: `awaiting_ch` → `awaiting_cm` → `assigned_staff` | `split`.
 
 ### TASK-48 — Non-CH cannot assign-cm
 
-|                   |                                                           |
-| ----------------- | --------------------------------------------------------- |
-| **Preconditions** | Creative task in `awaiting_ch`                            |
-| **Steps**         | `PATCH …/assign-cm` as `employee@` (and optionally as CM) |
-| **Expected**      | **403** `FORBIDDEN`                                       |
+|                   |                                                                      |
+| ----------------- | -------------------------------------------------------------------- |
+| **Preconditions** | Creative task in `awaiting_ch`                                       |
+| **Steps**         | `PATCH …/assign-cm` as `employee@`, `creative-manager@`, and `pm@`   |
+| **Expected**      | **403** `FORBIDDEN`. CH và Admin vẫn **200** trên task `awaiting_ch` |
 
 ### TASK-49 — assign-cm rejects bad target / wrong stage
 
@@ -543,13 +543,13 @@ Stages: `awaiting_ch` → `awaiting_cm` → `assigned_staff` | `split`.
 | **Steps**         | `PATCH …/assign-staff` `{ mode: "whole", staffUserId: employee@, quantity: 24 }` |
 | **Expected**      | **200**; `pipelineStage` = `assigned_staff`; staff = employee; `quantity` = 24   |
 
-### TASK-51 — CM chia nhỏ (split → parent + children)
+### TASK-51 — PM/Admin chia nhỏ (split → parent + children)
 
-|                   |                                                                                                                                  |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **Preconditions** | awaiting_cm owned by CM; ≥2 staff users                                                                                          |
-| **Steps**         | `PATCH …/assign-staff` `{ mode: "split", subtasks: [2+] }` with names, descriptions, quantities, staffUserIds                    |
-| **Expected**      | Parent `pipelineStage` = `split`; `quantity` = sum of children; children `taskKind=split`, `assigned_staff`, each with own staff |
+|                   |                                                                                                                                           |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Preconditions** | awaiting_cm; parent quantity > 0; login PM hoặc Admin                                                                                     |
+| **Steps**         | `PATCH …/assign-staff` `{ mode: "split", subtasks: [2+] }` với brief; Staff và số lượng có thể trống / 0                                  |
+| **Expected**      | Parent `pipelineStage` = `split`; `quantity` **giữ nguyên** (không bằng tổng các phần); children `taskKind=split`. CM gọi split → **403** |
 
 ### TASK-52 — assign-staff authz / ownership
 
@@ -559,21 +559,21 @@ Stages: `awaiting_ch` → `awaiting_cm` → `assigned_staff` | `split`.
 | **Steps**         | Employee `PATCH …/assign-staff`; wrong CM tries whole/split                |
 | **Expected**      | **403** for employee and non-owner CM                                      |
 
-### TASK-53 — Quantity editable before split (awaiting_cm)
+### TASK-53 — Quantity of an unassigned creative task
 
-|                   |                                                     |
-| ----------------- | --------------------------------------------------- |
-| **Preconditions** | awaiting_cm; CM or Admin                            |
-| **Steps**         | `PATCH …/creative-edit` `{ quantity: 30 }`          |
-| **Expected**      | **200**; quantity updated while still `awaiting_cm` |
+|                   |                                                                  |
+| ----------------- | ---------------------------------------------------------------- |
+| **Preconditions** | awaiting_cm; CM and Admin                                        |
+| **Steps**         | `PATCH …/creative-edit` `{ quantity: 30 }`                       |
+| **Expected**      | CM **422**. Admin **200**; quantity updated; still `awaiting_cm` |
 
-### TASK-54 — Quantity locked after split; childQuantities must sum
+### TASK-54 — Child quantities stay within parent total
 
-|                   |                                                                                                                                  |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **Preconditions** | TASK-51 split parent + 2 children (e.g. 12+12=24)                                                                                |
-| **Steps**         | (a) creative-edit parent `{ quantity: 30 }` · (b) childQuantities sum ≠ parent · (c) childQuantities sum = parent (redistribute) |
-| **Expected**      | (a)(b) **422**; (c) **200** — children updated, parent total unchanged                                                           |
+|                   |                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| **Preconditions** | Split parent quantity 30; children sum ≤ 30                                                |
+| **Steps**         | (a) CM đổi SL tổng · (b) childQuantities tổng > SL cha · (c) childQuantities tổng ≤ SL cha |
+| **Expected**      | (a)(b) **422**, SL cha không đổi; (c) **200** — children đổi, SL cha không bị ghi đè       |
 
 ### TASK-55 — Reassign CM while awaiting_cm
 

@@ -198,7 +198,6 @@ export function CreateProjectModal({
       const check = validateMilestones(milestoneInputs, {
         startDate: values.startDate.format('YYYY-MM-DD'),
         endDate: values.endDate.format('YYYY-MM-DD'),
-        totalSlides: 0,
       });
       if (!check.ok) {
         message.error(check.message);

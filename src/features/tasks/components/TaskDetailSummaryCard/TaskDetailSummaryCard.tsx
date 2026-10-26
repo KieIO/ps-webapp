@@ -32,7 +32,10 @@ import {
   EVALUATED_BADGE_LABEL,
   formatEvaluationAcceptedLabel,
   formatEvaluationBadgeLabel,
+  formatFinishedQuantitySummary,
   hasCmEvaluation,
+  isWholeTask,
+  WHOLE_TASK_QUANTITY_TOOLTIP,
 } from '../../utils/evaluationRemainder';
 import {
   formatHasRevisionChildrenLabel,
@@ -257,7 +260,15 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
 
         <div className={styles.metaItem}>
           <p className={styles.metaLabel}>Quantity</p>
-          <p className={styles.metaValue}>{formatTaskQuantity(task)}</p>
+          {isWholeTask(task) ? (
+            <Tooltip title={WHOLE_TASK_QUANTITY_TOOLTIP}>
+              <p className={`${styles.metaValue} ${styles.quantityHint}`}>
+                {formatFinishedQuantitySummary(task) ?? formatTaskQuantity(task)}
+              </p>
+            </Tooltip>
+          ) : (
+            <p className={styles.metaValue}>{formatTaskQuantity(task)}</p>
+          )}
         </div>
 
         <div className={showCreativeDeadline ? styles.metaStack : styles.metaItem}>

@@ -20,7 +20,7 @@ interface TrackerUrgencyDotProps {
 
 export function TrackerUrgencyDot({ project }: TrackerUrgencyDotProps) {
   const { can } = usePermission();
-  const canEdit = can('EDIT_PROJECT');
+  const canEdit = can('EDIT_PROJECT') || can('EDIT_TRACKER_PROJECT');
   const [open, setOpen] = useState(false);
   const { mutate, isPending, variables } = useUpdateProjectUrgency();
   const isUpdating = isPending && variables?.id === project.id;

@@ -6,7 +6,7 @@ export const isProjectMetaEditLockedByStatus = (status: Project['status'] | unde
   status === 'finish' || status === 'cancel';
 
 /**
- * Project meta edit: Admin (incl. finish/cancel), Head, or creator.
+ * Project meta edit: Admin (incl. finish/cancel), Head, PM (tracker timeline), or creator.
  * Archived stays locked for everyone. Non-admin roles stay locked on finish/cancel.
  */
 export const canEditProjectMeta = (
@@ -18,7 +18,7 @@ export const canEditProjectMeta = (
   if (project.archivedAt) return false;
   if (role === ROLES.ADMIN) return true;
   if (isProjectMetaEditLockedByStatus(project.status)) return false;
-  if (role === ROLES.HEAD) return true;
+  if (role === ROLES.HEAD || role === ROLES.PM) return true;
   if (userId && project.createdById && userId === project.createdById) return true;
   return false;
 };

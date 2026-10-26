@@ -51,6 +51,11 @@ describe('formatMilestoneQuantity', () => {
     expect(
       formatMilestoneQuantity(m({ id: '2', deadlineDate: '2026-09-10', quantity: 3, unit: 'da' })),
     ).toBe('3 DA');
+    expect(
+      formatMilestoneQuantity(
+        m({ id: '4', deadlineDate: '2026-09-10', quantity: 100, unit: 'others' }),
+      ),
+    ).toBe('100 Others');
   });
 
   it('returns null when volume is empty', () => {

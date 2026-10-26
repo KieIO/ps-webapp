@@ -11,6 +11,7 @@ import {
   getFittedDayWidth,
   getInitialScrollDayIndex,
   getInitialScrollLeft,
+  resolveBarClickDate,
 } from './calendar';
 
 describe('calendar initial scroll', () => {
@@ -39,6 +40,16 @@ describe('calendar initial scroll', () => {
 
     expect(clippedAtStart).toEqual({ left: 1, width: 5 * 28 - 2 });
     expect(clippedAtEnd).toEqual({ left: 27 * 28 + 1, width: 4 * 28 - 2 });
+  });
+
+  it('maps a click on a bar clipped from the previous month', () => {
+    const novemberDays = buildCalendarDays('2026-11-01', '2026-11-30', '2026-11-08');
+    const width = 30 * 28 - 2;
+
+    expect(resolveBarClickDate(novemberDays, '2026-10-23', 0, 28, width)).toBe('2026-11-01');
+    expect(resolveBarClickDate(novemberDays, '2026-10-23', 2 * 28, 28, width)).toBe('2026-11-03');
+    expect(resolveBarClickDate(novemberDays, '2026-11-05', 0, 28, 10 * 28 - 2)).toBe('2026-11-05');
+    expect(resolveBarClickDate(novemberDays, '2026-11-05', 28, 28, 10 * 28 - 2)).toBe('2026-11-06');
   });
 
   it('expands day width to fill available panel width', () => {

@@ -1,7 +1,9 @@
 /**
- * Shared API helpers for creative split Playwright specs (TASK-66 / TASK-68).
+ * Shared API helpers for creative pipeline Playwright specs (TASK-66 / 68 / 70–76).
  */
 import { SEED_ACCOUNTS } from '../../fixtures/auth';
+
+export { SEED_ACCOUNTS };
 
 export const apiBase = process.env.VITE_API_URL ?? 'http://localhost:8080/api/v1';
 
@@ -15,6 +17,16 @@ export type TaskDto = {
   parentTaskId?: string | null;
   pipelineStage?: string;
   staffConfirmation?: string;
+  description?: string;
+  deadline?: string;
+  date?: string;
+  creativeDeadline?: string | null;
+  pmEvaluation?: string;
+  pmNote?: string;
+  completionPercent?: number | null;
+  handoffEvaluation?: string;
+  handoffNote?: string;
+  handoffCompletionPercent?: number | null;
   staff?: Array<{ userId?: string; name?: string }>;
 };
 
@@ -43,12 +55,12 @@ export async function apiLogin(
   return { token, user };
 }
 
-export async function apiJson<T>(
+export async function apiFetch(
   method: string,
   path: string,
   token: string,
   body?: unknown,
-): Promise<{ status: number; data: T }> {
+): Promise<{ status: number; data: unknown; message?: string; code?: string }> {
   const response = await fetch(`${apiBase}${path}`, {
     method,
     headers: {
@@ -58,16 +70,33 @@ export async function apiJson<T>(
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const text = await response.text();
-  let parsed: { data?: T; message?: string } = {};
+  let parsed: { data?: unknown; message?: string; code?: string } = {};
   try {
-    parsed = text ? (JSON.parse(text) as { data?: T; message?: string }) : {};
+    parsed = text ? (JSON.parse(text) as { data?: unknown; message?: string; code?: string }) : {};
   } catch {
-    throw new Error(`${method} ${path} non-JSON ${response.status}: ${text}`);
+    return { status: response.status, data: text, message: text };
   }
-  if (!response.ok) {
-    throw new Error(`${method} ${path} failed ${response.status}: ${parsed.message ?? text}`);
+  return {
+    status: response.status,
+    data: parsed.data,
+    message: parsed.message,
+    code: parsed.code,
+  };
+}
+
+export async function apiJson<T>(
+  method: string,
+  path: string,
+  token: string,
+  body?: unknown,
+): Promise<{ status: number; data: T }> {
+  const result = await apiFetch(method, path, token, body);
+  if (result.status >= 400) {
+    throw new Error(
+      `${method} ${path} failed ${result.status}: ${result.message ?? JSON.stringify(result.data)}`,
+    );
   }
-  return { status: response.status, data: parsed.data as T };
+  return { status: result.status, data: result.data as T };
 }
 
 export async function createCreativeHandoff(
@@ -151,6 +180,109 @@ export async function patchStatus(
     staffConfirmation,
     staffNote: 'e2e',
   });
+}
+
+export async function wholeAssign(
+  token: string,
+  taskId: string,
+  staffUserId: string,
+  quantity: number,
+): Promise<TaskDto> {
+  const { data } = await apiJson<TaskDto>('PATCH', `/tasks/my/${taskId}/assign-staff`, token, {
+    mode: 'whole',
+    staffUserId,
+    quantity,
+  });
+  return data;
+}
+
+export async function creativeEdit(
+  token: string,
+  taskId: string,
+  body: Record<string, unknown>,
+): Promise<TaskDto> {
+  const { data } = await apiJson<TaskDto>(
+    'PATCH',
+    `/tasks/my/${taskId}/creative-edit`,
+    token,
+    body,
+  );
+  return data;
+}
+
+export async function patchEval(
+  token: string,
+  taskId: string,
+  body: {
+    completionPercent: number;
+    pmEvaluation: string;
+    pmNote: string;
+  },
+): Promise<TaskDto> {
+  const { data } = await apiJson<TaskDto>(
+    'PATCH',
+    `/tasks/my/${taskId}/pm-evaluation`,
+    token,
+    body,
+  );
+  return data;
+}
+
+export async function getTask(token: string, taskId: string): Promise<TaskDto> {
+  const { data } = await apiJson<TaskDto>('GET', `/tasks/my/${taskId}`, token);
+  return data;
+}
+
+/** Awaiting-CH parent (PM create creative handoff, no CM yet). */
+export async function setupAwaitingCh(
+  taskName: string,
+  quantity = 5,
+): Promise<{
+  parent: TaskDto;
+  cm: { token: string; user: ApiUser };
+  ch: { token: string; user: ApiUser };
+  pm: { token: string; user: ApiUser };
+  admin: { token: string; user: ApiUser };
+}> {
+  const pm = await apiLogin(SEED_ACCOUNTS.pm.email, SEED_ACCOUNTS.pm.password);
+  const ch = await apiLogin(
+    SEED_ACCOUNTS.creative_head.email,
+    SEED_ACCOUNTS.creative_head.password,
+  );
+  const cm = await apiLogin(
+    SEED_ACCOUNTS.creative_manager.email,
+    SEED_ACCOUNTS.creative_manager.password,
+  );
+  const admin = await apiLogin(SEED_ACCOUNTS.admin.email, SEED_ACCOUNTS.admin.password);
+  const parent = await createCreativeHandoff(pm.token, taskName, quantity);
+  return { parent, cm, ch, pm, admin };
+}
+
+/** Awaiting-CM parent (PM create → CH assign CM). */
+export async function setupAwaitingCm(taskName: string): Promise<{
+  parent: TaskDto;
+  cm: { token: string; user: ApiUser };
+  ch: { token: string; user: ApiUser };
+  pm: { token: string; user: ApiUser };
+  admin: { token: string; user: ApiUser };
+}> {
+  const setup = await setupAwaitingCh(taskName, 5);
+  const parent = await assignCm(setup.ch.token, setup.parent.id, setup.cm.user.id);
+  return { ...setup, parent };
+}
+
+/** Whole-assign to employee (seed staff). */
+export async function setupWholeAssigned(taskName: string): Promise<{
+  task: TaskDto;
+  cm: { token: string; user: ApiUser };
+  ch: { token: string; user: ApiUser };
+  pm: { token: string; user: ApiUser };
+  employee: { token: string; user: ApiUser };
+}> {
+  const { parent, cm, ch, pm } = await setupAwaitingCm(taskName);
+  const employee = await apiLogin(SEED_ACCOUNTS.employee.email, SEED_ACCOUNTS.employee.password);
+  const task = await wholeAssign(cm.token, parent.id, employee.user.id, parent.quantity || 5);
+  return { task, cm, ch, pm, employee };
 }
 
 export async function setupSplitFamily(opts: {

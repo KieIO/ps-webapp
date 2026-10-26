@@ -35,13 +35,13 @@ Companion to [`task-mgmt-test-cases.md`](./task-mgmt-test-cases.md).
 | TASK-45    | Project ↔ Non-project nav                                    | **E2E / manual**              | Playwright                                                                                |
 | TASK-46    | Filter Reset chrome                                           | **E2E / manual**              | Playwright (API covers filter logic)                                                      |
 | TASK-47    | CH assign-cm                                                  | **Yes** + **E2E**             | API + Playwright Giao CM drawer                                                           |
-| TASK-48    | Non-CH assign-cm forbidden                                    | **Yes**                       | API 403                                                                                   |
+| TASK-48    | Staff, CM, and PM assign-cm forbidden                         | **Yes**                       | API 403                                                                                   |
 | TASK-49    | assign-cm validation                                          | **Yes**                       | API 422                                                                                   |
 | TASK-50    | CM whole assign-staff                                         | **Yes**                       | API `mode=whole`                                                                          |
-| TASK-51    | CM split assign-staff                                         | **Yes**                       | API `mode=split` + children                                                               |
+| TASK-51    | PM/Admin split; parent qty unchanged                          | **Yes**                       | API `mode=split`; CM split 403                                                            |
 | TASK-52    | assign-staff authz                                            | **Yes**                       | API 403                                                                                   |
 | TASK-53    | Qty before split                                              | **Yes**                       | API creative-edit quantity                                                                |
-| TASK-54    | Qty after split / childQuantities                             | **Yes**                       | API lock + redistribute                                                                   |
+| TASK-54    | Child qty must not exceed parent                              | **Yes**                       | API cap; parent qty not overwritten                                                       |
 | TASK-55    | Reassign CM                                                   | **Yes**                       | API creative-edit `cmUserId`                                                              |
 | TASK-56    | Split list visibility                                         | **Yes**                       | API list Admin vs CM                                                                      |
 | TASK-57    | Stage happy path                                              | **Yes**                       | API create → assign-cm → whole                                                            |
@@ -199,7 +199,7 @@ npm run test:e2e:tasks
 4. **Mock-only Vitest as seed-dev pass/fail** — mocks ≠ RBAC/visibility.
 5. **Assume Head can create tasks** — default `CREATE_TASK` is PM + Admin only.
 6. **Assume `ASSIGN_TASK` middleware gates assign routes** — assign / assign-cm / assign-staff are auth + service today.
-7. **Edit parent quantity after split** — use `childQuantities` with sum = locked parent total.
+7. **Edit child quantity after split** — `childQuantities` sum must stay ≤ parent quantity. Parent quantity is not overwritten by the child sum.
 
 ---
 

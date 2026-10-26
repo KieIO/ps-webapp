@@ -177,7 +177,6 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
       const check = validateMilestones(milestoneInputs, {
         startDate: values.startDate.format('YYYY-MM-DD'),
         endDate: values.endDate.format('YYYY-MM-DD'),
-        totalSlides: project.totalSlides,
       });
       if (!check.ok) {
         message.error(check.message);

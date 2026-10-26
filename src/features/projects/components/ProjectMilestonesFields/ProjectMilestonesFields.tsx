@@ -5,8 +5,10 @@ import { DATE_FORMAT } from '@/config/constants';
 import {
   MILESTONE_UNIT_LABELS,
   MILESTONE_UNITS,
+  isSlidesOrDaUnit,
   type MilestoneUnit,
 } from '../../schemas/milestone.schema';
+import { milestoneFieldLabel } from '../../utils/milestoneFieldLabel';
 import styles from '../EditProjectModal/EditProjectModal.module.scss';
 import localStyles from './ProjectMilestonesFields.module.scss';
 
@@ -60,7 +62,7 @@ export function ProjectMilestonesFields({
                   name: '',
                   deadlineDate: startDate ?? undefined,
                   quantity: null,
-                  unit: undefined,
+                  unit: 'others',
                   note: '',
                   completed: false,
                 })
@@ -97,21 +99,21 @@ function MilestoneRow({
     | MilestoneUnit
     | ''
     | undefined;
-  const volumeRequired = unit === 'slides' || unit === 'da';
+  const volumeRequired = isSlidesOrDaUnit(unit);
 
   return (
     <div className={localStyles.card}>
       <div className={styles.row}>
         <Form.Item
           name={[field.name, 'name']}
-          label="Tên mốc"
+          label={milestoneFieldLabel('Tên mốc', true)}
           rules={[{ required: true, message: 'Tên mốc là bắt buộc' }]}
         >
           <Input placeholder="VD: Nộp nháp, Deadline đợt 1" disabled={disabled} />
         </Form.Item>
         <Form.Item
           name={[field.name, 'deadlineDate']}
-          label="Ngày deadline"
+          label={milestoneFieldLabel('Ngày deadline', true)}
           rules={[{ required: true, message: 'Ngày deadline là bắt buộc' }]}
         >
           <DatePicker
@@ -128,25 +130,18 @@ function MilestoneRow({
         </Form.Item>
       </div>
       <div className={styles.rowThree}>
-        <Form.Item name={[field.name, 'unit']} label="Đơn vị">
+        <Form.Item name={[field.name, 'unit']} label={milestoneFieldLabel('Đơn vị')}>
           <Select
-            allowClear
             disabled={disabled}
-            placeholder="Slides / DA (tuỳ chọn)"
             options={MILESTONE_UNITS.map((item) => ({
               value: item,
               label: MILESTONE_UNIT_LABELS[item],
             }))}
-            onChange={(value) => {
-              if (!value) {
-                form.setFieldValue(['milestones', field.name, 'quantity'], null);
-              }
-            }}
           />
         </Form.Item>
         <Form.Item
           name={[field.name, 'quantity']}
-          label="Khối lượng"
+          label={milestoneFieldLabel('Khối lượng', volumeRequired)}
           rules={
             volumeRequired
               ? [
@@ -165,7 +160,7 @@ function MilestoneRow({
             step={1}
             precision={0}
             style={{ width: '100%' }}
-            disabled={disabled || !volumeRequired}
+            disabled={disabled}
             placeholder="Số nguyên"
           />
         </Form.Item>

@@ -65,6 +65,76 @@ export const normalizeTaskDateEnd = (value: string): string =>
 export const formatTaskDateTime = (value: string): string =>
   dayjs.utc(value).format(DATETIME_FORMAT);
 
+export const CREATIVE_DEADLINE_AFTER_PM_MESSAGE = 'Creative deadline không được sau deadline PM';
+
+/** Shown beside Creative deadline fields. Same rule as the picker lock. */
+export const CREATIVE_DEADLINE_WITHIN_PM_TOOLTIP =
+  'Không được sau deadline PM. Lịch khóa ngày và giờ trễ hơn.';
+
+/** True when the picker value is strictly later than the PM deadline. Equal is allowed. */
+export const isCreativeDeadlineAfterPmDeadline = (
+  creative: Dayjs | null | undefined,
+  pmDeadline: Dayjs | null | undefined,
+): boolean => Boolean(creative?.isValid() && pmDeadline?.isValid() && creative.isAfter(pmDeadline));
+
+export const creativeDeadlineNotAfterPmRule = (pmDeadline: Dayjs | null | undefined) => ({
+  validator: async (_rule: unknown, value: Dayjs | null | undefined) => {
+    if (isCreativeDeadlineAfterPmDeadline(value, pmDeadline)) {
+      throw new Error(CREATIVE_DEADLINE_AFTER_PM_MESSAGE);
+    }
+  },
+});
+
+/** Disable calendar days after the PM deadline day. */
+export const isCreativeDeadlineDayAfterPm = (
+  current: Dayjs | null | undefined,
+  pmDeadline: Dayjs | null | undefined,
+): boolean =>
+  Boolean(current?.isValid() && pmDeadline?.isValid() && current.isAfter(pmDeadline, 'day'));
+
+const intsFrom = (start: number, endExclusive: number): number[] =>
+  Array.from({ length: Math.max(0, endExclusive - start) }, (_, index) => start + index);
+
+/** Disable clock times later than the PM deadline on that same day. */
+export const creativeDeadlineDisabledTime = (
+  current: Dayjs | null | undefined,
+  pmDeadline: Dayjs | null | undefined,
+): {
+  disabledHours?: () => number[];
+  disabledMinutes?: (hour: number) => number[];
+} => {
+  if (!current?.isValid() || !pmDeadline?.isValid() || !current.isSame(pmDeadline, 'day')) {
+    return {};
+  }
+  const hour = pmDeadline.hour();
+  const minute = pmDeadline.minute();
+  return {
+    disabledHours: () => intsFrom(hour + 1, 24),
+    disabledMinutes: (selectedHour: number) =>
+      selectedHour === hour ? intsFrom(minute + 1, 60) : [],
+  };
+};
+
+/** Stored ISO comparison. Empty creative deadline is not a violation. */
+export const isCreativeDeadlineIsoAfterPm = (
+  creative: string | null | undefined,
+  pmDeadline: string | null | undefined,
+): boolean => {
+  if (!creative || !pmDeadline) return false;
+  const creativeAt = dayjs.utc(creative);
+  const pmAt = dayjs.utc(pmDeadline);
+  return creativeAt.isValid() && pmAt.isValid() && creativeAt.isAfter(pmAt);
+};
+
+export const assertCreativeDeadlineNotAfterPm = (
+  creative: string | null | undefined,
+  pmDeadline: string | null | undefined,
+): void => {
+  if (isCreativeDeadlineIsoAfterPm(creative, pmDeadline)) {
+    throw new Error(CREATIVE_DEADLINE_AFTER_PM_MESSAGE);
+  }
+};
+
 /**
  * Calendar day (YYYY-MM-DD) from a stored UTC wall-clock deadline.
  * Must use UTC so e.g. `…T17:08:00Z` stays on the same day as UI (not local +7 → next day).

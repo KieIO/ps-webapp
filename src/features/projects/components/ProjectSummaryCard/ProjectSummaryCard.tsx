@@ -45,7 +45,9 @@ export function ProjectSummaryCard({
 }: ProjectSummaryCardProps) {
   const { can, role } = usePermission();
   const userId = useAppSelector((state) => state.auth.user?.id);
-  const canEdit = can('EDIT_PROJECT') && canEditProjectMeta(project, role, userId);
+  const canEdit =
+    (can('EDIT_PROJECT') || can('EDIT_TRACKER_PROJECT')) &&
+    canEditProjectMeta(project, role, userId);
   const canArchive = can('ARCHIVE_PROJECT');
   const canDelete = can('DELETE_PROJECT');
   const canViewAllTasks = can('VIEW_ALL_TASKS');

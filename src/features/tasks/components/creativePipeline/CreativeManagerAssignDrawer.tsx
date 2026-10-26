@@ -12,6 +12,7 @@ import {
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
+import { ROLES } from '@/config/permissions';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useAssignCreativeManager } from '../../hooks/useAssignCreativeManager';
@@ -30,10 +31,19 @@ import {
   resolveAssigneeAvailability,
 } from '../../utils/creativePipeline';
 import { openDeclineReasonModal } from '../../utils/declineReasonModal';
-import { fromTaskDeadline, formatTaskDateTime, toTaskDeadline } from '../../utils/taskDates';
+import {
+  creativeDeadlineDisabledTime,
+  creativeDeadlineNotAfterPmRule,
+  formatTaskDateTime,
+  fromTaskDeadline,
+  isCreativeDeadlineDayAfterPm,
+  toTaskDeadline,
+} from '../../utils/taskDates';
 import { getTaskDeadline } from '../../utils/taskDetail';
-import { wholeTaskQuantityRule } from '../../utils/taskQuantity';
+import { wholeTaskQuantityRule, nonNegativeWholeQuantityRule } from '../../utils/taskQuantity';
+import { defaultSplitChildName } from '../../utils/taskScoreName';
 import { resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
+import { CreativeDeadlineFieldLabel } from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
 import { CreativeAssignModeSection } from './CreativeAssignModeSection';
 import styles from './creativePipeline.module.scss';
@@ -63,7 +73,7 @@ type ManagerFormValues = {
 const emptySubtask = (): SubtaskForm => ({
   name: '',
   staffUserId: undefined,
-  quantity: undefined,
+  quantity: 0,
   description: '',
   creativeDeadline: undefined,
 });
@@ -115,6 +125,7 @@ export function CreativeManagerAssignDrawer({
     isError: capacityError,
   } = useAssignPickerCapacity(task, open, capacityDeadlineOverride);
   const canSubmit = Boolean(task && !readOnly && isAwaitingCm(task));
+  const canSplitChildren = currentUser?.role === ROLES.ADMIN || currentUser?.role === ROLES.PM;
   const canRefuse = Boolean(
     task && !readOnly && canCmRefuseCreativeAssignment(task, currentUser?.id, currentUser?.role),
   );
@@ -122,6 +133,7 @@ export function CreativeManagerAssignDrawer({
   const chNote = task ? resolveChNote(task) : '';
   const creativeManagerName = currentUser?.name?.trim() || '—';
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
+  const pmDeadline = task ? fromTaskDeadline(getTaskDeadline(task)) : null;
   const pmDeadlineLabel = task ? formatTaskDateTime(getTaskDeadline(task)) : '—';
   const creativeDeadlineLabel = task ? resolveCreativeDeadlineLabel(task) : '—';
   const briefText = task?.description?.trim() || 'Chưa có mô tả';
@@ -161,6 +173,7 @@ export function CreativeManagerAssignDrawer({
     const defaultCreative = task.creativeDeadline
       ? fromTaskDeadline(task.creativeDeadline)
       : undefined;
+    const splitName = defaultSplitChildName(task.taskName);
     form.setFieldsValue({
       staffUserId: undefined,
       // CM owns quantity — do not prefill placeholder from create-time default.
@@ -168,6 +181,7 @@ export function CreativeManagerAssignDrawer({
       creativeDeadline: defaultCreative,
       subtasks: [emptySubtask(), emptySubtask()].map((row) => ({
         ...row,
+        name: splitName,
         creativeDeadline: defaultCreative,
       })),
     });
@@ -226,6 +240,23 @@ export function CreativeManagerAssignDrawer({
     const values = await form.validateFields(
       mode === 'whole' ? ['staffUserId', 'quantity', 'creativeDeadline'] : ['subtasks'],
     );
+    if (mode === 'split') {
+      const childSum = (values.subtasks ?? []).reduce((sum, row) => {
+        const qty = Number(row.quantity);
+        return Number.isFinite(qty) && qty > 0 ? sum + qty : sum;
+      }, 0);
+      if (childSum > task.quantity) {
+        form.setFields([
+          {
+            name: 'subtasks',
+            errors: [
+              `Tổng SL các phần (${childSum}) không được lớn hơn SL task cha (${task.quantity})`,
+            ],
+          },
+        ]);
+        return;
+      }
+    }
     mutate(
       {
         id: task.id,
@@ -242,8 +273,8 @@ export function CreativeManagerAssignDrawer({
             : {
                 mode,
                 subtasks: (values.subtasks ?? []).map((subtask) => ({
-                  name: (subtask.name ?? '').trim(),
-                  staffUserId: subtask.staffUserId ?? '',
+                  name: (subtask.name ?? '').trim() || defaultSplitChildName(task.taskName),
+                  staffUserId: (subtask.staffUserId ?? '').trim(),
                   quantity: subtask.quantity ?? 0,
                   description: (subtask.description ?? '').trim(),
                   creativeDeadline: subtask.creativeDeadline?.isValid()
@@ -262,6 +293,7 @@ export function CreativeManagerAssignDrawer({
       optionFilterProp="label"
       disabled={disabled}
       placeholder="Chọn Staff"
+      allowClear
       options={staffSelectOptions}
       optionRender={(option) => {
         const data = option.data as {
@@ -387,17 +419,19 @@ export function CreativeManagerAssignDrawer({
           {canSubmit ? (
             <div className={styles.formSection}>
               <p className={styles.sectionLabel}>Hình thức giao</p>
-              <Segmented
-                className={styles.modeToggle}
-                block
-                size="small"
-                value={mode}
-                onChange={(value) => setMode(value as CreativeAssignMode)}
-                options={[
-                  { label: 'Giao nguyên', value: 'whole' },
-                  { label: 'Chia nhỏ', value: 'split' },
-                ]}
-              />
+              {canSplitChildren ? (
+                <Segmented
+                  className={styles.modeToggle}
+                  block
+                  size="small"
+                  value={mode}
+                  onChange={(value) => setMode(value as CreativeAssignMode)}
+                  options={[
+                    { label: 'Giao nguyên', value: 'whole' },
+                    { label: 'Chia nhỏ', value: 'split' },
+                  ]}
+                />
+              ) : null}
 
               <Form form={form} layout="vertical" size="small" className={styles.editForm}>
                 {mode === 'whole' ? (
@@ -439,8 +473,11 @@ export function CreativeManagerAssignDrawer({
                     </Form.Item>
                     <Form.Item
                       name="creativeDeadline"
-                      label="Creative deadline"
-                      extra="Bỏ trống = giữ deadline hiện có."
+                      label={
+                        <CreativeDeadlineFieldLabel>Creative deadline</CreativeDeadlineFieldLabel>
+                      }
+                      rules={[creativeDeadlineNotAfterPmRule(pmDeadline)]}
+                      extra="Bỏ trống = giữ deadline hiện có. Không được sau deadline PM."
                     >
                       <DatePicker
                         showTime={{
@@ -451,6 +488,12 @@ export function CreativeManagerAssignDrawer({
                         style={{ width: '100%' }}
                         allowClear
                         showNow={false}
+                        disabledDate={(current) =>
+                          isCreativeDeadlineDayAfterPm(current, pmDeadline)
+                        }
+                        disabledTime={(current) =>
+                          creativeDeadlineDisabledTime(current, pmDeadline)
+                        }
                       />
                     </Form.Item>
                   </div>
@@ -463,9 +506,7 @@ export function CreativeManagerAssignDrawer({
                           : 'SL tổng sẽ khoá khi nhập đủ các phần'}
                       </span>
                       <span className={styles.splitSummaryHint}>
-                        {task.quantity > 0
-                          ? `SL hiện tại: ${task.quantity}. Cộng SL từng phần = tổng khoá.`
-                          : 'Cộng SL từng phần = tổng khoá sau khi giao.'}
+                        {`SL task cha: ${task.quantity}. Tổng các phần không được lớn hơn SL này. Có thể để SL 0 và chưa gán Staff.`}
                       </span>{' '}
                     </div>{' '}
                     <Form.List name="subtasks">
@@ -484,9 +525,15 @@ export function CreativeManagerAssignDrawer({
                               <Form.Item
                                 name={[field.name, 'name']}
                                 label="Tên"
-                                rules={[{ required: true, message: 'Nhập tên task nhỏ' }]}
+                                rules={
+                                  defaultSplitChildName(task.taskName)
+                                    ? []
+                                    : [{ required: true, message: 'Nhập tên task nhỏ' }]
+                                }
                               >
-                                <Input placeholder={`${task.taskName} - phần ${index + 1}`} />
+                                <Input
+                                  placeholder={defaultSplitChildName(task.taskName) || 'Tên task'}
+                                />
                               </Form.Item>
                               <Form.Item
                                 name={[field.name, 'description']}
@@ -499,23 +546,16 @@ export function CreativeManagerAssignDrawer({
                                 />
                               </Form.Item>
                               <div className={styles.deadlineRow}>
-                                <Form.Item
-                                  name={[field.name, 'staffUserId']}
-                                  label="Giao cho"
-                                  rules={[{ required: true, message: 'Chọn Staff' }]}
-                                >
+                                <Form.Item name={[field.name, 'staffUserId']} label="Giao cho">
                                   {renderStaffSelect(false)}
                                 </Form.Item>
                                 <Form.Item
                                   name={[field.name, 'quantity']}
                                   label="Số lượng"
-                                  rules={[
-                                    { required: true, message: 'Nhập số lượng' },
-                                    wholeTaskQuantityRule,
-                                  ]}
+                                  rules={[nonNegativeWholeQuantityRule]}
                                 >
                                   <InputNumber
-                                    min={1}
+                                    min={0}
                                     precision={0}
                                     step={1}
                                     style={{ width: '100%' }}
@@ -524,7 +564,13 @@ export function CreativeManagerAssignDrawer({
                               </div>
                               <Form.Item
                                 name={[field.name, 'creativeDeadline']}
-                                label="Creative deadline"
+                                label={
+                                  <CreativeDeadlineFieldLabel>
+                                    Creative deadline
+                                  </CreativeDeadlineFieldLabel>
+                                }
+                                rules={[creativeDeadlineNotAfterPmRule(pmDeadline)]}
+                                extra="Không được sau deadline PM. Bỏ trống = dùng deadline hiện có."
                               >
                                 <DatePicker
                                   showTime={{
@@ -535,11 +581,25 @@ export function CreativeManagerAssignDrawer({
                                   style={{ width: '100%' }}
                                   allowClear
                                   showNow={false}
+                                  disabledDate={(current) =>
+                                    isCreativeDeadlineDayAfterPm(current, pmDeadline)
+                                  }
+                                  disabledTime={(current) =>
+                                    creativeDeadlineDisabledTime(current, pmDeadline)
+                                  }
                                 />
                               </Form.Item>
                             </div>
                           ))}
-                          <Button className={styles.addSubtask} onClick={() => add(emptySubtask())}>
+                          <Button
+                            className={styles.addSubtask}
+                            onClick={() =>
+                              add({
+                                ...emptySubtask(),
+                                name: defaultSplitChildName(task.taskName),
+                              })
+                            }
+                          >
                             + Thêm task nhỏ
                           </Button>
                         </>

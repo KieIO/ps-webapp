@@ -11,7 +11,13 @@ import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
 import type { MyTask } from '../../schemas/task.schema';
-import { fromTaskDeadline, toTaskDeadline } from '../../utils/taskDates';
+import {
+  creativeDeadlineDisabledTime,
+  creativeDeadlineNotAfterPmRule,
+  fromTaskDeadline,
+  isCreativeDeadlineDayAfterPm,
+  toTaskDeadline,
+} from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import {
   canChRefuseCreativeHandoff,
@@ -28,6 +34,7 @@ import { getTaskDeadline } from '../../utils/taskDetail';
 import { normalizeTaskUrgencySetting, resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { ClassificationScale } from '../CreateTaskDrawer/ClassificationScale';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
+import { CreativeDeadlineFieldLabel } from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
 import styles from './creativePipeline.module.scss';
 
@@ -114,6 +121,7 @@ export function CreativeHeadAssignDrawer({
       : task?.level;
 
   const pmDeadlineLabel = task ? formatDeadlineShort(resolvePmDeadlineIso(task)) : '—';
+  const pmDeadline = task ? fromTaskDeadline(resolvePmDeadlineIso(task)) : null;
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
 
   const cmOptions = useMemo(
@@ -283,8 +291,12 @@ export function CreativeHeadAssignDrawer({
               </Form.Item>
               <Form.Item
                 name="creativeDeadline"
-                label="Deadline Creative"
+                label={<CreativeDeadlineFieldLabel>Deadline Creative</CreativeDeadlineFieldLabel>}
                 className={styles.deadlineField}
+                rules={
+                  canEditCreativeDeadline ? [creativeDeadlineNotAfterPmRule(pmDeadline)] : undefined
+                }
+                extra={canEditCreativeDeadline ? 'Không được sau deadline gốc.' : undefined}
               >
                 <DatePicker
                   showTime={{
@@ -297,6 +309,8 @@ export function CreativeHeadAssignDrawer({
                   disabled={readOnly || !canEditCreativeDeadline}
                   placeholder="Nội bộ"
                   showNow={false}
+                  disabledDate={(current) => isCreativeDeadlineDayAfterPm(current, pmDeadline)}
+                  disabledTime={(current) => creativeDeadlineDisabledTime(current, pmDeadline)}
                 />
               </Form.Item>
             </div>

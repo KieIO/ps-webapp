@@ -8,6 +8,7 @@ import {
   canChRefuseCreativeHandoff,
   canCmRefuseCreativeAssignment,
   canEditCreativePipelineTask,
+  canEditSplitParentTotal,
   canOpenCreativePipelineEdit,
   canReassignCreativeManager,
   canReassignCreativeStaff,
@@ -22,6 +23,7 @@ import {
   isCreativeLevelLockedByStaffConfirm,
   needsChBrief,
   pipelineAssigneeLabel,
+  queueActionLabel,
   resolveCreateBriefOwner,
   resolveCreatePipelineStage,
   resolveCreativeAssignMode,
@@ -551,10 +553,13 @@ describe('creativePipeline helpers', () => {
       action: 'assign_cm',
       label: 'Bổ sung brief & giao CM',
     });
-    expect(resolveCreativeDetailPipelineAction(awaitingCh, ROLES.PM, 'pm')).toEqual({
+    expect(resolveCreativeDetailPipelineAction(awaitingCh, ROLES.ADMIN, 'admin')).toEqual({
       action: 'assign_cm',
       label: 'Bổ sung brief & giao CM',
     });
+    expect(resolveCreativeDetailPipelineAction(awaitingCh, ROLES.PM, 'pm')).toBeNull();
+    expect(queueActionLabel(awaitingCh, 'ch', ROLES.PM, 'pm')).toBe('Xem');
+    expect(queueActionLabel(awaitingCh, 'ch', ROLES.CREATIVE_HEAD, 'ch')).toBe('Bổ sung brief');
     expect(resolveCreativeDetailPipelineAction(awaitingCh, ROLES.EMPLOYEE, 'e1')).toBeNull();
     expect(
       resolveCreativeDetailPipelineAction(awaitingCh, ROLES.CREATIVE_MANAGER, 'cm'),
@@ -635,6 +640,22 @@ describe('creativePipeline helpers', () => {
         'admin',
       ),
     ).toEqual({ action: 'edit', label: 'Đổi Staff / SL' });
+  });
+});
+
+describe('canEditSplitParentTotal', () => {
+  it('allows Admin and the task creator, and a PM only when the creator was not stored', () => {
+    const created = { createdById: 'pm-1' };
+    expect(canEditSplitParentTotal(ROLES.ADMIN, 'admin', created)).toBe(true);
+    expect(canEditSplitParentTotal(ROLES.PM, 'pm-1', created)).toBe(true);
+    expect(canEditSplitParentTotal(ROLES.PM, 'other-pm', created)).toBe(false);
+    expect(canEditSplitParentTotal(ROLES.CREATIVE_MANAGER, 'cm-1', created)).toBe(false);
+    expect(canEditSplitParentTotal(ROLES.CREATIVE_HEAD, 'ch-1', created)).toBe(false);
+    expect(canEditSplitParentTotal(ROLES.HEAD, 'head-1', created)).toBe(false);
+    expect(canEditSplitParentTotal(ROLES.PM, 'pm-1', { createdById: null })).toBe(true);
+    expect(canEditSplitParentTotal(ROLES.CREATIVE_MANAGER, 'cm-1', { createdById: null })).toBe(
+      false,
+    );
   });
 });
 
