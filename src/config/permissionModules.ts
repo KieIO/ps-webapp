@@ -91,7 +91,10 @@ export const PERMISSION_MODULES: PermissionModuleDef[] = [
     key: 'tracker',
     label: 'Project Tracker',
     accessType: 'permission',
-    actions: [{ permission: 'VIEW_CAPACITY_FULL', label: 'View project tracker' }],
+    actions: [
+      { permission: 'VIEW_CAPACITY_FULL', label: 'View project tracker' },
+      { permission: 'EDIT_TRACKER_PROJECT', label: 'Edit tracker urgency and timeline' },
+    ],
   },
   {
     key: 'performance',
