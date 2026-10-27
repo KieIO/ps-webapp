@@ -41,6 +41,8 @@ interface EvaluateTaskModalProps {
 type EvaluateTaskFormValues = UpdateMyTaskPmEvaluationRequest & {
   /** UI-only — drives %; not persisted separately. */
   completedQuantity: number;
+  /** Required when spawning an evaluation remainder sibling. */
+  changeReason?: string;
 };
 
 type RemainderLink = {
