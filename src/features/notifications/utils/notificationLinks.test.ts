@@ -62,6 +62,18 @@ describe('getNotificationPath', () => {
     ).toContain('task-789');
   });
 
+  it('routes project staff decline (task_declined) to task detail for PM', () => {
+    expect(
+      getNotificationPath(
+        base({
+          type: 'task_declined',
+          refType: 'task',
+          refId: 'task-321',
+        }),
+      ),
+    ).toContain('task-321');
+  });
+
   it('keeps staff assign on task detail even when ref looks like creative task', () => {
     const path = getNotificationPath(
       base({

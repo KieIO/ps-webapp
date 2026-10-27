@@ -234,6 +234,7 @@ test.describe('TASK-66 split evaluate remainder + confirmed SL', () => {
     await qtyInput.fill('3');
     await expect(modal.getByText(/Đạt 3 \/ 8 · Còn 5/)).toBeVisible();
 
+    await modal.getByLabel('Lý do thay đổi').fill('A mới làm được 3');
     await modal.getByRole('button', { name: /Tạo task phần còn lại/ }).click();
     await expect(modal.getByText('Đã tạo task còn lại')).toBeVisible({ timeout: 20_000 });
     await expect(modal.getByText(/Đạt 3 \/ 8 · đã tách 5/)).toBeVisible();

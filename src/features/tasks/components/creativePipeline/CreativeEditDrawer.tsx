@@ -99,6 +99,7 @@ type EditFormValues = {
   staffUserId?: string;
   cmUserId?: string;
   staffNote?: string;
+  changeReason?: string;
   newChildren?: {
     name?: string;
     description?: string;
@@ -469,6 +470,17 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       values.staffUserId !==
         (resolveWholeAssignStaff(task)[0]?.userId ?? task.staff[0]?.userId ?? undefined);
 
+    const needsChangeReason =
+      staffChanged ||
+      cmChanged ||
+      newChildren.length > 0 ||
+      changedChildQuantities.length > 0 ||
+      (splitParent && parentQtyChanged);
+    if (needsChangeReason && !(values.changeReason ?? '').trim()) {
+      form.setFields([{ name: 'changeReason', errors: ['Nhập lý do thay đổi'] }]);
+      return;
+    }
+
     let creativeDeadlinePayload: string | undefined;
     if (canEditCreativeDl) {
       if (values.creativeDeadline?.isValid()) {
@@ -520,6 +532,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
           cmUserId: cmChanged ? values.cmUserId : undefined,
           staffUserId: staffChanged ? values.staffUserId : undefined,
           staffNote: values.staffNote,
+          ...(needsChangeReason ? { changeReason: (values.changeReason ?? '').trim() } : {}),
         },
       },
       { onSuccess: resetAndClose },
@@ -918,6 +931,16 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                 </Form.Item>
                 <Form.Item name="staffNote" label="Ghi chú">
                   <Input.TextArea rows={2} />
+                </Form.Item>
+                <Form.Item
+                  name="changeReason"
+                  label="Lý do thay đổi"
+                  extra="Bắt buộc khi thêm task con, đổi SL, hoặc đổi người được giao."
+                >
+                  <Input.TextArea
+                    rows={2}
+                    placeholder="Ví dụ: giảm SL A để gán phần còn lại cho C"
+                  />
                 </Form.Item>
               </div>
             </div>

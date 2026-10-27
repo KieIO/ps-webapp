@@ -187,8 +187,14 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
       return;
     }
 
+    const changeReason = String(form.getFieldValue('changeReason') ?? '').trim();
+    if (!changeReason) {
+      form.setFields([{ name: 'changeReason', errors: ['Nhập lý do thay đổi'] }]);
+      return;
+    }
+
     spawnRemainder(
-      { id: workingTask.id, payload: { acceptedQuantity: accepted } },
+      { id: workingTask.id, payload: { acceptedQuantity: accepted, changeReason } },
       {
         onSuccess: (result) => {
           const remainderQty = Math.round(result.remainderTask.quantity ?? 0);
@@ -388,6 +394,15 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
         <Form.Item name="pmNote" label={EVALUATE_TASK_NOTE_LABEL}>
           <Input.TextArea rows={3} placeholder={EVALUATE_TASK_NOTE_PLACEHOLDER} />
         </Form.Item>
+        {showRemainderAction ? (
+          <Form.Item
+            name="changeReason"
+            label="Lý do thay đổi"
+            extra="Bắt buộc khi tách phần còn lại."
+          >
+            <Input.TextArea rows={2} placeholder="Ví dụ: A mới làm được 3, phần còn lại giao sau" />
+          </Form.Item>
+        ) : null}
       </Form>
 
       {showRemainderAction ? (

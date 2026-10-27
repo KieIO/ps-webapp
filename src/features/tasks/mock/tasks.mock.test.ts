@@ -495,7 +495,12 @@ describe('creative CH/CM pipeline', () => {
       'dev-admin',
     );
 
-    await mockUpdateCreativePipeline('task-cm-025', { quantity: 30 }, 'dev-admin', 'admin');
+    await mockUpdateCreativePipeline(
+      'task-cm-025',
+      { quantity: 30, changeReason: 'đổi scope cha' },
+      'dev-admin',
+      'admin',
+    );
     expect(getMockTasksStore().find((item) => item.id === 'task-cm-025')?.quantity).toBe(30);
 
     const children = getMockTasksStore().filter((item) => item.parentTaskId === 'task-cm-025');
@@ -504,6 +509,7 @@ describe('creative CH/CM pipeline', () => {
       mockUpdateCreativePipeline(
         first!.id,
         {
+          changeReason: 'đối soát SL',
           childQuantities: [
             { id: first!.id, quantity: 20 },
             { id: second!.id, quantity: 12 },
@@ -518,7 +524,7 @@ describe('creative CH/CM pipeline', () => {
     await expect(
       mockUpdateCreativePipeline(
         'task-cm-025',
-        { quantity: 40 },
+        { quantity: 40, changeReason: 'đổi scope cha' },
         'dev-creative_manager',
         'creative_manager',
       ),
@@ -528,6 +534,7 @@ describe('creative CH/CM pipeline', () => {
       mockUpdateCreativePipeline(
         'task-cm-025',
         {
+          changeReason: 'đối soát SL',
           childQuantities: [
             { id: first!.id, quantity: 20 },
             { id: second!.id, quantity: 12 },
@@ -542,6 +549,7 @@ describe('creative CH/CM pipeline', () => {
     await mockUpdateCreativePipeline(
       first!.id,
       {
+        changeReason: 'đối soát SL',
         childQuantities: [
           { id: first!.id, quantity: 16 },
           { id: second!.id, quantity: 14 },
@@ -589,6 +597,7 @@ describe('creative CH/CM pipeline', () => {
         'task-cm-025',
         {
           description: 'Updated brief',
+          changeReason: 'đối soát SL',
           childQuantities: [
             { id: first!.id, quantity: 12 },
             { id: second!.id, quantity: 12 },
@@ -602,6 +611,7 @@ describe('creative CH/CM pipeline', () => {
     await mockUpdateCreativePipeline(
       'task-cm-025',
       {
+        changeReason: 'đối soát SL',
         childQuantities: [
           { id: first!.id, quantity: 10 },
           { id: second!.id, quantity: 14 },
@@ -625,6 +635,7 @@ describe('creative CH/CM pipeline', () => {
       mockUpdateCreativePipeline(
         'task-cm-025',
         {
+          changeReason: 'đối soát SL',
           childQuantities: [
             { id: first!.id, quantity: 8 },
             { id: second!.id, quantity: 16 },
@@ -703,7 +714,7 @@ describe('creative CH/CM pipeline', () => {
 
     const updated = await mockUpdateCreativePipeline(
       first.id,
-      { staffUserId: 'usr-creative-khoa' },
+      { staffUserId: 'usr-creative-khoa', changeReason: 'đổi Staff' },
       'dev-admin',
       'admin',
     );
@@ -742,7 +753,7 @@ describe('creative CH/CM pipeline', () => {
 
     const result = await mockSpawnEvaluationRemainder(
       source.id,
-      { acceptedQuantity: 3 },
+      { acceptedQuantity: 3, changeReason: 'A mới làm được 3' },
       'dev-creative_manager',
     );
 
@@ -764,7 +775,11 @@ describe('creative CH/CM pipeline', () => {
     expect(getMockTasksStore().find((item) => item.id === 'task-cm-025')?.quantity).toBe(24);
 
     await expect(
-      mockSpawnEvaluationRemainder(source.id, { acceptedQuantity: 3 }, 'dev-creative_manager'),
+      mockSpawnEvaluationRemainder(
+        source.id,
+        { acceptedQuantity: 3, changeReason: 'A mới làm được 3' },
+        'dev-creative_manager',
+      ),
     ).rejects.toThrow(/phần còn lại/);
 
     const evaluated = await mockUpdateMyTaskPmEvaluation(

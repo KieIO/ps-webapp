@@ -56,6 +56,7 @@ import {
   isReturnedToPm,
   isSplitChildQuantityLocked,
   isSplitChildTask,
+  isSplitParentTask,
   needsChBrief,
   pickPrimaryEditableSplitChild,
   resolveCreateBriefOwner,
@@ -1021,6 +1022,9 @@ export const mockSpawnEvaluationRemainder = async (
   if (role && !canEvaluateTaskLayer(role, source)) {
     throw new Error('Bạn không được đánh giá task ở tầng này');
   }
+  if (!(payload.changeReason ?? '').trim()) {
+    throw new Error('nhập lý do thay đổi');
+  }
   if (!canSpawnEvaluationRemainder(source, payload.acceptedQuantity)) {
     throw new Error(
       'Chỉ tách phần còn lại khi task con đã finished và số lượng đạt nhỏ hơn SL giao',
@@ -1387,6 +1391,19 @@ export const mockUpdateCreativePipeline = async (
 
   if (!canEditCreativePipelineTask(current, editorRole, editorUserId)) {
     throw new Error('Bạn không có quyền sửa task này');
+  }
+
+  const needsChangeReason = Boolean(
+    payload.addSubtasks?.length ||
+      payload.childQuantities?.length ||
+      payload.staffUserId ||
+      payload.cmUserId ||
+      (payload.quantity != null &&
+        isSplitParentTask(current) &&
+        payload.quantity !== current.quantity),
+  );
+  if (needsChangeReason && !(payload.changeReason ?? '').trim()) {
+    throw new Error('nhập lý do thay đổi');
   }
 
   const wantsLevel =

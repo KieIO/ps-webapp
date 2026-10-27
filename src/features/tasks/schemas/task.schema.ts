@@ -320,6 +320,7 @@ export const UpdateMyTaskPmEvaluationRequestSchema = z.object({
 /** CM: accept partial quantity on a finished split child → spawn remainder sibling. */
 export const SpawnEvaluationRemainderRequestSchema = z.object({
   acceptedQuantity: z.number().int().min(0),
+  changeReason: z.string().trim().min(1, 'Nhập lý do thay đổi'),
 });
 
 export type SpawnEvaluationRemainderRequest = z.infer<typeof SpawnEvaluationRemainderRequestSchema>;
@@ -412,6 +413,7 @@ export const UpdateCreativePipelineRequestSchema = z
     contentProcessing: z.number().int().min(1).max(5).optional(),
     staffUserId: z.string().optional(),
     staffNote: z.string().optional(),
+    changeReason: z.string().optional(),
     /** CH/Admin: reassign CM while awaiting_cm. */
     cmUserId: z.string().optional(),
     /**
@@ -439,6 +441,19 @@ export const UpdateCreativePipelineRequestSchema = z
         code: z.ZodIssueCode.custom,
         path: ['designThinking'],
         message: 'Cần đủ 3 tiêu chí để đổi Level',
+      });
+    }
+    const needsReason = Boolean(
+      value.addSubtasks?.length ||
+        value.childQuantities?.length ||
+        value.staffUserId ||
+        value.cmUserId,
+    );
+    if (needsReason && !(value.changeReason ?? '').trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['changeReason'],
+        message: 'Nhập lý do thay đổi',
       });
     }
     if (value.cmUserId && value.staffUserId) {

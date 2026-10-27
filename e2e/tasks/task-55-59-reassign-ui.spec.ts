@@ -20,6 +20,7 @@ test.describe('TASK-55/59 reassign UI', () => {
 
     const denied = await apiFetch('PATCH', `/tasks/my/${parent.id}/creative-edit`, cm.token, {
       cmUserId: cm.user.id,
+      changeReason: 'đổi CM',
     });
     expect([403, 422]).toContain(denied.status);
 
@@ -28,6 +29,7 @@ test.describe('TASK-55/59 reassign UI', () => {
     const ok = await creativeEdit(ch.token, parent.id, {
       cmUserId: cm.user.id,
       description: 'keep cm',
+      changeReason: 'đổi CM',
     });
     expect(ok.pipelineStage).toBe('awaiting_cm');
 
@@ -54,6 +56,7 @@ test.describe('TASK-55/59 reassign UI', () => {
     const updated = await creativeEdit(cm.token, task.id, {
       staffUserId: head.user.id,
       description: task.description ?? 'E2E brief for split family',
+      changeReason: 'đổi Staff',
     });
     expect(updated.pipelineStage).toBe('assigned_staff');
     expect(updated.staff?.some((s) => s.userId === head.user.id)).toBeTruthy();

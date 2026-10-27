@@ -65,6 +65,7 @@ test.describe('TASK-83 PM adds an unassigned zero-quantity child after split', (
     await expect(quantity).toHaveValue('0');
     await expect(drawer.getByText('Chưa gán Staff')).toBeVisible();
 
+    await drawer.getByLabel('Lý do thay đổi').fill('bổ sung phần để sau');
     await drawer.getByRole('button', { name: 'Lưu thay đổi' }).click();
     await expect(drawer).toHaveCount(0, { timeout: 20_000 });
 
