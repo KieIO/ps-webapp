@@ -458,7 +458,7 @@ describe('creative CH/CM pipeline', () => {
           },
         ],
       },
-      'dev-admin',
+      'dev-creative_manager',
     );
     expect(parent.pipelineStage).toBe('split');
     expect(parent.quantity).toBe(24);

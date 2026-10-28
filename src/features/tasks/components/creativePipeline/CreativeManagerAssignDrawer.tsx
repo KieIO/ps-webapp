@@ -12,7 +12,6 @@ import {
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
-import { ROLES } from '@/config/permissions';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useAssignCreativeManager } from '../../hooks/useAssignCreativeManager';
@@ -125,7 +124,8 @@ export function CreativeManagerAssignDrawer({
     isError: capacityError,
   } = useAssignPickerCapacity(task, open, capacityDeadlineOverride);
   const canSubmit = Boolean(task && !readOnly && isAwaitingCm(task));
-  const canSplitChildren = currentUser?.role === ROLES.ADMIN || currentUser?.role === ROLES.PM;
+  /** Initial split on assign — CM/Admin/PM. Adding more children later stays PM/Admin-only. */
+  const canSplitOnAssign = Boolean(canSubmit);
   const canRefuse = Boolean(
     task && !readOnly && canCmRefuseCreativeAssignment(task, currentUser?.id, currentUser?.role),
   );
@@ -419,7 +419,7 @@ export function CreativeManagerAssignDrawer({
           {canSubmit ? (
             <div className={styles.formSection}>
               <p className={styles.sectionLabel}>Hình thức giao</p>
-              {canSplitChildren ? (
+              {canSplitOnAssign ? (
                 <Segmented
                   className={styles.modeToggle}
                   block

@@ -1289,9 +1289,6 @@ export const mockAssignCreativeManager = async (
   if (subtasks.length < 2) {
     throw new Error('Chia nhỏ cần ít nhất 2 task');
   }
-  if (role === ROLES.CREATIVE_MANAGER) {
-    throw new Error('chỉ PM hoặc Admin được tạo task con');
-  }
   if (current.quantity < 1) {
     throw new Error('task cha phải có số lượng lớn hơn 0');
   }
