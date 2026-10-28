@@ -38,11 +38,19 @@ import {
   type CreativeCmQueueFrame,
   type CreativeQueueView,
 } from '../../utils/creativePipeline';
+import {
+  applyCreativeQueueFilters,
+  EMPTY_CREATIVE_QUEUE_FILTERS,
+  resolveCreativeQueueFilterVisibility,
+  sanitizeCreativeQueueFilters,
+  type CreativeQueueListFilters,
+} from '../../utils/creativeQueueFilters';
 import { getTaskDeadline } from '../../utils/taskDetail';
 import { resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { CreativeEditDrawer } from './CreativeEditDrawer';
 import { CreativeHeadAssignDrawer } from './CreativeHeadAssignDrawer';
 import { CreativeManagerAssignDrawer } from './CreativeManagerAssignDrawer';
+import { CreativeQueueFilters } from './CreativeQueueFilters';
 import styles from './creativePipeline.module.scss';
 
 dayjs.extend(utc);
@@ -61,6 +69,9 @@ export function CreativePipelineView() {
   const [view, setView] = useState<CreativeQueueView>(defaultCreativeQueueView(role));
   const [cmFrame, setCmFrame] = useState<CreativeCmQueueFrame>('intake');
   const [selected, setSelected] = useState<MyTask | null>(null);
+  const [listFilters, setListFilters] = useState<CreativeQueueListFilters>(() => ({
+    ...EMPTY_CREATIVE_QUEUE_FILTERS,
+  }));
 
   useEffect(() => {
     setView(defaultCreativeQueueView(role));
@@ -70,14 +81,38 @@ export function CreativePipelineView() {
     if (view !== 'cm') setCmFrame('intake');
   }, [view]);
 
+  useEffect(() => {
+    setListFilters((current) =>
+      sanitizeCreativeQueueFilters(
+        current,
+        resolveCreativeQueueFilterVisibility(view, cmFrame, current),
+      ),
+    );
+  }, [view, cmFrame]);
+
   const { data, isLoading } = useMyTaskList({ taskCategory: 'project' });
   const tasks = useMemo(() => data?.items ?? [], [data?.items]);
   const rehandCreative = useRehandCreativeToCH();
 
-  const queue = useMemo(
+  const scopedQueue = useMemo(
     () => filterCreativeQueue(tasks, view, user?.id, role, cmFrame),
     [tasks, view, user?.id, role, cmFrame],
   );
+  const filterVisibility = useMemo(
+    () => resolveCreativeQueueFilterVisibility(view, cmFrame, listFilters),
+    [view, cmFrame, listFilters],
+  );
+  const queue = useMemo(
+    () => applyCreativeQueueFilters(scopedQueue, listFilters, filterVisibility),
+    [scopedQueue, listFilters, filterVisibility],
+  );
+  const projectOptions = useMemo(() => {
+    const names = new Set<string>();
+    for (const task of scopedQueue) {
+      if (task.projectName?.trim()) names.add(task.projectName);
+    }
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, [scopedQueue]);
   const actionableCount = useMemo(
     () => countActionableQueueItems(tasks, view, user?.id, role, cmFrame),
     [tasks, view, user?.id, role, cmFrame],
@@ -368,16 +403,25 @@ export function CreativePipelineView() {
       <CardWrapper
         title={view === 'cm' ? CREATIVE_CM_QUEUE_FRAME_LABELS[cmFrame] : 'Danh sách task'}
       >
+        <CreativeQueueFilters
+          filters={listFilters}
+          visibility={filterVisibility}
+          projectOptions={projectOptions}
+          onChange={setListFilters}
+          onReset={() => setListFilters({ ...EMPTY_CREATIVE_QUEUE_FILTERS })}
+        />
         <TableWrapper
           loading={isLoading}
           isEmpty={!isLoading && queue.length === 0}
           emptyTitle="Chưa có task trong hàng chờ"
           emptyDescription={
-            view === 'ch'
-              ? 'Task Creative từ PM sẽ xuất hiện tại đây khi cần bạn xử lý.'
-              : cmFrame === 'intake'
-                ? 'Task Creative Head giao cho bạn sẽ xuất hiện tại đây.'
-                : 'Task đã giao Staff (nguyên hoặc chia nhỏ) sẽ xuất hiện tại đây.'
+            scopedQueue.length > 0 && queue.length === 0
+              ? 'Không có task khớp bộ lọc hiện tại. Thử Reset filter.'
+              : view === 'ch'
+                ? 'Task Creative từ PM sẽ xuất hiện tại đây khi cần bạn xử lý.'
+                : cmFrame === 'intake'
+                  ? 'Task Creative Head giao cho bạn sẽ xuất hiện tại đây.'
+                  : 'Task đã giao Staff (nguyên hoặc chia nhỏ) sẽ xuất hiện tại đây.'
           }
         >
           <Table

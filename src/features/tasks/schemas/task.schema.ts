@@ -151,6 +151,8 @@ export const MyTaskSchema = z.object({
   creativeManager: TaskPersonSchema.optional(),
   /** Set when the task is handed to a staff member (15-minute confirm SLA). */
   assignedAt: z.string().nullish(),
+  /** When the parent was first split (also stamped on split children). */
+  splitAt: z.string().nullish(),
   designThinking: z.number().int().min(1).max(5),
   technical: z.number().int().min(1).max(5),
   contentProcessing: z.number().int().min(1).max(5),

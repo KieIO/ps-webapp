@@ -1056,6 +1056,7 @@ export const mockSpawnEvaluationRemainder = async (
     taskKind: 'split',
     pipelineStage: 'assigned_staff',
     assignedAt: undefined,
+    splitAt: parent.splitAt ?? source.splitAt ?? now,
     staffConfirmation: 'not_updated',
     staffNote: '',
     completionPercent: null,
@@ -1341,6 +1342,7 @@ export const mockAssignCreativeManager = async (
       taskKind: 'split',
       pipelineStage: 'assigned_staff',
       assignedAt: now,
+      splitAt: now,
       staffConfirmation: 'not_updated',
       staffNote: payload.staffNote ?? '',
       creativeDeadline:
@@ -1368,6 +1370,7 @@ export const mockAssignCreativeManager = async (
     pipelineStage: 'split',
     staff: uniqueChildStaff,
     assignedAt: undefined,
+    splitAt: current.splitAt ?? now,
     updatedAt: now,
   };
 
@@ -1630,6 +1633,7 @@ export const mockUpdateCreativePipeline = async (
           ])
         : [];
       const name = subtask.name?.trim() || defaultSplitChildName(parent.taskName);
+      const addedAt = new Date().toISOString();
       added.push(
         enrichMockTaskWithProjectContext({
           ...parent,
@@ -1642,8 +1646,9 @@ export const mockUpdateCreativePipeline = async (
           parentTaskId: parent.id,
           taskKind: 'split',
           pipelineStage: 'assigned_staff',
+          splitAt: parent.splitAt ?? addedAt,
           staffConfirmation: 'not_updated',
-          updatedAt: new Date().toISOString(),
+          updatedAt: addedAt,
         }),
       );
     });
