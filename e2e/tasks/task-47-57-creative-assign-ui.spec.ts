@@ -65,11 +65,11 @@ test.describe('TASK-47/50/51/57 creative assign UI', () => {
     // Prefer API whole-assign for staff pick stability; assert drawer chrome then complete via API.
     await expect(staffDrawer.getByRole('button', { name: /Giao nguyên task/ })).toBeVisible();
     await staffDrawer.getByRole('button', { name: /^Hủy$/ }).click();
-    await wholeAssign(cm.token, parent.id, employee.user.id, 6);
+    await wholeAssign(cm.token, parent.id, employee.user.id, parent.quantity);
 
     const afterStaff = await getTask(cm.token, parent.id);
     expect(afterStaff.pipelineStage).toBe('assigned_staff');
-    expect(afterStaff.quantity).toBe(6);
+    expect(afterStaff.quantity).toBe(parent.quantity);
 
     // Confirm UI reflects assigned Staff (detail uses assignee chip, not pipeline label).
     await page.reload();

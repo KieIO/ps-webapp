@@ -240,6 +240,15 @@ export function CreativeManagerAssignDrawer({
     const values = await form.validateFields(
       mode === 'whole' ? ['staffUserId', 'quantity', 'creativeDeadline'] : ['subtasks'],
     );
+    if (mode === 'whole' && task.quantity > 0 && Number(values.quantity) > task.quantity) {
+      form.setFields([
+        {
+          name: 'quantity',
+          errors: [`Số lượng không được lớn hơn SL hiện tại (${task.quantity})`],
+        },
+      ]);
+      return;
+    }
     if (mode === 'split') {
       const childSum = (values.subtasks ?? []).reduce((sum, row) => {
         const qty = Number(row.quantity);
@@ -442,15 +451,25 @@ export function CreativeManagerAssignDrawer({
                       rules={[
                         { required: true, message: 'CM nhập số lượng trước khi giao' },
                         wholeTaskQuantityRule,
+                        ...(task.quantity > 0
+                          ? [
+                              {
+                                type: 'number' as const,
+                                max: task.quantity,
+                                message: `Số lượng không được lớn hơn SL hiện tại (${task.quantity})`,
+                              },
+                            ]
+                          : []),
                       ]}
                       extra={
                         task.quantity > 0
-                          ? `SL hiện tại trên task (PM/Admin lúc tạo): ${task.quantity}. CM nhập SL chính thức khi giao.`
+                          ? `SL hiện tại (PM/Admin lúc tạo): ${task.quantity}. CM nhập SL chính thức khi giao (≤ ${task.quantity}).`
                           : 'CM nhập số lượng khi giao Staff.'
                       }
                     >
                       <InputNumber
                         min={1}
+                        max={task.quantity > 0 ? task.quantity : undefined}
                         precision={0}
                         step={1}
                         style={{ width: '100%' }}

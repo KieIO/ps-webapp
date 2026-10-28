@@ -9,6 +9,7 @@ import {
   InputNumber,
   Modal,
   Select,
+  message,
 } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useMemo } from 'react';
@@ -130,6 +131,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   } = useCreativeSplitChildren(task?.id, { enabled: needsSplitFamily });
   const watchedCreativeDeadline = Form.useWatch('creativeDeadline', form);
   const watchedPmDeadline = Form.useWatch('deadline', form);
+  const watchedNewChildren = Form.useWatch('newChildren', form);
   const capacityDeadlineOverride = useMemo(
     () => (watchedCreativeDeadline?.isValid() ? toTaskDeadline(watchedCreativeDeadline) : null),
     [watchedCreativeDeadline],
@@ -217,7 +219,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
         : null;
   const watchedChildQuantities = Form.useWatch('childQuantities', form);
   const watchedParentQuantity = Form.useWatch('quantity', form);
-  const allocatedFromForm = useMemo(() => {
+  const existingAllocatedFromForm = useMemo(() => {
     if (quantityFamily.length === 0) return 0;
     return quantityFamily.reduce((sum, child) => {
       const fromForm = watchedChildQuantities?.[child.id];
@@ -225,6 +227,15 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       return sum + (Number.isFinite(qty) ? qty : 0);
     }, 0);
   }, [quantityFamily, watchedChildQuantities]);
+  const newChildrenAllocated = useMemo(
+    () =>
+      (watchedNewChildren ?? []).reduce((sum, row) => {
+        const qty = Number(row?.quantity);
+        return sum + (Number.isFinite(qty) && qty > 0 ? qty : 0);
+      }, 0),
+    [watchedNewChildren],
+  );
+  const allocatedFromForm = existingAllocatedFromForm + newChildrenAllocated;
   const parentTotalFromForm =
     watchedParentQuantity != null && Number.isFinite(Number(watchedParentQuantity))
       ? Number(watchedParentQuantity)
@@ -393,7 +404,13 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
 
   const handleSubmit = async () => {
     if (!task || !canEdit) return;
-    const values = await form.validateFields();
+    let values: EditFormValues;
+    try {
+      values = await form.validateFields();
+    } catch {
+      message.warning('Kiểm tra lại các ô còn thiếu hoặc chưa hợp lệ trong form.');
+      return;
+    }
 
     const nextChildQuantities =
       quantityFamily.length > 0
@@ -426,14 +443,9 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       0,
     );
     if (quantityFamily.length > 0 && existingSum + newChildSum > projectedParentQty) {
-      form.setFields([
-        {
-          name: 'newChildren',
-          errors: [
-            `Tổng SL các phần (${existingSum + newChildSum}) không được lớn hơn SL task cha (${projectedParentQty})`,
-          ],
-        },
-      ]);
+      const overMsg = `Tổng SL các phần (${existingSum + newChildSum}) không được lớn hơn SL task cha (${projectedParentQty})`;
+      form.setFields([{ name: 'newChildren', errors: [overMsg] }]);
+      message.warning(overMsg);
       return;
     }
 
@@ -478,6 +490,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       (splitParent && parentQtyChanged);
     if (needsChangeReason && !(values.changeReason ?? '').trim()) {
       form.setFields([{ name: 'changeReason', errors: ['Nhập lý do thay đổi'] }]);
+      message.warning('Nhập lý do thay đổi rồi bấm Lưu (ô ngay dưới task con mới).');
       return;
     }
 
@@ -618,6 +631,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
             layout="vertical"
             disabled={!canEdit || isPending}
             className={styles.editForm}
+            scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
             onValuesChange={handleFormValuesChange}
           >
             <div className={styles.formSection}>
@@ -730,72 +744,106 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                         );
                       })}
                       {canAddSplitChild ? (
-                        <Form.List name="newChildren">
-                          {(fields, { add, remove }) => (
-                            <div>
-                              {fields.map((field) => (
-                                <div className={styles.subtaskCard} key={field.key}>
-                                  <div className={styles.subtaskHead}>
-                                    <p className={styles.subtaskTitle}>Task con mới</p>
-                                    <Button type="text" onClick={() => remove(field.name)}>
-                                      Xóa
-                                    </Button>
-                                  </div>
-                                  <Form.Item name={[field.name, 'name']} label="Tên">
-                                    <Input
-                                      placeholder={
-                                        defaultSplitChildName(task.taskName) || 'Tên task'
-                                      }
-                                    />
-                                  </Form.Item>
-                                  <Form.Item
-                                    name={[field.name, 'description']}
-                                    label="Brief"
-                                    rules={[{ required: true, message: 'Nhập brief' }]}
-                                  >
-                                    <Input.TextArea rows={2} />
-                                  </Form.Item>
-                                  <div className={styles.allocationRow}>
-                                    <Form.Item name={[field.name, 'staffUserId']} label="Giao cho">
-                                      <Select
-                                        showSearch
-                                        allowClear
-                                        optionFilterProp="label"
-                                        placeholder="Chưa gán Staff"
-                                        options={staffSelectOptions}
+                        <div className={styles.newChildrenBlock}>
+                          <div className={styles.newChildrenHeader}>
+                            <p className={styles.sectionLabel}>Thêm task con</p>
+                            <p className={styles.allocationHint}>
+                              Còn {Math.max(0, parentTotalFromForm - allocatedFromForm)} SL chưa
+                              chia. Điền brief → Lưu thay đổi (có thể SL 0, chưa gán Staff).
+                            </p>
+                          </div>
+                          <Form.List name="newChildren">
+                            {(fields, { add, remove }) => (
+                              <div className={styles.formSectionStack}>
+                                {fields.map((field, index) => (
+                                  <div className={styles.subtaskCardCompact} key={field.key}>
+                                    <div className={styles.subtaskHeader}>
+                                      <span>Task con mới {index + 1}</span>
+                                      <Button
+                                        type="link"
+                                        danger
+                                        size="small"
+                                        onClick={() => remove(field.name)}
+                                      >
+                                        Xóa
+                                      </Button>
+                                    </div>
+                                    <Form.Item name={[field.name, 'name']} label="Tên">
+                                      <Input
+                                        placeholder={
+                                          defaultSplitChildName(task.taskName) || 'Tên task'
+                                        }
                                       />
                                     </Form.Item>
                                     <Form.Item
-                                      name={[field.name, 'quantity']}
-                                      label="Số lượng"
-                                      rules={[nonNegativeWholeQuantityRule]}
+                                      name={[field.name, 'description']}
+                                      label="Brief"
+                                      rules={[{ required: true, message: 'Nhập brief' }]}
                                     >
-                                      <InputNumber
-                                        min={0}
-                                        precision={0}
-                                        step={1}
-                                        style={{ width: '100%' }}
+                                      <Input.TextArea
+                                        rows={2}
+                                        placeholder="Brief phần việc của task con này…"
                                       />
                                     </Form.Item>
+                                    <div className={styles.deadlineRow}>
+                                      <Form.Item
+                                        name={[field.name, 'staffUserId']}
+                                        label="Giao cho"
+                                      >
+                                        <Select
+                                          showSearch
+                                          allowClear
+                                          optionFilterProp="label"
+                                          placeholder="Chưa gán Staff"
+                                          options={staffSelectOptions}
+                                        />
+                                      </Form.Item>
+                                      <Form.Item
+                                        name={[field.name, 'quantity']}
+                                        label="Số lượng"
+                                        rules={[nonNegativeWholeQuantityRule]}
+                                      >
+                                        <InputNumber
+                                          min={0}
+                                          precision={0}
+                                          step={1}
+                                          style={{ width: '100%' }}
+                                        />
+                                      </Form.Item>
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
-                              <Button
-                                type="dashed"
-                                block
-                                onClick={() =>
-                                  add({
-                                    name: defaultSplitChildName(task.taskName),
-                                    quantity: 0,
-                                    description: '',
-                                  })
-                                }
-                              >
-                                + Thêm task con
-                              </Button>
-                            </div>
-                          )}
-                        </Form.List>
+                                ))}
+                                <Button
+                                  type="dashed"
+                                  block
+                                  className={styles.addSubtask}
+                                  onClick={() =>
+                                    add({
+                                      name: defaultSplitChildName(task.taskName),
+                                      quantity: 0,
+                                      description: '',
+                                    })
+                                  }
+                                >
+                                  + Thêm task con
+                                </Button>
+                              </div>
+                            )}
+                          </Form.List>
+                          {(watchedNewChildren?.length ?? 0) > 0 ? (
+                            <Form.Item
+                              name="changeReason"
+                              label="Lý do thêm / đổi"
+                              rules={[{ required: true, message: 'Nhập lý do thay đổi' }]}
+                              extra="Bắt buộc khi thêm task con. Sau đó bấm Lưu thay đổi ở cuối drawer."
+                            >
+                              <Input.TextArea
+                                rows={2}
+                                placeholder="Ví dụ: bổ sung phần còn lại cho Staff khác"
+                              />
+                            </Form.Item>
+                          ) : null}
+                        </div>
                       ) : null}
                     </>
                   ) : (
@@ -932,16 +980,18 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                 <Form.Item name="staffNote" label="Ghi chú">
                   <Input.TextArea rows={2} />
                 </Form.Item>
-                <Form.Item
-                  name="changeReason"
-                  label="Lý do thay đổi"
-                  extra="Bắt buộc khi thêm task con, đổi SL, hoặc đổi người được giao."
-                >
-                  <Input.TextArea
-                    rows={2}
-                    placeholder="Ví dụ: giảm SL A để gán phần còn lại cho C"
-                  />
-                </Form.Item>
+                {(watchedNewChildren?.length ?? 0) === 0 ? (
+                  <Form.Item
+                    name="changeReason"
+                    label="Lý do thay đổi"
+                    extra="Bắt buộc khi đổi SL các phần hoặc đổi người được giao."
+                  >
+                    <Input.TextArea
+                      rows={2}
+                      placeholder="Ví dụ: giảm SL A để gán phần còn lại cho C"
+                    />
+                  </Form.Item>
+                ) : null}
               </div>
             </div>
 

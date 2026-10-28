@@ -780,9 +780,32 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   font-size: 12px;
   font-weight: 700;
+}
+
+.newChildrenBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--color-border, #e5e5e5);
+}
+
+.newChildrenHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .sectionLabel {
+    margin: 0;
+  }
+
+  .allocationHint {
+    margin: 0;
+  }
 }
 
 .addSubtask {

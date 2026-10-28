@@ -21,12 +21,15 @@ export const useUpdateCreativePipeline = () => {
       myTaskApi.updateCreativePipeline(id, payload, userId, role),
     onSuccess: (_task, variables) => {
       invalidateProjectAndTaskQueries(queryClient);
+      const added = variables.payload.addSubtasks?.length ?? 0;
       message.success(
         variables.payload.cmUserId
           ? 'Đã đổi Creative Manager. CM mới sẽ nhận noti trên Creative queue.'
           : variables.payload.staffUserId
             ? 'Đã cập nhật task và đổi Staff. Nhân viên mới có 15 phút để confirm.'
-            : 'Đã cập nhật task Creative.',
+            : added > 0
+              ? `Đã thêm ${added} task con.`
+              : 'Đã cập nhật task Creative.',
       );
     },
     onError: (error: Error) => {

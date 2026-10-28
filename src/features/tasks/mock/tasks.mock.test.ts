@@ -397,14 +397,30 @@ describe('creative CH/CM pipeline', () => {
     );
     const updated = await mockAssignCreativeManager(
       before.id,
-      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: 24 },
+      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: before.quantity },
       'dev-creative_manager',
     );
     expect(updated.pipelineStage).toBe('assigned_staff');
     expect(updated.level).toBe(before.level);
     expect(updated.staff[0]?.userId).toBe('usr-creative-ha');
-    expect(updated.quantity).toBe(24);
+    expect(updated.quantity).toBe(before.quantity);
     expect(updated.assignedAt).toBeTruthy();
+  });
+
+  it('rejects whole assign when CM quantity exceeds current SL', async () => {
+    resetMockTasksStore();
+    const before = await mockAssignCreativeHead(
+      'task-ch-031',
+      { cmUserId: 'dev-creative_manager' },
+      'dev-creative_head',
+    );
+    await expect(
+      mockAssignCreativeManager(
+        before.id,
+        { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: before.quantity + 1 },
+        'dev-creative_manager',
+      ),
+    ).rejects.toThrow(/không được lớn hơn SL hiện tại/);
   });
 
   it('uses the parent task type when a split child name is left blank', async () => {
@@ -844,7 +860,7 @@ describe('creative CH/CM pipeline', () => {
     );
     const assigned = await mockAssignCreativeManager(
       handed.id,
-      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: 24 },
+      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: handed.quantity },
       'dev-creative_manager',
     );
 

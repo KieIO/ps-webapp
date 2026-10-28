@@ -1263,6 +1263,9 @@ export const mockAssignCreativeManager = async (
     if (payload.quantity == null || payload.quantity <= 0) {
       throw new Error('CM nhập số lượng trước khi giao');
     }
+    if (current.quantity >= 1 && payload.quantity > current.quantity) {
+      throw new Error(`số lượng không được lớn hơn SL hiện tại (${current.quantity})`);
+    }
     if (payload.creativeDeadline) {
       assertCreativeDeadlineNotAfterPm(payload.creativeDeadline, getTaskDeadline(current));
     }

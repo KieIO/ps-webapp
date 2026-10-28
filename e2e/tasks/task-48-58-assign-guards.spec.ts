@@ -119,14 +119,22 @@ test.describe('TASK-38/48/49/52/58 assign guards', () => {
     await expect(page.getByRole('button', { name: /Giao cho Staff/ })).toHaveCount(0);
   });
 
-  test('TASK-58 assign-staff validation rejects empty staff / zero qty', async () => {
+  test('TASK-58 assign-staff validation rejects empty staff / zero qty / over SL', async () => {
     const { parent, cm } = await setupAwaitingCm(`E2E Val Staff ${Date.now()}`);
+    const employee = await apiLogin(SEED_ACCOUNTS.employee.email, SEED_ACCOUNTS.employee.password);
     const bad = await apiFetch('PATCH', `/tasks/my/${parent.id}/assign-staff`, cm.token, {
       mode: 'whole',
       staffUserId: '',
       quantity: 0,
     });
     expect(bad.status).toBe(422);
+
+    const over = await apiFetch('PATCH', `/tasks/my/${parent.id}/assign-staff`, cm.token, {
+      mode: 'whole',
+      staffUserId: employee.user.id,
+      quantity: parent.quantity + 1,
+    });
+    expect(over.status).toBe(422);
   });
 
   test('TASK-38 create with on_leave assignee returns ASSIGNEE_ON_LEAVE', async () => {

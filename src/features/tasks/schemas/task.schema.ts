@@ -371,7 +371,7 @@ export const AssignCreativeManagerRequestSchema = z
     mode: z.enum(CREATIVE_ASSIGN_MODES),
     staffUserId: z.string().optional(),
     staffNote: z.string().optional(),
-    /** Required when mode=whole — CM fills quantity when assigning. */
+    /** Required when mode=whole — CM confirms SL (≤ current task quantity) when assigning. */
     quantity: z.number().int().positive('Số lượng phải là số nguyên lớn hơn 0').optional(),
     /** Optional CM creative deadline for whole assign. */
     creativeDeadline: z.string().optional(),
