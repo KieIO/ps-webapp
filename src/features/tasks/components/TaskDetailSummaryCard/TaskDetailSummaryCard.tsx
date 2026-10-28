@@ -34,7 +34,6 @@ import {
   formatEvaluationBadgeLabel,
   formatFinishedQuantitySummary,
   hasCmEvaluation,
-  isWholeTask,
   WHOLE_TASK_QUANTITY_TOOLTIP,
 } from '../../utils/evaluationRemainder';
 import {
@@ -83,6 +82,7 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
   const splitParent = isSplitParentTask(task);
   const parentHasRevisions = hasRevisionChildren(task);
   const parentHasActiveRevision = hasActiveRevisionChildren(task);
+  const finishedQuantitySummary = formatFinishedQuantitySummary(task);
   const parentCode = revision
     ? inferParentTaskCodeFromRevision(task.taskCode)
     : splitChild
@@ -259,16 +259,14 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
         </div>
 
         <div className={styles.metaItem}>
-          <p className={styles.metaLabel}>Quantity</p>
-          {isWholeTask(task) ? (
+          {finishedQuantitySummary ? (
             <Tooltip title={WHOLE_TASK_QUANTITY_TOOLTIP}>
-              <p className={`${styles.metaValue} ${styles.quantityHint}`}>
-                {formatFinishedQuantitySummary(task) ?? formatTaskQuantity(task)}
-              </p>
+              <p className={`${styles.metaLabel} ${styles.quantityHint}`}>Quantity</p>
             </Tooltip>
           ) : (
-            <p className={styles.metaValue}>{formatTaskQuantity(task)}</p>
+            <p className={styles.metaLabel}>Quantity</p>
           )}
+          <p className={styles.metaValue}>{finishedQuantitySummary ?? formatTaskQuantity(task)}</p>
         </div>
 
         <div className={showCreativeDeadline ? styles.metaStack : styles.metaItem}>
