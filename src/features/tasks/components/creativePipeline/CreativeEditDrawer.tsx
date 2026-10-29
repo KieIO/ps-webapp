@@ -58,6 +58,7 @@ import {
   isSplitChildTask,
   isSplitParentTask,
   pickPrimaryEditableSplitChild,
+  PIPELINE_STAGE_LABELS,
   SPLIT_CHILD_BADGE_LABEL,
   SPLIT_PARENT_BADGE_LABEL,
   resolveAssigneeAvailability,
