@@ -9,6 +9,7 @@ const ctx = {
 const base = {
   name: 'Nộp đợt 1',
   deadlineDate: '2026-09-10',
+  outsideTimeline: false,
   quantity: 10,
   unit: 'slides' as const,
   note: '',
@@ -72,6 +73,7 @@ describe('validateMilestones', () => {
           {
             name: 'Full',
             deadlineDate: '2026-09-10',
+            outsideTimeline: false,
             quantity: null,
             unit: 'others',
             note: '',
@@ -80,6 +82,7 @@ describe('validateMilestones', () => {
           {
             name: 'Full 2',
             deadlineDate: '2026-09-11',
+            outsideTimeline: false,
             quantity: 100,
             unit: 'others',
             note: '',
@@ -98,6 +101,7 @@ describe('validateMilestones', () => {
           {
             name: 'Kickoff',
             deadlineDate: '2026-09-10',
+            outsideTimeline: false,
             quantity: null,
             unit: '',
             note: 'Họp nội bộ',
@@ -115,6 +119,7 @@ describe('validateMilestones', () => {
         {
           name: 'Bad',
           deadlineDate: '2026-09-10',
+          outsideTimeline: false,
           quantity: null,
           unit: 'slides',
           note: '',
@@ -146,6 +151,7 @@ describe('toReplaceMilestonePayload', () => {
           id: 'keep-me',
           name: 'A',
           deadlineDate: '2026-09-10T12:00:00.000Z',
+          outsideTimeline: false,
           quantity: 10,
           unit: 'slides',
           note: ' x ',
@@ -155,6 +161,7 @@ describe('toReplaceMilestonePayload', () => {
           id: 'empty',
           name: 'B',
           deadlineDate: '2026-09-11',
+          outsideTimeline: false,
           quantity: null,
           unit: '',
           note: '',
@@ -163,6 +170,7 @@ describe('toReplaceMilestonePayload', () => {
         {
           name: 'C',
           deadlineDate: '2026-09-12',
+          outsideTimeline: false,
           quantity: 8,
           unit: 'others',
           note: '',

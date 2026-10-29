@@ -13,6 +13,7 @@ const m = (
   overrides: Partial<ProjectMilestone> & Pick<ProjectMilestone, 'id' | 'deadlineDate'>,
 ): ProjectMilestone => ({
   name: 'Mốc',
+  outsideTimeline: false,
   quantity: 10,
   unit: 'slides',
   note: '',
