@@ -111,10 +111,15 @@ export function UserLeaveSection({ userId, userStatus, onScheduleLeave }: UserLe
           <ul className={styles.historyList}>
             {pastHistory.map((entry) => (
               <li key={entry.id} className={styles.historyItem}>
-                <span>
-                  {dayjs(entry.startDate).format(DATE_FORMAT)} →{' '}
-                  {dayjs(entry.endDate).format(DATE_FORMAT)}
-                </span>
+                <div className={styles.historyMeta}>
+                  <span>
+                    {dayjs(entry.startDate).format(DATE_FORMAT)} →{' '}
+                    {dayjs(entry.endDate).format(DATE_FORMAT)}
+                  </span>
+                  {entry.reason ? (
+                    <span className={styles.reasonInline}>{entry.reason}</span>
+                  ) : null}
+                </div>
                 <StatusPill
                   label={leaveStatusLabel(entry.status)}
                   variant={entry.status === 'cancelled' ? 'overdue' : 'completed'}

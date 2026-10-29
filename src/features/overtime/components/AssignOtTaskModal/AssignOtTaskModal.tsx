@@ -2,12 +2,22 @@ import { Alert, Button, Empty, Modal, Radio, Space, Spin, Typography } from 'ant
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
-import { CreateTaskModal } from '@/features/tasks/components/CreateTaskModal/CreateTaskModal';
-import type { TaskPerson } from '@/features/tasks/schemas/task.schema';
+import { useProject } from '@/features/projects/hooks/useProjectList';
+import {
+  CreateTaskDrawer,
+  type CreateTaskDrawerPreset,
+} from '@/features/tasks/components/CreateTaskDrawer/CreateTaskDrawer';
+import {
+  CONFIRMATION_LABELS,
+  type TaskConfirmationStatus,
+} from '@/shared/constants/taskConfirmation';
 import { formatOtReasonCategories } from '../../constants';
 import { useAssignableOtTasks, useAssignOtTask } from '../../hooks/useOvertime';
 import type { OvertimeRecord } from '../../schemas/overtime.schema';
 import styles from './AssignOtTaskModal.module.scss';
+
+const staffConfirmationLabel = (value: string): string =>
+  CONFIRMATION_LABELS[value as TaskConfirmationStatus] ?? value;
 
 interface AssignOtTaskModalProps {
   open: boolean;
@@ -21,22 +31,23 @@ export function AssignOtTaskModal({ open, overtime, onClose, onAssigned }: Assig
   const [createOpen, setCreateOpen] = useState(false);
   const assignableQuery = useAssignableOtTasks(overtime.id, open);
   const assignMutation = useAssignOtTask();
+  // Same project create drawer as /tasks/project — resolve PM from project, not OT requester.
+  const { data: otProject } = useProject(overtime.project.id);
 
-  const createPreset = useMemo(() => {
-    const projectManager: TaskPerson | undefined = overtime.requestedBy.name
-      ? {
-          code: overtime.requestedBy.code || overtime.requestedBy.name,
-          name: overtime.requestedBy.name,
-          userId: overtime.requestedBy.userId,
-        }
-      : undefined;
-
+  const createPreset = useMemo((): CreateTaskDrawerPreset => {
     const categoriesLabel = formatOtReasonCategories(overtime.reasonCategories);
+    const projectPm = otProject?.pm;
 
     return {
       projectName: overtime.project.name,
-      projectManager,
-      staffUserId: overtime.assignee.userId,
+      projectManager:
+        projectPm?.code && projectPm?.name
+          ? {
+              code: projectPm.code,
+              name: projectPm.name,
+              userId: projectPm.userId,
+            }
+          : undefined,
       date: dayjs(overtime.otDate).hour(12).minute(0).second(0),
       description: [
         `OT ${dayjs(overtime.otDate).format(DATE_FORMAT)} · ${overtime.startTime}–${overtime.endTime}`,
@@ -46,9 +57,8 @@ export function AssignOtTaskModal({ open, overtime, onClose, onAssigned }: Assig
         .filter(Boolean)
         .join('\n'),
       lockProject: true,
-      lockStaff: true,
     };
-  }, [overtime]);
+  }, [overtime, otProject?.pm]);
 
   const handleClose = () => {
     setSelectedTaskId(null);
@@ -149,7 +159,7 @@ export function AssignOtTaskModal({ open, overtime, onClose, onAssigned }: Assig
                       {task.taskCode}
                       {task.date ? ` · ${dayjs(task.date).format(DATE_FORMAT)}` : ''}
                       {` · ${task.staffName || 'Chưa gán'}`}
-                      {` · ${task.staffConfirmation}`}
+                      {` · ${staffConfirmationLabel(task.staffConfirmation)}`}
                     </Typography.Text>
                   </div>
                 </label>
@@ -159,10 +169,9 @@ export function AssignOtTaskModal({ open, overtime, onClose, onAssigned }: Assig
         </div>
       </Modal>
 
-      <CreateTaskModal
+      <CreateTaskDrawer
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        taskCategory="project"
         preset={createPreset}
         onCreated={(taskId) => {
           linkTask(taskId);
