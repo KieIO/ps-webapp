@@ -16,6 +16,7 @@ export type MilestoneFormRow = {
   id?: string;
   name: string;
   deadlineDate: Dayjs;
+  outsideTimeline?: boolean;
   quantity?: number | null;
   unit?: MilestoneUnit | '';
   note?: string;
@@ -61,6 +62,7 @@ export function ProjectMilestonesFields({
                 add({
                   name: '',
                   deadlineDate: startDate ?? undefined,
+                  outsideTimeline: false,
                   quantity: null,
                   unit: 'others',
                   note: '',
@@ -99,36 +101,45 @@ function MilestoneRow({
     | MilestoneUnit
     | ''
     | undefined;
+  const outsideTimeline = Boolean(
+    Form.useWatch(['milestones', field.name, 'outsideTimeline'], form),
+  );
   const volumeRequired = isSlidesOrDaUnit(unit);
 
   return (
     <div className={localStyles.card}>
-      <div className={styles.row}>
-        <Form.Item
-          name={[field.name, 'name']}
-          label={milestoneFieldLabel('Tên mốc', true)}
-          rules={[{ required: true, message: 'Tên mốc là bắt buộc' }]}
-        >
-          <Input placeholder="VD: Nộp nháp, Deadline đợt 1" disabled={disabled} />
-        </Form.Item>
-        <Form.Item
-          name={[field.name, 'deadlineDate']}
-          label={milestoneFieldLabel('Ngày deadline', true)}
-          rules={[{ required: true, message: 'Ngày deadline là bắt buộc' }]}
-        >
-          <DatePicker
-            format={DATE_FORMAT}
-            style={{ width: '100%' }}
-            disabled={disabled}
-            disabledDate={(current) => {
-              if (!current) return false;
-              if (startDate && current.isBefore(startDate, 'day')) return true;
-              if (endDate && current.isAfter(endDate, 'day')) return true;
-              return false;
-            }}
-          />
-        </Form.Item>
-      </div>
+      <Form.Item
+        name={[field.name, 'name']}
+        label={milestoneFieldLabel('Tên mốc', true)}
+        rules={[{ required: true, message: 'Tên mốc là bắt buộc' }]}
+      >
+        <Input placeholder="VD: Nộp nháp, Deadline đợt 1" disabled={disabled} />
+      </Form.Item>
+      <Form.Item
+        name={[field.name, 'outsideTimeline']}
+        valuePropName="checked"
+        style={{ marginBottom: 12 }}
+        extra="Cho phép ngày nằm ngoài Start–End của project (feedback, todo, note)."
+      >
+        <Checkbox disabled={disabled}>Ngoài timeline dự án</Checkbox>
+      </Form.Item>
+      <Form.Item
+        name={[field.name, 'deadlineDate']}
+        label={milestoneFieldLabel('Ngày deadline', true)}
+        rules={[{ required: true, message: 'Ngày deadline là bắt buộc' }]}
+      >
+        <DatePicker
+          format={DATE_FORMAT}
+          style={{ width: '100%' }}
+          disabled={disabled}
+          disabledDate={(current) => {
+            if (!current || outsideTimeline) return false;
+            if (startDate && current.isBefore(startDate, 'day')) return true;
+            if (endDate && current.isAfter(endDate, 'day')) return true;
+            return false;
+          }}
+        />
+      </Form.Item>
       <div className={styles.rowThree}>
         <Form.Item name={[field.name, 'unit']} label={milestoneFieldLabel('Đơn vị')}>
           <Select

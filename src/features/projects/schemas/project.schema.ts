@@ -79,6 +79,11 @@ export const ProjectRecordSchema = z.object({
   urgency: z.enum(PROJECT_URGENCIES).optional().default('auto'),
   /** Stored override; when omitted, UI/API may derive from linked tasks. */
   completionPercent: z.number().min(0).max(100).optional(),
+  /**
+   * Optional customer/contract target slides. When set, Tracker Total shows
+   * `calculated/planned` (e.g. 83/139). Null/omit = show calculated only.
+   */
+  plannedSlides: z.number().int().min(1).nullish(),
   finishedDate: z.string().optional(),
   archivedAt: z.string().optional(),
   updatedAt: z.string().optional(),
@@ -143,6 +148,8 @@ export const UpdateProjectRequestSchema = z.object({
   urgency: z.enum(PROJECT_URGENCIES),
   /** When set, persists a manual % hoàn thành override (Evaluate project). */
   completionPercent: z.number().min(0).max(100).optional(),
+  /** Optional customer/contract target; `null` clears. */
+  plannedSlides: z.number().int().min(1).nullable().optional(),
   /**
    * When set (including `[]`), replaces all project milestones.
    * Omit to leave milestones unchanged (e.g. urgency-only / non-admin saves).

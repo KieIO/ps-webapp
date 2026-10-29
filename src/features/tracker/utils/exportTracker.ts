@@ -1,15 +1,16 @@
 import dayjs from 'dayjs';
 import { downloadCsv } from '@/shared/utils/exportCsv';
 import type { TrackerProject } from '../schemas/tracker.schema';
+import { formatTrackerTotal } from './formatTrackerTotal';
 
 export const exportTrackerToCsv = (projects: TrackerProject[], monthKey?: string): void => {
-  const monthSuffix = monthKey ? ` (${monthKey})` : '';
-  const headers = ['Project', 'PM/CM', 'Team', `Total / tháng${monthSuffix}`];
+  const headers = ['Project', 'PM/CM', 'Team', 'Total'];
+  void monthKey;
   const rows = projects.map((project) => [
     project.name,
     [project.pm, ...(project.cm ?? [])].filter(Boolean).join(' / '),
     project.team.join(', '),
-    project.totalSlides,
+    formatTrackerTotal(project),
   ]);
 
   const fileMonth = monthKey ?? dayjs().format('YYYY-MM');

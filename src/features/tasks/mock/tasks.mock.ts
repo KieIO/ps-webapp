@@ -26,12 +26,8 @@ import type {
   TaskHistoryListResponse,
 } from '../schemas/task.schema';
 import { UNASSIGNED_STAFF_LABEL } from '../constants';
-import { buildFallbackTaskHistory, getTaskDeadline } from '../utils/taskDetail';
-import {
-  assertCreativeDeadlineNotAfterPm,
-  normalizeTaskDateEnd,
-  normalizeTaskDateStart,
-} from '../utils/taskDates';
+import { buildFallbackTaskHistory } from '../utils/taskDetail';
+import { normalizeTaskDateEnd, normalizeTaskDateStart } from '../utils/taskDates';
 import { isTaskActiveOnWorkDate } from '../utils/taskWorkDate';
 import { computeTaskLevel } from '../utils/taskLevel';
 import { isStaffAssignable } from '../utils/staffAvailability';
@@ -752,14 +748,6 @@ export const mockUpdateMyTask = async (
     payload.technical,
     payload.contentProcessing,
   );
-  const department = current.department?.toLowerCase() ?? '';
-  if (
-    payload.creativeDeadline &&
-    (department === 'creative' || department.startsWith('creative'))
-  ) {
-    assertCreativeDeadlineNotAfterPm(payload.creativeDeadline, payload.date);
-  }
-
   const updated: MyTask = {
     ...current,
     taskName: payload.taskName,
@@ -1191,10 +1179,6 @@ export const mockAssignCreativeHead = async (
     }
   }
 
-  if (payload.creativeDeadline) {
-    assertCreativeDeadlineNotAfterPm(payload.creativeDeadline, getTaskDeadline(current));
-  }
-
   const updated: MyTask = {
     ...current,
     description,
@@ -1272,10 +1256,6 @@ export const mockAssignCreativeManager = async (
     if (current.quantity >= 1 && payload.quantity > current.quantity) {
       throw new Error(`số lượng không được lớn hơn SL hiện tại (${current.quantity})`);
     }
-    if (payload.creativeDeadline) {
-      assertCreativeDeadlineNotAfterPm(payload.creativeDeadline, getTaskDeadline(current));
-    }
-
     const updated: MyTask = {
       ...current,
       staff,
@@ -1327,10 +1307,6 @@ export const mockAssignCreativeManager = async (
     if (assignee && !isStaffAssignable(assignee.availability)) {
       throw new Error('Không thể giao cho nhân viên đang nghỉ phép');
     }
-    if (subtask.creativeDeadline) {
-      assertCreativeDeadlineNotAfterPm(subtask.creativeDeadline, getTaskDeadline(current));
-    }
-
     const name = subtask.name?.trim() || defaultSplitChildName(current.taskName);
     if (!name) {
       throw new Error('Mỗi task nhỏ cần tên');
@@ -1683,12 +1659,6 @@ export const mockUpdateCreativePipeline = async (
     payload.deadline === undefined || payload.deadline === null || payload.deadline === ''
       ? undefined
       : payload.deadline;
-  if (payload.creativeDeadline) {
-    assertCreativeDeadlineNotAfterPm(
-      payload.creativeDeadline,
-      nextDeadline || getTaskDeadline(currentAfterQty),
-    );
-  }
   const nextDate = nextDeadline ? normalizeTaskDateStart(nextDeadline) : currentAfterQty.date;
 
   const updated: MyTask = {

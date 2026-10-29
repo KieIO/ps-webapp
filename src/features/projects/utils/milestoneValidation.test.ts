@@ -30,6 +30,23 @@ describe('validateMilestones', () => {
     }
   });
 
+  it('allows deadline outside project range when outsideTimeline is set', () => {
+    expect(
+      validateMilestones(
+        [
+          {
+            ...base,
+            deadlineDate: '2026-10-15',
+            outsideTimeline: true,
+            unit: 'others',
+            quantity: null,
+          },
+        ],
+        ctx,
+      ),
+    ).toEqual({ ok: true });
+  });
+
   it('allows slides sum above the project totalSlides', () => {
     expect(
       validateMilestones(
@@ -157,6 +174,7 @@ describe('toReplaceMilestonePayload', () => {
         id: 'keep-me',
         name: 'A',
         deadlineDate: '2026-09-10',
+        outsideTimeline: false,
         quantity: 10,
         unit: 'slides',
         note: 'x',
@@ -166,6 +184,7 @@ describe('toReplaceMilestonePayload', () => {
         id: 'empty',
         name: 'B',
         deadlineDate: '2026-09-11',
+        outsideTimeline: false,
         quantity: null,
         unit: '',
         note: '',
@@ -174,6 +193,7 @@ describe('toReplaceMilestonePayload', () => {
       {
         name: 'C',
         deadlineDate: '2026-09-12',
+        outsideTimeline: false,
         quantity: 8,
         unit: 'others',
         note: '',

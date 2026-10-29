@@ -12,7 +12,7 @@ const toDay = (value: string) => dayjs(value).startOf('day');
 
 /**
  * Hard rules:
- * - deadline must fall within [startDate, endDate] (inclusive, by calendar day)
+ * - deadline must fall within [startDate, endDate] unless outsideTimeline is set
  * - volume: unit slides|da requires quantity > 0; empty unit allows null quantity
  * - milestone slide totals are not capped by the project's totalSlides
  */
@@ -55,7 +55,10 @@ export const validateMilestones = (
     if (!deadline.isValid()) {
       return { ok: false, message: `Mốc "${name}": ngày deadline không hợp lệ` };
     }
-    if (deadline.isBefore(start, 'day') || deadline.isAfter(end, 'day')) {
+    if (
+      !milestone.outsideTimeline &&
+      (deadline.isBefore(start, 'day') || deadline.isAfter(end, 'day'))
+    ) {
       return {
         ok: false,
         message: `Mốc "${name}": deadline phải nằm trong thời gian dự án`,
@@ -88,6 +91,7 @@ export const toReplaceMilestonePayload = (
     const payload: ProjectMilestoneInput = {
       name: item.name.trim(),
       deadlineDate: toMilestoneDateKey(item.deadlineDate),
+      outsideTimeline: Boolean(item.outsideTimeline),
       quantity: unit ? (item.quantity ?? null) : null,
       unit,
       note: item.note?.trim() ?? '',

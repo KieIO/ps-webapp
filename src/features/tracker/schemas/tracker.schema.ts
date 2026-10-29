@@ -36,6 +36,8 @@ export const TrackerProjectSchema = z.object({
   cm: z.array(z.string()).optional().default([]),
   team: z.array(z.string()),
   totalSlides: z.number().int().min(0),
+  /** Optional customer/contract target; UI shows calculated/planned when set. */
+  plannedSlides: z.number().int().min(1).nullish(),
   highlightSlides: z.boolean().optional(),
   urgency: z.enum(TRACKER_URGENCIES),
   /** Stored urgency setting (includes `auto`). Falls back to resolved urgency for older payloads. */

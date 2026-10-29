@@ -12,10 +12,9 @@ import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
 import type { MyTask } from '../../schemas/task.schema';
 import {
-  creativeDeadlineDisabledTime,
-  creativeDeadlineNotAfterPmRule,
+  creativeDeadlineFieldExtra,
   fromTaskDeadline,
-  isCreativeDeadlineDayAfterPm,
+  isCreativeDeadlineAfterPmDeadline,
   toTaskDeadline,
 } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
@@ -122,6 +121,7 @@ export function CreativeHeadAssignDrawer({
 
   const pmDeadlineLabel = task ? formatDeadlineShort(resolvePmDeadlineIso(task)) : '—';
   const pmDeadline = task ? fromTaskDeadline(resolvePmDeadlineIso(task)) : null;
+  const creativeAfterPm = isCreativeDeadlineAfterPmDeadline(creativeDeadlineWatch, pmDeadline);
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
 
   const cmOptions = useMemo(
@@ -293,10 +293,9 @@ export function CreativeHeadAssignDrawer({
                 name="creativeDeadline"
                 label={<CreativeDeadlineFieldLabel>Deadline Creative</CreativeDeadlineFieldLabel>}
                 className={styles.deadlineField}
-                rules={
-                  canEditCreativeDeadline ? [creativeDeadlineNotAfterPmRule(pmDeadline)] : undefined
+                extra={
+                  canEditCreativeDeadline ? creativeDeadlineFieldExtra(creativeAfterPm) : undefined
                 }
-                extra={canEditCreativeDeadline ? 'Không được sau deadline gốc.' : undefined}
               >
                 <DatePicker
                   showTime={{
@@ -309,8 +308,6 @@ export function CreativeHeadAssignDrawer({
                   disabled={readOnly || !canEditCreativeDeadline}
                   placeholder="Nội bộ"
                   showNow={false}
-                  disabledDate={(current) => isCreativeDeadlineDayAfterPm(current, pmDeadline)}
-                  disabledTime={(current) => creativeDeadlineDisabledTime(current, pmDeadline)}
                 />
               </Form.Item>
             </div>

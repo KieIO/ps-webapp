@@ -33,8 +33,7 @@ export const filterTrackerBlocksForMonth = (
 
 /**
  * Sum task quantities whose work day (`start`) falls in the month.
- * Overlapping multi-day bars still render via overlap, but quantity is attributed
- * once — to the start month — so August+September do not double-count.
+ * Kept for diagnostics / tests — the Total column uses project-wide totalSlides.
  */
 export const sumMonthTaskQuantity = (
   blocks: TrackerBlock[],
@@ -51,30 +50,25 @@ export const sumMonthTaskQuantity = (
   return Math.round(total);
 };
 
+/**
+ * Month picker only filters which task blocks render on the timeline.
+ * Total / highlight stay project-wide (API totalSlides), not recomputed per month.
+ */
 export const withMonthScopedTrackerMetrics = (
   project: TrackerProject,
   monthStart: string,
   monthEnd: string,
 ): TrackerProject => {
-  const blocks: TrackerBlock[] = [];
-  let totalSlides = 0;
-  for (const block of project.blocks) {
-    const isBar = isProjectTimelineBar(block, project.name);
-    if (isBar || blockOverlapsDateRange(block, monthStart, monthEnd)) {
-      blocks.push(block);
-    }
-    if (!isBar && block.start >= monthStart && block.start <= monthEnd) {
-      totalSlides += block.quantity ?? 0;
-    }
-  }
-  const roundedSlides = Math.round(totalSlides);
+  const blocks = filterTrackerBlocksForMonth(project.blocks, project.name, monthStart, monthEnd);
+  const totalSlides = Math.round(project.totalSlides);
   return {
     ...project,
     blocks,
-    totalSlides: roundedSlides,
+    totalSlides,
     highlightSlides:
       project.urgency === 'red' ||
       project.urgency === 'orange' ||
-      roundedSlides >= slidesHighlightThreshold,
+      project.highlightSlides ||
+      totalSlides >= slidesHighlightThreshold,
   };
 };

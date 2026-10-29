@@ -65,57 +65,20 @@ export const normalizeTaskDateEnd = (value: string): string =>
 export const formatTaskDateTime = (value: string): string =>
   dayjs.utc(value).format(DATETIME_FORMAT);
 
-export const CREATIVE_DEADLINE_AFTER_PM_MESSAGE = 'Creative deadline không được sau deadline PM';
+/** Soft warning under Creative deadline when it is after Deadline PM (allowed, not blocked). */
+export const CREATIVE_DEADLINE_AFTER_PM_WARNING = 'Đang sau deadline PM.';
 
-/** Shown beside Creative deadline fields. Same rule as the picker lock. */
-export const CREATIVE_DEADLINE_WITHIN_PM_TOOLTIP =
-  'Không được sau deadline PM. Lịch khóa ngày và giờ trễ hơn.';
+/** Info tooltip on the Creative deadline label. */
+export const CREATIVE_DEADLINE_FIELD_TOOLTIP =
+  'Mốc nội bộ Creative. Có thể sau deadline PM — UI sẽ cảnh báo.';
 
-/** True when the picker value is strictly later than the PM deadline. Equal is allowed. */
+/** True when the picker value is strictly later than the PM deadline. Equal is fine. */
 export const isCreativeDeadlineAfterPmDeadline = (
   creative: Dayjs | null | undefined,
   pmDeadline: Dayjs | null | undefined,
 ): boolean => Boolean(creative?.isValid() && pmDeadline?.isValid() && creative.isAfter(pmDeadline));
 
-export const creativeDeadlineNotAfterPmRule = (pmDeadline: Dayjs | null | undefined) => ({
-  validator: async (_rule: unknown, value: Dayjs | null | undefined) => {
-    if (isCreativeDeadlineAfterPmDeadline(value, pmDeadline)) {
-      throw new Error(CREATIVE_DEADLINE_AFTER_PM_MESSAGE);
-    }
-  },
-});
-
-/** Disable calendar days after the PM deadline day. */
-export const isCreativeDeadlineDayAfterPm = (
-  current: Dayjs | null | undefined,
-  pmDeadline: Dayjs | null | undefined,
-): boolean =>
-  Boolean(current?.isValid() && pmDeadline?.isValid() && current.isAfter(pmDeadline, 'day'));
-
-const intsFrom = (start: number, endExclusive: number): number[] =>
-  Array.from({ length: Math.max(0, endExclusive - start) }, (_, index) => start + index);
-
-/** Disable clock times later than the PM deadline on that same day. */
-export const creativeDeadlineDisabledTime = (
-  current: Dayjs | null | undefined,
-  pmDeadline: Dayjs | null | undefined,
-): {
-  disabledHours?: () => number[];
-  disabledMinutes?: (hour: number) => number[];
-} => {
-  if (!current?.isValid() || !pmDeadline?.isValid() || !current.isSame(pmDeadline, 'day')) {
-    return {};
-  }
-  const hour = pmDeadline.hour();
-  const minute = pmDeadline.minute();
-  return {
-    disabledHours: () => intsFrom(hour + 1, 24),
-    disabledMinutes: (selectedHour: number) =>
-      selectedHour === hour ? intsFrom(minute + 1, 60) : [],
-  };
-};
-
-/** Stored ISO comparison. Empty creative deadline is not a violation. */
+/** Stored ISO comparison. Empty creative deadline is not after PM. */
 export const isCreativeDeadlineIsoAfterPm = (
   creative: string | null | undefined,
   pmDeadline: string | null | undefined,
@@ -126,13 +89,15 @@ export const isCreativeDeadlineIsoAfterPm = (
   return creativeAt.isValid() && pmAt.isValid() && creativeAt.isAfter(pmAt);
 };
 
-export const assertCreativeDeadlineNotAfterPm = (
-  creative: string | null | undefined,
-  pmDeadline: string | null | undefined,
-): void => {
-  if (isCreativeDeadlineIsoAfterPm(creative, pmDeadline)) {
-    throw new Error(CREATIVE_DEADLINE_AFTER_PM_MESSAGE);
-  }
+/** Form.Item `extra`: optional base hint + soft after-PM warning. */
+export const creativeDeadlineFieldExtra = (
+  afterPm: boolean,
+  base?: string | null,
+): string | undefined => {
+  const parts = [base?.trim(), afterPm ? CREATIVE_DEADLINE_AFTER_PM_WARNING : null].filter(
+    (part): part is string => Boolean(part),
+  );
+  return parts.length > 0 ? parts.join(' ') : undefined;
 };
 
 /**

@@ -28,7 +28,7 @@ describe('monthScopedTracker', () => {
     expect(filtered.map((entry) => entry.label)).toEqual([projectName, '122 Slides']);
   });
 
-  it('sums task quantity for the selected month only', () => {
+  it('sums task quantity for the selected month only (helper)', () => {
     const blocks = [
       block({ start: '2026-05-01', end: '2026-12-31', label: projectName }),
       block({ start: '2026-07-15', end: '2026-07-15', label: 'Slides', quantity: 1000 }),
@@ -39,7 +39,7 @@ describe('monthScopedTracker', () => {
     expect(sumMonthTaskQuantity(blocks, projectName, '2026-08-01', '2026-08-31')).toBe(109);
   });
 
-  it('rewrites totalSlides from month scope', () => {
+  it('keeps project-wide totalSlides when scoping the timeline month', () => {
     const project: TrackerProject = {
       id: 'p1',
       name: projectName,
@@ -56,12 +56,12 @@ describe('monthScopedTracker', () => {
     };
 
     const scoped = withMonthScopedTrackerMetrics(project, '2026-08-01', '2026-08-31');
-    expect(scoped.totalSlides).toBe(50);
+    expect(scoped.totalSlides).toBe(9999);
     expect(scoped.highlightSlides).toBe(true);
     expect(scoped.blocks).toHaveLength(2);
   });
 
-  it('does not fall back to all-time total when the month has no quantities', () => {
+  it('still keeps project total when the visible month has no task quantities', () => {
     const project: TrackerProject = {
       id: 'p1',
       name: projectName,
@@ -78,12 +78,12 @@ describe('monthScopedTracker', () => {
     };
 
     const scoped = withMonthScopedTrackerMetrics(project, '2026-08-01', '2026-08-31');
-    expect(scoped.totalSlides).toBe(0);
-    expect(scoped.highlightSlides).toBe(false);
+    expect(scoped.totalSlides).toBe(9999);
+    expect(scoped.highlightSlides).toBe(true);
     expect(scoped.blocks.map((entry) => entry.label)).toEqual([projectName]);
   });
 
-  it('attributes spanning-block quantity to the start month only', () => {
+  it('attributes spanning-block quantity to the start month only in the helper', () => {
     const blocks = [
       block({ start: '2026-08-31', end: '2026-09-02', label: 'Slides', quantity: 40 }),
     ];
@@ -108,7 +108,7 @@ describe('monthScopedTracker', () => {
       blocks,
     };
     const september = withMonthScopedTrackerMetrics(project, '2026-09-01', '2026-09-30');
-    expect(september.totalSlides).toBe(0);
+    expect(september.totalSlides).toBe(40);
     expect(september.blocks.map((entry) => entry.label)).toEqual(['Slides']);
   });
 });

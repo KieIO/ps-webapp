@@ -6,6 +6,7 @@ import {
   formatMilestoneQuantity,
   groupMilestonesByDate,
   isMilestoneGroupCompleted,
+  isMilestoneGroupOutsideTimeline,
 } from './milestoneMarkers';
 
 const m = (
@@ -109,6 +110,23 @@ describe('isMilestoneGroupCompleted', () => {
       isMilestoneGroupCompleted([
         m({ id: '1', deadlineDate: '2026-09-10', completed: true }),
         m({ id: '2', deadlineDate: '2026-09-10', completed: false }),
+      ]),
+    ).toBe(false);
+  });
+});
+
+describe('isMilestoneGroupOutsideTimeline', () => {
+  it('is amber when every incomplete milestone is outside timeline', () => {
+    expect(
+      isMilestoneGroupOutsideTimeline([
+        m({ id: '1', deadlineDate: '2026-09-10', outsideTimeline: true }),
+        m({ id: '2', deadlineDate: '2026-09-10', outsideTimeline: true, completed: true }),
+      ]),
+    ).toBe(true);
+    expect(
+      isMilestoneGroupOutsideTimeline([
+        m({ id: '1', deadlineDate: '2026-09-10', outsideTimeline: true }),
+        m({ id: '2', deadlineDate: '2026-09-10', outsideTimeline: false }),
       ]),
     ).toBe(false);
   });

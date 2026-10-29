@@ -49,6 +49,17 @@ export const formatMilestoneNameNote = (milestone: ProjectMilestone): string => 
 export const isMilestoneGroupCompleted = (milestones: readonly ProjectMilestone[]): boolean =>
   milestones.length > 0 && milestones.every((item) => Boolean(item.completed));
 
+/**
+ * Incomplete same-day stack uses the amber “outside timeline” style when every
+ * incomplete milestone is flagged outsideTimeline (feedback / todo / note).
+ */
+export const isMilestoneGroupOutsideTimeline = (
+  milestones: readonly ProjectMilestone[],
+): boolean => {
+  const incomplete = milestones.filter((item) => !item.completed);
+  return incomplete.length > 0 && incomplete.every((item) => Boolean(item.outsideTimeline));
+};
+
 /** Milestones visible in the selected month (by deadline date). */
 export const filterMilestonesInMonth = (
   milestones: readonly ProjectMilestone[],

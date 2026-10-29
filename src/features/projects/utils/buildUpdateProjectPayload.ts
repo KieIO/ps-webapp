@@ -21,5 +21,6 @@ export const buildUpdateProjectPayload = (
   note: project.note,
   status: project.status,
   urgency: project.urgency,
+  plannedSlides: project.plannedSlides ?? null,
   ...overrides,
 });

@@ -30,11 +30,10 @@ import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateCreativePipeline } from '../../hooks/useUpdateCreativePipeline';
 import type { MyTask } from '../../schemas/task.schema';
 import {
-  creativeDeadlineDisabledTime,
-  creativeDeadlineNotAfterPmRule,
+  creativeDeadlineFieldExtra,
   formatTaskDateTime,
   fromTaskDeadline,
-  isCreativeDeadlineDayAfterPm,
+  isCreativeDeadlineAfterPmDeadline,
   toTaskDeadline,
 } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
@@ -204,6 +203,10 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     : pmDeadlineIso
       ? fromTaskDeadline(pmDeadlineIso)
       : null;
+  const creativeAfterPm = isCreativeDeadlineAfterPmDeadline(
+    watchedCreativeDeadline,
+    pmDeadlineLimit,
+  );
   const pmDeadlineLabel = pmDeadlineIso ? formatTaskDateTime(pmDeadlineIso) : '—';
   const creativeDeadlineLabel = task?.creativeDeadline
     ? formatTaskDateTime(task.creativeDeadline)
@@ -1140,17 +1143,12 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                       <CreativeDeadlineFieldLabel>Creative deadline</CreativeDeadlineFieldLabel>
                     }
                     className={styles.deadlineField}
-                    rules={
-                      canEditCreativeDl
-                        ? [creativeDeadlineNotAfterPmRule(pmDeadlineLimit)]
-                        : undefined
-                    }
                     extra={
                       !canEditCreativeDl
                         ? role === ROLES.CREATIVE_MANAGER
                           ? 'CM chỉ sửa creative deadline sau khi đã giao Staff.'
                           : CREATIVE_DEADLINE_META_EDIT_HINT
-                        : 'Không được sau deadline PM.'
+                        : creativeDeadlineFieldExtra(creativeAfterPm)
                     }
                   >
                     <DatePicker
@@ -1164,12 +1162,6 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                       disabled={!canEdit || !canEditCreativeDl}
                       placeholder="Nội bộ"
                       showNow={false}
-                      disabledDate={(current) =>
-                        isCreativeDeadlineDayAfterPm(current, pmDeadlineLimit)
-                      }
-                      disabledTime={(current) =>
-                        creativeDeadlineDisabledTime(current, pmDeadlineLimit)
-                      }
                     />
                   </Form.Item>
                 </div>

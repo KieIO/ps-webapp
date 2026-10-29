@@ -67,6 +67,11 @@ export const ProjectMilestoneSchema = z
     name: z.string().min(1),
     /** Calendar date YYYY-MM-DD (or ISO; UI normalizes to date). */
     deadlineDate: z.string().min(1),
+    /**
+     * When true, deadline may fall outside the project Start–End range
+     * (feedback / todo / note markers).
+     */
+    outsideTimeline: z.boolean().optional().default(false),
     /** Null when unit is empty (non-volume milestone). */
     quantity: z.preprocess(normalizeQuantity, z.number().positive().nullable()),
     /** `others` | `slides` | `da` | `""` */
@@ -84,6 +89,7 @@ export const ProjectMilestoneInputSchema = z
     id: z.string().optional(),
     name: z.string().min(1, 'Tên mốc là bắt buộc'),
     deadlineDate: z.string().min(1, 'Ngày deadline là bắt buộc'),
+    outsideTimeline: z.boolean().optional().default(false),
     quantity: z.preprocess(normalizeQuantity, z.number().positive().nullable()),
     unit: z.preprocess(normalizeUnit, z.enum(MILESTONE_WIRE_UNITS)),
     note: z.string().optional().default(''),

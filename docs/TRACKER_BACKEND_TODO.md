@@ -63,6 +63,7 @@ interface TrackerProject {
   pm: string; // display name
   team: string[]; // team member display names
   totalSlides: number;
+  plannedSlides?: number | null; // optional customer/contract target; UI shows calculated/planned
   highlightSlides?: boolean; // highlight count when urgent / large
   urgency: 'red' | 'orange' | 'green' | 'gray';
   blocks: TrackerBlock[];

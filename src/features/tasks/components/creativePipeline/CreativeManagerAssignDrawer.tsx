@@ -31,11 +31,10 @@ import {
 } from '../../utils/creativePipeline';
 import { openDeclineReasonModal } from '../../utils/declineReasonModal';
 import {
-  creativeDeadlineDisabledTime,
-  creativeDeadlineNotAfterPmRule,
+  creativeDeadlineFieldExtra,
   formatTaskDateTime,
   fromTaskDeadline,
-  isCreativeDeadlineDayAfterPm,
+  isCreativeDeadlineAfterPmDeadline,
   toTaskDeadline,
 } from '../../utils/taskDates';
 import { getTaskDeadline } from '../../utils/taskDetail';
@@ -136,6 +135,10 @@ export function CreativeManagerAssignDrawer({
   const pmDeadline = task ? fromTaskDeadline(getTaskDeadline(task)) : null;
   const pmDeadlineLabel = task ? formatTaskDateTime(getTaskDeadline(task)) : '—';
   const creativeDeadlineLabel = task ? resolveCreativeDeadlineLabel(task) : '—';
+  const wholeCreativeAfterPm = isCreativeDeadlineAfterPmDeadline(
+    watchedCreativeDeadline,
+    pmDeadline,
+  );
   const briefText = task?.description?.trim() || 'Chưa có mô tả';
   const briefLong = briefText.length > 140 || briefText.includes('\n');
   const splitLockedTotal = useMemo(
@@ -495,8 +498,10 @@ export function CreativeManagerAssignDrawer({
                       label={
                         <CreativeDeadlineFieldLabel>Creative deadline</CreativeDeadlineFieldLabel>
                       }
-                      rules={[creativeDeadlineNotAfterPmRule(pmDeadline)]}
-                      extra="Bỏ trống = giữ deadline hiện có. Không được sau deadline PM."
+                      extra={creativeDeadlineFieldExtra(
+                        wholeCreativeAfterPm,
+                        'Bỏ trống = giữ deadline hiện có.',
+                      )}
                     >
                       <DatePicker
                         showTime={{
@@ -507,12 +512,6 @@ export function CreativeManagerAssignDrawer({
                         style={{ width: '100%' }}
                         allowClear
                         showNow={false}
-                        disabledDate={(current) =>
-                          isCreativeDeadlineDayAfterPm(current, pmDeadline)
-                        }
-                        disabledTime={(current) =>
-                          creativeDeadlineDisabledTime(current, pmDeadline)
-                        }
                       />
                     </Form.Item>
                   </div>
@@ -588,8 +587,13 @@ export function CreativeManagerAssignDrawer({
                                     Creative deadline
                                   </CreativeDeadlineFieldLabel>
                                 }
-                                rules={[creativeDeadlineNotAfterPmRule(pmDeadline)]}
-                                extra="Không được sau deadline PM. Bỏ trống = dùng deadline hiện có."
+                                extra={creativeDeadlineFieldExtra(
+                                  isCreativeDeadlineAfterPmDeadline(
+                                    watchedSubtasks?.[index]?.creativeDeadline,
+                                    pmDeadline,
+                                  ),
+                                  'Bỏ trống = dùng deadline hiện có.',
+                                )}
                               >
                                 <DatePicker
                                   showTime={{
@@ -600,12 +604,6 @@ export function CreativeManagerAssignDrawer({
                                   style={{ width: '100%' }}
                                   allowClear
                                   showNow={false}
-                                  disabledDate={(current) =>
-                                    isCreativeDeadlineDayAfterPm(current, pmDeadline)
-                                  }
-                                  disabledTime={(current) =>
-                                    creativeDeadlineDisabledTime(current, pmDeadline)
-                                  }
                                 />
                               </Form.Item>
                             </div>

@@ -1,4 +1,4 @@
-import { DatePicker, Form, Input, Modal, Select, message } from 'antd';
+import { DatePicker, Form, Input, InputNumber, Modal, Select, message } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
@@ -98,6 +98,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
         note: project.note,
         status: project.status,
         urgency: project.urgency,
+        plannedSlides: project.plannedSlides ?? null,
         milestones: canEditMilestones ? milestonesToFormRows(project.milestones) : undefined,
       });
     }
@@ -170,6 +171,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
       note: values.note ?? '',
       status: values.status,
       urgency: values.urgency,
+      plannedSlides: values.plannedSlides ?? null,
     };
 
     if (canEditMilestones) {
@@ -276,6 +278,14 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
 
           <Form.Item name="brief" label="Brief">
             <Input.TextArea rows={2} />
+          </Form.Item>
+
+          <Form.Item
+            name="plannedSlides"
+            label="Planned slides"
+            extra="Optional — Tracker Total shows calculated/planned (e.g. 83/139)"
+          >
+            <InputNumber min={1} precision={0} style={{ width: '100%' }} placeholder="e.g. 139" />
           </Form.Item>
         </section>
 

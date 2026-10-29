@@ -35,6 +35,7 @@ const normalizeStoredMilestones = (
       id: item.id?.trim() || `ms-${crypto.randomUUID().slice(0, 8)}`,
       name: item.name.trim(),
       deadlineDate: toMilestoneDateKey(item.deadlineDate),
+      outsideTimeline: Boolean(item.outsideTimeline),
       quantity: unit ? (item.quantity ?? null) : null,
       unit,
       note: item.note?.trim() ?? '',
@@ -197,6 +198,7 @@ export const mockCreateProject = async (
     note: payload.note,
     status: payload.status,
     urgency: payload.urgency,
+    plannedSlides: payload.plannedSlides ?? null,
     finishedDate: payload.status === 'finish' ? now : undefined,
     createdById: creatorUserId,
     updatedAt: now,
@@ -252,6 +254,8 @@ export const mockUpdateProject = async (
     note: payload.note,
     status: payload.status,
     urgency: payload.urgency,
+    plannedSlides:
+      payload.plannedSlides !== undefined ? payload.plannedSlides : current.plannedSlides,
     finishedDate,
     milestones:
       payload.milestones !== undefined

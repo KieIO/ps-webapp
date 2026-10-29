@@ -40,6 +40,7 @@ interface MilestoneQuickModalProps {
 
 type FormValues = {
   name: string;
+  outsideTimeline?: boolean;
   deadlineDate: Dayjs;
   quantity?: number | null;
   unit?: MilestoneUnit | null;
@@ -51,6 +52,7 @@ const toInputFromExisting = (item: ProjectMilestone): ProjectMilestoneInput => (
   id: item.id,
   name: item.name,
   deadlineDate: toMilestoneDateKey(item.deadlineDate),
+  outsideTimeline: Boolean(item.outsideTimeline),
   quantity: item.quantity,
   unit: isSlidesOrDaUnit(item.unit) || item.unit === 'others' ? item.unit : 'others',
   note: item.note ?? '',
@@ -61,6 +63,7 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
   const [form] = Form.useForm<FormValues>();
   const { mutate, isPending } = useReplaceProjectMilestones();
   const watchedUnit = Form.useWatch('unit', form);
+  const outsideTimeline = Boolean(Form.useWatch('outsideTimeline', form));
 
   useEffect(() => {
     if (!target) return;
@@ -71,6 +74,7 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
 
     form.setFieldsValue({
       name: existing?.name ?? '',
+      outsideTimeline: Boolean(existing?.outsideTimeline),
       deadlineDate: dayjs(existing?.deadlineDate ?? target.deadlineDate),
       quantity: existing?.quantity ?? undefined,
       unit:
@@ -99,6 +103,7 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
     const nextItem: ProjectMilestoneInput = {
       name: values.name.trim(),
       deadlineDate: toMilestoneDateKey(values.deadlineDate.toISOString()),
+      outsideTimeline: Boolean(values.outsideTimeline),
       quantity,
       unit,
       note: values.note?.trim() ?? '',
@@ -228,6 +233,14 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
           <Input placeholder="VD: Nộp nháp, Deadline đợt 1" />
         </Form.Item>
         <Form.Item
+          name="outsideTimeline"
+          valuePropName="checked"
+          style={{ marginBottom: 12 }}
+          extra="Bật khi mốc là feedback, todo hoặc ghi chú ngày nằm ngoài Start–End của project. Chấm trên Tracker sẽ màu cam."
+        >
+          <Checkbox>Ngoài timeline dự án</Checkbox>
+        </Form.Item>
+        <Form.Item
           name="deadlineDate"
           label={milestoneFieldLabel('Ngày deadline', true)}
           rules={[{ required: true, message: 'Ngày deadline là bắt buộc' }]}
@@ -236,7 +249,7 @@ export function MilestoneQuickModal({ target, onClose }: MilestoneQuickModalProp
             format={DATE_FORMAT}
             style={{ width: '100%' }}
             disabledDate={(current) => {
-              if (!current) return false;
+              if (!current || outsideTimeline) return false;
               if (start && current.isBefore(start, 'day')) return true;
               if (end && current.isAfter(end, 'day')) return true;
               return false;

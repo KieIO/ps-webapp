@@ -36,14 +36,13 @@ Khi bấm một ô task trên Tracker, hệ thống mở Project Tasks với pro
 
 ---
 
-## 3. Tổng tháng trên Tracker
+## 3. Cột Total trên Tracker
 
-Cột **TOTAL / THÁNG** trên Tracker cộng số lượng các ô task có **ngày bắt đầu ô** nằm trong tháng đang xem (đã loại task cha đã chia nhỏ và task từ chối / hủy theo quy tắc đếm khối lượng). Vì vậy tổng tháng có thể khác tổng Qty trên tab Tasks của project nếu:
+Cột **Total** là **tổng khối lượng toàn project** (theo quy tắc đếm trên Tracker: loại task cha đã chia nhỏ và task từ chối / hủy). Đổi tháng trên lịch **không** đổi con số này; tháng chỉ lọc ô task hiện trên timeline.
 
-- Bạn đang xem **tháng khác** với phần lớn deadline trên bảng, hoặc
-- Bảng đang ở chế độ khác (trước đây ẩn task con; nay khi xem theo project thì đã gồm con).
+Nếu project có **Planned slides** (nhập lúc tạo / sửa project — số tổng khách cần, tuỳ chọn), cột hiện dạng `tính được/kế hoạch` (ví dụ `83/139`). Nếu không nhập, chỉ hiện số tự tính (ví dụ `83`).
 
-Đối chiếu nhanh: cùng project + cùng tháng ngày task + gồm task con → các ô Tracker và dòng bảng phải khớp tên / khối lượng.
+Đối chiếu nhanh với tab Tasks (đã gồm task con khi xem theo project): tổng Qty hợp lệ trên bảng gần với phần số tự tính trên Tracker.
 
 ---
 

@@ -14,6 +14,7 @@ export const milestonesToFormRows = (
     id: milestone.id,
     name: milestone.name,
     deadlineDate: dayjs(milestone.deadlineDate),
+    outsideTimeline: Boolean(milestone.outsideTimeline),
     quantity: milestone.quantity ?? undefined,
     unit:
       isSlidesOrDaUnit(milestone.unit) || milestone.unit === 'others' ? milestone.unit : 'others',
@@ -36,6 +37,7 @@ export const formRowsToMilestoneInputs = (
       deadlineDate: toMilestoneDateKey(
         dayjs.isDayjs(row.deadlineDate) ? row.deadlineDate.toISOString() : String(row.deadlineDate),
       ),
+      outsideTimeline: Boolean(row.outsideTimeline),
       quantity,
       unit,
       note: row.note?.trim() ?? '',

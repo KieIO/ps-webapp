@@ -62,14 +62,15 @@ PM có quyền tương tự Admin cho **các thao tác trên Tracker**: urgency,
 
 ## 4. Mỗi mốc gồm gì?
 
-| Trường        | Bắt buộc      | Mô tả                                                                |
-| ------------- | ------------- | -------------------------------------------------------------------- |
-| Tên mốc       | Có            | Ví dụ: “Batch 1”, “Kickoff”                                          |
-| Ngày deadline | Có            | Ngày giao (calendar date)                                            |
-| Đơn vị        | Không         | Mặc định **Others**. Có thể đổi sang Slides hoặc DA. Không có dấu \* |
-| Khối lượng    | Khi Slides/DA | Others: có thể để trống hoặc nhập số nguyên ≥ 1. Slides/DA: bắt buộc |
-| Ghi chú       | Không         | Tuỳ chọn                                                             |
-| Hoàn thành    | Không         | Checkbox trong form sửa; chấm Tracker đỏ → xanh                      |
+| Trường               | Bắt buộc      | Mô tả                                                                                             |
+| -------------------- | ------------- | ------------------------------------------------------------------------------------------------- |
+| Tên mốc              | Có            | Ví dụ: “Batch 1”, “Kickoff”                                                                       |
+| Ngoài timeline dự án | Không         | Bật khi ngày mốc **không** nằm trong Start–End project (feedback, todo, note). Chấm Tracker cam   |
+| Ngày deadline        | Có            | Ngày giao (calendar date). Mặc định chỉ chọn trong timeline; bỏ ràng buộc nếu tick ngoài timeline |
+| Đơn vị               | Không         | Mặc định **Others**. Có thể đổi sang Slides hoặc DA. Không có dấu \*                              |
+| Khối lượng           | Khi Slides/DA | Others: có thể để trống hoặc nhập số nguyên ≥ 1. Slides/DA: bắt buộc                              |
+| Ghi chú              | Không         | Tuỳ chọn                                                                                          |
+| Hoàn thành           | Không         | Checkbox trong form sửa; chấm Tracker đỏ/cam → xanh                                               |
 
 Tên mốc và ngày deadline luôn có dấu _. Đơn vị không có. Khối lượng có dấu _ khi đơn vị là Slides hoặc DA.
 
@@ -86,6 +87,7 @@ Tên mốc và ngày deadline luôn có dấu _. Đơn vị không có. Khối l
 
 - Mốc là **điểm ngày**, không kéo dài theo range làm việc của project.
 - **Múi giờ Việt Nam (Asia/Ho_Chi_Minh):** ngày timeline project, mốc giao và thanh Tracker đều tính theo **ngày lịch VN** (không cắt theo UTC). Ví dụ deadline hiển thị **16/10** thì thanh timeline phải kéo hết cột **16/10**.
+- Mặc định ngày deadline phải nằm trong **Start–End** của project. Tick **Ngoài timeline dự án** khi cần gắn ngày feedback / todo / note ngoài khoảng đó; chấm Tracker dùng màu **cam** (khác đỏ trong timeline).
 - Tổng khối lượng các mốc **không** bị chặn bởi `totalSlides` của project. Mốc Slides/DA có thể lớn hơn tổng slides đang có trên task.
 - Cùng một ngày: nhiều mốc hợp lệ; Tracker hiển thị **một chấm** + badge. Chấm xanh chỉ khi **mọi** mốc cùng ngày đều hoàn thành.
 - Project archived / finish / cancel: không sửa mốc.

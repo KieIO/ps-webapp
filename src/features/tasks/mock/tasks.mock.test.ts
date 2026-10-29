@@ -303,14 +303,14 @@ describe('creative CH/CM pipeline', () => {
     expect(updated.creativeDeadline).toBe(creativeDeadline);
   });
 
-  it('rejects a creative deadline after the PM deadline', async () => {
-    await expect(
-      mockAssignCreativeHead(
-        'task-ch-031',
-        { cmUserId: 'dev-creative_manager', creativeDeadline: '2026-08-22T09:30:00Z' },
-        'dev-creative_head',
-      ),
-    ).rejects.toThrow(/không được sau deadline PM/);
+  it('allows a creative deadline after the PM deadline', async () => {
+    const creativeDeadline = '2026-08-22T09:30:00Z';
+    const updated = await mockAssignCreativeHead(
+      'task-ch-031',
+      { cmUserId: 'dev-creative_manager', creativeDeadline },
+      'dev-creative_head',
+    );
+    expect(updated.creativeDeadline).toBe(creativeDeadline);
   });
 
   it('defaults creative deadline to the Admin/PM deadline when CH leaves it empty', async () => {

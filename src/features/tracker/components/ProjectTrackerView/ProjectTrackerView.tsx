@@ -59,6 +59,7 @@ import {
   resolveBarClickDate,
 } from '../../utils/calendar';
 import { exportTrackerToCsv } from '../../utils/exportTracker';
+import { formatTrackerTotal } from '../../utils/formatTrackerTotal';
 import {
   isProjectTimelineBar,
   withMonthScopedTrackerMetrics,
@@ -115,7 +116,11 @@ function TrackerLegendContent() {
         <ul className={styles.legendPopoverList}>
           <li className={styles.legendPopoverItem}>
             <span className={styles.legendMilestoneDot} />
-            Chưa hoàn thành
+            Trong timeline · chưa xong
+          </li>
+          <li className={styles.legendPopoverItem}>
+            <span className={styles.legendMilestoneDotOutside} />
+            Ngoài timeline · chưa xong
           </li>
           <li className={styles.legendPopoverItem}>
             <span className={styles.legendMilestoneDotCompleted} />
@@ -442,7 +447,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                 <div className={styles.leftHeaderTop}>
                   <div className={styles.leftHeaderName}>{PROJECT_NAME_COLUMN_LABEL}</div>
                   <div className={styles.leftHeaderTeam}>PM/CM</div>
-                  <div className={styles.leftHeaderSlides}>Total / tháng</div>
+                  <div className={styles.leftHeaderSlides}>Total</div>
                 </div>
                 <div
                   className={classNames(styles.offRowLabel, {
@@ -497,7 +502,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                           [styles.slidesUrgent]: project.highlightSlides,
                         })}
                       >
-                        {project.totalSlides.toLocaleString()}
+                        {formatTrackerTotal(project)}
                       </div>
                     </div>
                   );

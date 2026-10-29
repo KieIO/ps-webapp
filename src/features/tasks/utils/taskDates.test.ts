@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
-  assertCreativeDeadlineNotAfterPm,
   calendarDateFromTaskDeadline,
   clampDeadlineToProjectRange,
-  creativeDeadlineDisabledTime,
+  creativeDeadlineFieldExtra,
+  CREATIVE_DEADLINE_AFTER_PM_WARNING,
   defaultTaskDeadline,
   formatTaskDateTime,
   fromTaskDeadline,
   isCreativeDeadlineAfterPmDeadline,
-  isCreativeDeadlineDayAfterPm,
   isCreativeDeadlineIsoAfterPm,
   isOutsideProjectDateRange,
   normalizeTaskDateEnd,
@@ -27,28 +26,24 @@ describe('taskDates', () => {
     expect(toTaskDeadline(dayjs('2026-06-13T18:30:00'))).toBe('2026-06-13T18:30:00Z');
   });
 
-  it('rejects a creative deadline later than the PM deadline', () => {
+  it('flags a creative deadline later than the PM deadline for soft warning', () => {
     const pm = dayjs('2026-10-28T17:22:00');
     const later = dayjs('2026-10-30T17:22:00');
     const same = dayjs('2026-10-28T17:22:00');
     expect(isCreativeDeadlineAfterPmDeadline(later, pm)).toBe(true);
     expect(isCreativeDeadlineAfterPmDeadline(same, pm)).toBe(false);
-    expect(isCreativeDeadlineDayAfterPm(later, pm)).toBe(true);
-    expect(isCreativeDeadlineDayAfterPm(same, pm)).toBe(false);
-    expect(creativeDeadlineDisabledTime(same, pm).disabledHours?.()).toEqual([
-      18, 19, 20, 21, 22, 23,
-    ]);
-    expect(creativeDeadlineDisabledTime(same, pm).disabledMinutes?.(17)).toEqual(
-      Array.from({ length: 37 }, (_, index) => 23 + index),
-    );
-    expect(creativeDeadlineDisabledTime(later, pm).disabledHours).toBeUndefined();
     expect(isCreativeDeadlineIsoAfterPm('2026-10-30T17:22:00Z', '2026-10-28T17:22:00Z')).toBe(true);
     expect(isCreativeDeadlineIsoAfterPm('2026-10-28T17:22:00Z', '2026-10-28T17:22:00Z')).toBe(
       false,
     );
-    expect(() =>
-      assertCreativeDeadlineNotAfterPm('2026-10-30T17:22:00Z', '2026-10-28T17:22:00Z'),
-    ).toThrow(/không được sau deadline PM/);
+    expect(creativeDeadlineFieldExtra(true)).toBe(CREATIVE_DEADLINE_AFTER_PM_WARNING);
+    expect(creativeDeadlineFieldExtra(true, 'Bỏ trống = giữ deadline hiện có.')).toBe(
+      `Bỏ trống = giữ deadline hiện có. ${CREATIVE_DEADLINE_AFTER_PM_WARNING}`,
+    );
+    expect(creativeDeadlineFieldExtra(false, 'Bỏ trống = giữ deadline hiện có.')).toBe(
+      'Bỏ trống = giữ deadline hiện có.',
+    );
+    expect(creativeDeadlineFieldExtra(false)).toBeUndefined();
   });
 
   it('loads stored deadlines into picker wall-clock values', () => {

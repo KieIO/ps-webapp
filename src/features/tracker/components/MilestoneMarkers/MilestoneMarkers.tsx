@@ -7,6 +7,7 @@ import {
   formatMilestoneQuantity,
   groupMilestonesByDate,
   isMilestoneGroupCompleted,
+  isMilestoneGroupOutsideTimeline,
 } from '../../utils/milestoneMarkers';
 import { getDayIndex } from '../../utils/calendar';
 import type { CalendarDay } from '../../types';
@@ -48,6 +49,7 @@ export function MilestoneMarkers({
 
         const count = group.milestones.length;
         const completed = isMilestoneGroupCompleted(group.milestones);
+        const outsideTimeline = !completed && isMilestoneGroupOutsideTimeline(group.milestones);
         const content = (
           <div className={styles.milestonePopover}>
             {group.milestones.map((milestone) => {
@@ -56,6 +58,9 @@ export function MilestoneMarkers({
                 <div key={milestone.id} className={styles.milestonePopoverItem}>
                   <div className={styles.milestonePopoverName}>
                     {quantityLabel ? milestone.name : formatMilestoneNameNote(milestone)}
+                    {milestone.outsideTimeline ? (
+                      <span className={styles.milestoneOutsideTag}>Ngoài timeline</span>
+                    ) : null}
                   </div>
                   {quantityLabel ? <div>Khối lượng: {quantityLabel}</div> : null}
                   <div>Hạn nộp: {group.dateKey.split('-').reverse().join('/')}</div>
@@ -93,6 +98,7 @@ export function MilestoneMarkers({
               type="button"
               className={classNames(styles.milestoneDot, {
                 [styles.milestoneDotCompleted]: completed,
+                [styles.milestoneDotOutside]: outsideTimeline,
                 [styles.milestoneDotStacked]: count > 1,
                 [styles.milestoneDotInteractive]: canManage,
               })}

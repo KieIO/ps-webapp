@@ -38,10 +38,9 @@ import {
 } from '../../utils/taskEvaluation';
 import { mergeStaffSelectOptions, resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
 import {
-  creativeDeadlineDisabledTime,
-  creativeDeadlineNotAfterPmRule,
+  creativeDeadlineFieldExtra,
   fromTaskDeadline,
-  isCreativeDeadlineDayAfterPm,
+  isCreativeDeadlineAfterPmDeadline,
   toTaskDeadline,
 } from '../../utils/taskDates';
 import { getTaskDeadline } from '../../utils/taskDetail';
@@ -114,6 +113,7 @@ export function EditTaskModal({
   const technical = Form.useWatch('technical', form);
   const contentProcessing = Form.useWatch('contentProcessing', form);
   const watchedDate = Form.useWatch('date', form);
+  const watchedCreativeDeadline = Form.useWatch('creativeDeadline', form);
 
   const previewLevel: ClassificationLevel | undefined =
     designThinking != null && technical != null && contentProcessing != null
@@ -138,6 +138,10 @@ export function EditTaskModal({
     : task
       ? fromTaskDeadline(getTaskDeadline(task))
       : null;
+  const creativeAfterPm = isCreativeDeadlineAfterPmDeadline(
+    watchedCreativeDeadline,
+    pmDeadlineLimit,
+  );
   const showClassification =
     hasField(editableFields, 'designThinking') ||
     hasField(editableFields, 'technical') ||
@@ -459,15 +463,10 @@ export function EditTaskModal({
                         {MY_TASK_COLUMN_HEADERS.creativeDeadline}
                       </CreativeDeadlineFieldLabel>
                     }
-                    rules={
-                      canEditCreativeDl
-                        ? [creativeDeadlineNotAfterPmRule(pmDeadlineLimit)]
-                        : undefined
-                    }
                     extra={
                       !canEditCreativeDl
                         ? CREATIVE_DEADLINE_META_EDIT_HINT
-                        : 'Không được sau deadline PM.'
+                        : creativeDeadlineFieldExtra(creativeAfterPm)
                     }
                   >
                     <DatePicker
@@ -479,12 +478,6 @@ export function EditTaskModal({
                       style={{ width: '100%' }}
                       disabled={!canEditCreativeDl}
                       showNow={false}
-                      disabledDate={(current) =>
-                        isCreativeDeadlineDayAfterPm(current, pmDeadlineLimit)
-                      }
-                      disabledTime={(current) =>
-                        creativeDeadlineDisabledTime(current, pmDeadlineLimit)
-                      }
                     />
                   </Form.Item>
                 ) : null}
