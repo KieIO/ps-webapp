@@ -14,6 +14,7 @@ export type TaskDto = {
   taskName: string;
   taskCode?: string;
   quantity: number;
+  level?: number;
   parentTaskId?: string | null;
   pipelineStage?: string;
   staffConfirmation?: string;

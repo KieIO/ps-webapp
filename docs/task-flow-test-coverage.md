@@ -126,7 +126,14 @@ Hướng dẫn dùng: `docs-site/docs/create-task-flow.md`, `split-task-flow.md`
 | TASK-75 | Sau khi CM đã đánh giá: Staff mở task mình → tab Evaluation thấy điểm/note của CM                                                                                                                                             |  ●  |  ●  |  ○   |   ○    | `TestTaskMgmt_TASK75_*`                                               |
 | TASK-76 | PM đánh giá task Creative bằng nút Evaluate trên chi tiết task; CM và CH xem điểm/%/note trên tab Evaluation của cùng task (không có màn đánh giá PM riêng)                                                                   |  ●  |  ●  |  ○   |   ○    | `TestTaskMgmt_TASK76_*` · `task-72-76-…spec.ts`                       |
 | TASK-80 | Task giao nguyên: CH/PM ghi điểm gói CM, CM ghi kết quả Staff, hai điểm không đè nhau. CH thấy task trong danh sách, CM thấy task ở cả hai tab, Staff thấy task của mình. CM đọc được điểm của CH; Staff đọc được điểm của CM |  ●  |  ●  |  ●   |   ○    | `TestTaskMgmt_TASK80_*` · `task-82-dual-eval-list-visibility.spec.ts` |
-| TASK-83 | Sau khi đã chia, PM mở Sửa task cha và thêm task con số lượng 0, chưa gán Staff. SL cha không đổi                                                                                                                             |  ●  |  ●  |  ○   |   ○    | `TestTaskMgmt_TASK83_*` · `task-83-pm-add-zero-child.spec.ts`         |
+
+### 2.6 Thêm task con sau chia (kể cả QA)
+
+| ID      | Case                                                                                                                                                | API | E2E | Unit | Manual | Path / note                                                                             |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | :-: | :-: | :--: | :----: | --------------------------------------------------------------------------------------- |
+| TASK-83 | Sau khi đã chia, PM mở Sửa task cha và thêm task con số lượng 0, chưa gán Staff. SL cha không đổi                                                   |  ●  |  ●  |  ○   |   ●    | `TestTaskMgmt_TASK83_*` · `task-83-pm-add-zero-child.spec.ts`                           |
+| TASK-84 | Lịch sử task cha ghi nhận chia nhỏ, thêm task con, đổi SL kèm lý do                                                                                 |  ●  |  ○  |  ○   |   ●    | `TestTaskMgmt_TASK84_*`                                                                 |
+| TASK-85 | PM/Admin tick Task QA khi thêm task con: Type/Name = QA, level 1–5; SL QA ngoài tổng cha; thiếu qaLevel / CM thêm / vượt SL phần làm việc → từ chối |  ●  |  ●  |  ●   |   ●    | `TestTaskMgmt_TASK85_*` · `task-85-pm-add-qa-child.spec.ts` · mock `tasks.mock.test.ts` |
 
 ---
 

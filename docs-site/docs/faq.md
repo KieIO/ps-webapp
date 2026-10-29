@@ -187,35 +187,36 @@ Sau khi CM **chia nhỏ** task Creative. Chi tiết luồng chia: [Luồng chia 
 
 Quy tắc chung sau khi chia:
 
-1. **SL tổng** do PM nhập lúc tạo task (**> 0**) và **không** bị ghi đè bằng tổng các phần. Tổng SL các phần **không được lớn hơn** SL tổng. **Đổi SL tổng** sau khi chia chỉ **người tạo task (PM)** hoặc **Admin** làm được. **Creative Manager không sửa SL tổng** và **không tạo task con**. CM chỉ phân bổ lại SL các phần còn mở trong giới hạn SL tổng.
-2. Mỗi phần **có thể chưa gán Staff** và **số lượng có thể bằng 0**. Có Staff thì một người một phần. Có thể đổi Staff / deadline / SL trên phần còn mở.
+1. **SL tổng** do PM nhập lúc tạo task (**> 0**) và **không** bị ghi đè bằng tổng các phần. Tổng SL các phần **làm việc** (không gồm QA) **không được lớn hơn** SL tổng. **Đổi SL tổng** sau khi chia chỉ **người tạo task (PM)** hoặc **Admin** làm được. **Creative Manager không sửa SL tổng** và **không tạo task con**. CM chỉ phân bổ lại SL các phần còn mở trong giới hạn SL tổng.
+2. Mỗi phần **có thể chưa gán Staff** và **số lượng có thể bằng 0**. Có Staff thì một người một phần. Có thể đổi Staff, deadline, SL trên phần còn mở.
 3. Phần **Finished** hoặc **Cancelled**: SL khóa.
-4. **Không** thêm / xóa phần tùy ý sau lần chia đầu (trừ tách phần còn lại khi Evaluate, câu 8).
+4. **Xóa** task nhỏ tùy ý sau lần chia đầu: chưa hỗ trợ. **Thêm** task con: PM hoặc Admin làm được (câu 7, 11). Tách phần còn lại khi Evaluate: câu 8.
 
 ---
 
 ## 7. Sửa lại scope các task nhỏ được không?
 
-**Được một phần:** người tạo task (PM) hoặc Admin đổi SL tổng; PM hoặc Admin thêm task con (kể cả SL 0, chưa gán Staff). CM, người tạo task và Admin phân bổ lại SL giữa các phần còn mở. Tổng các phần không được lớn hơn SL tổng. CM không sửa SL tổng và không tạo task con.
+**Được một phần:** người tạo task (PM) hoặc Admin đổi SL tổng; PM hoặc Admin thêm task con (kể cả SL 0, chưa gán Staff, hoặc task **QA**). CM, người tạo task và Admin phân bổ lại SL giữa các phần làm việc còn mở. Tổng phần làm việc không được lớn hơn SL tổng. CM không sửa SL tổng và không tạo task con.
 
 **Làm được**
 
 1. Mở task gốc đã chia (form **Sửa / Task nhỏ**).
 2. Người tạo task hoặc Admin đổi **SL tổng** (ví dụ 20 → 25); hệ thống điều chỉnh phần còn mở cho khớp. CM không làm bước này.
 3. Chia lại **số lượng** các phần còn mở; tổng không vượt SL tổng.
-4. Đổi **Staff** / **deadline** trên phần còn mở.
+4. Đổi **Staff** hoặc **deadline** trên phần còn mở.
+5. Cần người **QA** phần của người khác: PM hoặc Admin **Thêm task con**, tick **Task QA**, chọn **QA 1** đến **QA 5**. Số lượng QA đứng riêng, không trừ SL tổng. Chi tiết: [Luồng chia task con](/split-task#task-con-qa).
 
 **Không làm được**
 
-1. Sửa SL phần Finished / Cancelled.
-2. Thêm / xóa task nhỏ tùy ý sau lần chia đầu.
-3. Đổi SL tổng xuống thấp hơn tổng các phần đã khóa (Finished / Cancelled).
+1. Sửa SL phần Finished hoặc Cancelled.
+2. Xóa task nhỏ tùy ý sau lần chia đầu.
+3. Đổi SL tổng xuống thấp hơn tổng các phần đã khóa (Finished hoặc Cancelled).
 
-**Ví dụ:** Tổng 20. Phần 1 Finished = 8 (khóa). Người tạo task hoặc Admin có thể tăng SL tổng lên 25 (phần còn mở nhận thêm). CM có thể chia lại 12 còn lại giữa phần 2 và 3. Không giảm tổng xuống dưới 8 + phần mở tối thiểu.
+**Ví dụ:** Tổng 20. Phần 1 Finished = 8 (khóa). Người tạo task hoặc Admin có thể tăng SL tổng lên 25 (phần còn mở nhận thêm). CM có thể chia lại 12 còn lại giữa phần 2 và 3. Không giảm tổng xuống dưới 8 cộng phần mở tối thiểu.
 
-Muốn hai người cùng làm phần còn lại: đổi Staff, chia lại SL giữa phần đã có, hoặc tách phần còn lại qua Evaluate (câu 8). Cần người **QA** phần của người khác: PM/Admin **Thêm task con** và tick **Task QA** (chọn QA 1–5); SL QA **không** trừ SL tổng.
+Muốn hai người cùng làm phần còn lại: đổi Staff, chia lại SL giữa phần đã có, hoặc tách phần còn lại qua Evaluate (câu 8).
 
-**Tóm lại:** Sửa scope = người tạo task hoặc Admin đổi SL tổng, và / hoặc thêm task con (kể cả QA), và / hoặc CM chia lại SL phần còn mở trong giới hạn SL tổng. Không sửa Finished / Cancelled.
+**Tóm lại:** Sửa scope là đổi SL tổng (người tạo hoặc Admin), thêm task con (kể cả QA), hoặc CM chia lại SL phần còn mở trong giới hạn SL tổng. Không sửa Finished hoặc Cancelled.
 
 ---
 
@@ -275,15 +276,15 @@ Mỗi phần chỉ tách phần còn lại **một lần** khi Evaluate.
 
 **Thêm người hỗ trợ**
 
-| Nhu cầu                              | Hiện tại         |
-| ------------------------------------ | ---------------- |
-| Đổi người trên phần đang có          | Được             |
-| San SL giữa phần đã có               | Được             |
-| Tách phần còn lại sau khi làm dở     | Evaluate (câu 8) |
-| Thêm task nhỏ sau lần chia đầu       | Được (PM/Admin)  |
-| Thêm task nhỏ loại **QA** (SL riêng) | Được (PM/Admin)  |
+| Nhu cầu                                    | Hiện tại             |
+| ------------------------------------------ | -------------------- |
+| Đổi người trên phần đang có                | Được                 |
+| San SL giữa phần đã có                     | Được                 |
+| Tách phần còn lại sau khi làm dở           | Evaluate (câu 8)     |
+| Thêm task nhỏ sau lần chia đầu             | Được (PM hoặc Admin) |
+| Thêm task nhỏ loại **QA** (số lượng riêng) | Được (PM hoặc Admin) |
 
-**Tóm lại:** San scope giữa phần mở được. PM hoặc Admin có thể thêm task con sau (kể cả QA); tổng scope không vượt SL task cha.
+**Tóm lại:** San scope giữa phần mở được. PM hoặc Admin có thể thêm task con sau (kể cả QA). Tổng phần làm việc không vượt SL task cha; số lượng QA không trừ SL tổng.
 
 ---
 
@@ -314,7 +315,7 @@ Phần **Tracker / mốc giao** bên dưới: Goware có thể hỗ trợ sau **
 | #   | Khoảng trống                                                                 | Ghi chú ngắn                                                                                                                                                         | Nguồn        | Ngày bổ sung |
 | --- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------ |
 | 1   | Xóa task nhỏ tùy ý sau khi đã chia                                           | Thêm task con: PM/Admin làm được (câu 11). Xóa phần đã tạo thì chưa.                                                                                                 | Câu 7, 9, 10 | —            |
-| 2   | ~~Task nhỏ loại **QA** trong họ chia~~                                       | **Đã có:** PM/Admin tick Task QA khi thêm task con; SL QA riêng khỏi SL tổng.                                                                                        | Câu 7, 10    | 29/10/2026   |
+| 2   | Task nhỏ loại **QA** trong họ chia                                           | **Đã có (29/10/2026):** PM hoặc Admin tick Task QA khi thêm task con; số lượng QA riêng khỏi SL tổng. Xem [Task con QA](/split-task#task-con-qa).                    | Câu 7, 10    | 29/10/2026   |
 | 3   | **Cancel** một phần rồi **tạo phần mới thay thế**, vẫn giữ SL tổng           | Cancel khóa phần đó, không giải phóng SL để tạo phần thay.                                                                                                           | Câu 8        | —            |
 | 4   | Lấy SL từ phần **Finished / Cancelled** chuyển sang người khác bằng form sửa | Form sửa không bớt SL phần đã xong / đã hủy để chuyển người khác. Chỉ chỉnh được các phần **chưa** Finished / Cancelled (hoặc tăng SL tổng rồi đẩy vào các phần đó). | Câu 7, 9, 10 | —            |
 | 5   | Một task nhỏ giao **nhiều Staff** cùng lúc                                   | Mỗi phần một người.                                                                                                                                                  | Câu 7, 10    | —            |

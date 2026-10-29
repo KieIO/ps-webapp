@@ -217,6 +217,8 @@ PM vào **Creative queue** để theo dõi task đã chuyển Creative, và đ�
 
 **Chỉ Creative Head** nhận task từ hàng chờ CH rồi giao CM. **Admin** làm được cùng bước giao CM này. Sau khi đã giao, đổi CM vẫn là Creative Head hoặc Admin, khi task còn chờ CM.
 
+Sau khi task đã **chia nhỏ**, PM hoặc Admin có thể **Thêm task con** trên form sửa (kể cả task **QA** để Staff kiểm lại phần của người khác). Chi tiết: [Luồng chia task con](/split-task#task-con-qa).
+
 ### Đánh giá sau khi hoàn thành
 
 Người có quyền đánh giá task gồm **PM, Creative Head, Creative Manager, Head, Admin** — không chỉ riêng CH.
