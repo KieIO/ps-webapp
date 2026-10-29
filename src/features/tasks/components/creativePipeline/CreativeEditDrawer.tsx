@@ -30,7 +30,6 @@ import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateCreativePipeline } from '../../hooks/useUpdateCreativePipeline';
 import type { MyTask } from '../../schemas/task.schema';
 import {
-  creativeDeadlineFieldExtra,
   formatTaskDateTime,
   fromTaskDeadline,
   isCreativeDeadlineAfterPmDeadline,
@@ -78,7 +77,10 @@ import {
 import { normalizeTaskUrgencySetting, resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { ClassificationScale } from '../CreateTaskDrawer/ClassificationScale';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
-import { CreativeDeadlineFieldLabel } from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
+import {
+  CreativeDeadlineFieldExtra,
+  CreativeDeadlineFieldLabel,
+} from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
 import { CreativeAssignModeSection } from './CreativeAssignModeSection';
 import styles from './creativePipeline.module.scss';
@@ -1144,11 +1146,15 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                     }
                     className={styles.deadlineField}
                     extra={
-                      !canEditCreativeDl
-                        ? role === ROLES.CREATIVE_MANAGER
-                          ? 'CM chỉ sửa creative deadline sau khi đã giao Staff.'
-                          : CREATIVE_DEADLINE_META_EDIT_HINT
-                        : creativeDeadlineFieldExtra(creativeAfterPm)
+                      !canEditCreativeDl ? (
+                        role === ROLES.CREATIVE_MANAGER ? (
+                          'CM chỉ sửa creative deadline sau khi đã giao Staff.'
+                        ) : (
+                          CREATIVE_DEADLINE_META_EDIT_HINT
+                        )
+                      ) : (
+                        <CreativeDeadlineFieldExtra afterPm={creativeAfterPm} />
+                      )
                     }
                   >
                     <DatePicker

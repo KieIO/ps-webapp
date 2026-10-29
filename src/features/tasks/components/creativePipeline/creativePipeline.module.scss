@@ -637,6 +637,24 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+}
+
+.staffOptionLeave {
+  opacity: 0.72;
+
+  .staffName {
+    color: var(--color-text-muted, #8c8c8c);
+  }
+
+  .staffMeta {
+    color: var(--color-warning, #d97706);
+    font-weight: 500;
+  }
+}
+
+.staffName {
+  min-width: 0;
 }
 
 .staffMeta {

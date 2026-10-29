@@ -12,7 +12,6 @@ import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
 import type { MyTask } from '../../schemas/task.schema';
 import {
-  creativeDeadlineFieldExtra,
   fromTaskDeadline,
   isCreativeDeadlineAfterPmDeadline,
   toTaskDeadline,
@@ -33,7 +32,10 @@ import { getTaskDeadline } from '../../utils/taskDetail';
 import { normalizeTaskUrgencySetting, resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { ClassificationScale } from '../CreateTaskDrawer/ClassificationScale';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
-import { CreativeDeadlineFieldLabel } from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
+import {
+  CreativeDeadlineFieldExtra,
+  CreativeDeadlineFieldLabel,
+} from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
 import styles from './creativePipeline.module.scss';
 
@@ -294,7 +296,9 @@ export function CreativeHeadAssignDrawer({
                 label={<CreativeDeadlineFieldLabel>Deadline Creative</CreativeDeadlineFieldLabel>}
                 className={styles.deadlineField}
                 extra={
-                  canEditCreativeDeadline ? creativeDeadlineFieldExtra(creativeAfterPm) : undefined
+                  canEditCreativeDeadline ? (
+                    <CreativeDeadlineFieldExtra afterPm={creativeAfterPm} />
+                  ) : undefined
                 }
               >
                 <DatePicker

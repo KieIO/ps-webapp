@@ -31,7 +31,6 @@ import {
 } from '../../utils/creativePipeline';
 import { openDeclineReasonModal } from '../../utils/declineReasonModal';
 import {
-  creativeDeadlineFieldExtra,
   formatTaskDateTime,
   fromTaskDeadline,
   isCreativeDeadlineAfterPmDeadline,
@@ -41,7 +40,10 @@ import { getTaskDeadline } from '../../utils/taskDetail';
 import { wholeTaskQuantityRule, nonNegativeWholeQuantityRule } from '../../utils/taskQuantity';
 import { defaultSplitChildName } from '../../utils/taskScoreName';
 import { resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
-import { CreativeDeadlineFieldLabel } from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
+import {
+  CreativeDeadlineFieldExtra,
+  CreativeDeadlineFieldLabel,
+} from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
 import { CreativeAssignModeSection } from './CreativeAssignModeSection';
 import styles from './creativePipeline.module.scss';
@@ -498,10 +500,12 @@ export function CreativeManagerAssignDrawer({
                       label={
                         <CreativeDeadlineFieldLabel>Creative deadline</CreativeDeadlineFieldLabel>
                       }
-                      extra={creativeDeadlineFieldExtra(
-                        wholeCreativeAfterPm,
-                        'Bỏ trống = giữ deadline hiện có.',
-                      )}
+                      extra={
+                        <CreativeDeadlineFieldExtra
+                          afterPm={wholeCreativeAfterPm}
+                          base="Bỏ trống = giữ deadline hiện có."
+                        />
+                      }
                     >
                       <DatePicker
                         showTime={{
@@ -587,13 +591,15 @@ export function CreativeManagerAssignDrawer({
                                     Creative deadline
                                   </CreativeDeadlineFieldLabel>
                                 }
-                                extra={creativeDeadlineFieldExtra(
-                                  isCreativeDeadlineAfterPmDeadline(
-                                    watchedSubtasks?.[index]?.creativeDeadline,
-                                    pmDeadline,
-                                  ),
-                                  'Bỏ trống = dùng deadline hiện có.',
-                                )}
+                                extra={
+                                  <CreativeDeadlineFieldExtra
+                                    afterPm={isCreativeDeadlineAfterPmDeadline(
+                                      watchedSubtasks?.[index]?.creativeDeadline,
+                                      pmDeadline,
+                                    )}
+                                    base="Bỏ trống = dùng deadline hiện có."
+                                  />
+                                }
                               >
                                 <DatePicker
                                   showTime={{

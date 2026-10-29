@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   calendarDateFromTaskDeadline,
   clampDeadlineToProjectRange,
-  creativeDeadlineFieldExtra,
   CREATIVE_DEADLINE_AFTER_PM_WARNING,
+  CREATIVE_DEADLINE_FIELD_TOOLTIP,
   defaultTaskDeadline,
   formatTaskDateTime,
   fromTaskDeadline,
@@ -36,14 +36,8 @@ describe('taskDates', () => {
     expect(isCreativeDeadlineIsoAfterPm('2026-10-28T17:22:00Z', '2026-10-28T17:22:00Z')).toBe(
       false,
     );
-    expect(creativeDeadlineFieldExtra(true)).toBe(CREATIVE_DEADLINE_AFTER_PM_WARNING);
-    expect(creativeDeadlineFieldExtra(true, 'Bỏ trống = giữ deadline hiện có.')).toBe(
-      `Bỏ trống = giữ deadline hiện có. ${CREATIVE_DEADLINE_AFTER_PM_WARNING}`,
-    );
-    expect(creativeDeadlineFieldExtra(false, 'Bỏ trống = giữ deadline hiện có.')).toBe(
-      'Bỏ trống = giữ deadline hiện có.',
-    );
-    expect(creativeDeadlineFieldExtra(false)).toBeUndefined();
+    expect(CREATIVE_DEADLINE_AFTER_PM_WARNING).toBe('Đang sau deadline PM.');
+    expect(CREATIVE_DEADLINE_FIELD_TOOLTIP).toBe('Mốc nội bộ Creative. Có thể sau deadline PM.');
   });
 
   it('loads stored deadlines into picker wall-clock values', () => {

@@ -1,4 +1,5 @@
 import { Avatar } from 'antd';
+import classNames from 'classnames';
 import { getInitials } from '@/shared/utils/person';
 import { STAFF_AVAILABILITY_LABELS } from '../../utils/staffAvailability';
 import type { StaffAvailability, TaskAssignee } from '../../schemas/task.schema';
@@ -26,14 +27,15 @@ export function AssigneeOptionLabel({
   availability: availabilityProp,
 }: AssigneeOptionLabelProps) {
   const availability = availabilityProp ?? staff.availability;
+  const onLeave = availability === 'on_leave';
 
   return (
-    <span className={styles.staffOption}>
+    <span className={classNames(styles.staffOption, onLeave && styles.staffOptionLeave)}>
       <Avatar size={22}>{getInitials(staff.name)}</Avatar>
-      <span>{staff.name}</span>
+      <span className={styles.staffName}>{staff.name}</span>
       <span className={styles.staffMeta}>
-        {activeCount != null ? `${activeCount} tasks` : null}
-        {capacityPercent != null ? ` | ${capacityPercent}%` : null}
+        {!onLeave && activeCount != null ? `${activeCount} tasks` : null}
+        {!onLeave && capacityPercent != null ? ` | ${capacityPercent}%` : null}
         {availability ? (
           <>
             <span className={`${styles.dot} ${AVAILABILITY_DOT[availability]}`} />

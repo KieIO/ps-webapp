@@ -69,8 +69,7 @@ export const formatTaskDateTime = (value: string): string =>
 export const CREATIVE_DEADLINE_AFTER_PM_WARNING = 'Đang sau deadline PM.';
 
 /** Info tooltip on the Creative deadline label. */
-export const CREATIVE_DEADLINE_FIELD_TOOLTIP =
-  'Mốc nội bộ Creative. Có thể sau deadline PM — UI sẽ cảnh báo.';
+export const CREATIVE_DEADLINE_FIELD_TOOLTIP = 'Mốc nội bộ Creative. Có thể sau deadline PM.';
 
 /** True when the picker value is strictly later than the PM deadline. Equal is fine. */
 export const isCreativeDeadlineAfterPmDeadline = (
@@ -87,17 +86,6 @@ export const isCreativeDeadlineIsoAfterPm = (
   const creativeAt = dayjs.utc(creative);
   const pmAt = dayjs.utc(pmDeadline);
   return creativeAt.isValid() && pmAt.isValid() && creativeAt.isAfter(pmAt);
-};
-
-/** Form.Item `extra`: optional base hint + soft after-PM warning. */
-export const creativeDeadlineFieldExtra = (
-  afterPm: boolean,
-  base?: string | null,
-): string | undefined => {
-  const parts = [base?.trim(), afterPm ? CREATIVE_DEADLINE_AFTER_PM_WARNING : null].filter(
-    (part): part is string => Boolean(part),
-  );
-  return parts.length > 0 ? parts.join(' ') : undefined;
 };
 
 /**

@@ -4,7 +4,8 @@ export const STAFF_AVAILABILITY_LABELS: Record<StaffAvailability, string> = {
   free: 'Free',
   normal: 'Bình thường',
   overloaded: 'Overloaded',
-  on_leave: 'Nghỉ phép',
+  /** Assign picker: leave covering the capacity / creative-deadline day. */
+  on_leave: 'Nghỉ ngày giao',
 };
 
 /**

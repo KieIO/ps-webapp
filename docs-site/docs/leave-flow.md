@@ -15,9 +15,9 @@ Hướng dẫn lên lịch nghỉ phép, bàn giao task, hủy sớm, và tự A
    - **Đang trong kỳ** → kỳ **đang diễn ra**, nhân viên **On leave**
    - **Đã hết** → kỳ **đã kết thúc**, nhân viên **tự về Active** (không cần Admin Activate)
 2. Có thể đặt **nhiều kỳ không chồng lịch**; mỗi lần Confirm = một khoảng, bàn giao task riêng.
-3. **Không** giao task mới cho người đang On leave / ngày thuộc kỳ đã đặt (ngày làm việc).
+3. **Không** giao task mới nếu **ngày giao** (deadline / creative deadline) thuộc kỳ nghỉ đã đặt — kể cả kỳ **Scheduled** (nhân viên vẫn Active).
 4. On leave **vẫn đăng nhập được**. Chỉ tài khoản **Deactivate** mới bị chặn login.
-5. Tracker **không** hiện tên nghỉ vào **Thứ 7 / Chủ nhật**.
+5. Tracker **không** hiện tên nghỉ vào **Thứ 7 / Chủ nhật** — công ty **không làm việc** cuối tuần, nên off-day marker chỉ hiện **T2–T6**.
 
 Đưa về **Active** sớm hơn lịch:
 
@@ -46,7 +46,7 @@ Mỗi người chỉ **một kỳ đang mở**. Confirm xong → **On leave ngay
 - On leave **đúng ngày**; kỳ tương lai giữ Active.
 - Cancel / reassign **theo từng kỳ**.
 - Hết kỳ → **tự Active**; On leave vẫn login được.
-- Tracker ẩn tên nghỉ T7/CN.
+- Tracker ẩn tên nghỉ T7/CN (không làm việc cuối tuần).
 - Wizard: **Already booked**, khoá ngày đã chiếm.
 
 ---
@@ -163,13 +163,13 @@ Liệt kê task của người nghỉ có ngày trong kỳ, confirmation còn **
 
 ## 6. Trong thời gian On leave
 
-| Việc thử                    | Hệ thống                                              |
-| --------------------------- | ----------------------------------------------------- |
-| Đăng nhập                   | **Được** (chỉ Deactivate mới chặn)                    |
-| Giao / đổi staff trên task  | **Không** chọn được người On leave                    |
-| Capacity / Create task      | Hiện đang nghỉ; không giao được                       |
-| Project Tracker             | Hiện tên nghỉ **ngày làm việc**; **không** hiện T7/CN |
-| Đổi Status tay thành Active | Không cần để “mở login”; hết kỳ sẽ tự Active          |
+| Việc thử                    | Hệ thống                                                                    |
+| --------------------------- | --------------------------------------------------------------------------- |
+| Đăng nhập                   | **Được** (chỉ Deactivate mới chặn)                                          |
+| Giao / đổi staff trên task  | **Không** chọn được nếu ngày giao thuộc kỳ nghỉ (Scheduled / đang On leave) |
+| Capacity / Create task      | Ngày giao thuộc kỳ nghỉ → Off; không giao được                              |
+| Project Tracker             | Hiện tên nghỉ **T2–T6**; **không** hiện T7/CN (công ty không làm việc)      |
+| Đổi Status tay thành Active | Không cần để “mở login”; hết kỳ sẽ tự Active                                |
 
 ---
 

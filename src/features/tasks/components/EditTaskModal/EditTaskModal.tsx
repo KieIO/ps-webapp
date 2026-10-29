@@ -38,7 +38,6 @@ import {
 } from '../../utils/taskEvaluation';
 import { mergeStaffSelectOptions, resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
 import {
-  creativeDeadlineFieldExtra,
   fromTaskDeadline,
   isCreativeDeadlineAfterPmDeadline,
   toTaskDeadline,
@@ -55,7 +54,10 @@ import {
   TASK_STATUS_LOCKED_MESSAGE,
 } from '../../utils/taskStatusLock';
 import type { ClassificationLevel, MyTask, UpdateMyTaskRequest } from '../../schemas/task.schema';
-import { CreativeDeadlineFieldLabel } from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
+import {
+  CreativeDeadlineFieldExtra,
+  CreativeDeadlineFieldLabel,
+} from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import styles from './EditTaskModal.module.scss';
 
@@ -464,9 +466,11 @@ export function EditTaskModal({
                       </CreativeDeadlineFieldLabel>
                     }
                     extra={
-                      !canEditCreativeDl
-                        ? CREATIVE_DEADLINE_META_EDIT_HINT
-                        : creativeDeadlineFieldExtra(creativeAfterPm)
+                      !canEditCreativeDl ? (
+                        CREATIVE_DEADLINE_META_EDIT_HINT
+                      ) : (
+                        <CreativeDeadlineFieldExtra afterPm={creativeAfterPm} />
+                      )
                     }
                   >
                     <DatePicker

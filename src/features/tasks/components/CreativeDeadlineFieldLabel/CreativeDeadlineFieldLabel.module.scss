@@ -9,3 +9,26 @@
   font-size: 12px;
   cursor: help;
 }
+
+.extra {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.4;
+}
+
+.hint {
+  color: var(--color-text-muted, #8c8c8c);
+}
+
+.warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-warning, #d97706);
+  font-weight: 500;
+}
+
+.warnIcon {
+  font-size: 12px;
+}
