@@ -43,10 +43,7 @@ import {
 } from '../../constants';
 import type { TrackerOffDay, TrackerProject } from '../../schemas/tracker.schema';
 import type { CalendarDay } from '../../types';
-import {
-  inferOutputMetricFromTaskName,
-  parseTrackerTaskBaseLabel,
-} from '../../utils/aggregateAdminBlocks';
+import { parseTrackerTaskBaseLabel } from '../../utils/aggregateAdminBlocks';
 import { getBlockTop, layoutProjectBlocks, type LaidOutBlock } from '../../utils/blockLanes';
 import { mergeProjectRowLayout } from '../../utils/rowContentHeight';
 import {
@@ -949,20 +946,24 @@ function TimelineBlock({
       ? `Open project ${project.name}`
       : `View ${taskName ?? block.label} tasks for ${project.name}`;
 
-  const handleOpenDetailOrTasks = () => {
+  const handleOpenDetailOrTasks = (workDate?: string) => {
     if (isProjectBar) {
       navigate(buildProjectDetailPath(project.id));
       return;
     }
-    const taskMonth = dayjs(block.start).isValid()
-      ? dayjs(block.start).format('YYYY-MM')
-      : undefined;
+    // Do not attach outputMetric here: that KPI filter scopes by project department
+    // (Slides·Project vs DA·Creative) and hides Creative tasks like QA / Slides on christmas.
+    const day =
+      workDate && dayjs(workDate).isValid()
+        ? dayjs(workDate).format('YYYY-MM-DD')
+        : dayjs(block.start).isValid()
+          ? dayjs(block.start).format('YYYY-MM-DD')
+          : undefined;
     navigate(
       buildProjectTasksPath({
         projectName: project.name,
         search: taskName,
-        outputMetric: taskName ? inferOutputMetricFromTaskName(taskName) : undefined,
-        outputMonth: taskMonth,
+        workDate: day,
       }),
     );
   };
@@ -975,7 +976,8 @@ function TimelineBlock({
       if (date) onCreateMilestoneAtDate(date);
       return;
     }
-    handleOpenDetailOrTasks();
+    const clickedDay = resolveClickedDayOnBar(event, days, dayWidth, block.start, position.width);
+    handleOpenDetailOrTasks(clickedDay ?? undefined);
   };
 
   return (

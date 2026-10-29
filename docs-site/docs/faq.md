@@ -151,6 +151,19 @@ Hover nhãn **Còn lại / ngày** để xem giả định quy đổi. Định m
 
 ---
 
+## 5A. Tracker có ô QA / Slides mà chi tiết project không thấy?
+
+Thường không phải mất data. Hai màn hình đang ở **hai chế độ danh sách** khác nhau, và Tracker neo theo **ngày task** chứ không theo deadline.
+
+| Việc cần làm                                                                       | Giải thích                                                                                                                                                    |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mở **chi tiết đúng project** (tab Tasks) hoặc Project Tasks **đã lọc tên project** | Khi xem theo một project, danh sách gồm cả **task con** (kể cả QA). Inbox Project Tasks **không** lọc project thì Admin / PM / Head thường chỉ thấy task cha. |
+| So tháng trên Tracker với **ngày task**, không chỉ cột Deadline                    | Project có thể kết thúc tháng 10 trong khi task con vẫn có ngày task tháng 11; Tracker tháng 11 vẫn hiện ô đó.                                                |
+
+Chi tiết và checklist đối chiếu: [Task trên project và Tracker](/project-task-views).
+
+---
+
 ## 6. Decline Creative Task hoạt động thế nào?
 
 Luồng **Creative Head từ chối task PM đã chuyển sang Creative**, khác với từ chối nội bộ trong phòng Creative.

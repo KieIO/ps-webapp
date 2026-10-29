@@ -44,7 +44,7 @@ export function NotificationBell() {
       <div className={styles.feed}>
         <NotificationFeed
           items={items}
-          isLoading={listQuery.isLoading || listQuery.isFetching}
+          isLoading={listQuery.isLoading && items.length === 0}
           dense
           onItemClick={(item) => {
             if (!item.isRead) markRead.mutate(item.id);

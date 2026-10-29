@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { notificationApi } from '../api';
 import type { Notification, NotificationListResponse } from '../schemas/notification.schema';
+import { applyMarkAllReadToList, applyMarkReadToList } from '../utils/notificationListCache';
 
 export const NOTIFICATIONS_QUERY_KEY = ['notifications'] as const;
 
@@ -22,30 +23,47 @@ export const useNotificationList = (limit?: number, options?: { enabled?: boolea
   });
 };
 
+type MarkReadCacheSnapshot = Array<
+  readonly [readonly unknown[], NotificationListResponse | undefined]
+>;
+
 export const useMarkNotificationRead = () => {
   const queryClient = useQueryClient();
   const userId = useAppSelector((state) => state.auth.user?.id);
 
   return useMutation({
     mutationFn: (id: string) => notificationApi.markRead(id),
+    onMutate: async (id) => {
+      const scopeKey = userId ? [...NOTIFICATIONS_QUERY_KEY, userId] : NOTIFICATIONS_QUERY_KEY;
+      await queryClient.cancelQueries({ queryKey: scopeKey });
+
+      const previous = queryClient.getQueriesData<NotificationListResponse>({
+        queryKey: scopeKey,
+      }) as MarkReadCacheSnapshot;
+
+      // Optimistic: bump badge immediately. SSE may also set absolute unreadCount;
+      // onSuccess must not decrement again or we under-count (6→4).
+      patchNotificationCaches(
+        queryClient,
+        (cache) => applyMarkReadToList(cache, { id }, { adjustUnreadCount: true }),
+        userId,
+      );
+
+      return { previous };
+    },
     onSuccess: (updated) => {
       patchNotificationCaches(
         queryClient,
-        (previous) => {
-          const wasUnread = previous.items.some((item) => item.id === updated.id && !item.isRead);
-          const items = previous.items.map((item) =>
-            item.id === updated.id ? { ...item, isRead: true } : item,
-          );
-          return {
-            ...previous,
-            items,
-            unreadCount: wasUnread ? Math.max(0, previous.unreadCount - 1) : previous.unreadCount,
-          };
-        },
+        (cache) => applyMarkReadToList(cache, updated, { adjustUnreadCount: false }),
         userId,
       );
     },
-    onError: (error: unknown) => {
+    onError: (error: unknown, _id, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data);
+        }
+      }
       if (axios.isAxiosError(error)) {
         message.error(
           (error.response?.data as { message?: string } | undefined)?.message ||
@@ -64,19 +82,25 @@ export const useMarkAllNotificationsRead = () => {
 
   return useMutation({
     mutationFn: () => notificationApi.markAllRead(),
+    onMutate: async () => {
+      const scopeKey = userId ? [...NOTIFICATIONS_QUERY_KEY, userId] : NOTIFICATIONS_QUERY_KEY;
+      await queryClient.cancelQueries({ queryKey: scopeKey });
+      const previous = queryClient.getQueriesData<NotificationListResponse>({
+        queryKey: scopeKey,
+      }) as MarkReadCacheSnapshot;
+      patchNotificationCaches(queryClient, applyMarkAllReadToList, userId);
+      return { previous };
+    },
     onSuccess: () => {
-      patchNotificationCaches(
-        queryClient,
-        (previous) => ({
-          ...previous,
-          items: previous.items.map((item) => ({ ...item, isRead: true })),
-          unreadCount: 0,
-        }),
-        userId,
-      );
+      patchNotificationCaches(queryClient, applyMarkAllReadToList, userId);
       message.success('Đã đánh dấu tất cả là đã đọc');
     },
-    onError: () => {
+    onError: (_error, _vars, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data);
+        }
+      }
       message.error('Không đánh dấu tất cả được');
     },
   });

@@ -122,6 +122,12 @@ Có thể kèm **ghi chú chung** cho Staff khi giao.
 
 Thứ tự tạo quyết định mã `…S1`, `…S2`, …. Nếu sau này hệ thống tạo thêm phần còn lại, mã lấy số `S` tiếp theo.
 
+:::note[Xem task con trên project]
+
+Inbox **Project Tasks** (không lọc một project) với role PM / Head / Admin thường **chỉ hiện task cha**. Muốn thấy đủ task con và QA: mở **chi tiết project → tab Tasks**, hoặc lọc đúng tên project trên Project Tasks. Tracker vẫn hiện ô theo **ngày task**. Chi tiết: [Task trên project và Tracker](/project-task-views).
+
+:::
+
 ### Task con QA
 
 **Khi nào:** cần Staff **kiểm lại** phần slide hoặc phần việc của người khác trong cùng họ task đã chia (không phải chia thêm phần làm mới từ SL tổng).
@@ -169,3 +175,4 @@ Nếu task con đã **Finished** mà số lượng chấp nhận **nhỏ hơn** 
 
 - Tạo task / CM giao Staff (tóm tắt): [Tạo task mới](/)
 - Làm lại sau khi đã chạy: [Luồng tạo revision](/revision)
+- Đối chiếu Tracker và bảng task theo project: [Task trên project và Tracker](/project-task-views)

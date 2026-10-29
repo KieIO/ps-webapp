@@ -70,6 +70,18 @@ describe('taskListVisibility', () => {
       'rev',
     ]);
   });
+
+  it('keeps split children when includeSplitChildren (project-scoped list)', () => {
+    const items = [
+      task({ id: 'parent', pipelineStage: 'split' }),
+      task({ id: 'child', parentTaskId: 'parent', taskKind: 'split', taskName: 'QA' }),
+    ];
+    expect(
+      filterTasksForViewerRole(items, ROLES.ADMIN, { includeSplitChildren: true }).map(
+        (item) => item.id,
+      ),
+    ).toEqual(['parent', 'child']);
+  });
 });
 
 describe('CM Project Tasks scope (option C)', () => {

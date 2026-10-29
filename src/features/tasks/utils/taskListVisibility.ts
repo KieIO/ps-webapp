@@ -17,8 +17,19 @@ export const isOversightTaskListRole = (role: Role | undefined): boolean =>
 export const shouldHideSplitChildFromTaskList = (task: MyTask, role: Role | undefined): boolean =>
   isOversightTaskListRole(role) && isSplitChildTask(task);
 
-export const filterTasksForViewerRole = (tasks: MyTask[], role: Role | undefined): MyTask[] =>
-  tasks.filter((task) => !shouldHideSplitChildFromTaskList(task, role));
+/**
+ * Oversight lists hide split children by default.
+ * When the list is scoped to one project (Project Detail / projectName filter),
+ * keep children so QA and staff slices match Tracker pills.
+ */
+export const filterTasksForViewerRole = (
+  tasks: MyTask[],
+  role: Role | undefined,
+  options?: { includeSplitChildren?: boolean },
+): MyTask[] => {
+  if (options?.includeSplitChildren) return tasks;
+  return tasks.filter((task) => !shouldHideSplitChildFromTaskList(task, role));
+};
 
 /**
  * CM Project Tasks scopes (option C):

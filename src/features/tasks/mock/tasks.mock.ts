@@ -204,7 +204,12 @@ export const filterMockTasks = (
       }
     }
     // Oversight roles (VIEW_ALL): hide CM→staff split children — parent handoff only.
-    if (viewAllTasks && shouldHideSplitChildFromTaskList(task, resolvedRole)) {
+    // Project-scoped lists keep children (match Tracker / Project Detail).
+    if (
+      viewAllTasks &&
+      !filters.projectName &&
+      shouldHideSplitChildFromTaskList(task, resolvedRole)
+    ) {
       return false;
     }
     if (filters.taskCategory && task.taskCategory !== filters.taskCategory) return false;

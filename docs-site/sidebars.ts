@@ -25,7 +25,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Project',
       collapsed: false,
-      items: ['milestone-flow'],
+      items: ['milestone-flow', 'project-task-views'],
     },
     {
       type: 'category',

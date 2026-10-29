@@ -233,12 +233,14 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
   const { data, isLoading, isError, error } = useMyTaskList(queryFilters);
 
   const roleFilteredItems = useMemo(() => {
-    let items = filterTasksForViewerRole(data?.items ?? [], role);
+    let items = filterTasksForViewerRole(data?.items ?? [], role, {
+      includeSplitChildren: Boolean(filters.projectName),
+    });
     if (filters.otOnly) {
       items = items.filter((task) => Boolean(task.overtimeRequestId));
     }
     return items;
-  }, [data?.items, filters.otOnly, role]);
+  }, [data?.items, filters.otOnly, filters.projectName, role]);
 
   const cmScopeCounts = useMemo(
     () => (showCmScopeToggle ? countCmProjectTaskScopes(roleFilteredItems) : null),

@@ -753,6 +753,16 @@ describe('creative CH/CM pipeline', () => {
     const children = await mockListSplitChildren('task-cm-025', 'dev-admin', 'admin');
     expect(children).toHaveLength(2);
     expect(children.every((item) => item.parentTaskId === 'task-cm-025')).toBe(true);
+
+    const parent = getMockTasksStore().find((item) => item.id === 'task-cm-025');
+    expect(parent?.projectName).toBeTruthy();
+    const projectScoped = filterMockTasks(
+      getMockTasksStore(),
+      { taskCategory: 'project', projectName: parent!.projectName },
+      'dev-admin',
+      'admin',
+    );
+    expect(projectScoped.some((item) => item.parentTaskId === 'task-cm-025')).toBe(true);
   });
 
   it('allows reassigning staff on confirmed split child and resets confirmation', async () => {

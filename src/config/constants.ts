@@ -79,16 +79,23 @@ export const buildProjectDetailPath = (id: string) => `/projects/${id}`;
 export const buildProjectTasksPath = (options?: {
   projectName?: string;
   search?: string;
+  /** Calendar day the task is active on (YYYY-MM-DD). Prefer this over outputMetric for tracker drills. */
+  workDate?: string;
+  /** Productivity KPI drill only — filters by project department (project vs creative DA). */
   outputMetric?: 'project_slides' | 'creative_da';
   outputMonth?: string;
 }) => {
   const params = new URLSearchParams();
   const projectName = options?.projectName?.trim();
   const search = options?.search?.trim();
+  const workDate = options?.workDate?.trim();
   const outputMetric = options?.outputMetric;
   const outputMonth = options?.outputMonth?.trim();
   if (projectName) params.set('projectName', projectName);
   if (search) params.set('search', search);
+  if (workDate && /^\d{4}-\d{2}-\d{2}$/.test(workDate)) {
+    params.set('workDate', workDate);
+  }
   if (outputMetric && outputMonth && /^\d{4}-\d{2}$/.test(outputMonth)) {
     params.set('outputMetric', outputMetric);
     params.set('outputMonth', outputMonth);
