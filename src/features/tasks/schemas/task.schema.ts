@@ -357,14 +357,38 @@ export const AssignCreativeHeadRequestSchema = z.object({
   urgency: z.enum(PROJECT_URGENCIES).optional(),
 });
 
-export const CreativeManagerSubtaskSchema = z.object({
-  name: z.string().min(1, 'Tên task nhỏ is required'),
-  staffUserId: z.string().optional(),
-  quantity: z.number().int().min(0, 'Số lượng không được âm'),
-  description: z.string().min(1, 'Nhập brief cho task nhỏ'),
-  /** Optional CM creative deadline for this part. */
-  creativeDeadline: z.string().optional(),
-});
+export const CreativeManagerSubtaskSchema = z
+  .object({
+    name: z.string().optional(),
+    staffUserId: z.string().optional(),
+    quantity: z.number().int().min(0, 'Số lượng không được âm'),
+    description: z.string().min(1, 'Nhập brief cho task nhỏ'),
+    /** Optional CM creative deadline for this part. */
+    creativeDeadline: z.string().optional(),
+    /** PM/Admin: QA support child — Type=QA; SL not counted toward parent total. */
+    isQa: z.boolean().optional(),
+    /** Catalog level 1–5 when isQa. */
+    qaLevel: z.number().int().min(1).max(5).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.isQa) {
+      if (value.qaLevel == null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['qaLevel'],
+          message: 'Chọn level QA (1–5)',
+        });
+      }
+      return;
+    }
+    if (!(value.name ?? '').trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['name'],
+        message: 'Tên task nhỏ is required',
+      });
+    }
+  });
 
 export const AssignCreativeManagerRequestSchema = z
   .object({

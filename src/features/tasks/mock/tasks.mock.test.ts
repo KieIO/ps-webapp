@@ -663,6 +663,62 @@ describe('creative CH/CM pipeline', () => {
     ).rejects.toThrow(/finish|huỷ/);
   });
 
+  it('lets Admin add a QA child whose quantity is outside parent SL', async () => {
+    resetMockTasksStore();
+    await mockAssignCreativeManager(
+      'task-cm-025',
+      {
+        mode: 'split',
+        subtasks: [
+          {
+            name: 'Icon dashboard',
+            staffUserId: 'usr-creative-ha',
+            quantity: 12,
+            description: 'Brief icon dashboard',
+          },
+          {
+            name: 'Icon forms',
+            staffUserId: 'usr-creative-tran',
+            quantity: 12,
+            description: 'Brief icon forms',
+          },
+        ],
+      },
+      'dev-admin',
+    );
+    const parent = getMockTasksStore().find((item) => item.id === 'task-cm-025')!;
+    expect(parent.quantity).toBe(24);
+
+    await mockUpdateCreativePipeline(
+      parent.id,
+      {
+        changeReason: 'thêm QA cho phần đã làm',
+        addSubtasks: [
+          {
+            name: 'QA',
+            description: 'QA slides của Quy Ngoc',
+            quantity: 5,
+            isQa: true,
+            qaLevel: 2,
+          },
+        ],
+      },
+      'dev-admin',
+      'admin',
+    );
+
+    const children = getMockTasksStore().filter(
+      (item) => item.parentTaskId === parent.id && item.taskKind === 'split',
+    );
+    const qa = children.find((item) => item.taskName === 'QA');
+    expect(qa).toMatchObject({ quantity: 5, level: 2, taskName: 'QA' });
+    expect(getMockTasksStore().find((item) => item.id === parent.id)?.quantity).toBe(24);
+    const scopeSum = children
+      .filter((item) => item.taskName !== 'QA')
+      .reduce((sum, item) => sum + item.quantity, 0);
+    expect(scopeSum).toBe(24);
+  });
+
   it('lists split children for admin even though list hides them', async () => {
     await mockAssignCreativeManager(
       'task-cm-025',

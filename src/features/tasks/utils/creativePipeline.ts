@@ -8,6 +8,7 @@ import type {
   TaskAssignee,
 } from '../schemas/task.schema';
 import { isRevisionTask } from './taskRevision';
+import { isQaTaskName } from './taskScoreName';
 import {
   canSelectAssigneeWithCapacity,
   displayCapacityPercentFromSnapshot,
@@ -23,6 +24,14 @@ export const PIPELINE_STAGE_LABELS: Record<CreativePipelineStage, string> = {
   assigned_staff: 'Đã giao Staff',
   split: 'Đã chia nhỏ',
   returned_to_pm: 'Chờ PM xử lý',
+};
+
+const PIPELINE_STAGE_TAG_COLOR: Record<CreativePipelineStage, string> = {
+  awaiting_ch: 'orange',
+  awaiting_cm: 'gold',
+  returned_to_pm: 'red',
+  split: 'blue',
+  assigned_staff: 'green',
 };
 
 /** List/detail badges — keep in sync with Creative edit drawer chips. */
@@ -174,8 +183,16 @@ export const inferParentTaskCodeFromSplit = (taskCode: string): string | null =>
   return match[1];
 };
 
+/** QA support child under a split parent (Type/name QA — SL outside parent total). */
+export const isQaSplitChildTask = (task: MyTask): boolean =>
+  isSplitChildTask(task) && isQaTaskName(task.taskName);
+
+/** Scope SL toward parent total — excludes QA support children. */
 export const sumSplitChildrenQuantity = (children: MyTask[]): number =>
-  children.reduce((sum, child) => sum + (child.quantity ?? 0), 0);
+  children.reduce((sum, child) => {
+    if (isQaTaskName(child.taskName)) return sum;
+    return sum + (child.quantity ?? 0);
+  }, 0);
 
 /** True when split family conserves parent total (within float epsilon). */
 export const isSplitQuantityConserved = (parentQty: number, children: MyTask[]): boolean =>
@@ -185,13 +202,15 @@ export const isSplitQuantityConserved = (parentQty: number, children: MyTask[]):
 export const isSplitChildQuantityLocked = (task: Pick<MyTask, 'staffConfirmation'>): boolean =>
   task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled';
 
-/** Prefer largest editable child when redistributing parent SL delta. */
+/** Prefer largest editable non-QA child when redistributing parent SL delta. */
 export const pickPrimaryEditableSplitChild = <
-  T extends Pick<MyTask, 'quantity' | 'staffConfirmation'>,
+  T extends Pick<MyTask, 'quantity' | 'staffConfirmation' | 'taskName'>,
 >(
   children: T[],
 ): T | undefined => {
-  const editable = children.filter((child) => !isSplitChildQuantityLocked(child));
+  const editable = children.filter(
+    (child) => !isSplitChildQuantityLocked(child) && !isQaTaskName(child.taskName),
+  );
   if (editable.length === 0) return undefined;
   return editable.reduce((best, child) =>
     (child.quantity ?? 0) > (best.quantity ?? 0) ? child : best,
@@ -215,6 +234,18 @@ export const resolveWholeAssignStaff = (task: MyTask): TaskAssignee[] => {
       !(cmUserId && member.userId === cmUserId) &&
       !isCreativeManagerAssignee(member),
   );
+};
+
+/** Queue Trạng thái chip — unassigned split children are not “Đã giao Staff”. */
+export const resolveCreativeQueueStatusDisplay = (
+  task: MyTask,
+): { label: string; color: string } | null => {
+  if (isSplitChildTask(task) && resolveWholeAssignStaff(task).length === 0) {
+    return { label: 'Chưa giao Staff', color: 'gold' };
+  }
+  const stage = resolveEffectivePipelineStage(task);
+  if (!stage) return null;
+  return { label: PIPELINE_STAGE_LABELS[stage], color: PIPELINE_STAGE_TAG_COLOR[stage] };
 };
 
 /** Người nhận = Creative Staff only. Split parents use child staff (via allTasks or enriched API). */

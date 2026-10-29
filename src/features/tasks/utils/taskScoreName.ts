@@ -37,3 +37,12 @@ export function parseTaskScoreName(scoreName: string): {
 export function defaultSplitChildName(parentTaskName: string): string {
   return parseTaskScoreName(parentTaskName).baseName;
 }
+
+/** Split support child typed as QA (catalog QA 1–5). */
+export function isQaTaskName(taskName: string | null | undefined): boolean {
+  return (
+    parseTaskScoreName(taskName ?? '')
+      .baseName.trim()
+      .toLowerCase() === 'qa'
+  );
+}

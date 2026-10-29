@@ -33,6 +33,7 @@ import {
   pickPrimaryEditableSplitChild,
   resolveWholeAssignStaff,
   resolveCreativeDetailPipelineAction,
+  resolveCreativeQueueStatusDisplay,
   shouldUseCreativePipelineEditDrawer,
 } from './creativePipeline';
 
@@ -352,6 +353,34 @@ describe('creativePipeline helpers', () => {
     ];
     expect(filterCreativeManagers(options).map((item) => item.userId)).toEqual(['cm']);
     expect(filterCreativeStaff(options).map((item) => item.userId)).toEqual(['staff']);
+  });
+
+  it('shows Chưa giao Staff for unassigned split children', () => {
+    expect(
+      resolveCreativeQueueStatusDisplay(
+        task({
+          parentTaskId: 'parent',
+          taskKind: 'split',
+          pipelineStage: 'assigned_staff',
+          staff: [],
+        }),
+      ),
+    ).toEqual({ label: 'Chưa giao Staff', color: 'gold' });
+    expect(
+      resolveCreativeQueueStatusDisplay(
+        task({
+          parentTaskId: 'parent',
+          taskKind: 'split',
+          pipelineStage: 'assigned_staff',
+          creativeManager: assignee({ name: 'Yen', userId: 'cm' }),
+          staff: [assignee({ name: 'An', userId: 'staff-1' })],
+        }),
+      ),
+    ).toEqual({ label: 'Đã giao Staff', color: 'green' });
+    expect(resolveCreativeQueueStatusDisplay(task({ pipelineStage: 'split', staff: [] }))).toEqual({
+      label: 'Đã chia nhỏ',
+      color: 'blue',
+    });
   });
 
   it('labels Người nhận as Creative Staff names only', () => {

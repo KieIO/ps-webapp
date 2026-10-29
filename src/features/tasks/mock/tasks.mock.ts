@@ -53,6 +53,7 @@ import {
   isAwaitingCh,
   isCreativeHandoffPayload,
   isCreativeLevelLockedByStaffConfirm,
+  isQaSplitChildTask,
   isReturnedToPm,
   isSplitChildQuantityLocked,
   isSplitChildTask,
@@ -1520,7 +1521,10 @@ export const mockUpdateCreativePipeline = async (
       }
       nextQty.set(row.id, row.quantity);
     }
-    const sum = [...nextQty.values()].reduce((total, qty) => total + qty, 0);
+    const sum = siblings.reduce((total, sibling) => {
+      if (isQaSplitChildTask(sibling)) return total;
+      return total + (nextQty.get(sibling.id) ?? sibling.quantity);
+    }, 0);
     const wantsParentQty = payload.quantity != null;
     if (
       wantsParentQty &&
@@ -1611,7 +1615,10 @@ export const mockUpdateCreativePipeline = async (
     const siblings = storeAfterQty.filter(
       (entry) => entry.parentTaskId === parentId && entry.taskKind !== 'revision',
     );
-    let used = siblings.reduce((total, child) => total + child.quantity, 0);
+    let used = siblings.reduce((total, child) => {
+      if (isQaSplitChildTask(child)) return total;
+      return total + child.quantity;
+    }, 0);
     const added: MyTask[] = [];
     payload.addSubtasks.forEach((subtask, offset) => {
       if (!subtask.description?.trim()) {
@@ -1620,11 +1627,17 @@ export const mockUpdateCreativePipeline = async (
       if (!Number.isInteger(subtask.quantity) || subtask.quantity < 0) {
         throw new Error('Số lượng phải là số nguyên từ 0');
       }
-      used += subtask.quantity;
-      if (used > parent.quantity) {
-        throw new Error(
-          `tổng SL các phần (${used}) không được lớn hơn SL task cha (${parent.quantity})`,
-        );
+      const isQa = Boolean(subtask.isQa);
+      if (isQa && (subtask.qaLevel == null || subtask.qaLevel < 1 || subtask.qaLevel > 5)) {
+        throw new Error('Chọn level QA (1–5)');
+      }
+      if (!isQa) {
+        used += subtask.quantity;
+        if (used > parent.quantity) {
+          throw new Error(
+            `tổng SL các phần (${used}) không được lớn hơn SL task cha (${parent.quantity})`,
+          );
+        }
       }
       const staff = subtask.staffUserId?.trim()
         ? resolveStaffFromUserId(subtask.staffUserId, [
@@ -1632,7 +1645,7 @@ export const mockUpdateCreativePipeline = async (
             ...storeAfterQty.flatMap((task) => task.staff),
           ])
         : [];
-      const name = subtask.name?.trim() || defaultSplitChildName(parent.taskName);
+      const name = isQa ? 'QA' : subtask.name?.trim() || defaultSplitChildName(parent.taskName);
       const addedAt = new Date().toISOString();
       added.push(
         enrichMockTaskWithProjectContext({
@@ -1640,6 +1653,7 @@ export const mockUpdateCreativePipeline = async (
           id: `task-${Date.now()}-add-${offset}`,
           taskCode: `${parent.taskCode}-S${siblings.length + offset + 1}`,
           taskName: name,
+          level: isQa ? (subtask.qaLevel as number) : parent.level,
           description: subtask.description.trim(),
           quantity: subtask.quantity,
           staff,

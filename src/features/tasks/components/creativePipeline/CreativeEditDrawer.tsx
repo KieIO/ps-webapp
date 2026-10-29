@@ -1,6 +1,7 @@
 import {
   Alert,
   Button,
+  Checkbox,
   Collapse,
   DatePicker,
   Drawer,
@@ -18,6 +19,8 @@ import { buildMyTaskDetailPath, DATETIME_SHORT_FORMAT } from '@/config/constants
 import { ROLES } from '@/config/permissions';
 import type { ProjectUrgency } from '@/features/projects/schemas/project.schema';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
+import { useTaskScoreList } from '@/features/task-scores/hooks/useTaskScoreList';
+import { resolveTaskType } from '@/features/task-scores/utils/resolveTaskType';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { CONFIRMATION_LABELS, MY_TASK_COLUMN_HEADERS } from '../../constants';
 import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
@@ -36,7 +39,7 @@ import {
 } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import { wholeTaskQuantityRule, nonNegativeWholeQuantityRule } from '../../utils/taskQuantity';
-import { defaultSplitChildName } from '../../utils/taskScoreName';
+import { defaultSplitChildName, parseTaskScoreName } from '../../utils/taskScoreName';
 import {
   canChangeCreativeLevelRole,
   canEditCreativePipelineTask,
@@ -50,11 +53,11 @@ import {
   getAssigneeWorkload,
   isCreativeLevelLockedByStaffConfirm,
   inferParentTaskCodeFromSplit,
+  isQaSplitChildTask,
   isSplitChildQuantityLocked,
   isSplitChildTask,
   isSplitParentTask,
   pickPrimaryEditableSplitChild,
-  PIPELINE_STAGE_LABELS,
   SPLIT_CHILD_BADGE_LABEL,
   SPLIT_PARENT_BADGE_LABEL,
   resolveAssigneeAvailability,
@@ -106,6 +109,8 @@ type EditFormValues = {
     description?: string;
     quantity?: number;
     staffUserId?: string;
+    asQa?: boolean;
+    qaLevel?: number;
   }[];
 };
 
@@ -115,6 +120,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   const userId = useAppSelector((state) => state.auth.user?.id);
   const { mutate, isPending } = useUpdateCreativePipeline();
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
+  const { data: taskScoreList } = useTaskScoreList({ search: 'QA' }, { enabled: open });
   const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
   const allTasks = useMemo(() => taskList?.items ?? [], [taskList?.items]);
   const stagePreview = task ? resolveEffectivePipelineStage(task) : undefined;
@@ -219,9 +225,24 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
         : null;
   const watchedChildQuantities = Form.useWatch('childQuantities', form);
   const watchedParentQuantity = Form.useWatch('quantity', form);
+  const qaLevelOptions = useMemo(() => {
+    const scores = taskScoreList?.items ?? [];
+    const levels = new Map<number, string>();
+    for (const score of scores) {
+      const type = resolveTaskType(score.taskType, score.name).trim().toLowerCase();
+      if (type !== 'qa') continue;
+      const { level } = parseTaskScoreName(score.name);
+      if (level == null || level < 1 || level > 5) continue;
+      levels.set(level, `QA ${level}`);
+    }
+    return [...levels.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([value, label]) => ({ value, label }));
+  }, [taskScoreList?.items]);
   const existingAllocatedFromForm = useMemo(() => {
     if (quantityFamily.length === 0) return 0;
     return quantityFamily.reduce((sum, child) => {
+      if (isQaSplitChildTask(child)) return sum;
       const fromForm = watchedChildQuantities?.[child.id];
       const qty = fromForm != null ? Number(fromForm) : child.quantity;
       return sum + (Number.isFinite(qty) ? qty : 0);
@@ -230,6 +251,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   const newChildrenAllocated = useMemo(
     () =>
       (watchedNewChildren ?? []).reduce((sum, row) => {
+        if (row?.asQa) return sum;
         const qty = Number(row?.quantity);
         return sum + (Number.isFinite(qty) && qty > 0 ? qty : 0);
       }, 0),
@@ -435,13 +457,27 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
           ));
 
     const newChildren = (values.newChildren ?? []).filter(
-      (row) => (row.description ?? '').trim() || (row.name ?? '').trim() || (row.quantity ?? 0) > 0,
+      (row) =>
+        (row.description ?? '').trim() ||
+        (row.name ?? '').trim() ||
+        (row.quantity ?? 0) > 0 ||
+        row.asQa,
     );
-    const newChildSum = newChildren.reduce((sum, row) => sum + (Number(row.quantity) || 0), 0);
-    const existingSum = nextChildQuantities.reduce(
-      (sum, row) => sum + (Number(row.quantity) || 0),
-      0,
-    );
+    for (const row of newChildren) {
+      if (row.asQa && (row.qaLevel == null || row.qaLevel < 1 || row.qaLevel > 5)) {
+        message.warning('Chọn level QA (1–5) cho task con QA.');
+        return;
+      }
+    }
+    const newChildSum = newChildren.reduce((sum, row) => {
+      if (row.asQa) return sum;
+      return sum + (Number(row.quantity) || 0);
+    }, 0);
+    const existingSum = quantityFamily.reduce((sum, child) => {
+      if (isQaSplitChildTask(child)) return sum;
+      const row = nextChildQuantities.find((entry) => entry.id === child.id);
+      return sum + (Number(row?.quantity ?? child.quantity) || 0);
+    }, 0);
     if (quantityFamily.length > 0 && existingSum + newChildSum > projectedParentQty) {
       const overMsg = `Tổng SL các phần (${existingSum + newChildSum}) không được lớn hơn SL task cha (${projectedParentQty})`;
       form.setFields([{ name: 'newChildren', errors: [overMsg] }]);
@@ -518,12 +554,23 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
           ...splitQtyPayload,
           ...(newChildren.length > 0
             ? {
-                addSubtasks: newChildren.map((row) => ({
-                  name: (row.name ?? '').trim() || defaultSplitChildName(task.taskName),
-                  description: (row.description ?? '').trim(),
-                  quantity: Number(row.quantity) || 0,
-                  staffUserId: (row.staffUserId ?? '').trim() || undefined,
-                })),
+                addSubtasks: newChildren.map((row) =>
+                  row.asQa
+                    ? {
+                        name: 'QA',
+                        description: (row.description ?? '').trim(),
+                        quantity: Number(row.quantity) || 0,
+                        staffUserId: (row.staffUserId ?? '').trim() || undefined,
+                        isQa: true,
+                        qaLevel: row.qaLevel,
+                      }
+                    : {
+                        name: (row.name ?? '').trim() || defaultSplitChildName(task.taskName),
+                        description: (row.description ?? '').trim(),
+                        quantity: Number(row.quantity) || 0,
+                        staffUserId: (row.staffUserId ?? '').trim() || undefined,
+                      },
+                ),
               }
             : {}),
           ...(canEditSchedule
@@ -653,9 +700,9 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                   <p className={styles.allocationHint}>
                     {canEditSplitTotal
                       ? splitChild
-                        ? 'Đang sửa một task nhỏ trong cùng task cha. Tổng các phần không được lớn hơn SL task cha.'
-                        : 'Chỉnh SL tổng hoặc từng phần. Tổng các phần không được lớn hơn SL task cha. Phần finished/huỷ bị khoá.'
-                      : 'SL tổng do người tạo task hoặc Admin sửa. Bạn chỉ sửa số lượng từng phần; tổng các phần không được lớn hơn SL tổng.'}
+                        ? 'Đang sửa một task nhỏ trong cùng task cha. Tổng các phần (không gồm QA) không được lớn hơn SL task cha.'
+                        : 'Chỉnh SL tổng hoặc từng phần. Tổng các phần scope (không gồm QA) không được lớn hơn SL task cha. Phần finished/huỷ bị khoá.'
+                      : 'SL tổng do người tạo task hoặc Admin sửa. Bạn chỉ sửa số lượng từng phần; tổng scope không gồm QA.'}
                   </p>
                   <Form.Item
                     name="quantity"
@@ -695,11 +742,15 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                     <>
                       {quantityFamily.map((child, index) => {
                         const qtyLocked = isSplitChildQuantityLocked(child);
+                        const isQaChild = isQaSplitChildTask(child);
                         return (
                           <div className={styles.allocationRow} key={child.id}>
                             <div className={styles.allocationMeta}>
                               <p className={styles.allocationTitle}>
-                                {index + 1}. {child.taskName}
+                                {index + 1}. {isQaChild ? `QA ${child.level}` : child.taskName}
+                                {isQaChild ? (
+                                  <span className={styles.qaChip}>QA · SL riêng</span>
+                                ) : null}
                               </p>
                               <p className={styles.allocationSub}>
                                 {child.taskCode}
@@ -748,71 +799,130 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                           <div className={styles.newChildrenHeader}>
                             <p className={styles.sectionLabel}>Thêm task con</p>
                             <p className={styles.allocationHint}>
-                              Còn {Math.max(0, parentTotalFromForm - allocatedFromForm)} SL chưa
-                              chia. Điền brief → Lưu thay đổi (có thể SL 0, chưa gán Staff).
+                              Còn {Math.max(0, parentTotalFromForm - allocatedFromForm)} SL scope
+                              chưa chia. Tick QA để tạo task QA (SL riêng, không trừ SL tổng). Điền
+                              brief → Lưu thay đổi.
                             </p>
                           </div>
                           <Form.List name="newChildren">
                             {(fields, { add, remove }) => (
                               <div className={styles.formSectionStack}>
-                                {fields.map((field, index) => (
-                                  <div className={styles.subtaskCardCompact} key={field.key}>
-                                    <div className={styles.subtaskHeader}>
-                                      <span>Task con mới {index + 1}</span>
-                                      <Button
-                                        type="link"
-                                        danger
-                                        size="small"
-                                        onClick={() => remove(field.name)}
-                                      >
-                                        Xóa
-                                      </Button>
-                                    </div>
-                                    <Form.Item name={[field.name, 'name']} label="Tên">
-                                      <Input
-                                        placeholder={
-                                          defaultSplitChildName(task.taskName) || 'Tên task'
-                                        }
-                                      />
-                                    </Form.Item>
-                                    <Form.Item
-                                      name={[field.name, 'description']}
-                                      label="Brief"
-                                      rules={[{ required: true, message: 'Nhập brief' }]}
-                                    >
-                                      <Input.TextArea
-                                        rows={2}
-                                        placeholder="Brief phần việc của task con này…"
-                                      />
-                                    </Form.Item>
-                                    <div className={styles.deadlineRow}>
+                                {fields.map((field, index) => {
+                                  const asQa = Boolean(watchedNewChildren?.[field.name]?.asQa);
+                                  return (
+                                    <div className={styles.subtaskCardCompact} key={field.key}>
+                                      <div className={styles.subtaskHeader}>
+                                        <span>
+                                          Task con mới {index + 1}
+                                          {asQa ? ' · QA' : ''}
+                                        </span>
+                                        <Button
+                                          type="link"
+                                          danger
+                                          size="small"
+                                          onClick={() => remove(field.name)}
+                                        >
+                                          Xóa
+                                        </Button>
+                                      </div>
                                       <Form.Item
-                                        name={[field.name, 'staffUserId']}
-                                        label="Giao cho"
+                                        name={[field.name, 'asQa']}
+                                        valuePropName="checked"
+                                        className={styles.qaCheckboxItem}
                                       >
-                                        <Select
-                                          showSearch
-                                          allowClear
-                                          optionFilterProp="label"
-                                          placeholder="Chưa gán Staff"
-                                          options={staffSelectOptions}
+                                        <Checkbox
+                                          onChange={(event) => {
+                                            if (event.target.checked) {
+                                              form.setFieldValue(
+                                                ['newChildren', field.name, 'name'],
+                                                'QA',
+                                              );
+                                            } else {
+                                              form.setFieldValue(
+                                                ['newChildren', field.name, 'name'],
+                                                defaultSplitChildName(task.taskName),
+                                              );
+                                              form.setFieldValue(
+                                                ['newChildren', field.name, 'qaLevel'],
+                                                undefined,
+                                              );
+                                            }
+                                          }}
+                                        >
+                                          Task QA (QA lại slide / phần của người khác)
+                                        </Checkbox>
+                                      </Form.Item>
+                                      {asQa ? (
+                                        <Form.Item
+                                          name={[field.name, 'qaLevel']}
+                                          label="Loại QA"
+                                          rules={[{ required: true, message: 'Chọn QA 1–5' }]}
+                                          extra="Type task con = QA. SL QA không tính vào SL tổng task cha."
+                                        >
+                                          <Select
+                                            placeholder="Chọn QA 1 / 2 / …"
+                                            options={
+                                              qaLevelOptions.length > 0
+                                                ? qaLevelOptions
+                                                : [1, 2, 3, 4, 5].map((level) => ({
+                                                    value: level,
+                                                    label: `QA ${level}`,
+                                                  }))
+                                            }
+                                          />
+                                        </Form.Item>
+                                      ) : (
+                                        <Form.Item name={[field.name, 'name']} label="Tên">
+                                          <Input
+                                            placeholder={
+                                              defaultSplitChildName(task.taskName) || 'Tên task'
+                                            }
+                                          />
+                                        </Form.Item>
+                                      )}
+                                      <Form.Item
+                                        name={[field.name, 'description']}
+                                        label="Brief"
+                                        rules={[{ required: true, message: 'Nhập brief' }]}
+                                      >
+                                        <Input.TextArea
+                                          rows={2}
+                                          placeholder={
+                                            asQa
+                                              ? 'Brief phần QA (slide / phần cần kiểm)…'
+                                              : 'Brief phần việc của task con này…'
+                                          }
                                         />
                                       </Form.Item>
-                                      <Form.Item
-                                        name={[field.name, 'quantity']}
-                                        label="Số lượng"
-                                        rules={[nonNegativeWholeQuantityRule]}
-                                      >
-                                        <InputNumber
-                                          min={0}
-                                          precision={0}
-                                          step={1}
-                                          style={{ width: '100%' }}
-                                        />
-                                      </Form.Item>
+                                      <div className={styles.deadlineRow}>
+                                        <Form.Item
+                                          name={[field.name, 'staffUserId']}
+                                          label="Giao cho"
+                                        >
+                                          <Select
+                                            showSearch
+                                            allowClear
+                                            optionFilterProp="label"
+                                            placeholder="Chưa gán Staff"
+                                            options={staffSelectOptions}
+                                          />
+                                        </Form.Item>
+                                        <Form.Item
+                                          name={[field.name, 'quantity']}
+                                          label={asQa ? 'SL QA (riêng)' : 'Số lượng'}
+                                          rules={[nonNegativeWholeQuantityRule]}
+                                        >
+                                          <InputNumber
+                                            min={0}
+                                            precision={0}
+                                            step={1}
+                                            style={{ width: '100%' }}
+                                          />
+                                        </Form.Item>
+                                      </div>
                                     </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                                 <Button
                                   type="dashed"
                                   block
@@ -822,6 +932,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                                       name: defaultSplitChildName(task.taskName),
                                       quantity: 0,
                                       description: '',
+                                      asQa: false,
                                     })
                                   }
                                 >

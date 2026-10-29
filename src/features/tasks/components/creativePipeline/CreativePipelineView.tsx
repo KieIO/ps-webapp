@@ -29,9 +29,9 @@ import {
   isReturnedToPm,
   isSplitChildTask,
   needsChBrief,
-  PIPELINE_STAGE_LABELS,
   pipelineAssigneeLabel,
   queueActionLabel,
+  resolveCreativeQueueStatusDisplay,
   resolveEffectivePipelineStage,
   SPLIT_CHILD_BADGE_HINT,
   SPLIT_CHILD_BADGE_LABEL,
@@ -309,21 +309,11 @@ export function CreativePipelineView() {
       {
         title: 'Trạng thái',
         key: 'pipelineStage',
-        width: 120,
+        width: 128,
         render: (_, record) => {
-          const stage = resolveEffectivePipelineStage(record);
-          if (!stage) return '—';
-          const color =
-            stage === 'awaiting_ch'
-              ? 'orange'
-              : stage === 'awaiting_cm'
-                ? 'gold'
-                : stage === 'returned_to_pm'
-                  ? 'red'
-                  : stage === 'split'
-                    ? 'blue'
-                    : 'green';
-          return <Tag color={color}>{PIPELINE_STAGE_LABELS[stage]}</Tag>;
+          const status = resolveCreativeQueueStatusDisplay(record);
+          if (!status) return '—';
+          return <Tag color={status.color}>{status.label}</Tag>;
         },
       },
       {

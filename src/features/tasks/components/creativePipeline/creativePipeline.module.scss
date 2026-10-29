@@ -808,6 +808,24 @@
   }
 }
 
+.qaCheckboxItem {
+  margin-bottom: 8px;
+}
+
+.qaChip {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 0 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 650;
+  vertical-align: middle;
+}
+
 .addSubtask {
   width: 100%;
 }

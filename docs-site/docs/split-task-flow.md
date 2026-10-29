@@ -110,16 +110,25 @@ Có thể kèm **ghi chú chung** cho Staff khi giao.
 
 ## 6. Task gốc và task con sau khi chia
 
-|                   | Task gốc                                                                                      | Task con                                                                   |
-| ----------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Mã                | Giữ mã cũ                                                                                     | `{mã gốc}-S1`, `-S2`, …                                                    |
-| Nhãn trên UI      | **Đã chia nhỏ**                                                                               | **Task nhỏ**                                                               |
-| Trạng thái làm    | Không còn là chỗ Staff làm chính                                                              | Đã giao Staff — Staff làm và nộp ở đây                                     |
-| Số lượng          | SL PM nhập lúc tạo, **không** bị ghi đè bằng tổng các phần. Chỉ người tạo task hoặc Admin sửa | Số lượng từng phần, có thể 0. Tổng các phần không được lớn hơn SL task cha |
-| Người nhận        | Về phía CM (theo dõi / quản lý)                                                               | Staff từng phần                                                            |
-| Thông tin kế thừa | —                                                                                             | Project, Level, urgency, tiêu chí, deadline PM, … từ gốc                   |
+|                   | Task gốc                                                                                      | Task con                                                                                            |
+| ----------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Mã                | Giữ mã cũ                                                                                     | `{mã gốc}-S1`, `-S2`, …                                                                             |
+| Nhãn trên UI      | **Đã chia nhỏ**                                                                               | **Task nhỏ**                                                                                        |
+| Trạng thái làm    | Không còn là chỗ Staff làm chính                                                              | Đã giao Staff — Staff làm và nộp ở đây                                                              |
+| Số lượng          | SL PM nhập lúc tạo, **không** bị ghi đè bằng tổng các phần. Chỉ người tạo task hoặc Admin sửa | Số lượng từng phần, có thể 0. Tổng các phần **scope** (không gồm QA) không được lớn hơn SL task cha |
+| Người nhận        | Về phía CM (theo dõi / quản lý)                                                               | Staff từng phần                                                                                     |
+| Thông tin kế thừa | —                                                                                             | Project, Level, urgency, tiêu chí, deadline PM, … từ gốc (trừ task con **QA**)                      |
 
 Thứ tự tạo quyết định `-S1`, `-S2`, …. Nếu sau này hệ thống tạo thêm phần còn lại, mã lấy số `S` tiếp theo.
+
+### Task con QA (hỗ trợ)
+
+Khi **PM hoặc Admin** thêm task con sau lần chia, có thể tick **Task QA** và chọn **QA 1 … QA 5** (catalog Task score).
+
+- **Type / tên** task con = **QA** (không kế thừa Slides/DA của cha).
+- **Level** = level QA đã chọn (dùng cho capacity / score `QA N`).
+- **SL QA** là **SL riêng**: **không** trừ / cộng vào SL tổng task cha; tổng các phần scope vẫn chỉ gồm các task con không phải QA.
+- Brief và Staff (có thể để trống) giống task con thường.
 
 ---
 
@@ -141,11 +150,12 @@ Nếu task con đã **Finished** mà số lượng chấp nhận **nhỏ hơn** 
 ## 8. Quy tắc cần biết
 
 - Lúc tạo task Creative, PM nhập **số lượng task cha > 0**. Lúc chia, hệ thống **không** ghi đè số lượng đó bằng tổng các phần.
-- Tổng số lượng các task con **không được lớn hơn** SL task cha. Phần chưa chia có thể để dành, thêm task con sau.
+- Tổng số lượng các task con **scope** (không gồm QA) **không được lớn hơn** SL task cha. Phần chưa chia có thể để dành, thêm task con sau.
 - Chỉ **PM** và **Admin** tạo task con (lần đầu và khi thêm sau). Creative Manager không tạo task con.
-- Sau khi chia, **SL tổng** chỉ **người tạo task (PM)** hoặc **Admin** sửa được. CM chỉ sửa số lượng từng task con còn mở, và tổng các phần không được vượt SL tổng.
+- PM/Admin có thể thêm task con **QA** (tick trong form thêm) để Staff QA lại phần slide / việc của người khác; SL QA không tính vào SL tổng.
+- Sau khi chia, **SL tổng** chỉ **người tạo task (PM)** hoặc **Admin** sửa được. CM chỉ sửa số lượng từng task con còn mở, và tổng các phần scope không được vượt SL tổng.
 - Task con có thể **số lượng 0** và **chưa gán Staff**. Brief vẫn bắt buộc. Có Staff thì mới gửi thông báo giao việc.
-- **Level** kế thừa từ gốc; CM **không** phân loại lại Level lúc chia (Admin / CH đổi Level trước khi Staff confirm, theo quy tắc chung).
+- **Level** task con thường kế thừa từ gốc; task con **QA** dùng level QA 1–5 đã chọn. CM **không** phân loại lại Level lúc chia (Admin / CH đổi Level trước khi Staff confirm, theo quy tắc chung).
 - Số lượng task con **khóa** khi Finished / Cancelled; còn Confirmed thì vẫn sửa được trong form sửa.
 - Hệ thống **không đếm đôi** số lượng: đếm theo task con, không cộng lại task gốc đã chia.
 - Có thể tạo **revision** trên task con (nếu đủ điều kiện) — revision **không** phải chia nhỏ.
