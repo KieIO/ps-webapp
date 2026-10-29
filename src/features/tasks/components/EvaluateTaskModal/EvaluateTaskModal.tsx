@@ -221,11 +221,18 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
   const handleFinish = (values: EvaluateTaskFormValues) => {
     if (!workingTask) return;
 
-    // Keep % = đạt / SL giao ban đầu (vd 9/12 → 75%), kể cả sau khi đã tách phần còn lại.
-    const completionPercent =
-      remainderLink && acceptedAtSpawn != null && originalAssignedQuantity > 0
-        ? computeCompletionPercentFromQuantity(acceptedAtSpawn, originalAssignedQuantity)
-        : (values.completionPercent ?? 0);
+    // Always derive % from SL đạt when quantity is the source of truth. Integer % alone
+    // cannot distinguish nearby quantities (17/117 and 18/117 both round to 15%).
+    const assignedForPercent =
+      originalAssignedQuantity > 0 ? originalAssignedQuantity : assignedQuantity;
+    let completionPercent = values.completionPercent ?? 0;
+    if (layer === 'staff' && assignedForPercent > 0) {
+      const accepted =
+        remainderLink && acceptedAtSpawn != null
+          ? acceptedAtSpawn
+          : Math.round(values.completedQuantity ?? 0);
+      completionPercent = computeCompletionPercentFromQuantity(accepted, assignedForPercent);
+    }
     const typedNote = (values.pmNote ?? '').trim();
     let pmNote = values.pmNote ?? '';
     if (!typedNote && remainderLink && acceptedAtSpawn != null && originalAssignedQuantity > 0) {

@@ -14,6 +14,7 @@ import { useMyTask } from '../../hooks/useMyTask';
 import { formatHasRevisionChildrenLabel, hasRevisionChildren } from '../../utils/taskRevision';
 import { isCreativeWholeAssigned } from '../../utils/taskEvaluation';
 import { formatEvaluationQuantitySummary, hasCmEvaluation } from '../../utils/evaluationRemainder';
+import { formatCompletionPercentDisplay } from '../../utils/evaluationCompletion';
 import styles from './TaskDetailView.module.scss';
 
 interface TaskDetailViewProps {
@@ -56,7 +57,7 @@ function EvaluationScoreGrid({
           ) : null}
           <div className={styles.evalItem}>
             <span className={styles.evalLabel}>Completion</span>
-            <span className={styles.evalValue}>{percent != null ? `${percent}%` : '—'}</span>
+            <span className={styles.evalValue}>{formatCompletionPercentDisplay(percent)}</span>
           </div>
           <div className={styles.evalItem}>
             <span className={styles.evalLabel}>Evaluation</span>
@@ -284,7 +285,7 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
                         <div className={styles.evalItem}>
                           <span className={styles.evalLabel}>Completion</span>
                           <span className={styles.evalValue}>
-                            {task.completionPercent != null ? `${task.completionPercent}%` : '—'}
+                            {formatCompletionPercentDisplay(task.completionPercent)}
                           </span>
                         </div>
                         <div className={styles.evalItem}>

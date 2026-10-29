@@ -102,6 +102,25 @@ describe('formatEvaluationQuantitySummary', () => {
     expect(formatEvaluationQuantitySummary(evaluatedParent())).toBe('Đạt 16 / 31 · Còn 15');
   });
 
+  it('keeps nearby quantities distinct when percent is precise (17 vs 18 of 117)', () => {
+    expect(
+      formatEvaluationQuantitySummary(
+        evaluatedParent({
+          quantity: 117,
+          completionPercent: (17 / 117) * 100,
+        }),
+      ),
+    ).toBe('Đạt 17 / 117 · Còn 100');
+    expect(
+      formatEvaluationQuantitySummary(
+        evaluatedParent({
+          quantity: 117,
+          completionPercent: (18 / 117) * 100,
+        }),
+      ),
+    ).toBe('Đạt 18 / 117 · Còn 99');
+  });
+
   it('shows đã tách after remainder spawn', () => {
     expect(
       formatEvaluationQuantitySummary(
