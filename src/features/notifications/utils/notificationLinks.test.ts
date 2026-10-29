@@ -74,6 +74,27 @@ describe('getNotificationPath', () => {
     ).toContain('task-321');
   });
 
+  it('routes evaluation notices to task detail Evaluation tab', () => {
+    expect(
+      getNotificationPath(
+        base({
+          type: 'task_evaluation_cm',
+          refType: 'task',
+          refId: 'task-eval-cm',
+        }),
+      ),
+    ).toBe('/tasks/detail/task-eval-cm?tab=evaluation');
+    expect(
+      getNotificationPath(
+        base({
+          type: 'task_evaluation_staff',
+          refType: 'task',
+          refId: 'task-eval-staff',
+        }),
+      ),
+    ).toBe('/tasks/detail/task-eval-staff?tab=evaluation');
+  });
+
   it('keeps staff assign on task detail even when ref looks like creative task', () => {
     const path = getNotificationPath(
       base({

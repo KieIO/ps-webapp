@@ -72,6 +72,52 @@ export const isWholeTask = (task: MyTask): boolean =>
 export const WHOLE_TASK_QUANTITY_TOOLTIP =
   'Thông tin này chỉ hiện đối với task nguyên. Task nhỏ và task cha đã chia không hiện thông tin trạng thái này, vì số lượng của chúng được tính theo cách khác.';
 
+export const EVALUATION_QUANTITY_TOOLTIP =
+  'Số lượng đạt theo đánh giá so với SL đã giao. Phần còn lại chưa được chấp nhận trong lần đánh giá này (có thể tách thành task mới).';
+
+/**
+ * Same wording as Evaluate modal «Tóm tắt»: `Đạt 16 / 31 · Còn 15`.
+ * Null when not evaluated, full acceptance, or assigned qty unknown.
+ */
+export const formatEvaluationQuantitySummary = (task: MyTask): string | null => {
+  if (!hasCmEvaluation(task)) return null;
+
+  const currentQty = Math.round(task.quantity ?? 0);
+  const originalAssigned =
+    task.originalAssignedQuantity != null ? Math.round(task.originalAssignedQuantity) : null;
+  const assigned = originalAssigned != null && originalAssigned > 0 ? originalAssigned : currentQty;
+  if (assigned <= 0) return null;
+
+  const remainderSpawned =
+    Boolean(task.evaluationRemainderTaskId) &&
+    originalAssigned != null &&
+    currentQty < originalAssigned;
+
+  let achieved: number;
+  let remaining: number;
+
+  if (remainderSpawned) {
+    achieved = currentQty;
+    remaining =
+      task.evaluationRemainderQuantity != null
+        ? Math.round(task.evaluationRemainderQuantity)
+        : Math.max(0, assigned - achieved);
+  } else if (task.completionPercent != null) {
+    achieved = deriveCompletedQuantityFromPercent(task.completionPercent, assigned);
+    remaining = Math.max(0, assigned - achieved);
+  } else {
+    return null;
+  }
+
+  achieved = Math.min(Math.max(0, achieved), assigned);
+
+  if (remainderSpawned) {
+    return `Đạt ${achieved} / ${assigned} · đã tách ${remaining}`;
+  }
+  if (remaining <= 0) return null;
+  return `Đạt ${achieved} / ${assigned} · Còn ${remaining}`;
+};
+
 /**
  * Detail Quantity for a finished whole task when evaluate accepted less than assigned.
  * Uses the same percent → quantity reverse as the evaluate modal. Does not change stored quantity.
@@ -80,6 +126,9 @@ export const WHOLE_TASK_QUANTITY_TOOLTIP =
 export const formatFinishedQuantitySummary = (task: MyTask): string | null => {
   if (task.staffConfirmation !== 'finished') return null;
   if (!isWholeTask(task)) return null;
+  // Prefer the shared evaluation summary when available (same Đạt wording as the modal).
+  const evaluationSummary = formatEvaluationQuantitySummary(task);
+  if (evaluationSummary) return evaluationSummary;
   if (task.completionPercent == null) return null;
   const total = Math.round(task.quantity ?? 0);
   if (total <= 0) return null;

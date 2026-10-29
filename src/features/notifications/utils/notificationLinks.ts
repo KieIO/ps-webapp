@@ -9,6 +9,9 @@ import type { Notification } from '../schemas/notification.schema';
 /** Creative pipeline inbox actions (CH assign CM / CM assign Staff) — not My Task detail. */
 const CREATIVE_QUEUE_NOTIFICATION_TYPES = new Set(['task_creative_handoff', 'task_creative_cm']);
 
+/** Evaluation notices open task detail on the Evaluation tab. */
+const EVALUATION_NOTIFICATION_TYPES = new Set(['task_evaluation_cm', 'task_evaluation_staff']);
+
 /** Resolve deep-link path for a notification; null when no navigable ref. */
 export const getNotificationPath = (notification: Notification): string | null => {
   const refType = notification.refType?.trim();
@@ -19,6 +22,9 @@ export const getNotificationPath = (notification: Notification): string | null =
   }
 
   if (refType === 'task' && refId) {
+    if (EVALUATION_NOTIFICATION_TYPES.has(notification.type)) {
+      return buildMyTaskDetailPath(refId, { tab: 'evaluation' });
+    }
     return buildMyTaskDetailPath(refId);
   }
   if (refType === 'project' && refId) {

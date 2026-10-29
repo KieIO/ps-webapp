@@ -6,6 +6,7 @@ import {
   computeAcceptedRemainderQuantity,
   formatEvaluationAcceptedLabel,
   formatEvaluationBadgeLabel,
+  formatEvaluationQuantitySummary,
   formatFinishedQuantitySummary,
   hasCmEvaluation,
   nextSplitChildTaskCode,
@@ -82,6 +83,50 @@ describe('evaluation display helpers', () => {
   });
 });
 
+describe('formatEvaluationQuantitySummary', () => {
+  const evaluatedParent = (overrides: Partial<MyTask> = {}): MyTask =>
+    ({
+      id: 'parent-1',
+      taskCode: 'PO.020-CHRISTMA-005',
+      taskName: 'Slides',
+      quantity: 31,
+      staffConfirmation: 'not_updated',
+      completionPercent: 52,
+      pmEvaluation: '4',
+      pipelineStage: 'split',
+      staff: [],
+      ...overrides,
+    }) as MyTask;
+
+  it('shows Đạt / Còn for an evaluated split parent (percent → accepted qty)', () => {
+    expect(formatEvaluationQuantitySummary(evaluatedParent())).toBe('Đạt 16 / 31 · Còn 15');
+  });
+
+  it('shows đã tách after remainder spawn', () => {
+    expect(
+      formatEvaluationQuantitySummary(
+        baseChild({
+          quantity: 3,
+          originalAssignedQuantity: 8,
+          evaluationRemainderTaskId: 'rem-1',
+          evaluationRemainderQuantity: 5,
+          completionPercent: 38,
+          pmEvaluation: 'B',
+        }),
+      ),
+    ).toBe('Đạt 3 / 8 · đã tách 5');
+  });
+
+  it('returns null when full acceptance or not evaluated', () => {
+    expect(formatEvaluationQuantitySummary(evaluatedParent({ completionPercent: 100 }))).toBeNull();
+    expect(
+      formatEvaluationQuantitySummary(
+        evaluatedParent({ completionPercent: null, pmEvaluation: '' }),
+      ),
+    ).toBeNull();
+  });
+});
+
 describe('formatFinishedQuantitySummary', () => {
   const whole = (overrides: Partial<MyTask> = {}): MyTask =>
     ({
@@ -96,8 +141,8 @@ describe('formatFinishedQuantitySummary', () => {
       ...overrides,
     }) as MyTask;
 
-  it('shows accepted vs assigned for a finished whole task', () => {
-    expect(formatFinishedQuantitySummary(whole())).toBe('Hoàn thành 3/23 (còn 20)');
+  it('shows accepted vs assigned for a finished whole task (Đạt wording)', () => {
+    expect(formatFinishedQuantitySummary(whole())).toBe('Đạt 3 / 23 · Còn 20');
   });
 
   it('keeps the plain quantity when acceptance is full, unevaluated, or not finished', () => {
@@ -106,13 +151,18 @@ describe('formatFinishedQuantitySummary', () => {
     expect(formatFinishedQuantitySummary(whole({ staffConfirmation: 'confirmed' }))).toBeNull();
   });
 
-  it('does not rewrite split-family quantities', () => {
+  it('does not rewrite unevaluated split-family quantities', () => {
     expect(formatFinishedQuantitySummary(baseChild({ quantity: 23, completionPercent: 13 }))).toBe(
       null,
     );
     expect(
       formatFinishedQuantitySummary(
-        whole({ pipelineStage: 'split', parentTaskId: undefined, completionPercent: 13 }),
+        whole({
+          pipelineStage: 'split',
+          parentTaskId: undefined,
+          staffConfirmation: 'not_updated',
+          completionPercent: 13,
+        }),
       ),
     ).toBeNull();
   });

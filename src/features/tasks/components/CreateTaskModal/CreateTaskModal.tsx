@@ -375,10 +375,20 @@ export function CreateTaskModal({
     const taskName = resolveTaskType(matchedScore.taskType, matchedScore.name);
     const department = values.department ?? matchedScore.department ?? undefined;
 
+    const projectManager =
+      pmLockedToSelf && currentUser?.id
+        ? {
+            ...values.projectManager,
+            code: values.projectManager?.code || defaultProjectManager?.code || '',
+            name: values.projectManager?.name || defaultProjectManager?.name || currentUser.name,
+            userId: currentUser.id,
+          }
+        : values.projectManager;
+
     const payload: CreateMyTaskRequest = {
       taskCategory,
       projectName: values.projectName,
-      projectManager: values.projectManager,
+      projectManager,
       taskName,
       level: isCreativeTask ? DEFAULT_VALUES.level : values.level,
       quantity: isCreativeTask ? DEFAULT_VALUES.quantity : values.quantity,
@@ -452,6 +462,9 @@ export function CreateTaskModal({
             />
           </Form.Item>
           <Form.Item name={['projectManager', 'name']} hidden>
+            <Input />
+          </Form.Item>
+          <Form.Item name={['projectManager', 'userId']} hidden>
             <Input />
           </Form.Item>
         </section>

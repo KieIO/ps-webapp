@@ -547,6 +547,15 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
     if (!workflowKind) return;
     try {
       const values = await form.validateFields();
+      // Ant Design only returns registered fields; keep PM userId when locked to self.
+      if (pmLockedToSelf && currentUser?.id) {
+        values.projectManager = {
+          ...values.projectManager,
+          code: values.projectManager?.code || defaultProjectManager?.code || '',
+          name: values.projectManager?.name || defaultProjectManager?.name || currentUser.name,
+          userId: currentUser.id,
+        };
+      }
       const payload = buildCreateTaskPayload({
         workflowKind,
         values,
@@ -659,6 +668,9 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                 </Form.Item>
               </div>
               <Form.Item name={['projectManager', 'name']} hidden>
+                <Input />
+              </Form.Item>
+              <Form.Item name={['projectManager', 'userId']} hidden>
                 <Input />
               </Form.Item>
 

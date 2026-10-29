@@ -13,7 +13,7 @@ import { TaskRevisionHistoryTab } from '../TaskRevisionHistoryTab/TaskRevisionHi
 import { useMyTask } from '../../hooks/useMyTask';
 import { formatHasRevisionChildrenLabel, hasRevisionChildren } from '../../utils/taskRevision';
 import { isCreativeWholeAssigned } from '../../utils/taskEvaluation';
-import { hasCmEvaluation } from '../../utils/evaluationRemainder';
+import { formatEvaluationQuantitySummary, hasCmEvaluation } from '../../utils/evaluationRemainder';
 import styles from './TaskDetailView.module.scss';
 
 interface TaskDetailViewProps {
@@ -30,18 +30,30 @@ function EvaluationScoreGrid({
   percent,
   score,
   note,
+  quantitySummary,
 }: {
   title: string;
   percent?: number | null;
   score?: string | null;
   note?: string | null;
+  quantitySummary?: string | null;
 }) {
-  const recorded = percent != null || Boolean(score?.trim()) || Boolean(note?.trim());
+  const recorded =
+    percent != null ||
+    Boolean(score?.trim()) ||
+    Boolean(note?.trim()) ||
+    Boolean(quantitySummary?.trim());
   return (
     <section>
       <p className={styles.sectionTitle}>{title}</p>
       {recorded ? (
         <div className={styles.evalGrid}>
+          {quantitySummary ? (
+            <div className={styles.evalItem}>
+              <span className={styles.evalLabel}>Số lượng đạt</span>
+              <span className={styles.evalValue}>{quantitySummary}</span>
+            </div>
+          ) : null}
           <div className={styles.evalItem}>
             <span className={styles.evalLabel}>Completion</span>
             <span className={styles.evalValue}>{percent != null ? `${percent}%` : '—'}</span>
@@ -239,41 +251,55 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
               {
                 key: 'evaluation',
                 label: 'Evaluation',
-                children: isCreativeWholeAssigned(task) ? (
-                  <div className={styles.detailStack}>
-                    <EvaluationScoreGrid
-                      title="Đánh giá của Creative Head"
-                      percent={task.handoffCompletionPercent}
-                      score={task.handoffEvaluation}
-                      note={task.handoffNote}
-                    />
-                    <EvaluationScoreGrid
-                      title="Đánh giá kết quả Staff"
-                      percent={task.completionPercent}
-                      score={task.pmEvaluation}
-                      note={task.pmNote}
-                    />
-                  </div>
-                ) : hasCmEvaluation(task) ? (
-                  <div className={styles.evalGrid}>
-                    <div className={styles.evalItem}>
-                      <span className={styles.evalLabel}>Completion</span>
-                      <span className={styles.evalValue}>
-                        {task.completionPercent != null ? `${task.completionPercent}%` : '—'}
-                      </span>
-                    </div>
-                    <div className={styles.evalItem}>
-                      <span className={styles.evalLabel}>Evaluation</span>
-                      <span className={styles.evalValue}>{task.pmEvaluation || '—'}</span>
-                    </div>
-                    <div className={styles.evalItem}>
-                      <span className={styles.evalLabel}>PM note</span>
-                      <span className={styles.evalValue}>{task.pmNote || '—'}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.emptyBlock}>No evaluation recorded yet.</div>
-                ),
+                children: (() => {
+                  const quantitySummary = formatEvaluationQuantitySummary(task);
+                  if (isCreativeWholeAssigned(task)) {
+                    return (
+                      <div className={styles.detailStack}>
+                        <EvaluationScoreGrid
+                          title="Đánh giá của Creative Head"
+                          percent={task.handoffCompletionPercent}
+                          score={task.handoffEvaluation}
+                          note={task.handoffNote}
+                        />
+                        <EvaluationScoreGrid
+                          title="Đánh giá kết quả Staff"
+                          percent={task.completionPercent}
+                          score={task.pmEvaluation}
+                          note={task.pmNote}
+                          quantitySummary={quantitySummary}
+                        />
+                      </div>
+                    );
+                  }
+                  if (hasCmEvaluation(task)) {
+                    return (
+                      <div className={styles.evalGrid}>
+                        {quantitySummary ? (
+                          <div className={styles.evalItem}>
+                            <span className={styles.evalLabel}>Số lượng đạt</span>
+                            <span className={styles.evalValue}>{quantitySummary}</span>
+                          </div>
+                        ) : null}
+                        <div className={styles.evalItem}>
+                          <span className={styles.evalLabel}>Completion</span>
+                          <span className={styles.evalValue}>
+                            {task.completionPercent != null ? `${task.completionPercent}%` : '—'}
+                          </span>
+                        </div>
+                        <div className={styles.evalItem}>
+                          <span className={styles.evalLabel}>Evaluation</span>
+                          <span className={styles.evalValue}>{task.pmEvaluation || '—'}</span>
+                        </div>
+                        <div className={styles.evalItem}>
+                          <span className={styles.evalLabel}>Ghi chú</span>
+                          <span className={styles.evalValue}>{task.pmNote || '—'}</span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return <div className={styles.emptyBlock}>No evaluation recorded yet.</div>;
+                })(),
               },
             ]}
           />

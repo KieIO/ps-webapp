@@ -30,8 +30,10 @@ import {
 import { canViewCreativeDeadline } from '../../utils/creativeVisibility';
 import {
   EVALUATED_BADGE_LABEL,
+  EVALUATION_QUANTITY_TOOLTIP,
   formatEvaluationAcceptedLabel,
   formatEvaluationBadgeLabel,
+  formatEvaluationQuantitySummary,
   formatFinishedQuantitySummary,
   hasCmEvaluation,
   WHOLE_TASK_QUANTITY_TOOLTIP,
@@ -82,7 +84,14 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
   const splitParent = isSplitParentTask(task);
   const parentHasRevisions = hasRevisionChildren(task);
   const parentHasActiveRevision = hasActiveRevisionChildren(task);
+  const evaluationQuantitySummary = formatEvaluationQuantitySummary(task);
   const finishedQuantitySummary = formatFinishedQuantitySummary(task);
+  const quantitySummary = evaluationQuantitySummary ?? finishedQuantitySummary;
+  const quantityTooltip = evaluationQuantitySummary
+    ? EVALUATION_QUANTITY_TOOLTIP
+    : finishedQuantitySummary
+      ? WHOLE_TASK_QUANTITY_TOOLTIP
+      : undefined;
   const parentCode = revision
     ? inferParentTaskCodeFromRevision(task.taskCode)
     : splitChild
@@ -259,14 +268,14 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
         </div>
 
         <div className={styles.metaItem}>
-          {finishedQuantitySummary ? (
-            <Tooltip title={WHOLE_TASK_QUANTITY_TOOLTIP}>
+          {quantityTooltip ? (
+            <Tooltip title={quantityTooltip}>
               <p className={`${styles.metaLabel} ${styles.quantityHint}`}>Quantity</p>
             </Tooltip>
           ) : (
             <p className={styles.metaLabel}>Quantity</p>
           )}
-          <p className={styles.metaValue}>{finishedQuantitySummary ?? formatTaskQuantity(task)}</p>
+          <p className={styles.metaValue}>{quantitySummary ?? formatTaskQuantity(task)}</p>
         </div>
 
         <div className={showCreativeDeadline ? styles.metaStack : styles.metaItem}>
