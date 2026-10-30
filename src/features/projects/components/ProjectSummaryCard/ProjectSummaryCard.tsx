@@ -201,7 +201,7 @@ export function ProjectSummaryCard({
         <div className={styles.stat}>
           <dt className={styles.statLabel}>{PROJECT_TABLE_COLUMN_HEADERS.slides}</dt>
           <dd className={styles.statValue}>
-            <Tooltip title="Tổng quantity của task loại slides (không gồm DA)">
+            <Tooltip title="Cộng qty task slides (kể cả Animation/Redo); không gồm DA; không đếm trùng khi đã chia nhỏ">
               <span>{slidesLabel}</span>
             </Tooltip>
           </dd>
