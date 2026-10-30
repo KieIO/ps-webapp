@@ -56,7 +56,7 @@ const COMPLETION_EMPTY_HINT = 'PM chưa nhập % hoàn thành cho task này.';
 const CREATIVE_DEADLINE_HINT =
   'Deadline nội bộ của phòng Creative. Để trống nếu task không đi qua Creative.';
 const SLIDES_QTY_SUMMARY_HINT =
-  'Cộng qty task slides (kể cả Animation/Redo); không gồm DA; không đếm trùng khi đã chia nhỏ';
+  'Tổng qty task loại Slides (không gồm DA, QA, Animation, …); không đếm trùng khi đã chia nhỏ';
 
 function ColumnTitleWithHint({
   label,

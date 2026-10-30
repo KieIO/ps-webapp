@@ -28,14 +28,16 @@ const task = (overrides: Partial<MyTask>): MyTask =>
   }) as MyTask;
 
 describe('computeProjectDetailStats', () => {
-  it('counts tasks, sums slides quantity, and averages completion', () => {
+  it('counts tasks, sums Slides-type quantity only, and averages completion', () => {
     const stats = computeProjectDetailStats([
       task({ id: 's1', taskName: 'Slides', quantity: 20, completionPercent: 50 }),
-      task({ id: 's2', taskName: 'Redo Slide', quantity: 10, completionPercent: 100 }),
+      task({ id: 's2', taskName: 'Slides 2', quantity: 10, completionPercent: 100 }),
+      task({ id: 'redo', taskName: 'Redo Slide', quantity: 10, completionPercent: 100 }),
       task({ id: 'd1', taskName: 'DA', quantity: 8, completionPercent: 0 }),
+      task({ id: 'qa', taskName: 'QA', quantity: 5, completionPercent: 0 }),
     ]);
 
-    expect(stats.taskCount).toBe(3);
+    expect(stats.taskCount).toBe(5);
     expect(stats.totalSlides).toBe(30);
     expect(stats.averageCompletionPercent).toBe(50);
   });

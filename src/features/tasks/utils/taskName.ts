@@ -1,3 +1,5 @@
+import { parseTaskScoreName } from './taskScoreName';
+
 export type TaskNameVariant =
   | 'animation'
   | 'slides'
@@ -28,4 +30,12 @@ export function isCreativeDaTaskName(taskName: string): boolean {
 /** Project slides-style output (anything that is not Creative DA). */
 export function isSlidesOutputTaskName(taskName: string): boolean {
   return !isCreativeDaTaskName(taskName);
+}
+
+/**
+ * Catalog type Slides only (`Slides`, `Slides 2`, …).
+ * Matches Tracker Total / BE `isSlidesTypeTaskName` — not Animation, Redo, DA, QA.
+ */
+export function isSlidesTypeTaskName(taskName: string): boolean {
+  return parseTaskScoreName(taskName).baseName.trim().toLowerCase() === 'slides';
 }

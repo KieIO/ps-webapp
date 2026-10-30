@@ -503,7 +503,9 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                           [styles.slidesUrgent]: project.highlightSlides,
                         })}
                       >
-                        <span className={styles.slidesActual}>{totalParts.calculated}</span>
+                        <Tooltip title="Tổng qty task loại Slides (không gồm DA, QA, Animation, …)">
+                          <span className={styles.slidesActual}>{totalParts.calculated}</span>
+                        </Tooltip>
                         {totalParts.planned != null ? (
                           <span className={styles.slidesPlanned} title="Planned slides">
                             /{totalParts.planned}

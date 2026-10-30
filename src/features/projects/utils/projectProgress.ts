@@ -1,6 +1,6 @@
 import type { MyTask } from '@/features/tasks/schemas/task.schema';
 import { countsTowardQuantityAggregates } from '@/features/tasks/utils/creativePipeline';
-import { isSlidesOutputTaskName } from '@/features/tasks/utils/taskName';
+import { isSlidesTypeTaskName } from '@/features/tasks/utils/taskName';
 import type { Project } from '../schemas/project.schema';
 import { isTaskForProject } from './projectTaskCount';
 
@@ -56,13 +56,13 @@ const fromProjectRecord = (
   averageCompletionPercent: Math.round(project.completionPercent),
 });
 
-/** Stats for the project-detail summary: slides qty excludes Creative DA; % is unweighted among evaluated tasks. */
+/** Stats for the project-detail summary: Slides-type qty only; % is unweighted among evaluated tasks. */
 export const computeProjectDetailStats = (tasks: MyTask[]): ProjectDetailStats => {
   const percents = tasks
     .map((task) => task.completionPercent)
     .filter((value): value is number => value != null);
   const totalSlides = tasks
-    .filter((task) => isSlidesOutputTaskName(task.taskName) && countsTowardQuantityAggregates(task))
+    .filter((task) => isSlidesTypeTaskName(task.taskName) && countsTowardQuantityAggregates(task))
     .reduce((sum, task) => sum + task.quantity, 0);
 
   return {
