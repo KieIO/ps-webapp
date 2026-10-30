@@ -161,7 +161,8 @@ Nếu task con đã **Finished** mà số lượng chấp nhận **nhỏ hơn** 
 - Tổng số lượng các task con **làm việc** (không gồm QA) **không được lớn hơn** SL task cha. Phần chưa chia có thể để dành, thêm task con sau.
 - Lần chia đầu (form **Giao Staff → Chia nhỏ**): theo quyền giao Staff hiện tại (PM / Admin). **Thêm task con sau khi đã chia:** chỉ **CM** hoặc **Admin**.
 - CM hoặc Admin có thể thêm task con **QA** để Staff kiểm lại phần của người khác; số lượng QA không tính vào SL tổng.
-- Sau khi chia, **SL tổng** chỉ **người tạo task (PM)** hoặc **Admin** sửa được. CM chỉ sửa số lượng từng task con còn mở, và tổng phần làm việc không được vượt SL tổng.
+- Sau khi chia, **SL tổng** chỉ **người tạo task (PM)** hoặc **Admin** sửa được. CM chỉ sửa số lượng từng task con còn mở, và tổng phần làm việc không được vượt SL tổng. **Trước khi chia** (task còn chờ giao Staff), người tạo hoặc Admin cũng sửa được SL tổng trên form **Sửa / Đổi giao**.
+- Form sửa bắt buộc **Lý do thay đổi** khi: đổi **SL tổng**, đổi SL các phần, thêm task con, hoặc đổi Staff / CM (để ghi lịch sử / audit).
 - Task con có thể **số lượng 0** và **chưa gán Staff**. Brief vẫn bắt buộc. Có Staff thì mới gửi thông báo giao việc.
 - **Level** task con thường kế thừa từ gốc; task con **QA** dùng mức QA 1 đến 5 đã chọn. CM **không** phân loại lại Level lúc chia (Admin hoặc CH đổi Level trước khi Staff confirm, theo quy tắc chung).
 - Số lượng task con **khóa** khi Finished hoặc Cancelled; còn Confirmed thì vẫn sửa được trong form sửa.

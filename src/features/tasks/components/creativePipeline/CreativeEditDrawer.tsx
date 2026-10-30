@@ -515,6 +515,12 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       baselineParentQty != null &&
       Math.abs(projectedParentQty - baselineParentQty) > 1e-6;
 
+    const wholeQtyChanged =
+      quantityFamily.length === 0 &&
+      values.quantity != null &&
+      Number.isFinite(Number(values.quantity)) &&
+      Math.abs(Number(values.quantity) - task.quantity) > 1e-6;
+
     const splitQtyPayload =
       quantityFamily.length > 0
         ? {
@@ -543,15 +549,17 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       values.staffUserId !==
         (resolveWholeAssignStaff(task)[0]?.userId ?? task.staff[0]?.userId ?? undefined);
 
+    // Same audit gate as BE: SL (tổng / phần), thêm con, hoặc đổi người → bắt lý do.
     const needsChangeReason =
       staffChanged ||
       cmChanged ||
       newChildren.length > 0 ||
       changedChildQuantities.length > 0 ||
-      (splitParent && parentQtyChanged);
+      (splitParent && parentQtyChanged) ||
+      wholeQtyChanged;
     if (needsChangeReason && !(values.changeReason ?? '').trim()) {
       form.setFields([{ name: 'changeReason', errors: ['Nhập lý do thay đổi'] }]);
-      message.warning('Nhập lý do thay đổi rồi bấm Lưu (ô ngay dưới task con mới).');
+      message.warning('Nhập lý do thay đổi rồi bấm Lưu.');
       return;
     }
 
@@ -1120,11 +1128,11 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                   <Form.Item
                     name="changeReason"
                     label="Lý do thay đổi"
-                    extra="Bắt buộc khi đổi SL các phần hoặc đổi người được giao."
+                    extra="Bắt buộc khi đổi SL tổng / SL các phần, thêm task con, hoặc đổi người được giao."
                   >
                     <Input.TextArea
                       rows={2}
-                      placeholder="Ví dụ: giảm SL A để gán phần còn lại cho C"
+                      placeholder="Ví dụ: giảm SL tổng theo brief mới / giảm SL A để gán phần còn lại cho C"
                     />
                   </Form.Item>
                 ) : null}

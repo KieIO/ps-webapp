@@ -8,7 +8,6 @@ import { usePermission } from '@/shared/hooks/usePermission';
 import { GlobalLoadingSpinner } from '@/shared/ui/GlobalLoadingSpinner/GlobalLoadingSpinner';
 import { EditProjectModal } from '../EditProjectModal/EditProjectModal';
 import { ProjectBriefTab } from '../ProjectBriefTab/ProjectBriefTab';
-import { ProjectHistoryTab } from '../ProjectHistoryTab/ProjectHistoryTab';
 import { ProjectSummaryCard } from '../ProjectSummaryCard/ProjectSummaryCard';
 import { ProjectTasksTab } from '../ProjectTasksTab/ProjectTasksTab';
 import { useArchiveProject, useUnarchiveProject } from '../../hooks/useArchiveProject';
@@ -125,11 +124,6 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
                 description="Assign a client to this project to use Client Knowledge."
               />
             ),
-          },
-          {
-            key: 'history',
-            label: 'History',
-            children: <ProjectHistoryTab />,
           },
         ]}
       />

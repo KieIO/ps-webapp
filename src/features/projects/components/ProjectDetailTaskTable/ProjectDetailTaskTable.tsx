@@ -46,6 +46,7 @@ import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
 import { PROJECT_TASKS_PAGE_SIZE, PROJECT_TASKS_PAGE_SIZE_OPTIONS } from '../../constants';
+import { computeProjectDetailStats } from '../../utils/projectProgress';
 import { getMyTaskColumnSorter } from '@/features/tasks/utils/myTaskColumns';
 import type { ClassificationLevel, MyTask } from '@/features/tasks/schemas/task.schema';
 import styles from './ProjectDetailTaskTable.module.scss';
@@ -54,6 +55,8 @@ const COMPLETION_COLUMN_HINT = 'Phần trăm hoàn thành do PM đánh giá khi 
 const COMPLETION_EMPTY_HINT = 'PM chưa nhập % hoàn thành cho task này.';
 const CREATIVE_DEADLINE_HINT =
   'Deadline nội bộ của phòng Creative. Để trống nếu task không đi qua Creative.';
+const SLIDES_QTY_SUMMARY_HINT =
+  'Không gồm DA; không đếm trùng khi đã chia nhỏ (khớp ô SLIDES phía trên)';
 
 function ColumnTitleWithHint({
   label,
@@ -179,6 +182,14 @@ export function ProjectDetailTaskTable({ tasks, loading, total }: ProjectDetailT
   const editingUsesCreativeDrawer = Boolean(
     editingTask && shouldUseCreativePipelineEditDrawer(editingTask, role, userId),
   );
+
+  const slidesQtyTotal = useMemo(() => computeProjectDetailStats(tasks).totalSlides, [tasks]);
+  const slidesQtyLabel = useMemo(
+    () => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(slidesQtyTotal),
+    [slidesQtyTotal],
+  );
+  /** Columns before Qty: Task Code … % Hoàn thành (+ optional Deadline Creative). */
+  const qtySummaryLabelColSpan = canViewCreativeDeadlineColumn ? 7 : 6;
 
   const columns: ColumnsType<MyTask> = useMemo(() => {
     const canShowEdit = (task: MyTask) =>
@@ -385,6 +396,32 @@ export function ProjectDetailTaskTable({ tasks, loading, total }: ProjectDetailT
             pageSizeOptions: [...PROJECT_TASKS_PAGE_SIZE_OPTIONS],
             showTotal: (count, range) => `Showing ${range[0]}-${range[1]} / ${count} tasks`,
           }}
+          summary={() =>
+            tasks.length === 0 ? null : (
+              <Table.Summary fixed>
+                <Table.Summary.Row className={styles.summaryRow}>
+                  <Table.Summary.Cell index={0} colSpan={qtySummaryLabelColSpan}>
+                    <Tooltip title={SLIDES_QTY_SUMMARY_HINT}>
+                      <span className={styles.summaryLabel}>
+                        Tổng số lượng slides
+                        <InfoCircleOutlined
+                          className={styles.infoIcon}
+                          aria-label="Giải thích tổng số lượng slides"
+                        />
+                      </span>
+                    </Tooltip>
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={qtySummaryLabelColSpan} align="right">
+                    <Tooltip title={SLIDES_QTY_SUMMARY_HINT}>
+                      <span className={styles.summaryValue}>{slidesQtyLabel}</span>
+                    </Tooltip>
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={qtySummaryLabelColSpan + 1} />
+                  <Table.Summary.Cell index={qtySummaryLabelColSpan + 2} />
+                </Table.Summary.Row>
+              </Table.Summary>
+            )
+          }
         />
       </TableWrapper>
 

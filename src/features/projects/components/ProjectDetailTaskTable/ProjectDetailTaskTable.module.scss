@@ -99,3 +99,23 @@
   line-height: 1.3;
   vertical-align: top;
 }
+
+.summaryRow {
+  background: var(--color-bg-muted, #fafafa);
+
+  td {
+    font-weight: 600;
+  }
+}
+
+.summaryLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: help;
+}
+
+.summaryValue {
+  cursor: help;
+  font-variant-numeric: tabular-nums;
+}

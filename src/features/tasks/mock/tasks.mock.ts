@@ -53,7 +53,6 @@ import {
   isReturnedToPm,
   isSplitChildQuantityLocked,
   isSplitChildTask,
-  isSplitParentTask,
   needsChBrief,
   pickPrimaryEditableSplitChild,
   resolveCreateBriefOwner,
@@ -1383,9 +1382,7 @@ export const mockUpdateCreativePipeline = async (
       payload.childQuantities?.length ||
       payload.staffUserId ||
       payload.cmUserId ||
-      (payload.quantity != null &&
-        isSplitParentTask(current) &&
-        payload.quantity !== current.quantity),
+      (payload.quantity != null && payload.quantity !== current.quantity),
   );
   if (needsChangeReason && !(payload.changeReason ?? '').trim()) {
     throw new Error('nhập lý do thay đổi');

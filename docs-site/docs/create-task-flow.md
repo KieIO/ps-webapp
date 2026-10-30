@@ -219,6 +219,8 @@ PM vào **Creative queue** để theo dõi task đã chuyển Creative, và đ�
 
 Sau khi task đã **chia nhỏ**, **CM** hoặc **Admin** có thể **Thêm task con** trên form sửa (kể cả task **QA** để Staff kiểm lại phần của người khác). **PM không** thêm task con ở bước này. Chi tiết: [Luồng chia task con](/split-task#task-con-qa).
 
+Người tạo task hoặc **Admin** có thể sửa **SL tổng** trên form **Sửa / Đổi giao** (kể cả khi task còn chờ CM giao Staff). Đổi SL tổng, đổi SL phần, thêm task con, hoặc đổi Staff / CM đều cần điền **Lý do thay đổi**. Chi tiết: [FAQ câu 6–7](/faq) và [Luồng chia task con — quy tắc](/split-task).
+
 ### Đánh giá sau khi hoàn thành
 
 Người có quyền đánh giá task gồm **PM, Creative Head, Creative Manager, Head, Admin** — không chỉ riêng CH.
