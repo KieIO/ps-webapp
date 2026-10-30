@@ -16,6 +16,14 @@
   max-width: 220px;
 }
 
+.taskNameCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: 100%;
+}
+
 .taskNameLink {
   display: block;
   min-width: 0;
@@ -27,6 +35,23 @@
   &:hover {
     text-decoration: underline;
   }
+}
+
+.taskNameBadges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.shapeBadge {
+  margin-inline-end: 0 !important;
+  flex-shrink: 0;
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
 }
 
 .columnHeader {

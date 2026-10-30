@@ -579,9 +579,20 @@ $row-alt: #f9fafb;
   font-weight: 700;
   color: #374151;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-.slidesUrgent {
+.slidesActual {
+  color: inherit;
+}
+
+/* Manual planned target — always teal so it stays distinct from actual (incl. urgent red). */
+.slidesPlanned {
+  font-weight: 600;
+  color: #0f766e;
+}
+
+.slidesUrgent .slidesActual {
   color: #dc2626;
 }
 

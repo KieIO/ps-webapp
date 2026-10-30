@@ -11,13 +11,13 @@ import {
 } from './helpers/splitFamilyApi';
 
 /**
- * TASK-85 — After split, PM adds a QA child (checkbox + QA level).
+ * TASK-85 — After split, CM adds a QA child (checkbox + QA level).
  * QA quantity sits outside parent SL; parent quantity stays unchanged.
  */
 
-test.describe('TASK-85 PM adds a QA child outside parent quantity', () => {
-  test('PM ticks Task QA, picks QA 3, saves; SL tổng unchanged', async ({ page }) => {
-    const taskName = `E2E PM Add QA ${Date.now()}`;
+test.describe('TASK-85 CM adds a QA child outside parent quantity', () => {
+  test('CM ticks Task QA, picks QA 3, saves; SL tổng unchanged', async ({ page }) => {
+    const taskName = `E2E CM Add QA ${Date.now()}`;
     const brief = `QA lại slides ${Date.now()}`;
     const pm = await apiLogin(SEED_ACCOUNTS.pm.email, SEED_ACCOUNTS.pm.password);
     const ch = await apiLogin(
@@ -48,7 +48,7 @@ test.describe('TASK-85 PM adds a QA child outside parent quantity', () => {
     expect(parent.pipelineStage).toBe('split');
     expect(parent.quantity).toBe(20);
 
-    await loginAs(page, 'pm');
+    await loginAs(page, 'creative_manager');
     await page.goto(`/tasks/detail/${parent.id}`);
     await expect(page.getByText(taskName, { exact: false }).first()).toBeVisible({
       timeout: 30_000,
@@ -76,7 +76,7 @@ test.describe('TASK-85 PM adds a QA child outside parent quantity', () => {
     await drawer.getByRole('button', { name: 'Lưu thay đổi' }).click();
     await expect(drawer).toHaveCount(0, { timeout: 20_000 });
 
-    const children = await listSplitChildren(pm.token, parent.id);
+    const children = await listSplitChildren(cm.token, parent.id);
     expect(children).toHaveLength(3);
     const qa = children.find((child: TaskDto) => child.taskName === 'QA');
     expect(qa).toMatchObject({
@@ -86,7 +86,7 @@ test.describe('TASK-85 PM adds a QA child outside parent quantity', () => {
     });
     expect(qa?.staff ?? []).toHaveLength(0);
 
-    const reloaded = await apiJson<TaskDto>('GET', `/tasks/my/${parent.id}`, pm.token);
+    const reloaded = await apiJson<TaskDto>('GET', `/tasks/my/${parent.id}`, cm.token);
     expect(reloaded.data.quantity).toBe(20);
 
     const nonQaSum = children

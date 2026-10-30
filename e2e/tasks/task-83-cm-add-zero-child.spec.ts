@@ -11,13 +11,13 @@ import {
 } from './helpers/splitFamilyApi';
 
 /**
- * TASK-83 — After a creative task is split, the PM who created it opens
+ * TASK-83 — After a creative task is split, the owning CM opens
  * Sửa on the parent and adds another child with quantity 0 and no Staff.
  */
 
-test.describe('TASK-83 PM adds an unassigned zero-quantity child after split', () => {
-  test('PM saves a new child from the edit drawer without staff or quantity', async ({ page }) => {
-    const taskName = `E2E PM Add Child ${Date.now()}`;
+test.describe('TASK-83 CM adds an unassigned zero-quantity child after split', () => {
+  test('CM saves a new child from the edit drawer without staff or quantity', async ({ page }) => {
+    const taskName = `E2E CM Add Child ${Date.now()}`;
     const brief = `Để sau ${Date.now()}`;
     const pm = await apiLogin(SEED_ACCOUNTS.pm.email, SEED_ACCOUNTS.pm.password);
     const ch = await apiLogin(
@@ -48,7 +48,7 @@ test.describe('TASK-83 PM adds an unassigned zero-quantity child after split', (
     expect(parent.pipelineStage).toBe('split');
     expect(parent.quantity).toBe(20);
 
-    await loginAs(page, 'pm');
+    await loginAs(page, 'creative_manager');
     await page.goto(`/tasks/detail/${parent.id}`);
     await expect(page.getByText(taskName, { exact: false }).first()).toBeVisible({
       timeout: 30_000,
@@ -69,14 +69,14 @@ test.describe('TASK-83 PM adds an unassigned zero-quantity child after split', (
     await drawer.getByRole('button', { name: 'Lưu thay đổi' }).click();
     await expect(drawer).toHaveCount(0, { timeout: 20_000 });
 
-    const children = await listSplitChildren(pm.token, parent.id);
+    const children = await listSplitChildren(cm.token, parent.id);
     expect(children).toHaveLength(3);
     const extra = children.find(
       (child: TaskDto) => child.quantity === 0 && (child.staff?.length ?? 0) === 0,
     );
     expect(extra?.description).toBe(brief);
 
-    const reloaded = await apiJson<TaskDto>('GET', `/tasks/my/${parent.id}`, pm.token);
+    const reloaded = await apiJson<TaskDto>('GET', `/tasks/my/${parent.id}`, cm.token);
     expect(reloaded.data.quantity).toBe(20);
   });
 });

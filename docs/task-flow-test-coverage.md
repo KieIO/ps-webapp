@@ -131,9 +131,9 @@ Hướng dẫn dùng: `docs-site/docs/create-task-flow.md`, `split-task-flow.md`
 
 | ID      | Case                                                                                                                                                | API | E2E | Unit | Manual | Path / note                                                                             |
 | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | :-: | :-: | :--: | :----: | --------------------------------------------------------------------------------------- |
-| TASK-83 | Sau khi đã chia, PM mở Sửa task cha và thêm task con số lượng 0, chưa gán Staff. SL cha không đổi                                                   |  ●  |  ●  |  ○   |   ●    | `TestTaskMgmt_TASK83_*` · `task-83-pm-add-zero-child.spec.ts`                           |
+| TASK-83 | Sau khi đã chia, CM mở Sửa task cha và thêm task con số lượng 0, chưa gán Staff. SL cha không đổi; PM bị 403                                        |  ●  |  ●  |  ○   |   ●    | `TestTaskMgmt_TASK83_*` · `task-83-cm-add-zero-child.spec.ts`                           |
 | TASK-84 | Lịch sử task cha ghi nhận chia nhỏ, thêm task con, đổi SL kèm lý do                                                                                 |  ●  |  ○  |  ○   |   ●    | `TestTaskMgmt_TASK84_*`                                                                 |
-| TASK-85 | PM/Admin tick Task QA khi thêm task con: Type/Name = QA, level 1–5; SL QA ngoài tổng cha; thiếu qaLevel / CM thêm / vượt SL phần làm việc → từ chối |  ●  |  ●  |  ●   |   ●    | `TestTaskMgmt_TASK85_*` · `task-85-pm-add-qa-child.spec.ts` · mock `tasks.mock.test.ts` |
+| TASK-85 | CM/Admin tick Task QA khi thêm task con: Type/Name = QA, level 1–5; SL QA ngoài tổng cha; thiếu qaLevel / PM thêm / vượt SL phần làm việc → từ chối |  ●  |  ●  |  ●   |   ●    | `TestTaskMgmt_TASK85_*` · `task-85-cm-add-qa-child.spec.ts` · mock `tasks.mock.test.ts` |
 
 ---
 

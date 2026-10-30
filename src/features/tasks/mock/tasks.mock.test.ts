@@ -663,6 +663,45 @@ describe('creative CH/CM pipeline', () => {
     ).rejects.toThrow(/finish|huỷ/);
   });
 
+  it('rejects non-CM/Admin when adding a split child after split', async () => {
+    resetMockTasksStore();
+    await mockAssignCreativeManager(
+      'task-cm-025',
+      {
+        mode: 'split',
+        subtasks: [
+          {
+            name: 'Icon dashboard',
+            staffUserId: 'usr-creative-ha',
+            quantity: 12,
+            description: 'Brief icon dashboard',
+          },
+          {
+            name: 'Icon forms',
+            staffUserId: 'usr-creative-tran',
+            quantity: 12,
+            description: 'Brief icon forms',
+          },
+        ],
+      },
+      'dev-admin',
+    );
+    const parent = getMockTasksStore().find((item) => item.id === 'task-cm-025')!;
+
+    // Head can open the edit drawer, but only CM/Admin may addSubtasks.
+    await expect(
+      mockUpdateCreativePipeline(
+        parent.id,
+        {
+          changeReason: 'Head thử thêm',
+          addSubtasks: [{ description: 'blocked', quantity: 0 }],
+        },
+        'dev-head',
+        'head',
+      ),
+    ).rejects.toThrow(/CM hoặc Admin/);
+  });
+
   it('lets Admin add a QA child whose quantity is outside parent SL', async () => {
     resetMockTasksStore();
     await mockAssignCreativeManager(

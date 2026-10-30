@@ -456,7 +456,7 @@ export const UpdateCreativePipelineRequestSchema = z
         }),
       )
       .optional(),
-    /** PM/Admin add split children. Quantity may be 0. Staff may be omitted. */
+    /** CM/Admin add split children. Quantity may be 0. Staff may be omitted. */
     addSubtasks: z.array(CreativeManagerSubtaskSchema).optional(),
   })
   .superRefine((value, ctx) => {

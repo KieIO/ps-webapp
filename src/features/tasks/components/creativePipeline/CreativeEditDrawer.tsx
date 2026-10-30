@@ -196,7 +196,9 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     !splitParent && !splitChild && (stage === 'assigned_staff' || stage === 'split');
   const canEditSplitTotal = Boolean(canEdit && canEditSplitParentTotal(role, userId, task));
   const canAddSplitChild = Boolean(
-    canEdit && (role === ROLES.ADMIN || role === ROLES.PM) && (splitParent || splitChild),
+    canEdit &&
+      (role === ROLES.ADMIN || role === ROLES.CREATIVE_MANAGER) &&
+      (splitParent || splitChild),
   );
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
   const pmDeadlineIso = task ? getTaskDeadline(task) : null;

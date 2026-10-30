@@ -1585,8 +1585,8 @@ export const mockUpdateCreativePipeline = async (
 
   const storeAfterQty = getMockTasksStore();
   if (payload.addSubtasks?.length) {
-    if (editorRole !== ROLES.ADMIN && editorRole !== ROLES.PM) {
-      throw new Error('chỉ PM hoặc Admin được tạo task con');
+    if (editorRole !== ROLES.ADMIN && editorRole !== ROLES.CREATIVE_MANAGER) {
+      throw new Error('chỉ CM hoặc Admin được tạo task con');
     }
     const parentId = isSplitChild ? current.parentTaskId : current.id;
     const parent = storeAfterQty.find((entry) => entry.id === parentId);

@@ -54,9 +54,9 @@ Companion to [`task-mgmt-test-cases.md`](./task-mgmt-test-cases.md).
 | TASK-80    | Create-task **Add** unknown project (incl. empty filter list) | **E2E**                       | Playwright `task-80-81-…`                                                                 |
 | TASK-81    | PM no inline Add (no `CREATE_PROJECT`)                        | **E2E**                       | Same spec — free-text kept, no Add button                                                 |
 | TASK-82    | Deadline disabled/clamped outside project start–end           | **Unit**                      | `taskDates.test.ts`                                                                       |
-| TASK-83    | PM add zero-qty unassigned child after split                  | **Yes** + **E2E**             | API `TASK83` · `task-83-pm-add-zero-child.spec.ts`                                        |
+| TASK-83    | CM add zero-qty unassigned child after split                  | **Yes** + **E2E**             | API `TASK83` · `task-83-cm-add-zero-child.spec.ts`                                        |
 | TASK-84    | Parent split / add-child / qty-change audit history           | **Yes**                       | API `TASK84`                                                                              |
-| TASK-85    | PM/Admin add QA child (qty outside parent SL; CM denied)      | **Yes** + **E2E** + **Unit**  | API `TASK85` · `task-85-pm-add-qa-child.spec.ts` · mock QA child                          |
+| TASK-85    | CM/Admin add QA child (qty outside parent SL; PM denied)      | **Yes** + **E2E** + **Unit**  | API `TASK85` · `task-85-cm-add-qa-child.spec.ts` · mock QA child                          |
 | TASK-64    | CM decline → awaiting_ch                                      | **Yes** + **E2E**             | API + Playwright Từ chối nhận chrome                                                      |
 | TASK-65    | Staff decline → awaiting_cm                                   | **Yes** + **E2E**             | API + Playwright Từ chối chrome                                                           |
 | TASK-66    | Decline awaiting_ch rejected                                  | **Yes**                       | API 422 (no CH reject-inbox) — no UI                                                      |

@@ -59,7 +59,7 @@ import {
   resolveBarClickDate,
 } from '../../utils/calendar';
 import { exportTrackerToCsv } from '../../utils/exportTracker';
-import { formatTrackerTotal } from '../../utils/formatTrackerTotal';
+import { getTrackerTotalParts } from '../../utils/formatTrackerTotal';
 import {
   isProjectTimelineBar,
   withMonthScopedTrackerMetrics,
@@ -467,6 +467,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                 {monthScopedProjects.map((project, rowIndex) => {
                   const urgencyStyle = TRACKER_URGENCY_STYLES[project.urgency];
                   const rowHeight = projectLayouts[rowIndex]?.rowHeight ?? TRACKER_ROW_HEIGHT;
+                  const totalParts = getTrackerTotalParts(project);
 
                   return (
                     <div
@@ -502,7 +503,12 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                           [styles.slidesUrgent]: project.highlightSlides,
                         })}
                       >
-                        {formatTrackerTotal(project)}
+                        <span className={styles.slidesActual}>{totalParts.calculated}</span>
+                        {totalParts.planned != null ? (
+                          <span className={styles.slidesPlanned} title="Planned slides">
+                            /{totalParts.planned}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   );

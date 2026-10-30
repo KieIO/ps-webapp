@@ -40,7 +40,7 @@ Khi bấm một ô task trên Tracker, hệ thống mở Project Tasks với pro
 
 Cột **Total** là **tổng khối lượng toàn project** (theo quy tắc đếm trên Tracker: loại task cha đã chia nhỏ và task từ chối / hủy). Đổi tháng trên lịch **không** đổi con số này; tháng chỉ lọc ô task hiện trên timeline.
 
-Nếu project có **Planned slides** (nhập lúc tạo / sửa project — số tổng khách cần, tuỳ chọn), cột hiện dạng `tính được/kế hoạch` (ví dụ `83/139`). Nếu không nhập, chỉ hiện số tự tính (ví dụ `83`).
+Nếu project có **Planned slides** (nhập lúc tạo / sửa project — số tổng khách cần, tuỳ chọn), cột hiện dạng `tính được/kế hoạch` (ví dụ `83/139`). Phần sau dấu `/` (planned thủ công) hiện màu khác với số tự tính để dễ phân biệt. Nếu không nhập, chỉ hiện số tự tính (ví dụ `83`).
 
 Đối chiếu nhanh với tab Tasks (đã gồm task con khi xem theo project): tổng Qty hợp lệ trên bảng gần với phần số tự tính trên Tracker.
 

@@ -70,6 +70,7 @@ const cleanApiValidationMessage = (message: string): string => {
       'Chỉ Admin / Head / PM của task hoặc người tạo được sửa Deadline Creative.',
     'chỉ Admin / Head / PM của task hoặc người tạo được sửa creative deadline':
       'Chỉ Admin / Head / PM của task hoặc người tạo được sửa Deadline Creative.',
+    'chỉ CM hoặc Admin được tạo task con': 'Chỉ Creative Manager hoặc Admin được thêm task con.',
   };
   return known[trimmed] ?? trimmed;
 };

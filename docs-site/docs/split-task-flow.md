@@ -48,8 +48,8 @@ PM hoặc Admin mở "Giao Staff"
 | Việc                                                               | Ai làm được                          |
 | ------------------------------------------------------------------ | ------------------------------------ |
 | Chọn **Chia nhỏ** và tạo task con lần đầu                          | PM, Admin                            |
-| Thêm task con sau khi đã chia                                      | PM, Admin                            |
-| Thêm task con **QA** (kiểm lại phần của người khác)                | PM, Admin                            |
+| Thêm task con sau khi đã chia                                      | CM, Admin                            |
+| Thêm task con **QA** (kiểm lại phần của người khác)                | CM, Admin                            |
 | Sửa **SL tổng** sau khi đã chia                                    | Người tạo task (PM), Admin           |
 | Sửa số lượng từng task con (tổng phần làm việc không vượt SL tổng) | CM, người tạo task, Admin            |
 | Confirm / làm việc / đánh dấu Finished                             | Staff được giao từng phần            |
@@ -58,7 +58,7 @@ PM hoặc Admin mở "Giao Staff"
 | Xem Creative queue / theo dõi task đã chia                         | CM, CH, PM, Admin, Head (theo quyền) |
 | Không chia nhỏ                                                     | Creative Head (chỉ giao CM), Staff   |
 
-Creative Manager **không** tạo task con. CM vẫn **Giao nguyên** cho Staff. Chế độ **Chia nhỏ** chỉ hiện với PM và Admin.
+Lần chia đầu (**Chia nhỏ** trên form giao Staff) hiện với PM và Admin. **Thêm task con sau khi đã chia** là việc của **CM** hoặc **Admin**. CM vẫn **Giao nguyên** cho Staff khi không chia.
 
 ---
 
@@ -70,7 +70,7 @@ Creative Manager **không** tạo task con. CM vẫn **Giao nguyên** cho Staff.
 | Task đang **chờ CM giao Staff** (khung **Nhận từ CH / PM**) | Cần cho lần chia đầu tiên               |
 | Người thao tác là **PM hoặc Admin**                         | Cần                                     |
 | Chọn **Chia nhỏ** lần đầu                                   | Ít nhất **2** task con                  |
-| Đã chia rồi                                                 | PM / Admin thêm task con trong form sửa |
+| Đã chia rồi                                                 | CM / Admin thêm task con trong form sửa |
 
 **Từ chối nhận** chỉ khi task còn chờ CM giao Staff — tức **trước** khi chia. Task gốc đã chia **không** từ chối cả cục; xử lý từng task con.
 
@@ -86,7 +86,7 @@ Creative Manager **không** tạo task con. CM vẫn **Giao nguyên** cho Staff.
 
 Creative Manager mở cùng form nhưng chỉ thấy **Giao nguyên**.
 
-Sau khi đã chia, PM hoặc Admin mở form sửa task và bấm **Thêm task con**. Trong khung thêm có thể tick **Task QA** nếu cần phần kiểm lại (xem mục Task con QA bên dưới).
+Sau khi đã chia, **CM** hoặc **Admin** mở form sửa task và bấm **Thêm task con**. Trong khung thêm có thể tick **Task QA** nếu cần phần kiểm lại (xem mục Task con QA bên dưới). **PM không** thêm task con ở bước này.
 
 Sau khi chia:
 
@@ -132,7 +132,7 @@ Inbox **Project Tasks** (không lọc một project) với role PM / Head / Admi
 
 **Khi nào:** cần Staff **kiểm lại** phần slide hoặc phần việc của người khác trong cùng họ task đã chia (không phải chia thêm phần làm mới từ SL tổng).
 
-**Ai làm:** chỉ **PM** hoặc **Admin**, lúc **Thêm task con** trên form sửa task gốc đã chia.
+**Ai làm:** chỉ **CM** hoặc **Admin**, lúc **Thêm task con** trên form sửa task gốc đã chia.
 
 **Cách làm:** tick **Task QA**. Chọn mức **QA 1** đến **QA 5** (theo catalog Task score). Điền brief (Staff có thể để trống). Bấm **Lưu thay đổi**.
 
@@ -159,8 +159,8 @@ Nếu task con đã **Finished** mà số lượng chấp nhận **nhỏ hơn** 
 
 - Lúc tạo task Creative, PM nhập **số lượng task cha > 0**. Lúc chia, hệ thống **không** ghi đè số lượng đó bằng tổng các phần.
 - Tổng số lượng các task con **làm việc** (không gồm QA) **không được lớn hơn** SL task cha. Phần chưa chia có thể để dành, thêm task con sau.
-- Chỉ **PM** và **Admin** tạo task con (lần đầu và khi thêm sau). Creative Manager không tạo task con.
-- PM hoặc Admin có thể thêm task con **QA** để Staff kiểm lại phần của người khác; số lượng QA không tính vào SL tổng.
+- Lần chia đầu (form **Giao Staff → Chia nhỏ**): theo quyền giao Staff hiện tại (PM / Admin). **Thêm task con sau khi đã chia:** chỉ **CM** hoặc **Admin**.
+- CM hoặc Admin có thể thêm task con **QA** để Staff kiểm lại phần của người khác; số lượng QA không tính vào SL tổng.
 - Sau khi chia, **SL tổng** chỉ **người tạo task (PM)** hoặc **Admin** sửa được. CM chỉ sửa số lượng từng task con còn mở, và tổng phần làm việc không được vượt SL tổng.
 - Task con có thể **số lượng 0** và **chưa gán Staff**. Brief vẫn bắt buộc. Có Staff thì mới gửi thông báo giao việc.
 - **Level** task con thường kế thừa từ gốc; task con **QA** dùng mức QA 1 đến 5 đã chọn. CM **không** phân loại lại Level lúc chia (Admin hoặc CH đổi Level trước khi Staff confirm, theo quy tắc chung).

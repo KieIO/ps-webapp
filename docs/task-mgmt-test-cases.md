@@ -575,14 +575,14 @@ Stages: `awaiting_ch` → `awaiting_cm` → `assigned_staff` | `split`.
 | **Steps**         | (a) CM đổi SL tổng · (b) childQuantities tổng > SL cha · (c) childQuantities tổng ≤ SL cha |
 | **Expected**      | (a)(b) **422**, SL cha không đổi; (c) **200** — children đổi, SL cha không bị ghi đè       |
 
-### TASK-83 — PM thêm task con SL 0 chưa gán Staff sau khi đã chia
+### TASK-83 — CM thêm task con SL 0 chưa gán Staff sau khi đã chia
 
 |                   |                                                                                                                             |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **Preconditions** | Task Creative đã chia (≥2 task con); login PM (người tạo) hoặc Admin                                                        |
+| **Preconditions** | Task Creative đã chia (≥2 task con); login CM (owner) hoặc Admin                                                            |
 | **Steps**         | Mở **Sửa / Task nhỏ** trên task cha → **Thêm task con** → brief bắt buộc, SL = 0, không Staff → **Lưu thay đổi** (có lý do) |
-| **Expected**      | **200**; thêm 1 task con mới (chưa gán Staff, qty 0); SL cha **không đổi**                                                  |
-| **Automation**    | API `TestTaskMgmt_TASK83_*` · E2E `task-83-pm-add-zero-child.spec.ts`                                                       |
+| **Expected**      | **200**; thêm 1 task con mới (chưa gán Staff, qty 0); SL cha **không đổi**; PM gọi `addSubtasks` → **403**                  |
+| **Automation**    | API `TestTaskMgmt_TASK83_*` · E2E `task-83-cm-add-zero-child.spec.ts`                                                       |
 
 ### TASK-84 — Lịch sử task cha ghi nhận chia / thêm con / đổi SL
 
@@ -593,14 +593,14 @@ Stages: `awaiting_ch` → `awaiting_cm` → `assigned_staff` | `split`.
 | **Expected**      | Có mô tả chia nhỏ (tổng con / scope cha), thêm task con, đổi SL kèm lý do thay đổi |
 | **Automation**    | API `TestTaskMgmt_TASK84_*`                                                        |
 
-### TASK-85 — PM/Admin thêm task con QA (SL ngoài tổng cha)
+### TASK-85 — CM/Admin thêm task con QA (SL ngoài tổng cha)
 
 |                   |                                                                                                                                                                                                                                                                                 |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Preconditions** | Task Creative đã chia; tổng phần làm việc đã = SL cha (vd. 10+10 / 20); login PM hoặc Admin                                                                                                                                                                                     |
-| **Steps**         | (a) UI: **Thêm task con** → tick **Task QA** → chọn **QA 1–5** → brief + SL QA (có thể > phần còn lại của scope) → Lưu<br>(b) API: `addSubtasks` `{ isQa: true, qaLevel }` thiếu level → 422<br>(c) Thêm task con **không** QA khi đã full SL → 422<br>(d) CM gọi thêm QA → 403 |
+| **Preconditions** | Task Creative đã chia; tổng phần làm việc đã = SL cha (vd. 10+10 / 20); login CM (owner) hoặc Admin                                                                                                                                                                             |
+| **Steps**         | (a) UI: **Thêm task con** → tick **Task QA** → chọn **QA 1–5** → brief + SL QA (có thể > phần còn lại của scope) → Lưu<br>(b) API: `addSubtasks` `{ isQa: true, qaLevel }` thiếu level → 422<br>(c) Thêm task con **không** QA khi đã full SL → 422<br>(d) PM gọi thêm QA → 403 |
 | **Expected**      | (a) Task con `taskName=QA`, level = QA đã chọn; SL QA **không** trừ SL tổng; SL cha không đổi; tổng phần làm việc (không QA) vẫn ≤ SL cha<br>(b)(c) **422** · (d) **403**                                                                                                       |
-| **Automation**    | API `TestTaskMgmt_TASK85_*` · E2E `task-85-pm-add-qa-child.spec.ts` · Unit mock `tasks.mock.test.ts` (Admin add QA)                                                                                                                                                             |
+| **Automation**    | API `TestTaskMgmt_TASK85_*` · E2E `task-85-cm-add-qa-child.spec.ts` · Unit mock `tasks.mock.test.ts` (Admin add QA)                                                                                                                                                             |
 
 ### TASK-55 — Reassign CM while awaiting_cm
 

@@ -37,6 +37,7 @@ const PIPELINE_STAGE_TAG_COLOR: Record<CreativePipelineStage, string> = {
 /** List/detail badges — keep in sync with Creative edit drawer chips. */
 export const SPLIT_PARENT_BADGE_LABEL = 'Đã chia nhỏ';
 export const SPLIT_CHILD_BADGE_LABEL = 'Task nhỏ';
+export const WHOLE_ASSIGNED_BADGE_LABEL = 'Giao nguyên';
 
 /**
  * After a split, SL tổng stays locked for CM. Only Admin, or the user who
@@ -55,6 +56,7 @@ export const canEditSplitParentTotal = (
 };
 export const SPLIT_PARENT_BADGE_HINT = 'CM đã chia task này thành các task nhỏ';
 export const SPLIT_CHILD_BADGE_HINT = 'Đây là một phần của task cha (sau khi CM chia nhỏ)';
+export const WHOLE_ASSIGNED_BADGE_HINT = 'Task Creative đã giao nguyên cho Staff (không chia nhỏ)';
 
 export type CreativeQueueView = 'ch' | 'cm';
 

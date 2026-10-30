@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatTrackerTotal } from './formatTrackerTotal';
+import { formatTrackerTotal, getTrackerTotalParts } from './formatTrackerTotal';
 
 describe('formatTrackerTotal', () => {
   it('shows calculated only when plannedSlides is unset', () => {
@@ -19,5 +19,18 @@ describe('formatTrackerTotal', () => {
     expect(formatTrackerTotal({ totalSlides: 1200, plannedSlides: 2500 })).toBe(
       `${calculated}/${planned}`,
     );
+  });
+});
+
+describe('getTrackerTotalParts', () => {
+  it('splits calculated and planned for styled UI', () => {
+    expect(getTrackerTotalParts({ totalSlides: 475, plannedSlides: 219 })).toEqual({
+      calculated: '475',
+      planned: '219',
+    });
+    expect(getTrackerTotalParts({ totalSlides: 83 })).toEqual({
+      calculated: '83',
+      planned: null,
+    });
   });
 });
