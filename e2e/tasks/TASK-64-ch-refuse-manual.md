@@ -22,7 +22,7 @@
 | Case                                  | Expect                                   |
 | ------------------------------------- | ---------------------------------------- |
 | PM PATCH `decline` trên `awaiting_ch` | Forbidden / lỗi                          |
-| Admin từ chối trên `awaiting_ch`      | OK (break-glass), giống CH               |
+| Admin từ chối trên `awaiting_ch`      | Forbidden / không hiện CTA               |
 | CM mở handoff `awaiting_ch`           | Không có CTA Từ chối nhận                |
 | PM trên `awaiting_cm` (CM refuse)     | **Không** còn Từ chối nhận (đã siết)     |
 | CM owning trên `awaiting_cm`          | Vẫn Từ chối nhận → về CH (`not_updated`) |

@@ -759,8 +759,8 @@ export const canStaffConfirmOrDeclineCreative = (
 };
 
 /**
- * CM (or Admin break-glass) may refuse an awaiting_cm handoff → returns to CH.
- * PM is not allowed — handoff chain is PM → CH → CM.
+ * Owning CM may refuse an awaiting_cm handoff → returns to CH.
+ * Admin/PM are not allowed — handoff chain is PM → CH → CM.
  */
 export const canCmRefuseCreativeAssignment = (
   task: MyTask,
@@ -770,18 +770,16 @@ export const canCmRefuseCreativeAssignment = (
   if (!isAwaitingCm(task)) return false;
   if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
   if (task.staffConfirmation === 'decline') return false;
-  if (role === ROLES.CREATIVE_MANAGER) {
-    return Boolean(userId && isAssignedToUser(task, userId));
-  }
-  return role === ROLES.ADMIN;
+  if (role !== ROLES.CREATIVE_MANAGER) return false;
+  return Boolean(userId && isAssignedToUser(task, userId));
 };
 
 /**
- * CH (or Admin break-glass) may refuse an awaiting_ch handoff from PM → returned_to_pm.
- * PM is not allowed — they handed the task off.
+ * CH may refuse an awaiting_ch handoff from PM → returned_to_pm.
+ * Admin/PM are not allowed — only the Creative Head in the chain.
  */
 export const canChRefuseCreativeHandoff = (task: MyTask, role: Role | undefined): boolean => {
-  if (role !== ROLES.CREATIVE_HEAD && role !== ROLES.ADMIN) return false;
+  if (role !== ROLES.CREATIVE_HEAD) return false;
   if (!isAwaitingCh(task)) return false;
   if (task.staffConfirmation === 'finished' || task.staffConfirmation === 'cancelled') return false;
   if (task.staffConfirmation === 'decline') return false;

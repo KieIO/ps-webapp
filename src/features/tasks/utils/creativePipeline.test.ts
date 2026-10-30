@@ -724,7 +724,7 @@ describe('creative decline helpers', () => {
     expect(canCmRefuseCreativeAssignment(awaitingCm, 'cm-1', ROLES.CREATIVE_MANAGER)).toBe(true);
     expect(canCmRefuseCreativeAssignment(awaitingCm, 'other', ROLES.CREATIVE_MANAGER)).toBe(false);
     expect(canCmRefuseCreativeAssignment(awaitingCm, 'pm-1', ROLES.PM)).toBe(false);
-    expect(canCmRefuseCreativeAssignment(awaitingCm, 'admin-1', ROLES.ADMIN)).toBe(true);
+    expect(canCmRefuseCreativeAssignment(awaitingCm, 'admin-1', ROLES.ADMIN)).toBe(false);
 
     const refused = applyCreativeDeclineRollback({
       ...awaitingCm,
@@ -760,7 +760,7 @@ describe('creative decline helpers', () => {
       staffConfirmation: 'not_updated',
     });
     expect(canChRefuseCreativeHandoff(awaitingCh, ROLES.CREATIVE_HEAD)).toBe(true);
-    expect(canChRefuseCreativeHandoff(awaitingCh, ROLES.ADMIN)).toBe(true);
+    expect(canChRefuseCreativeHandoff(awaitingCh, ROLES.ADMIN)).toBe(false);
     expect(canChRefuseCreativeHandoff(awaitingCh, ROLES.PM)).toBe(false);
     expect(canChRefuseCreativeHandoff(awaitingCh, ROLES.CREATIVE_MANAGER)).toBe(false);
 

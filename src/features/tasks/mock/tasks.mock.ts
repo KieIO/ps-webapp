@@ -36,6 +36,8 @@ import {
   applyCreativeDeclineRollback,
   applyCreativeRehandToCH,
   canChangeCreativeLevelRole,
+  canChRefuseCreativeHandoff,
+  canCmRefuseCreativeAssignment,
   canEditCreativePipelineTask,
   canEditSplitParentTotal,
   canProcessChQueue,
@@ -47,6 +49,7 @@ import {
   filterCreativeManagers,
   filterCreativeStaff,
   isAwaitingCh,
+  isAwaitingCm,
   isCreativeHandoffPayload,
   isCreativeLevelLockedByStaffConfirm,
   isQaSplitChildTask,
@@ -889,6 +892,16 @@ export const mockUpdateMyTaskStatus = async (
     (current.department === 'creative' || current.department.startsWith('creative_'))
   ) {
     throw new Error('Chỉ từ chối task Creative khi trạng thái còn Chưa cập nhật');
+  }
+
+  if (payload.staffConfirmation === 'decline' && current.staffConfirmation !== 'decline') {
+    const role = resolveEditorRole(editorUserId);
+    if (isAwaitingCh(current) && !canChRefuseCreativeHandoff(current, role)) {
+      throw new Error('Chỉ Creative Head được từ chối handoff chờ CH');
+    }
+    if (isAwaitingCm(current) && !canCmRefuseCreativeAssignment(current, editorUserId, role)) {
+      throw new Error('Chỉ Creative Manager được giao task mới được từ chối handoff chờ CM');
+    }
   }
 
   let updated: MyTask = {

@@ -188,6 +188,8 @@ PM chuyển Creative → CH nhận
 | **CM từ chối nhận từ CH**           | Trả lại hàng chờ CH trong Creative.                |
 | **Staff từ chối sau khi được giao** | Trả về CM để giao lại trong phòng.                 |
 
+**Admin / PM không** bấm **Từ chối nhận** hộ CH hoặc CM (chỉ đúng role trong chuỗi handoff). Admin vẫn có thể giao / sửa task bằng CTA khác.
+
 **Tóm lại:** Decline Creative Task (nghĩa chính) = CH không nhận từ PM → về PM. Từ chối CM / Staff là tầng nội bộ Creative.
 
 ---
