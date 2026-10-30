@@ -85,6 +85,9 @@ import { AssigneeOptionLabel } from './AssigneeOptionLabel';
 import { CreativeAssignModeSection } from './CreativeAssignModeSection';
 import styles from './creativePipeline.module.scss';
 
+/** Stable empty list — `data = []` in destructuring allocates a new array every render. */
+const EMPTY_SPLIT_FAMILY: MyTask[] = [];
+
 interface CreativeEditDrawerProps {
   open: boolean;
   task: MyTask | null;
@@ -133,10 +136,11 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
         (task.parentTaskId && (task.taskKind === 'split' || !task.taskKind))),
   );
   const {
-    data: splitFamily = [],
+    data: splitFamilyData,
     isLoading: splitFamilyLoading,
     isError: splitFamilyError,
   } = useCreativeSplitChildren(task?.id, { enabled: needsSplitFamily });
+  const splitFamily = splitFamilyData ?? EMPTY_SPLIT_FAMILY;
   const watchedCreativeDeadline = Form.useWatch('creativeDeadline', form);
   const watchedPmDeadline = Form.useWatch('deadline', form);
   const watchedNewChildren = Form.useWatch('newChildren', form);
@@ -195,6 +199,12 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   const quantityRequired =
     !splitParent && !splitChild && (stage === 'assigned_staff' || stage === 'split');
   const canEditSplitTotal = Boolean(canEdit && canEditSplitParentTotal(role, userId, task));
+  /** Awaiting CH/CM: only Admin / creator (or PM when creator missing) may change SL tổng. */
+  const canEditAwaitingParentQuantity = Boolean(
+    canEdit && (role === ROLES.ADMIN || isCreator || (role === ROLES.PM && !task?.createdById)),
+  );
+  const quantityLockedOnAwaiting =
+    (stage === 'awaiting_cm' || stage === 'awaiting_ch') && !canEditAwaitingParentQuantity;
   const canAddSplitChild = Boolean(
     canEdit &&
       (role === ROLES.ADMIN || role === ROLES.CREATIVE_MANAGER) &&
@@ -217,7 +227,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     : '—';
   const statusLabel = task ? CONFIRMATION_LABELS[task.staffConfirmation] : '—';
   const quantityFamily = useMemo(() => {
-    if (!splitParent && !splitChild) return [];
+    if (!splitParent && !splitChild) return EMPTY_SPLIT_FAMILY;
     return [...splitFamily].sort((a, b) => a.taskCode.localeCompare(b.taskCode));
   }, [splitChild, splitFamily, splitParent]);
   const effectiveParentTotal = useMemo(() => {
@@ -351,6 +361,11 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     });
   }, [staffOptions, allTasks, capacityByUserId, task]);
 
+  const quantityFamilyKey = useMemo(
+    () => quantityFamily.map((child) => `${child.id}:${child.quantity}`).join('|'),
+    [quantityFamily],
+  );
+
   useEffect(() => {
     if (!open || !task) return;
     const childQuantities = Object.fromEntries(
@@ -376,11 +391,13 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       cmUserId: task.creativeManager?.userId ?? task.staff[0]?.userId ?? undefined,
       staffNote: task.staffNote || task.cmNote || '',
     });
+    // quantityFamilyKey: stable content fingerprint (avoid reset on new [] identity each render)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omit quantityFamily array identity
   }, [
     open,
     task,
     form,
-    quantityFamily,
+    quantityFamilyKey,
     lockedParentTotal,
     effectiveParentTotal,
     splitParent,
@@ -986,11 +1003,15 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                     rules={
                       quantityRequired
                         ? [{ required: true, message: 'CM nhập số lượng' }, wholeTaskQuantityRule]
-                        : undefined
+                        : canEditAwaitingParentQuantity
+                          ? [wholeTaskQuantityRule]
+                          : undefined
                     }
                     extra={
                       stage === 'awaiting_cm' || stage === 'awaiting_ch'
-                        ? 'SL task cha do người tạo task hoặc Admin sửa.'
+                        ? canEditAwaitingParentQuantity
+                          ? 'Bạn có thể sửa SL tổng (người tạo task hoặc Admin).'
+                          : 'SL task cha chỉ người tạo task hoặc Admin được sửa.'
                         : quantityRequired
                           ? 'Task Creative: CM điền / chỉnh số lượng.'
                           : 'CM sẽ nhập số lượng khi giao Staff.'
@@ -1001,11 +1022,7 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
                       precision={0}
                       step={1}
                       style={{ width: '100%' }}
-                      disabled={
-                        !canEdit ||
-                        isPending ||
-                        ((stage === 'awaiting_cm' || stage === 'awaiting_ch') && !canEditSplitTotal)
-                      }
+                      disabled={!canEdit || isPending || quantityLockedOnAwaiting}
                     />
                   </Form.Item>
                 </div>
