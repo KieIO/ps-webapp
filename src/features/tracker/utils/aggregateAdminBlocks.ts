@@ -1,3 +1,4 @@
+import { parseTaskScoreName } from '@/features/tasks/utils/taskScoreName';
 import type { TrackerBlock, TrackerProject } from '../schemas/tracker.schema';
 
 const BLOCK_TYPE_PRIORITY: Record<string, number> = {
@@ -16,16 +17,23 @@ const pickDominantType = (current: string, next: string): string => {
   return nextRank < curRank ? next : current;
 };
 
+/** Only Slides / DA show a leading qty. Keep in sync with BE shouldShowQuantityOnTrackerLabel. */
+export const shouldShowQuantityOnTrackerLabel = (baseLabel: string): boolean => {
+  const typ = parseTaskScoreName(baseLabel).baseName.trim().toLowerCase();
+  return typ === 'slides' || typ === 'da';
+};
+
 /**
  * Keep in sync with `formatQuantityTaskLabel` in ps-be/internal/service/tracker_service.go.
  * Prefer "122 Slides" (total qty) over "Slides ×4" (task count).
+ * Non Slides/DA types (e.g. Edit DA) omit the quantity prefix.
  */
 export const formatQuantityTaskLabel = (
   baseLabel: string,
   quantity: number,
   count: number,
 ): string => {
-  if (quantity > 0) {
+  if (quantity > 0 && shouldShowQuantityOnTrackerLabel(baseLabel)) {
     const rounded = Math.round(quantity);
     if (Math.abs(quantity - rounded) < 1e-9) {
       return `${rounded} ${baseLabel}`;

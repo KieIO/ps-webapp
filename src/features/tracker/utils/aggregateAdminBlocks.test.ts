@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TrackerProject } from '../schemas/tracker.schema';
 import {
   aggregateAdminTrackerBlocks,
+  formatQuantityTaskLabel,
   inferOutputMetricFromTaskName,
   parseTrackerTaskBaseLabel,
   withAdminAggregatedBlocks,
@@ -168,6 +169,16 @@ describe('aggregateAdminTrackerBlocks', () => {
       .sort();
     // Different labels after first pass → stay separate (avoids ×× corruption)
     expect(labels).toEqual(['DA', 'DA ×2']);
+  });
+});
+
+describe('formatQuantityTaskLabel', () => {
+  it('prefixes qty only for Slides and DA', () => {
+    expect(formatQuantityTaskLabel('Slides', 23, 1)).toBe('23 Slides');
+    expect(formatQuantityTaskLabel('DA', 5, 1)).toBe('5 DA');
+    expect(formatQuantityTaskLabel('Edit DA', 1, 1)).toBe('Edit DA');
+    expect(formatQuantityTaskLabel('Animation', 8, 1)).toBe('Animation');
+    expect(formatQuantityTaskLabel('Edit DA', 0, 3)).toBe('Edit DA ×3');
   });
 });
 
