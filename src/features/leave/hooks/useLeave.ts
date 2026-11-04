@@ -49,10 +49,12 @@ export const useUserLeaveHistory = (userId: string) =>
     queryFn: () => leaveApi.listByUser(userId),
   });
 
-export const useOpenLeaves = (userId: string) =>
+export const useOpenLeaves = (userId: string | null | undefined, enabled = true) =>
   useQuery({
     queryKey: ['leave', 'open', userId],
-    queryFn: () => leaveApi.listOpen(userId),
+    queryFn: () => leaveApi.listOpen(userId!),
+    enabled: Boolean(userId) && enabled,
+    staleTime: 30_000,
   });
 
 export const useCancelLeave = () => {

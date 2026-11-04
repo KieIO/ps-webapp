@@ -75,19 +75,20 @@ Hướng dẫn dùng: `docs-site/docs/create-task-flow.md`, `split-task-flow.md`
 
 ### 2.1 Giao cho CH / CM / Staff
 
-| ID      | Case                                                                                                                      | API | E2E | Unit | Manual | Path / note                                                    |
-| ------- | ------------------------------------------------------------------------------------------------------------------------- | :-: | :-: | :--: | :----: | -------------------------------------------------------------- |
-| TASK-06 | PM/Admin tạo task Creative (chưa chọn Staff) → task vào hàng chờ Creative Head                                            |  ●  |  ~  |  ~   |   ●    | `TASK06` · create handoff · e2e queue row trong `task-47-57-…` |
-| TASK-47 | CH (hoặc Admin) giao task đang ở hàng chờ Creative Head cho một CM → task vào hàng chờ Creative Manager. PM không giao CM |  ●  |  ●  |  ~   |   ●    | `TASK47` · `task-47-57-creative-assign-ui.spec.ts`             |
-| TASK-48 | Staff, CM và PM gọi assign-cm thì 403. CH và Admin được giao CM                                                           |  ●  |  ●  |  ○   |   ●    | `TASK48` · `task-48-58-assign-guards.spec.ts`                  |
-| TASK-49 | Không giao được CM nếu người chọn không phải role CM, hoặc task chưa ở hàng chờ Creative Head (API 422)                   |  ●  |  ●  |  ○   |   ●    | `TASK49` · 422 · cùng guards spec                              |
-| TASK-37 | Admin/PM giao (hoặc đổi) Staff trên task phòng Dự án — tối đa 1 người                                                     |  ●  |  ●  |  ○   |   ●    | `TASK37` · `task-37-56-project-assign-visibility.spec.ts`      |
-| TASK-50 | CM được giao task đó giao cả khối cho đúng 1 Staff (kèm số lượng)                                                         |  ●  |  ●  |  ~   |   ●    | `TASK50` · `task-47-57-…` (drawer + API whole)                 |
-| TASK-51 | PM/Admin chia task thành ≥2 task con. SL cha giữ nguyên; tổng các phần không vượt SL cha. CM không tạo task con           |  ●  |  ●  |  ~   |   ●    | `TASK51` · API split                                           |
-| TASK-52 | Chỉ CM đang phụ trách task (hoặc Admin/PM) được giao nguyên; Staff thường / CM khác bị 403                                |  ●  |  ●  |  ○   |   ●    | `TASK52` · guards spec                                         |
-| TASK-58 | Giao nguyên thiếu số lượng bị 422. Split dưới 2 phần bị 422. CM gọi chia nhỏ bị 403                                       |  ●  |  ●  |  ○   |   ●    | `TASK58` · guards spec                                         |
-| TASK-38 | Không cho tạo/giao nếu người nhận đang On leave → 422 `ASSIGNEE_ON_LEAVE` (chặn, không chỉ cảnh báo)                      |  ●  |  ~  |  ~   |   ●    | `TASK38` · e2e skip nếu users PATCH status không dùng được     |
-| TASK-57 | Happy path Creative: tạo → CH giao CM → CM giao Staff (cả khối) thành công                                                |  ●  |  ●  |  ○   |   ●    | `TASK57` · `task-47-57-…`                                      |
+| ID       | Case                                                                                                                      | API | E2E | Unit | Manual | Path / note                                                    |
+| -------- | ------------------------------------------------------------------------------------------------------------------------- | :-: | :-: | :--: | :----: | -------------------------------------------------------------- |
+| TASK-06  | PM/Admin tạo task Creative (chưa chọn Staff) → task vào hàng chờ Creative Head                                            |  ●  |  ~  |  ~   |   ●    | `TASK06` · create handoff · e2e queue row trong `task-47-57-…` |
+| TASK-47  | CH (hoặc Admin) giao task đang ở hàng chờ Creative Head cho một CM → task vào hàng chờ Creative Manager. PM không giao CM |  ●  |  ●  |  ~   |   ●    | `TASK47` · `task-47-57-creative-assign-ui.spec.ts`             |
+| TASK-48  | Staff, CM và PM gọi assign-cm thì 403. CH và Admin được giao CM                                                           |  ●  |  ●  |  ○   |   ●    | `TASK48` · `task-48-58-assign-guards.spec.ts`                  |
+| TASK-49  | Không giao được CM nếu người chọn không phải role CM, hoặc task chưa ở hàng chờ Creative Head (API 422)                   |  ●  |  ●  |  ○   |   ●    | `TASK49` · 422 · cùng guards spec                              |
+| TASK-37  | Admin/PM giao (hoặc đổi) Staff trên task phòng Dự án — tối đa 1 người                                                     |  ●  |  ●  |  ○   |   ●    | `TASK37` · `task-37-56-project-assign-visibility.spec.ts`      |
+| TASK-50  | CM được giao task đó giao cả khối cho đúng 1 Staff (kèm số lượng)                                                         |  ●  |  ●  |  ~   |   ●    | `TASK50` · `task-47-57-…` (drawer + API whole)                 |
+| TASK-51  | PM/Admin chia task thành ≥2 task con. SL cha giữ nguyên; tổng các phần không vượt SL cha. CM không tạo task con           |  ●  |  ●  |  ~   |   ●    | `TASK51` · API split                                           |
+| TASK-52  | Chỉ CM đang phụ trách task (hoặc Admin/PM) được giao nguyên; Staff thường / CM khác bị 403                                |  ●  |  ●  |  ○   |   ●    | `TASK52` · guards spec                                         |
+| TASK-58  | Giao nguyên thiếu số lượng bị 422. Split dưới 2 phần bị 422. CM gọi chia nhỏ bị 403                                       |  ●  |  ●  |  ○   |   ●    | `TASK58` · guards spec                                         |
+| TASK-38  | Không cho tạo/giao nếu người nhận đang On leave → 422 `ASSIGNEE_ON_LEAVE` (chặn, không chỉ cảnh báo)                      |  ●  |  ~  |  ~   |   ●    | `TASK38` · e2e skip nếu users PATCH status không dùng được     |
+| TASK-38b | CM **Giao nguyên** khi staff có leave overlap hôm nay→deadline: UI ép Chia nhỏ; API whole → 422                           |  ●  |  ○  |  ○   |   ●    | Manual UI + API; util `assignLeaveConflict.test.ts`            |
+| TASK-57  | Happy path Creative: tạo → CH giao CM → CM giao Staff (cả khối) thành công                                                |  ●  |  ●  |  ○   |   ●    | `TASK57` · `task-47-57-…`                                      |
 
 ### 2.2 Đổi người giao / giao lại
 
