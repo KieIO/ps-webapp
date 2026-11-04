@@ -4,6 +4,13 @@ import { useEffect, useMemo } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { ROLES, type Role } from '@/config/permissions';
 import { useDepartmentOptions } from '@/features/departments/hooks/useDepartmentOptions';
+import { useProjectList } from '@/features/projects/hooks/useProjectList';
+import {
+  ARCHIVED_PROJECT_CREATE_TASK_MESSAGE,
+  buildArchivedProjectNameKeys,
+  filterOutArchivedProjectNames,
+  isArchivedProjectName,
+} from '@/features/projects/utils/archivedProjectNames';
 import { useTaskScoreList } from '@/features/task-scores/hooks/useTaskScoreList';
 import { resolveTaskType } from '@/features/task-scores/utils/resolveTaskType';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
@@ -116,7 +123,16 @@ export function CreateTaskModal({
   const [form] = Form.useForm<CreateTaskFormValues>();
   const { mutate, isPending } = useCreateMyTask();
   const currentUser = useAppSelector((state) => state.auth.user);
-  const { data: projectOptions = [] } = useCreateTaskProjectOptions(taskCategory, open);
+  const { data: historicProjectNames = [] } = useCreateTaskProjectOptions(taskCategory, open);
+  const { data: archivedProjects } = useProjectList({ archived: true }, { enabled: open });
+  const archivedNameKeys = useMemo(
+    () => buildArchivedProjectNameKeys(archivedProjects?.items),
+    [archivedProjects?.items],
+  );
+  const projectOptions = useMemo(
+    () => filterOutArchivedProjectNames(historicProjectNames, archivedNameKeys),
+    [historicProjectNames, archivedNameKeys],
+  );
   const { data: pmOptions = [] } = useCreateTaskPmOptions(open);
   const pmLockedToSelf = isCreateTaskPmLockedToSelf(currentUser?.role);
   const visiblePmOptions = useMemo(
@@ -437,7 +453,17 @@ export function CreateTaskModal({
           <Form.Item
             name="projectName"
             label={MY_TASK_COLUMN_HEADERS.projectName}
-            rules={[{ required: true, message: 'Project name is required' }]}
+            rules={[
+              { required: true, message: 'Project name is required' },
+              {
+                validator: async (_, value: unknown) => {
+                  if (typeof value !== 'string' || !value.trim()) return;
+                  if (isArchivedProjectName(value, archivedNameKeys)) {
+                    throw new Error(ARCHIVED_PROJECT_CREATE_TASK_MESSAGE);
+                  }
+                },
+              },
+            ]}
           >
             <AutoComplete
               options={projectOptions.map((name) => ({ value: name }))}

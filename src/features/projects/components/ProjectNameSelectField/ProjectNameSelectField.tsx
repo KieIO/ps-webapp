@@ -3,6 +3,10 @@ import { PlusOutlined } from '@ant-design/icons';
 import { useMemo, useState } from 'react';
 import { usePermission } from '@/shared/hooks/usePermission';
 import type { Project } from '../../schemas/project.schema';
+import {
+  ARCHIVED_PROJECT_CREATE_TASK_MESSAGE,
+  isArchivedProjectName,
+} from '../../utils/archivedProjectNames';
 import { CreateProjectModal } from '../CreateProjectModal/CreateProjectModal';
 
 interface ProjectNameSelectFieldProps {
@@ -14,6 +18,8 @@ interface ProjectNameSelectFieldProps {
   options: string[];
   /** Live Projects catalog — used to resolve PM when selecting a name. */
   catalogProjects: Project[];
+  /** Archived project names (case-insensitive) — cannot be selected or free-typed. */
+  archivedNameKeys?: Set<string>;
   disabled?: boolean;
   placeholder?: string;
   id?: string;
@@ -25,6 +31,7 @@ export function ProjectNameSelectField({
   onProjectApplied,
   options,
   catalogProjects,
+  archivedNameKeys,
   disabled,
   placeholder = 'Chọn hoặc thêm project',
   id,
@@ -34,16 +41,18 @@ export function ProjectNameSelectField({
   const [search, setSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const blockedKeys = archivedNameKeys ?? new Set<string>();
 
   // Prefer live search text; fall back to committed value (e.g. after blur).
   const typed = (search.trim() || (value ?? '').trim()).trim();
+  const typedIsArchived = isArchivedProjectName(typed, blockedKeys);
 
   const exactMatch = useMemo(
     () => options.some((name) => name.trim().toLowerCase() === typed.toLowerCase()),
     [options, typed],
   );
 
-  const canShowAdd = canCreate && typed.length > 0 && !exactMatch && !disabled;
+  const canShowAdd = canCreate && typed.length > 0 && !exactMatch && !typedIsArchived && !disabled;
 
   const filteredOptions = useMemo(() => {
     const query = typed.toLowerCase();
@@ -55,6 +64,12 @@ export function ProjectNameSelectField({
   const applyByName = (rawName: string | undefined) => {
     const name = (rawName ?? '').trim();
     if (!name) return;
+    if (isArchivedProjectName(name, blockedKeys)) {
+      // Keep field empty so Form.Item validator can show the archive message.
+      onChange?.('');
+      setSearch('');
+      return;
+    }
     onChange?.(name);
     const match = catalogProjects.find(
       (project) => project.name.trim().toLowerCase() === name.toLowerCase(),
@@ -113,7 +128,9 @@ export function ProjectNameSelectField({
         }}
         onBlur={() => applyByName(value)}
         notFoundContent={
-          canShowAdd ? (
+          typedIsArchived ? (
+            ARCHIVED_PROJECT_CREATE_TASK_MESSAGE
+          ) : canShowAdd ? (
             <div style={{ padding: '4px 0' }}>{addButton}</div>
           ) : (
             'Không có project phù hợp'

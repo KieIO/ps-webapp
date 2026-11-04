@@ -19,6 +19,12 @@ import { ROLES, type Role } from '@/config/permissions';
 import { ProjectNameSelectField } from '@/features/projects/components/ProjectNameSelectField/ProjectNameSelectField';
 import { useProjectList } from '@/features/projects/hooks/useProjectList';
 import type { Project, ProjectUrgency } from '@/features/projects/schemas/project.schema';
+import {
+  ARCHIVED_PROJECT_CREATE_TASK_MESSAGE,
+  buildArchivedProjectNameKeys,
+  filterOutArchivedProjectNames,
+  isArchivedProjectName,
+} from '@/features/projects/utils/archivedProjectNames';
 import { useTaskScoreList } from '@/features/task-scores/hooks/useTaskScoreList';
 import { resolveTaskType } from '@/features/task-scores/utils/resolveTaskType';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
@@ -224,6 +230,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
 
   const { data: historicProjectNames = [] } = useCreateTaskProjectOptions('project', open);
   const { data: catalogProjects } = useProjectList({}, { enabled: open });
+  const { data: archivedProjects } = useProjectList({ archived: true }, { enabled: open });
   const { data: pmOptions = [] } = useCreateTaskPmOptions(open);
   const pmLockedToSelf = isCreateTaskPmLockedToSelf(currentUser?.role);
   const visiblePmOptions = useMemo(
@@ -236,16 +243,20 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
   });
 
   const catalogProjectItems = catalogProjects?.items ?? [];
+  const archivedNameKeys = useMemo(
+    () => buildArchivedProjectNameKeys(archivedProjects?.items),
+    [archivedProjects?.items],
+  );
   const projectOptions = useMemo(() => {
     const names = new Set<string>();
     for (const project of catalogProjectItems) {
       if (project.name.trim()) names.add(project.name);
     }
-    for (const name of historicProjectNames) {
+    for (const name of filterOutArchivedProjectNames(historicProjectNames, archivedNameKeys)) {
       if (name.trim()) names.add(name);
     }
     return [...names].sort((a, b) => a.localeCompare(b));
-  }, [catalogProjectItems, historicProjectNames]);
+  }, [catalogProjectItems, historicProjectNames, archivedNameKeys]);
 
   const applyCatalogProject = (project: Project) => {
     form.setFieldValue('projectName', project.name);
@@ -643,11 +654,22 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                 <Form.Item
                   name="projectName"
                   label="Tên dự án"
-                  rules={[{ required: true, message: 'Nhập tên dự án' }]}
+                  rules={[
+                    { required: true, message: 'Nhập tên dự án' },
+                    {
+                      validator: async (_, value: unknown) => {
+                        if (typeof value !== 'string' || !value.trim()) return;
+                        if (isArchivedProjectName(value, archivedNameKeys)) {
+                          throw new Error(ARCHIVED_PROJECT_CREATE_TASK_MESSAGE);
+                        }
+                      },
+                    },
+                  ]}
                 >
                   <ProjectNameSelectField
                     options={projectOptions}
                     catalogProjects={catalogProjectItems}
+                    archivedNameKeys={archivedNameKeys}
                     placeholder="Chọn hoặc thêm project"
                     disabled={Boolean(preset?.lockProject)}
                     onProjectApplied={applyCatalogProject}

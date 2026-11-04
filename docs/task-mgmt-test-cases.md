@@ -446,6 +446,16 @@ v1: **soft delete** (`DELETE` → GORM `DeletedAt`); **no task archive** (projec
 | **Expected (UI)**  | Staff **vẫn hiện**, **disabled**, badge **Nghỉ ngày giao**; không chọn được            |
 | **Expected (API)** | `GET …/staff-options` includes that user with `availability: "on_leave"`               |
 
+### TASK-38d — Archived project cannot be selected when creating a task
+
+|                    |                                                                                               |
+| ------------------ | --------------------------------------------------------------------------------------------- |
+| **Preconditions**  | Project archived (e.g. `christmas`); may still have historic tasks under that name            |
+| **Steps (UI)**     | Create task → Tên dự án dropdown / gõ tên archived                                            |
+| **Expected (UI)**  | Archived name **không** trong options; free-text bị chặn (“Không chọn được dự án đã lưu trữ”) |
+| **Steps (API)**    | `POST` create task với `projectName` trùng project archived                                   |
+| **Expected (API)** | **422** validation: không chọn được dự án đã lưu trữ                                          |
+
 ---
 
 ## I. Negative / validation
