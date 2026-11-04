@@ -145,16 +145,19 @@ export function CreativeManagerAssignDrawer({
       return toTaskDateOnly(watchedCreativeDeadline);
     }
     if (task?.creativeDeadline) {
-      return calendarDateFromTaskDeadline(task.creativeDeadline);
+      return calendarDateFromTaskDeadline(task.creativeDeadline) ?? assignWindowStart;
     }
     const pmDl = task ? getTaskDeadline(task) : '';
-    return pmDl ? calendarDateFromTaskDeadline(pmDl) : assignWindowStart;
+    if (pmDl) {
+      return calendarDateFromTaskDeadline(pmDl) ?? assignWindowStart;
+    }
+    return assignWindowStart;
   }, [watchedCreativeDeadline, task, assignWindowStart]);
 
   const { data: openLeavesInRange = [] } = useOpenLeavesInRange(
     assignWindowStart,
     assignWindowEnd,
-    open && Boolean(assignWindowEnd),
+    open,
   );
 
   const leaveChipByUserId = useMemo(
