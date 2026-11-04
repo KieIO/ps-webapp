@@ -417,6 +417,10 @@ export function CreativeManagerAssignDrawer({
       disabled={disabled}
       placeholder="Chọn Staff"
       allowClear
+      // Split row is narrow (beside quantity); keep popup as wide as whole-assign.
+      popupMatchSelectWidth={false}
+      classNames={{ popup: { root: styles.staffSelectPopup } }}
+      styles={{ popup: { root: { minWidth: 400 } } }}
       options={staffSelectOptions}
       optionRender={(option) => {
         const data = option.data as {
@@ -705,13 +709,18 @@ export function CreativeManagerAssignDrawer({
                                   placeholder="Mô tả phần việc giao cho Staff..."
                                 />
                               </Form.Item>
-                              <div className={styles.deadlineRow}>
-                                <Form.Item name={[field.name, 'staffUserId']} label="Giao cho">
+                              <div className={styles.splitAssignRow}>
+                                <Form.Item
+                                  name={[field.name, 'staffUserId']}
+                                  label="Giao cho"
+                                  className={styles.splitAssignStaff}
+                                >
                                   {renderStaffSelect(false)}
                                 </Form.Item>
                                 <Form.Item
                                   name={[field.name, 'quantity']}
                                   label="Số lượng"
+                                  className={styles.splitAssignQty}
                                   rules={[nonNegativeWholeQuantityRule]}
                                 >
                                   <InputNumber

@@ -506,6 +506,31 @@
   margin-bottom: 4px;
 }
 
+/** Split: staff select gets most width; quantity stays compact. */
+.splitAssignRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  gap: 10px;
+  align-items: stretch;
+  margin-bottom: 4px;
+}
+
+.splitAssignStaff {
+  min-width: 0;
+}
+
+.splitAssignQty {
+  min-width: 0;
+}
+
+.staffSelectPopup {
+  min-width: 400px !important;
+
+  :global(.ant-select-item-option-content) {
+    overflow: hidden;
+  }
+}
+
 .deadlineValue {
   display: flex;
   align-items: center;
@@ -639,12 +664,17 @@
 }
 
 @media (max-width: 520px) {
-  .deadlineRow {
+  .deadlineRow,
+  .splitAssignRow {
     grid-template-columns: 1fr;
   }
 
   .criteriaGrid {
     grid-template-columns: 1fr;
+  }
+
+  .staffSelectPopup {
+    min-width: min(400px, calc(100vw - 24px)) !important;
   }
 }
 
@@ -653,6 +683,7 @@
   align-items: center;
   gap: 8px;
   width: 100%;
+  min-width: 0;
 }
 
 .staffOptionLeave {
@@ -675,16 +706,22 @@
 }
 
 .staffName {
+  flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .staffMeta {
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
   gap: 6px;
   margin-left: auto;
   font-size: 12px;
   color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 .leaveChip {
@@ -701,6 +738,7 @@
   color: #9a3412;
   background: #fff7ed;
   border: 1px solid #fed7aa;
+  white-space: nowrap;
 }
 
 .dot {
