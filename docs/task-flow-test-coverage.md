@@ -88,6 +88,7 @@ Hướng dẫn dùng: `docs-site/docs/create-task-flow.md`, `split-task-flow.md`
 | TASK-58  | Giao nguyên thiếu số lượng bị 422. Split dưới 2 phần bị 422. CM gọi chia nhỏ bị 403                                       |  ●  |  ●  |  ○   |   ●    | `TASK58` · guards spec                                         |
 | TASK-38  | Không cho tạo/giao nếu người nhận đang On leave → 422 `ASSIGNEE_ON_LEAVE` (chặn, không chỉ cảnh báo)                      |  ●  |  ~  |  ~   |   ●    | `TASK38` · e2e skip nếu users PATCH status không dùng được     |
 | TASK-38b | CM **Giao nguyên** khi staff có leave overlap hôm nay→deadline: UI ép Chia nhỏ; API whole → 422                           |  ●  |  ○  |  ○   |   ●    | Manual UI + API; util `assignLeaveConflict.test.ts`            |
+| TASK-38c | Staff On leave đúng ngày deadline: vẫn trong dropdown, disabled + **Nghỉ ngày giao**                                      |  ●  |  ○  |  ○   |   ●    | `GET staff-options` includes `on_leave`                        |
 | TASK-57  | Happy path Creative: tạo → CH giao CM → CM giao Staff (cả khối) thành công                                                |  ●  |  ●  |  ○   |   ●    | `TASK57` · `task-47-57-…`                                      |
 
 ### 2.2 Đổi người giao / giao lại

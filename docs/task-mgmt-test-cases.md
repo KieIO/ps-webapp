@@ -437,6 +437,15 @@ v1: **soft delete** (`DELETE` → GORM `DeletedAt`); **no task archive** (projec
 | **Steps (API)**    | `POST …/assign-staff` `{ mode: "whole", staffUserId, quantity }` với staff có leave overlap cửa sổ                                          |
 | **Expected (API)** | **422** validation: phải chia nhỏ / có ngày nghỉ trong khoảng tới deadline                                                                  |
 
+### TASK-38c — On-leave staff visible but disabled on deadline day
+
+|                    |                                                                                        |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| **Preconditions**  | Staff `on_leave` covering assign/capacity day (e.g. leave = today = creative deadline) |
+| **Steps (UI)**     | CM **Giao cho** dropdown                                                               |
+| **Expected (UI)**  | Staff **vẫn hiện**, **disabled**, badge **Nghỉ ngày giao**; không chọn được            |
+| **Expected (API)** | `GET …/staff-options` includes that user with `availability: "on_leave"`               |
+
 ---
 
 ## I. Negative / validation
