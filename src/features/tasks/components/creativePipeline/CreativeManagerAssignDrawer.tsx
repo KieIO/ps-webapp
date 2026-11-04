@@ -13,7 +13,7 @@ import {
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
-import { useOpenLeaves } from '@/features/leave/hooks/useLeave';
+import { useOpenLeaves, useOpenLeavesInRange } from '@/features/leave/hooks/useLeave';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useAssignCreativeManager } from '../../hooks/useAssignCreativeManager';
@@ -23,6 +23,7 @@ import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
 import type { CreativeAssignMode, MyTask } from '../../schemas/task.schema';
 import {
+  buildLeaveChipByUserId,
   findLeaveOverlappingWindow,
   formatLeaveRangeLabel,
   WHOLE_ASSIGN_LEAVE_CONFLICT_HINT,
@@ -138,6 +139,7 @@ export function CreativeManagerAssignDrawer({
     isError: capacityError,
   } = useAssignPickerCapacity(task, open, capacityDeadlineOverride);
 
+  const assignWindowStart = useMemo(() => toTaskDateOnly(dayjs()), []);
   const assignWindowEnd = useMemo(() => {
     if (watchedCreativeDeadline?.isValid()) {
       return toTaskDateOnly(watchedCreativeDeadline);
@@ -146,8 +148,19 @@ export function CreativeManagerAssignDrawer({
       return calendarDateFromTaskDeadline(task.creativeDeadline);
     }
     const pmDl = task ? getTaskDeadline(task) : '';
-    return pmDl ? calendarDateFromTaskDeadline(pmDl) : toTaskDateOnly(dayjs());
-  }, [watchedCreativeDeadline, task]);
+    return pmDl ? calendarDateFromTaskDeadline(pmDl) : assignWindowStart;
+  }, [watchedCreativeDeadline, task, assignWindowStart]);
+
+  const { data: openLeavesInRange = [] } = useOpenLeavesInRange(
+    assignWindowStart,
+    assignWindowEnd,
+    open && Boolean(assignWindowEnd),
+  );
+
+  const leaveChipByUserId = useMemo(
+    () => buildLeaveChipByUserId(openLeavesInRange, assignWindowStart, assignWindowEnd),
+    [openLeavesInRange, assignWindowStart, assignWindowEnd],
+  );
 
   const { data: openLeaves = [], isFetching: openLeavesFetching } = useOpenLeaves(
     watchedStaffUserId,
@@ -156,9 +169,8 @@ export function CreativeManagerAssignDrawer({
 
   const leaveConflict = useMemo(() => {
     if (mode !== 'whole' || !watchedStaffUserId || !assignWindowEnd) return null;
-    const today = toTaskDateOnly(dayjs());
-    return findLeaveOverlappingWindow(openLeaves, today, assignWindowEnd);
-  }, [mode, watchedStaffUserId, assignWindowEnd, openLeaves]);
+    return findLeaveOverlappingWindow(openLeaves, assignWindowStart, assignWindowEnd);
+  }, [mode, watchedStaffUserId, assignWindowStart, assignWindowEnd, openLeaves]);
 
   const canSubmit = Boolean(task && !readOnly && isAwaitingCm(task));
   /** Initial split on assign — CM/Admin/PM. Adding more children later stays PM/Admin-only. */
@@ -193,18 +205,27 @@ export function CreativeManagerAssignDrawer({
       filterCreativeAssignableExecutors(staffOptions, currentUser?.role, currentUser?.id).map(
         (staff) => {
           const workload = getAssigneeWorkload(allTasks, staff.userId ?? undefined);
+          const userId = staff.userId ?? undefined;
           return {
-            value: staff.userId ?? staff.code,
+            value: userId ?? staff.code,
             label: staff.name,
             disabled: !canSelectAssignee(staff, allTasks, capacityByUserId),
             staff,
             activeCount: workload.activeCount,
             capacityPercent: displayCapacityPercent(staff, allTasks, capacityByUserId),
             availability: resolveAssigneeAvailability(staff, capacityByUserId),
+            leaveHint: userId ? (leaveChipByUserId.get(userId) ?? null) : null,
           };
         },
       ),
-    [staffOptions, allTasks, capacityByUserId, currentUser?.role, currentUser?.id],
+    [
+      staffOptions,
+      allTasks,
+      capacityByUserId,
+      currentUser?.role,
+      currentUser?.id,
+      leaveChipByUserId,
+    ],
   );
 
   const selectedStaffName = useMemo(() => {
@@ -400,6 +421,7 @@ export function CreativeManagerAssignDrawer({
           activeCount: number;
           capacityPercent: number;
           availability: (typeof staffSelectOptions)[number]['availability'];
+          leaveHint?: string | null;
         };
         return (
           <AssigneeOptionLabel
@@ -407,6 +429,7 @@ export function CreativeManagerAssignDrawer({
             activeCount={data.activeCount}
             capacityPercent={data.capacityPercent}
             availability={data.availability}
+            leaveHint={data.leaveHint}
           />
         );
       }}

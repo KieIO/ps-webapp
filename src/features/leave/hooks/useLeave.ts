@@ -57,6 +57,19 @@ export const useOpenLeaves = (userId: string | null | undefined, enabled = true)
     staleTime: 30_000,
   });
 
+/** Open leave overlapping assign window (today → deadline) for picker chips. */
+export const useOpenLeavesInRange = (
+  startDate: string | null | undefined,
+  endDate: string | null | undefined,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: ['leave', 'open-in-range', startDate, endDate],
+    queryFn: () => leaveApi.listOpenInRange(startDate!, endDate!),
+    enabled: Boolean(startDate && endDate) && enabled,
+    staleTime: 30_000,
+  });
+
 export const useCancelLeave = () => {
   const queryClient = useQueryClient();
 

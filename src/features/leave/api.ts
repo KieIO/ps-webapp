@@ -49,6 +49,16 @@ export const leaveApi = {
     return z.array(LeaveRecordSchema).parse(response.data);
   },
 
+  /** Open leave overlapping [startDate, endDate] — assign-picker window hints. */
+  listOpenInRange: async (startDate: string, endDate: string): Promise<LeaveRecord[]> => {
+    const response = await api
+      .get('/leave/open-in-range', { params: { startDate, endDate } })
+      .catch((error: unknown) => {
+        throw new Error(getApiErrorMessage(error, 'Failed to load leave in range'));
+      });
+    return z.array(LeaveRecordSchema).parse(response.data);
+  },
+
   cancel: async (userId: string) => {
     const response = await api.post(`/users/${userId}/leave/cancel`).catch((error: unknown) => {
       throw new Error(getApiErrorMessage(error, 'Failed to cancel leave'));

@@ -59,6 +59,46 @@ export function formatLeaveRangeLabel(hit: LeaveWindowHit): string {
   return `${hit.startDate} → ${hit.endDate}`;
 }
 
+/** Compact VN chip: "Nghỉ 06/11" or "Nghỉ 06/11–08/11". */
+export function formatLeaveChipLabel(hit: LeaveWindowHit): string {
+  const short = (iso: string): string => {
+    const parts = iso.split('-');
+    if (parts.length !== 3) return iso;
+    const [, month, day] = parts;
+    return `${day}/${month}`;
+  };
+  if (hit.startDate === hit.endDate) {
+    return `Nghỉ ${short(hit.startDate)}`;
+  }
+  return `Nghỉ ${short(hit.startDate)}–${short(hit.endDate)}`;
+}
+
+/**
+ * Earliest open leave per user overlapping [windowStart, windowEnd], as chip labels.
+ * `leaves` may already be range-filtered from the API.
+ */
+export function buildLeaveChipByUserId(
+  leaves: readonly Pick<LeaveRecord, 'userId' | 'startDate' | 'endDate' | 'status'>[],
+  windowStart: string,
+  windowEnd: string,
+): Map<string, string> {
+  const byUser = new Map<string, LeaveWindowHit>();
+  for (const leave of leaves) {
+    if (!leave.userId) continue;
+    const hit = findLeaveOverlappingWindow([leave], windowStart, windowEnd);
+    if (!hit) continue;
+    const prev = byUser.get(leave.userId);
+    if (!prev || hit.startDate < prev.startDate) {
+      byUser.set(leave.userId, hit);
+    }
+  }
+  const out = new Map<string, string>();
+  for (const [userId, hit] of byUser) {
+    out.set(userId, formatLeaveChipLabel(hit));
+  }
+  return out;
+}
+
 export const WHOLE_ASSIGN_LEAVE_CONFLICT_TITLE =
   'Người nhận có ngày nghỉ trong khoảng tới deadline';
 

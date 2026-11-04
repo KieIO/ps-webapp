@@ -18,6 +18,8 @@ interface AssigneeOptionLabelProps {
   capacityPercent?: number;
   /** When set (from capacity API), overrides staff.availability for the badge. */
   availability?: StaffAvailability;
+  /** Soft hint when leave overlaps today→deadline but staff stays selectable (e.g. "Nghỉ 06/11"). */
+  leaveHint?: string | null;
 }
 
 export function AssigneeOptionLabel({
@@ -25,12 +27,20 @@ export function AssigneeOptionLabel({
   activeCount,
   capacityPercent,
   availability: availabilityProp,
+  leaveHint,
 }: AssigneeOptionLabelProps) {
   const availability = availabilityProp ?? staff.availability;
   const onLeave = availability === 'on_leave';
+  const softLeaveHint = leaveHint?.trim() || null;
 
   return (
-    <span className={classNames(styles.staffOption, onLeave && styles.staffOptionLeave)}>
+    <span
+      className={classNames(
+        styles.staffOption,
+        onLeave && styles.staffOptionLeave,
+        softLeaveHint && !onLeave && styles.staffOptionHasLeaveHint,
+      )}
+    >
       <Avatar size={22}>{getInitials(staff.name)}</Avatar>
       <span className={styles.staffName}>{staff.name}</span>
       <span className={styles.staffMeta}>
@@ -39,8 +49,11 @@ export function AssigneeOptionLabel({
         {availability ? (
           <>
             <span className={`${styles.dot} ${AVAILABILITY_DOT[availability]}`} />
-            {STAFF_AVAILABILITY_LABELS[availability]}
+            {onLeave && softLeaveHint ? softLeaveHint : STAFF_AVAILABILITY_LABELS[availability]}
           </>
+        ) : null}
+        {!onLeave && softLeaveHint ? (
+          <span className={styles.leaveChip}>{softLeaveHint}</span>
         ) : null}
       </span>
     </span>
