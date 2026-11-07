@@ -357,7 +357,15 @@ $row-alt: #f9fafb;
   min-width: 380px;
   flex-shrink: 0;
   min-height: 0;
-  overflow: hidden;
+  /* Vertical scroll mirrors calendarPanel (synced in JS). Hide the bar so only the
+     timeline scrollbar shows — wheel / trackpad over this pane still scrolls. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .leftPanelContent {
@@ -371,6 +379,9 @@ $row-alt: #f9fafb;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .leftHeaderTop {

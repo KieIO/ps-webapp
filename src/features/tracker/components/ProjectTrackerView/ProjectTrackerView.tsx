@@ -139,6 +139,8 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   const canViewRemainingOutput = can('VIEW_CAPACITY_FULL');
   const calHeaderHeight = getTrackerCalHeaderHeight(canViewRemainingOutput);
   const calendarScrollRef = useRef<HTMLDivElement>(null);
+  const leftPanelRef = useRef<HTMLDivElement>(null);
+  const syncingVerticalScrollRef = useRef(false);
   const mainBodyRef = useRef<HTMLDivElement>(null);
   const prevMonthKeyRef = useRef('');
   const prevDayWidthRef = useRef(0);
@@ -253,6 +255,32 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     observer.observe(calendarNode);
 
     return () => observer.disconnect();
+  }, []);
+
+  /** Keep project-name column aligned with the timeline when either pane scrolls vertically. */
+  useEffect(() => {
+    const calendarNode = calendarScrollRef.current;
+    const leftNode = leftPanelRef.current;
+    if (!calendarNode || !leftNode) return;
+
+    const syncFrom = (source: HTMLElement, target: HTMLElement) => {
+      if (syncingVerticalScrollRef.current) return;
+      if (target.scrollTop === source.scrollTop) return;
+      syncingVerticalScrollRef.current = true;
+      target.scrollTop = source.scrollTop;
+      syncingVerticalScrollRef.current = false;
+    };
+
+    const onCalendarScroll = () => syncFrom(calendarNode, leftNode);
+    const onLeftScroll = () => syncFrom(leftNode, calendarNode);
+
+    calendarNode.addEventListener('scroll', onCalendarScroll, { passive: true });
+    leftNode.addEventListener('scroll', onLeftScroll, { passive: true });
+
+    return () => {
+      calendarNode.removeEventListener('scroll', onCalendarScroll);
+      leftNode.removeEventListener('scroll', onLeftScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -435,7 +463,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
         </div>
 
         <div className={styles.mainBody} ref={mainBodyRef}>
-          <div className={styles.leftPanel}>
+          <div className={styles.leftPanel} ref={leftPanelRef}>
             <div
               className={styles.leftPanelContent}
               style={{ height: calHeaderHeight + canvasHeight }}
