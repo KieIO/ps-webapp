@@ -257,29 +257,57 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     return () => observer.disconnect();
   }, []);
 
-  /** Keep project-name column aligned with the timeline when either pane scrolls vertically. */
+  /**
+   * Keep project-name column aligned with the timeline on vertical scroll.
+   * Absolute scrollTop sync drifts when the calendar shows a horizontal scrollbar
+   * (smaller clientHeight → larger max scrollTop). Compensate left content height
+   * and sync by scroll ratio so rows stay matched.
+   */
   useEffect(() => {
     const calendarNode = calendarScrollRef.current;
     const leftNode = leftPanelRef.current;
     if (!calendarNode || !leftNode) return;
 
+    const leftContent = leftNode.firstElementChild as HTMLElement | null;
+
+    const compensateHorizontalScrollbar = () => {
+      if (!leftContent) return;
+      const horizontalBar = Math.max(0, calendarNode.offsetHeight - calendarNode.clientHeight);
+      leftContent.style.paddingBottom = horizontalBar > 0 ? `${horizontalBar}px` : '';
+    };
+
     const syncFrom = (source: HTMLElement, target: HTMLElement) => {
       if (syncingVerticalScrollRef.current) return;
-      if (target.scrollTop === source.scrollTop) return;
+
+      const sourceMax = source.scrollHeight - source.clientHeight;
+      const targetMax = target.scrollHeight - target.clientHeight;
+      const nextTop =
+        sourceMax > 0 && targetMax > 0 ? (source.scrollTop / sourceMax) * targetMax : 0;
+
+      if (Math.abs(target.scrollTop - nextTop) < 0.5) return;
+
       syncingVerticalScrollRef.current = true;
-      target.scrollTop = source.scrollTop;
-      syncingVerticalScrollRef.current = false;
+      target.scrollTop = nextTop;
+      requestAnimationFrame(() => {
+        syncingVerticalScrollRef.current = false;
+      });
     };
 
     const onCalendarScroll = () => syncFrom(calendarNode, leftNode);
     const onLeftScroll = () => syncFrom(leftNode, calendarNode);
 
+    compensateHorizontalScrollbar();
+    const observer = new ResizeObserver(compensateHorizontalScrollbar);
+    observer.observe(calendarNode);
+
     calendarNode.addEventListener('scroll', onCalendarScroll, { passive: true });
     leftNode.addEventListener('scroll', onLeftScroll, { passive: true });
 
     return () => {
+      observer.disconnect();
       calendarNode.removeEventListener('scroll', onCalendarScroll);
       leftNode.removeEventListener('scroll', onLeftScroll);
+      if (leftContent) leftContent.style.paddingBottom = '';
     };
   }, []);
 
