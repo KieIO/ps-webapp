@@ -19,7 +19,7 @@ export {
   type TaskConfirmationStatus,
 } from '@/shared/constants/taskConfirmation';
 
-export const CLASSIFICATION_LEVELS = [1, 2, 3, 4, 5] as const;
+export { CLASSIFICATION_LEVELS, type ClassificationLevel } from './classificationLevels';
 
 export const TASK_CATEGORIES = ['project', 'non_project'] as const;
 
@@ -69,8 +69,6 @@ export type TaskKind = (typeof TASK_KINDS)[number];
 export const TASK_DEPARTMENTS = PROJECT_DEPARTMENTS;
 
 export type TaskDepartment = (typeof TASK_DEPARTMENTS)[number];
-
-export type ClassificationLevel = (typeof CLASSIFICATION_LEVELS)[number];
 
 export const TaskPersonSchema = z.object({
   code: z.string(),

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
+import { getApiErrorMessage } from '@/shared/api/apiError';
 import { departmentApi } from '../api';
 import type { UpdateDepartmentRequest } from '../schemas/department.schema';
 import { DEPARTMENT_QUERY_KEY } from './useDepartmentList';
@@ -14,8 +15,8 @@ export const useUpdateDepartment = () => {
       queryClient.invalidateQueries({ queryKey: DEPARTMENT_QUERY_KEY });
       message.success('Department updated');
     },
-    onError: (error: Error) => {
-      message.error(error.message || 'Failed to update department');
+    onError: (error: unknown) => {
+      message.error(getApiErrorMessage(error, 'Failed to update department'));
     },
   });
 };

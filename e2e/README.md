@@ -40,7 +40,7 @@ npm run test:e2e:projects
 # Coverage index (create/assign/decline/edit/delete): docs/task-flow-test-coverage.md
 npm run test:e2e:tasks
 
-# Department management UI smoke (DEPT-30–32)
+# Department management UI smoke (DEPT-30–36)
 npm run test:e2e:departments
 
 # Title-mgmt UI smoke (TITLE-35–44)
@@ -49,10 +49,10 @@ npm run test:e2e:titles
 # Client-mgmt UI smoke (CLIENT-41, CLIENT-42, CLIENT-43)
 npm run test:e2e:clients
 
-# Task scores UI smoke (TSCORE-39, TSCORE-40)
+# Task scores UI smoke (TSCORE-39–45)
 npm run test:e2e:taskscores
 
-# Capacity formula UI smoke (CAP-27–30)
+# Capacity formula UI smoke (CAP-27–33)
 npm run test:e2e:capacity
 
 # Leave smoke (multi-period + login/auto-Active/tracker weekends)
@@ -90,11 +90,11 @@ e2e/
   fixtures/auth.ts    # loginAs(role), sidebar helpers
   um/                 # User-mgmt UI cases (UM-11, 13, 18, …)
   projects/           # Project-mgmt UI cases (PM-31, 40, 41, …)
-  departments/        # Dept-mgmt UI cases (DEPT-30–32)
+  departments/        # Dept-mgmt UI cases (DEPT-30–36)
   titles/             # Title-mgmt UI cases (TITLE-35–44, …)
   clients/            # Client-mgmt UI cases (CLIENT-41, 42, 43, …)
-  task-scores/        # Task types & scores UI cases (TSCORE-39, 40, …)
-  capacity-formula/        # Capacity formula UI cases (CAP-27–30)
+  task-scores/        # Task types & scores UI cases (TSCORE-39–45)
+  capacity-formula/        # Capacity formula UI cases (CAP-27–33)
   milestones/              # Tracker milestone UI cases (MS-03/05/09/11/19)
   tracker/                 # Tracker PM urgency/timeline/VN dates (TRK-01…05)
   README.md
@@ -129,8 +129,12 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, depart
 | TASK-70/71 Deadline PM + Creative by role      | `tasks/task-70-71-deadlines-by-role.spec.ts`               |
 | TASK-72–76 Layered eval + visibility           | `tasks/task-72-76-eval-layers-visibility.spec.ts`          |
 | DEPT-30 Sidebar Department management          | `departments/dept-30-sidebar-departments.spec.ts`          |
-| DEPT-31 Admin opens `/settings/departments`    | `departments/dept-31-admin-page.spec.ts`                   |
-| DEPT-32 PM blocked from departments page       | `departments/dept-32-pm-page-blocked.spec.ts`              |
+| DEPT-31 Admin page columns + seeded rows       | `departments/dept-31-admin-page.spec.ts`                   |
+| DEPT-32 PM/Employee/CM blocked                 | `departments/dept-32-blocked-roles.spec.ts`                |
+| DEPT-33 Create + validation/duplicate          | `departments/dept-33-create-validation.spec.ts`            |
+| DEPT-34 Edit + delete unused/in-use            | `departments/dept-34-edit-delete.spec.ts`                  |
+| DEPT-35 New dept loaded by Create Project      | `departments/dept-35-project-picker.spec.ts`               |
+| DEPT-36 Priority smoke A1→E1                   | `departments/dept-36-priority-smoke.spec.ts`               |
 | TITLE-35 Sidebar Title management              | `titles/title-35-sidebar-title-mgmt.spec.ts`               |
 | TITLE-36 Sidebar Capacity formula              | `titles/title-36-sidebar-capacity-formula.spec.ts`         |
 | TITLE-37 PM/Employee/CM blocked                | `titles/title-37-pm-titles-blocked.spec.ts`                |
@@ -141,10 +145,21 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, depart
 | TITLE-42 Validation + duplicate L/G/T          | `titles/title-42-validation-duplicate.spec.ts`             |
 | TITLE-43 User Level → title filter             | `titles/title-43-user-level-title-filter.spec.ts`          |
 | TITLE-44 Level clear + assign new title        | `titles/title-44-user-level-clear-and-assign.spec.ts`      |
+| TSCORE-39 Sidebar Task types & scores by role  | `task-scores/tscore-39-sidebar-by-role.spec.ts`            |
+| TSCORE-40 Route gate `/settings/task-score`    | `task-scores/tscore-40-route-gate.spec.ts`                 |
+| TSCORE-41 Admin page columns + chrome          | `task-scores/tscore-41-admin-page-chrome.spec.ts`          |
+| TSCORE-42 Create + validation/duplicate + dept | `task-scores/tscore-42-create-validation.spec.ts`          |
+| TSCORE-43 Search / group filter / reset        | `task-scores/tscore-43-search-filter-reset.spec.ts`        |
+| TSCORE-44 Manage groups add/delete/in-use      | `task-scores/tscore-44-manage-groups.spec.ts`              |
+| TSCORE-45 Edit score / group / department      | `task-scores/tscore-45-edit-task.spec.ts`                  |
 | Variable                                       | Default                                                    | Notes |
+| CAP-27 Sidebar Capacity formula by role        | `capacity-formula/cap-27-sidebar-capacity-formula.spec.ts` |
 | CAP-28 PM blocked from formula page            | `capacity-formula/cap-28-pm-formula-blocked.spec.ts`       |
 | CAP-29 Employee blocked from formula page      | `capacity-formula/cap-29-employee-formula-blocked.spec.ts` |
-| CAP-30 Formula page chrome                     | `capacity-formula/cap-30-page-chrome.spec.ts`              |
+| CAP-30 Formula page chrome + seeded row        | `capacity-formula/cap-30-page-chrome.spec.ts`              |
+| CAP-31 Head/CH open + CM blocked               | `capacity-formula/cap-31-access-by-role.spec.ts`           |
+| CAP-32 Search / level·group filter / reset     | `capacity-formula/cap-32-search-filter-reset.spec.ts`      |
+| CAP-33 Inline edit capacity/ratio + formula    | `capacity-formula/cap-33-inline-edit-formula.spec.ts`      |
 | Leave-01 Multi-period schedule + overlap       | `leave/leave-01-multi-period-schedule.spec.ts`             |
 | Leave-02 Login on leave, auto Active, weekends | `leave/leave-02-login-auto-active-tracker.spec.ts`         |
 | TRK-01 PM urgency on Tracker (+ Employee 403)  | `tracker/trk-01-pm-urgency-on-tracker.spec.ts`             |

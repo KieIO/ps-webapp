@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
+import { getApiErrorMessage } from '@/shared/api/apiError';
 import { departmentApi } from '../api';
 import type { CreateDepartmentRequest } from '../schemas/department.schema';
 import { DEPARTMENT_QUERY_KEY } from './useDepartmentList';
@@ -13,8 +14,8 @@ export const useCreateDepartment = () => {
       queryClient.invalidateQueries({ queryKey: DEPARTMENT_QUERY_KEY });
       message.success('Department created');
     },
-    onError: (error: Error) => {
-      message.error(error.message || 'Failed to create department');
+    onError: (error: unknown) => {
+      message.error(getApiErrorMessage(error, 'Failed to create department'));
     },
   });
 };

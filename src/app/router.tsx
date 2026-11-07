@@ -56,7 +56,6 @@ const OvertimePage = lazyWithRetry(() => import('@/pages/OvertimePage/OvertimePa
 const UsersPage = lazyWithRetry(() => import('@/pages/UsersPage/UsersPage'));
 const UserDetailPage = lazyWithRetry(() => import('@/pages/UserDetailPage/UserDetailPage'));
 const RolesPage = lazyWithRetry(() => import('@/pages/RolesPage/RolesPage'));
-const AuditLogPage = lazyWithRetry(() => import('@/pages/AuditLogPage/AuditLogPage'));
 const TitleManagementPage = lazyWithRetry(
   () => import('@/pages/TitleManagementPage/TitleManagementPage'),
 );
@@ -245,7 +244,10 @@ const router = createBrowserRouter([
             children: [
               { path: ROUTES.SETTINGS_GENERAL.slice(1), element: <GeneralSettingsPage /> },
               { path: ROUTES.ROLES.slice(1), element: <RolesPage /> },
-              { path: ROUTES.AUDIT_LOG.slice(1), element: <AuditLogPage /> },
+              {
+                path: ROUTES.AUDIT_LOG.slice(1),
+                element: <Navigate to={ROUTES.NOT_FOUND} replace />,
+              },
               { path: ROUTES.TITLE_MANAGEMENT.slice(1), element: <TitleManagementPage /> },
               {
                 path: ROUTES.DEPARTMENT_MANAGEMENT.slice(1),

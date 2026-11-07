@@ -189,12 +189,7 @@ export const SIDEBAR_ITEMS: readonly SidebarItem[] = [
         roles: SETTINGS_HEAD_ROLES,
         shortcut: navShortcut('e'),
       },
-      {
-        label: 'Audit Log',
-        path: ROUTES.AUDIT_LOG,
-        permission: 'VIEW_AUDIT_LOG',
-        shortcut: navShortcut('l'),
-      },
+      // Audit Log (`/audit`) hidden until the module is ready — route redirects to 404.
       {
         label: 'Title management',
         path: ROUTES.TITLE_MANAGEMENT,

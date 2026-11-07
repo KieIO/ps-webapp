@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
+import { getApiErrorMessage } from '@/shared/api/apiError';
 import { titleApi } from '../api';
 import type { UpdateJobTitleCapacityRequest } from '../schemas/title.schema';
 
@@ -17,8 +18,8 @@ export const useUpdateJobTitleCapacity = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-titles'] });
     },
-    onError: (error: Error) => {
-      message.error(error.message || 'Failed to update capacity');
+    onError: (error: unknown) => {
+      message.error(getApiErrorMessage(error, 'Failed to update capacity'));
     },
   });
 };

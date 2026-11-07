@@ -1,4 +1,4 @@
-import { CLASSIFICATION_LEVELS, type ClassificationLevel } from '../schemas/task.schema';
+import { CLASSIFICATION_LEVELS, type ClassificationLevel } from '../schemas/classificationLevels';
 
 const MIN_CLASSIFICATION_LEVEL = CLASSIFICATION_LEVELS[0];
 const MAX_CLASSIFICATION_LEVEL = CLASSIFICATION_LEVELS[CLASSIFICATION_LEVELS.length - 1];

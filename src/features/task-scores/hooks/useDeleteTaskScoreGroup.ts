@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
+import { getApiErrorMessage } from '@/shared/api/apiError';
 import { taskScoreApi } from '../api';
 
 export const useDeleteTaskScoreGroup = () => {
@@ -11,8 +12,8 @@ export const useDeleteTaskScoreGroup = () => {
       queryClient.invalidateQueries({ queryKey: ['task-score-groups'] });
       message.success('Group deleted');
     },
-    onError: (error: Error) => {
-      message.error(error.message || 'Failed to delete group');
+    onError: (error: unknown) => {
+      message.error(getApiErrorMessage(error, 'Failed to delete group'));
     },
   });
 };

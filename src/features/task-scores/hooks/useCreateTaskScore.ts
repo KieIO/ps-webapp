@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
+import { getApiErrorMessage } from '@/shared/api/apiError';
 import { taskScoreApi } from '../api';
 import type { CreateTaskScoreRequest } from '../schemas/taskScore.schema';
 
@@ -12,8 +13,8 @@ export const useCreateTaskScore = () => {
       queryClient.invalidateQueries({ queryKey: ['task-scores'] });
       message.success('Task created');
     },
-    onError: (error: Error) => {
-      message.error(error.message || 'Failed to create task');
+    onError: (error: unknown) => {
+      message.error(getApiErrorMessage(error, 'Failed to create task'));
     },
   });
 };

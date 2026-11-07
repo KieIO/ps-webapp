@@ -1,8 +1,5 @@
-import {
-  CLASSIFICATION_LEVELS,
-  TASK_CONFIRMATION_STATUSES,
-  type ClassificationLevel,
-} from './schemas/task.schema';
+import { CLASSIFICATION_LEVELS, type ClassificationLevel } from './schemas/classificationLevels';
+import { TASK_CONFIRMATION_STATUSES } from '@/shared/constants/taskConfirmation';
 import {
   PROJECT_NAME_COLUMN_LABEL,
   PROJECT_URGENCY_SETTING_STYLES,

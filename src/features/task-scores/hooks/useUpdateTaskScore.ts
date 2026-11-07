@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
+import { getApiErrorMessage } from '@/shared/api/apiError';
 import { taskScoreApi } from '../api';
 import type { UpdateTaskScoreRequest } from '../schemas/taskScore.schema';
 
@@ -17,8 +18,8 @@ export const useUpdateTaskScore = () => {
       queryClient.invalidateQueries({ queryKey: ['task-scores'] });
       message.success('Task updated');
     },
-    onError: (error: Error) => {
-      message.error(error.message || 'Failed to update task');
+    onError: (error: unknown) => {
+      message.error(getApiErrorMessage(error, 'Failed to update task'));
     },
   });
 };
