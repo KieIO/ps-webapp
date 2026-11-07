@@ -1,5 +1,8 @@
 import { ROLES, type Role } from '@/config/permissions';
 
+const isCreativeDepartmentCode = (department?: string | null): boolean =>
+  department === 'creative' || Boolean(department?.startsWith('creative_'));
+
 export const canViewCreativeDeadline = (
   role: Role | undefined,
   department?: string | null,
@@ -7,8 +10,9 @@ export const canViewCreativeDeadline = (
   if (!role) return false;
   if (role === ROLES.CREATIVE_HEAD || role === ROLES.CREATIVE_MANAGER) return true;
   if (role === ROLES.ADMIN || role === ROLES.PM) return true;
+  // Staff on creative tasks need Creative DL (working deadline), not only PM.
   if (role === ROLES.EMPLOYEE) {
-    return department === 'creative_hcm' || department === 'creative_ag';
+    return isCreativeDepartmentCode(department);
   }
   return false;
 };

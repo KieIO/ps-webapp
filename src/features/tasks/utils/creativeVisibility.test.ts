@@ -15,6 +15,7 @@ describe('creativeVisibility', () => {
     expect(canViewCreativeDeadline(ROLES.PM, 'project')).toBe(true);
     expect(canViewCreativeDeadline(ROLES.EMPLOYEE, 'creative_hcm')).toBe(true);
     expect(canViewCreativeDeadline(ROLES.EMPLOYEE, 'creative_ag')).toBe(true);
+    expect(canViewCreativeDeadline(ROLES.EMPLOYEE, 'creative')).toBe(true);
   });
 
   it('denies employee outside creative departments for creative deadline view', () => {
