@@ -26,7 +26,7 @@ import type {
   TaskHistoryListResponse,
 } from '../schemas/task.schema';
 import { UNASSIGNED_STAFF_LABEL } from '../constants';
-import { buildFallbackTaskHistory } from '../utils/taskDetail';
+import { buildFallbackTaskHistory, getTaskDeadline } from '../utils/taskDetail';
 import { normalizeTaskDateEnd, normalizeTaskDateStart } from '../utils/taskDates';
 import { isTaskActiveOnWorkDate } from '../utils/taskWorkDate';
 import { computeTaskLevel } from '../utils/taskLevel';
@@ -443,8 +443,9 @@ export const mockCreateRevisionTask = async (
     quantity: payload.quantity,
     level: payload.level,
     date: dateStart,
-    deadline,
-    creativeDeadline: parent.creativeDeadline ?? deadline,
+    // PM deadline stays on the parent; form deadline is Creative (nộp lại).
+    deadline: getTaskDeadline(parent),
+    creativeDeadline: deadline,
     staff,
     parentTaskId: parent.id,
     taskKind: 'revision',

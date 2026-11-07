@@ -141,7 +141,9 @@ export function TaskRevisionHistoryTab({ task }: TaskRevisionHistoryTabProps) {
                   </div>
                   <div className={styles.metaItem}>
                     <dt>Deadline</dt>
-                    <dd>{formatTaskDateTime(item.deadline ?? item.date)}</dd>
+                    <dd>
+                      {formatTaskDateTime(item.creativeDeadline ?? item.deadline ?? item.date)}
+                    </dd>
                   </div>
                   <div className={styles.metaItem}>
                     <dt>Ngày capacity</dt>

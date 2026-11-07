@@ -1,5 +1,6 @@
 import { describe, expect, it, afterEach } from 'vitest';
 import type { CreateMyTaskRequest, MyTask } from '../schemas/task.schema';
+import { getTaskDeadline } from '../utils/taskDetail';
 import {
   INITIAL_MOCK_TASKS,
   getMockTasksStore,
@@ -12,6 +13,7 @@ import {
   mockAssignCreativeManager,
   mockCreateMyTask,
   mockCreateRevisionTask,
+  mockGetMyTaskById,
   mockListRevisionTasks,
   mockListSplitChildren,
   mockRehandCreativeToCH,
@@ -1005,6 +1007,8 @@ describe('mockCreateRevisionTask', () => {
   });
 
   it('creates a linked revision subtask with locked assignee and capacity date', async () => {
+    const parent = await mockGetMyTaskById('task-005', 'dev-pm');
+
     const created = await mockCreateRevisionTask(
       'task-005',
       {
@@ -1026,6 +1030,8 @@ describe('mockCreateRevisionTask', () => {
     expect(created.staffConfirmation).toBe('not_updated');
     expect(created.pipelineStage).toBe('assigned_staff');
     expect(created.taskCode).toContain('-R1');
+    expect(created.deadline).toBe(getTaskDeadline(parent));
+    expect(created.creativeDeadline).toBe('2026-09-12T17:00:00Z');
 
     const listed = await mockListRevisionTasks('task-005', 'dev-pm');
     expect(listed.total).toBeGreaterThanOrEqual(1);
