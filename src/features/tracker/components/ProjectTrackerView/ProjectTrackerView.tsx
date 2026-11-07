@@ -138,9 +138,6 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   const canManageMilestones = canManageProjectMilestones(role);
   const canViewRemainingOutput = can('VIEW_CAPACITY_FULL');
   const calHeaderHeight = getTrackerCalHeaderHeight(canViewRemainingOutput);
-  const calendarScrollRef = useRef<HTMLDivElement>(null);
-  const leftPanelRef = useRef<HTMLDivElement>(null);
-  const syncingVerticalScrollRef = useRef(false);
   const mainBodyRef = useRef<HTMLDivElement>(null);
   const prevMonthKeyRef = useRef('');
   const prevDayWidthRef = useRef(0);
@@ -243,77 +240,26 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     'Dòng Còn lại / ngày ước lượng khối lượng còn làm được trong ngày theo Điểm task CM của nhân viên đang active (không dùng Capacity/ngày đầy đủ). Phòng Project: điểm còn lại ÷ 45 = slides (Slides level 3). Phòng Creative: điểm còn lại ÷ 480 = DA (DA level 2).';
 
   useEffect(() => {
-    const calendarNode = calendarScrollRef.current;
-    if (!calendarNode) return;
+    const boardNode = mainBodyRef.current;
+    if (!boardNode) return;
 
     const measurePanelWidth = () => {
-      setPanelWidth(calendarNode.clientWidth);
+      const leftPane = boardNode.firstElementChild as HTMLElement | null;
+      const leftWidth = leftPane?.offsetWidth ?? 0;
+      // Visible timeline width = board viewport minus the sticky name column.
+      setPanelWidth(Math.max(0, boardNode.clientWidth - leftWidth));
     };
 
     measurePanelWidth();
     const observer = new ResizeObserver(measurePanelWidth);
-    observer.observe(calendarNode);
+    observer.observe(boardNode);
 
     return () => observer.disconnect();
   }, []);
 
-  /**
-   * Keep project-name column aligned with the timeline on vertical scroll.
-   * Absolute scrollTop sync drifts when the calendar shows a horizontal scrollbar
-   * (smaller clientHeight → larger max scrollTop). Compensate left content height
-   * and sync by scroll ratio so rows stay matched.
-   */
   useEffect(() => {
-    const calendarNode = calendarScrollRef.current;
-    const leftNode = leftPanelRef.current;
-    if (!calendarNode || !leftNode) return;
-
-    const leftContent = leftNode.firstElementChild as HTMLElement | null;
-
-    const compensateHorizontalScrollbar = () => {
-      if (!leftContent) return;
-      const horizontalBar = Math.max(0, calendarNode.offsetHeight - calendarNode.clientHeight);
-      leftContent.style.paddingBottom = horizontalBar > 0 ? `${horizontalBar}px` : '';
-    };
-
-    const syncFrom = (source: HTMLElement, target: HTMLElement) => {
-      if (syncingVerticalScrollRef.current) return;
-
-      const sourceMax = source.scrollHeight - source.clientHeight;
-      const targetMax = target.scrollHeight - target.clientHeight;
-      const nextTop =
-        sourceMax > 0 && targetMax > 0 ? (source.scrollTop / sourceMax) * targetMax : 0;
-
-      if (Math.abs(target.scrollTop - nextTop) < 0.5) return;
-
-      syncingVerticalScrollRef.current = true;
-      target.scrollTop = nextTop;
-      requestAnimationFrame(() => {
-        syncingVerticalScrollRef.current = false;
-      });
-    };
-
-    const onCalendarScroll = () => syncFrom(calendarNode, leftNode);
-    const onLeftScroll = () => syncFrom(leftNode, calendarNode);
-
-    compensateHorizontalScrollbar();
-    const observer = new ResizeObserver(compensateHorizontalScrollbar);
-    observer.observe(calendarNode);
-
-    calendarNode.addEventListener('scroll', onCalendarScroll, { passive: true });
-    leftNode.addEventListener('scroll', onLeftScroll, { passive: true });
-
-    return () => {
-      observer.disconnect();
-      calendarNode.removeEventListener('scroll', onCalendarScroll);
-      leftNode.removeEventListener('scroll', onLeftScroll);
-      if (leftContent) leftContent.style.paddingBottom = '';
-    };
-  }, []);
-
-  useEffect(() => {
-    const calendarNode = calendarScrollRef.current;
-    if (!calendarNode || dayWidth <= 0) return;
+    const boardNode = mainBodyRef.current;
+    if (!boardNode || dayWidth <= 0) return;
 
     const monthKey = selectedMonth.format('YYYY-MM');
     const monthChanged = prevMonthKeyRef.current !== monthKey;
@@ -324,14 +270,14 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
 
     if (monthChanged) {
       if (selectedMonth.isSame(dayjs(TRACKER_TODAY), 'month')) {
-        calendarNode.scrollLeft = getInitialScrollLeft(
+        boardNode.scrollLeft = getInitialScrollLeft(
           days,
           TRACKER_TODAY,
           TRACKER_INITIAL_LOOKBACK_DAYS,
           dayWidth,
         );
       } else {
-        calendarNode.scrollLeft = 0;
+        boardNode.scrollLeft = 0;
       }
       return;
     }
@@ -339,7 +285,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     // Keep the same day anchored when fitted day width changes (resize), instead of
     // resetting to the initial lookback offset.
     if (prevDayWidth > 0 && prevDayWidth !== dayWidth) {
-      calendarNode.scrollLeft = (calendarNode.scrollLeft / prevDayWidth) * dayWidth;
+      boardNode.scrollLeft = (boardNode.scrollLeft / prevDayWidth) * dayWidth;
     }
   }, [days, dayWidth, selectedMonth]);
 
@@ -491,7 +437,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
         </div>
 
         <div className={styles.mainBody} ref={mainBodyRef}>
-          <div className={styles.leftPanel} ref={leftPanelRef}>
+          <div className={styles.leftPanel}>
             <div
               className={styles.leftPanelContent}
               style={{ height: calHeaderHeight + canvasHeight }}
@@ -513,13 +459,13 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                   Nghỉ phép
                 </div>
                 {canViewRemainingOutput ? (
-                  <Tooltip title={remainingAssumptionNote} placement="right">
-                    <div className={styles.capacityRowLabel}>Còn lại / ngày</div>
-                  </Tooltip>
+                  <div className={styles.capacityRowLabel} title={remainingAssumptionNote}>
+                    Còn lại / ngày
+                  </div>
                 ) : null}
               </div>
 
-              <div className={styles.leftRows}>
+              <div className={styles.leftRows} style={{ height: canvasHeight }}>
                 {monthScopedProjects.map((project, rowIndex) => {
                   const urgencyStyle = TRACKER_URGENCY_STYLES[project.urgency];
                   const rowHeight = projectLayouts[rowIndex]?.rowHeight ?? TRACKER_ROW_HEIGHT;
@@ -531,8 +477,8 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                       className={styles.projectRow}
                       style={{
                         borderLeftColor: urgencyStyle.border,
+                        top: rowOffsets[rowIndex] ?? 0,
                         height: rowHeight,
-                        minHeight: rowHeight,
                       }}
                     >
                       <div className={styles.nameCell}>
@@ -575,55 +521,61 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                   <EmptyProjectRow
                     key={`empty-row-${index}`}
                     rowIndex={monthScopedProjects.length + index}
+                    top={totalProjectsHeight + index * TRACKER_ROW_HEIGHT}
                   />
                 ))}
               </div>
             </div>
           </div>
 
-          <div className={styles.calendarPanel} ref={calendarScrollRef}>
+          <div className={styles.calendarPanel}>
             <div className={styles.calendarInner} style={{ width: calendarWidth }}>
-              <div className={styles.calendarHeader}>
-                <div className={styles.monthRow}>
-                  {months.map((month) => (
-                    <div
-                      key={month.key}
-                      className={styles.monthLabel}
-                      style={{ width: month.dayCount * dayWidth }}
-                    >
-                      {month.label} {month.year}
-                    </div>
-                  ))}
-                </div>
+              <div
+                className={styles.calendarHeader}
+                style={{ height: calHeaderHeight, minHeight: calHeaderHeight }}
+              >
+                <div className={styles.calendarHeaderTop}>
+                  <div className={styles.monthRow}>
+                    {months.map((month) => (
+                      <div
+                        key={month.key}
+                        className={styles.monthLabel}
+                        style={{ width: month.dayCount * dayWidth }}
+                      >
+                        {month.label} {month.year}
+                      </div>
+                    ))}
+                  </div>
 
-                <div className={styles.dowRow}>
-                  {days.map((day) => (
-                    <div
-                      key={`dow-${day.key}`}
-                      className={classNames(styles.dowCell, {
-                        [styles.dowWeekend]: day.isWeekend,
-                        [styles.dowToday]: day.isToday,
-                      })}
-                      style={{ width: dayWidth }}
-                    >
-                      {TRACKER_DOW_LABELS[day.dayOfWeek]}
-                    </div>
-                  ))}
-                </div>
+                  <div className={styles.dowRow}>
+                    {days.map((day) => (
+                      <div
+                        key={`dow-${day.key}`}
+                        className={classNames(styles.dowCell, {
+                          [styles.dowWeekend]: day.isWeekend,
+                          [styles.dowToday]: day.isToday,
+                        })}
+                        style={{ width: dayWidth }}
+                      >
+                        {TRACKER_DOW_LABELS[day.dayOfWeek]}
+                      </div>
+                    ))}
+                  </div>
 
-                <div className={styles.dateRow}>
-                  {days.map((day) => (
-                    <div
-                      key={`date-${day.key}`}
-                      className={classNames(styles.dateCell, {
-                        [styles.dateWeekend]: day.isWeekend,
-                        [styles.dateToday]: day.isToday,
-                      })}
-                      style={{ width: dayWidth }}
-                    >
-                      {day.dayOfMonth}
-                    </div>
-                  ))}
+                  <div className={styles.dateRow}>
+                    {days.map((day) => (
+                      <div
+                        key={`date-${day.key}`}
+                        className={classNames(styles.dateCell, {
+                          [styles.dateWeekend]: day.isWeekend,
+                          [styles.dateToday]: day.isToday,
+                        })}
+                        style={{ width: dayWidth }}
+                      >
+                        {day.dayOfMonth}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div
@@ -777,15 +729,16 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
 
 interface EmptyProjectRowProps {
   rowIndex: number;
+  top: number;
 }
 
-function EmptyProjectRow({ rowIndex }: EmptyProjectRowProps) {
+function EmptyProjectRow({ rowIndex, top }: EmptyProjectRowProps) {
   return (
     <div
       className={classNames(styles.projectRow, styles.projectRowEmpty, {
         [styles.projectRowEven]: rowIndex % 2 === 1,
       })}
-      style={{ height: TRACKER_ROW_HEIGHT, minHeight: TRACKER_ROW_HEIGHT }}
+      style={{ top, height: TRACKER_ROW_HEIGHT }}
       aria-hidden
     >
       <div className={styles.nameCell} />

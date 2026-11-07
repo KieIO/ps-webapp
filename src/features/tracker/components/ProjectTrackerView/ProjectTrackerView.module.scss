@@ -345,27 +345,23 @@ $row-alt: #f9fafb;
 
 .mainBody {
   display: flex;
+  align-items: flex-start;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  /* Single scrollport for both panes — keeps name rows locked to timeline rows. */
+  overflow: auto;
 }
 
 .leftPanel {
   display: flex;
   flex-direction: column;
+  position: sticky;
+  left: 0;
+  z-index: 20;
   width: 380px;
   min-width: 380px;
   flex-shrink: 0;
-  min-height: 0;
-  /* Vertical scroll mirrors calendarPanel (synced in JS). Hide the bar so only the
-     timeline scrollbar shows — wheel / trackpad over this pane still scrolls. */
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  background: #fff;
 }
 
 .leftPanelContent {
@@ -382,6 +378,7 @@ $row-alt: #f9fafb;
   position: sticky;
   top: 0;
   z-index: 10;
+  overflow: hidden;
 }
 
 .leftHeaderTop {
@@ -453,19 +450,20 @@ $row-alt: #f9fafb;
 }
 
 .leftRows {
-  display: flex;
-  flex-direction: column;
+  position: relative;
   flex-shrink: 0;
 }
 
 .projectRow {
+  position: absolute;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: flex-start;
-  min-height: 48px;
+  box-sizing: border-box;
   border-bottom: 1px solid $row-border;
   border-left: 5px solid transparent;
-  flex-shrink: 0;
-  overflow: visible;
+  overflow: hidden;
 
   &:nth-child(odd) {
     background: #fff;
@@ -477,8 +475,6 @@ $row-alt: #f9fafb;
 }
 
 .projectRowEmpty {
-  height: 48px;
-  min-height: 48px;
   border-left-color: transparent;
   pointer-events: none;
 }
@@ -608,12 +604,8 @@ $row-alt: #f9fafb;
 }
 
 .calendarPanel {
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 0;
-  /* Prevent flex min-content height (header + canvas) from growing mainBody when
-     a horizontal scrollbar appears — that feedback loop spawned endless empty rows. */
-  min-height: 0;
-  overflow: auto;
 }
 
 .calendarInner {
@@ -624,11 +616,24 @@ $row-alt: #f9fafb;
   position: sticky;
   top: 0;
   z-index: 10;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+}
+
+.calendarHeaderTop {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  justify-content: flex-end;
 }
 
 .monthRow {
   display: flex;
   height: 28px;
+  flex-shrink: 0;
 }
 
 .monthLabel {
@@ -652,6 +657,7 @@ $row-alt: #f9fafb;
 .dowRow {
   display: flex;
   height: 22px;
+  flex-shrink: 0;
 }
 
 .dowCell {
@@ -680,11 +686,13 @@ $row-alt: #f9fafb;
 .dateRow {
   display: flex;
   height: 22px;
+  flex-shrink: 0;
 }
 
 .offRow {
   position: relative;
   height: 36px;
+  flex-shrink: 0;
   background: $yellow;
   border-top: 1px solid $yellow-border;
   border-bottom: 1px solid $yellow-border;
@@ -744,6 +752,7 @@ $row-alt: #f9fafb;
 .capacityRow {
   display: flex;
   height: 40px;
+  flex-shrink: 0;
   background: #ecfdf5;
   border-top: 1px solid #a7f3d0;
   border-bottom: 2px solid $navy;
