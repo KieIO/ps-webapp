@@ -43,7 +43,7 @@ npm run test:e2e:tasks
 # Department management UI smoke (DEPT-30–32)
 npm run test:e2e:departments
 
-# Title-mgmt UI smoke (TITLE-35–39)
+# Title-mgmt UI smoke (TITLE-35–44)
 npm run test:e2e:titles
 
 # Client-mgmt UI smoke (CLIENT-41, CLIENT-42, CLIENT-43)
@@ -91,7 +91,7 @@ e2e/
   um/                 # User-mgmt UI cases (UM-11, 13, 18, …)
   projects/           # Project-mgmt UI cases (PM-31, 40, 41, …)
   departments/        # Dept-mgmt UI cases (DEPT-30–32)
-  titles/             # Title-mgmt UI cases (TITLE-35–39, …)
+  titles/             # Title-mgmt UI cases (TITLE-35–44, …)
   clients/            # Client-mgmt UI cases (CLIENT-41, 42, 43, …)
   task-scores/        # Task types & scores UI cases (TSCORE-39, 40, …)
   capacity-formula/        # Capacity formula UI cases (CAP-27–30)
@@ -131,10 +131,16 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, depart
 | DEPT-30 Sidebar Department management          | `departments/dept-30-sidebar-departments.spec.ts`          |
 | DEPT-31 Admin opens `/settings/departments`    | `departments/dept-31-admin-page.spec.ts`                   |
 | DEPT-32 PM blocked from departments page       | `departments/dept-32-pm-page-blocked.spec.ts`              |
+| TITLE-35 Sidebar Title management              | `titles/title-35-sidebar-title-mgmt.spec.ts`               |
 | TITLE-36 Sidebar Capacity formula              | `titles/title-36-sidebar-capacity-formula.spec.ts`         |
-| TITLE-37 PM/Employee blocked                   | `titles/title-37-pm-titles-blocked.spec.ts`                |
-| TITLE-38 Tabs + create chrome                  | `titles/title-38-tabs-create-chrome.spec.ts`               |
+| TITLE-37 PM/Employee/CM blocked                | `titles/title-37-pm-titles-blocked.spec.ts`                |
+| TITLE-38 Tabs + Job titles columns + chrome    | `titles/title-38-tabs-create-chrome.spec.ts`               |
 | TITLE-39 Capacity page no-create               | `titles/title-39-capacity-page-no-create.spec.ts`          |
+| TITLE-40 Create level/group/title              | `titles/title-40-create-level-group-title.spec.ts`         |
+| TITLE-41 Search / filter / reset               | `titles/title-41-search-filter-reset.spec.ts`              |
+| TITLE-42 Validation + duplicate L/G/T          | `titles/title-42-validation-duplicate.spec.ts`             |
+| TITLE-43 User Level → title filter             | `titles/title-43-user-level-title-filter.spec.ts`          |
+| TITLE-44 Level clear + assign new title        | `titles/title-44-user-level-clear-and-assign.spec.ts`      |
 | Variable                                       | Default                                                    | Notes |
 | CAP-28 PM blocked from formula page            | `capacity-formula/cap-28-pm-formula-blocked.spec.ts`       |
 | CAP-29 Employee blocked from formula page      | `capacity-formula/cap-29-employee-formula-blocked.spec.ts` |

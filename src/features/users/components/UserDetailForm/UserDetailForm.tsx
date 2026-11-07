@@ -29,6 +29,7 @@ import { useUpdateUser } from '../../hooks/useUpdateUser';
 import { useUser } from '../../hooks/useUser';
 import type { UpdateUserRequest } from '../../schemas/user.schema';
 import { mapJobLevelCode } from '../../utils/jobLevel';
+import { titlesForSelect as filterTitlesForSelect } from '../../utils/titlesForSelect';
 import {
   canEditUserOrgFields,
   canEditUserProfile,
@@ -75,15 +76,10 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
   const selectedJobTitleId = Form.useWatch('jobTitleId', form);
   const jobTitles = jobTitlesData?.items ?? [];
   const jobLevels = jobLevelsData?.items ?? [];
-  const titlesForSelect = useMemo(() => {
-    const filtered = jobTitles.filter(
-      (title) => !selectedJobLevelId || title.jobLevelId === selectedJobLevelId,
-    );
-    if (!selectedJobTitleId) return filtered;
-    if (filtered.some((title) => title.id === selectedJobTitleId)) return filtered;
-    const selectedTitle = jobTitles.find((title) => title.id === selectedJobTitleId);
-    return selectedTitle ? [selectedTitle, ...filtered] : filtered;
-  }, [jobTitles, selectedJobLevelId, selectedJobTitleId]);
+  const titlesForSelect = useMemo(
+    () => filterTitlesForSelect(jobTitles, selectedJobLevelId, selectedJobTitleId),
+    [jobTitles, selectedJobLevelId, selectedJobTitleId],
+  );
 
   useEffect(() => {
     if (!user) return;

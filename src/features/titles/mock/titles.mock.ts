@@ -16,6 +16,7 @@ import {
   compareJobTitles,
   getNextJobTitleSortOrder,
 } from '../utils/sortTitles';
+import { filterJobTitles } from '../utils/filterJobTitles';
 import { computeSpecialistTaskPoints } from '../utils/capacityFormula';
 import { getCapacityFormulaForCode } from './capacityFormula.data';
 import {
@@ -29,7 +30,9 @@ import {
 
 const normalizeCode = (code: string) => code.trim().toUpperCase();
 
-const enrichJobTitle = (title: ReturnType<typeof getMockJobTitlesStore>[number]): JobTitleListItem => {
+const enrichJobTitle = (
+  title: ReturnType<typeof getMockJobTitlesStore>[number],
+): JobTitleListItem => {
   const level = getMockJobLevelsStore().find((entry) => entry.id === title.jobLevelId);
   const group = getMockJobGroupsStore().find((entry) => entry.id === title.jobGroupId);
 
@@ -44,23 +47,6 @@ const enrichJobTitle = (title: ReturnType<typeof getMockJobTitlesStore>[number])
     jobGroupCode: group.code,
     jobGroupLabel: group.label,
   };
-};
-
-const filterJobTitles = (
-  titles: ReturnType<typeof getMockJobTitlesStore>,
-  filters: JobTitleListFilters,
-) => {
-  const search = filters.search?.trim().toLowerCase();
-
-  return titles.filter((title) => {
-    if (filters.jobLevelId && title.jobLevelId !== filters.jobLevelId) return false;
-    if (filters.jobGroupId && title.jobGroupId !== filters.jobGroupId) return false;
-    if (search) {
-      const haystack = `${title.code} ${title.name}`.toLowerCase();
-      if (!haystack.includes(search)) return false;
-    }
-    return true;
-  });
 };
 
 export const mockGetJobLevelList = async (): Promise<JobLevelListResponse> => {
