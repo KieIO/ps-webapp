@@ -296,14 +296,21 @@ const PIPELINE_BOARD_STAGES = new Set<CreativePipelineStage>([
 const resolveQueueRecency = (task: MyTask): string =>
   task.updatedAt ?? task.assignedAt ?? task.date ?? '';
 
+/** Split children share the parent id so the family sorts as one block. */
+const resolveQueueFamilyId = (task: MyTask): string => task.parentTaskId ?? task.id;
+
 const isChQueueActionable = (task: MyTask, stage: CreativePipelineStage): boolean =>
   isAwaitingCh(task) || stage === 'returned_to_pm';
 
-/** Actionable inbox rows stay on top; everything else by most recent pipeline activity. */
+/**
+ * Actionable inbox rows stay on top; then families by most recent activity;
+ * within a split family: parent first, then children by taskCode.
+ */
 const compareCreativeQueueRows = (
   a: { task: MyTask; stage: CreativePipelineStage },
   b: { task: MyTask; stage: CreativePipelineStage },
   view: CreativeQueueView,
+  familyRecency: Map<string, string>,
 ): number => {
   const aActionable = view === 'ch' ? isChQueueActionable(a.task, a.stage) : isAwaitingCm(a.task);
   const bActionable = view === 'ch' ? isChQueueActionable(b.task, b.stage) : isAwaitingCm(b.task);
@@ -311,11 +318,25 @@ const compareCreativeQueueRows = (
     return aActionable ? -1 : 1;
   }
 
-  const byRecency = resolveQueueRecency(b.task).localeCompare(resolveQueueRecency(a.task));
-  if (byRecency !== 0) return byRecency;
+  const aFamily = resolveQueueFamilyId(a.task);
+  const bFamily = resolveQueueFamilyId(b.task);
+  const aRecency = familyRecency.get(aFamily) ?? resolveQueueRecency(a.task);
+  const bRecency = familyRecency.get(bFamily) ?? resolveQueueRecency(b.task);
+  const byFamilyRecency = bRecency.localeCompare(aRecency);
+  if (byFamilyRecency !== 0) return byFamilyRecency;
 
-  const byDate = (b.task.date ?? '').localeCompare(a.task.date ?? '');
-  if (byDate !== 0) return byDate;
+  if (aFamily !== bFamily) {
+    return aFamily.localeCompare(bFamily);
+  }
+
+  const aIsParent = !a.task.parentTaskId;
+  const bIsParent = !b.task.parentTaskId;
+  if (aIsParent !== bIsParent) {
+    return aIsParent ? -1 : 1;
+  }
+
+  const byCode = a.task.taskCode.localeCompare(b.task.taskCode);
+  if (byCode !== 0) return byCode;
 
   return a.task.id.localeCompare(b.task.id);
 };
@@ -557,7 +578,17 @@ export const filterCreativeQueue = (
     rows.push({ task, stage });
   }
 
-  rows.sort((a, b) => compareCreativeQueueRows(a, b, view));
+  const familyRecency = new Map<string, string>();
+  for (const row of rows) {
+    const familyId = resolveQueueFamilyId(row.task);
+    const recency = resolveQueueRecency(row.task);
+    const current = familyRecency.get(familyId);
+    if (!current || recency.localeCompare(current) > 0) {
+      familyRecency.set(familyId, recency);
+    }
+  }
+
+  rows.sort((a, b) => compareCreativeQueueRows(a, b, view, familyRecency));
 
   return rows.map((row) => row.task);
 };

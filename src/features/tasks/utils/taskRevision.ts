@@ -1,4 +1,5 @@
 import type { MyTask, TaskConfirmationStatus, TaskKind } from '../schemas/task.schema';
+import { getTaskDeadline } from './taskDetail';
 
 /** Statuses that block creating another revision on the same parent. */
 export const ACTIVE_REVISION_CONFIRMATIONS = new Set<TaskConfirmationStatus>([
@@ -202,6 +203,17 @@ export function assertRevisionQuantity(quantity: number): void {
 
 export function formatRevisionQuantityExtra(parentQuantity: number): string {
   return `Gốc: ${parentQuantity}. Có thể ít hơn hoặc nhiều hơn.`;
+}
+
+/**
+ * Reference deadline for revision UI (default + “Gốc” hint).
+ * Prefer Creative deadline when present; otherwise PM / effective deadline.
+ */
+export function resolveRevisionSourceDeadline(
+  task: Pick<MyTask, 'date' | 'deadline' | 'creativeDeadline'>,
+): string {
+  if (task.creativeDeadline) return task.creativeDeadline;
+  return getTaskDeadline(task);
 }
 
 export function revisionQuantityExpandedCapacityHint(

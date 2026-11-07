@@ -20,6 +20,7 @@ import {
   assertRevisionQuantity,
   compareRevisionQuantityToParent,
   revisionQuantityExpandedCapacityHint,
+  resolveRevisionSourceDeadline,
 } from './taskRevision';
 
 const baseTask = (overrides: Partial<MyTask> = {}): MyTask =>
@@ -257,5 +258,29 @@ describe('isRevisionDeadlineOnOrAfterWorkDate', () => {
   it('rejects invalid date strings', () => {
     expect(isRevisionDeadlineOnOrAfterWorkDate('', '2026-09-07T17:00:00Z')).toBe(false);
     expect(isRevisionDeadlineOnOrAfterWorkDate('2026-09-07', 'soon')).toBe(false);
+  });
+});
+
+describe('resolveRevisionSourceDeadline', () => {
+  it('prefers creative deadline when present', () => {
+    expect(
+      resolveRevisionSourceDeadline(
+        baseTask({
+          deadline: '2026-11-10T10:57:00.000Z',
+          creativeDeadline: '2026-11-08T10:57:00.000Z',
+        }),
+      ),
+    ).toBe('2026-11-08T10:57:00.000Z');
+  });
+
+  it('falls back to PM deadline when creative is missing', () => {
+    expect(
+      resolveRevisionSourceDeadline(
+        baseTask({
+          deadline: '2026-11-10T10:57:00.000Z',
+          creativeDeadline: null,
+        }),
+      ),
+    ).toBe('2026-11-10T10:57:00.000Z');
   });
 });

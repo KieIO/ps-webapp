@@ -13,7 +13,7 @@ import {
   message,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { buildMyTaskDetailPath, DATETIME_SHORT_FORMAT } from '@/config/constants';
 import { ROLES } from '@/config/permissions';
@@ -119,8 +119,45 @@ type EditFormValues = {
   }[];
 };
 
+/** Stable fingerprint for unsaved-change checks (avoids false positives from isFieldsTouched). */
+const snapshotEditFormValues = (values: EditFormValues): string => {
+  const childQuantities = values.childQuantities ?? {};
+  const sortedChildEntries = Object.keys(childQuantities)
+    .sort()
+    .map((id) => [id, Number(childQuantities[id])]);
+  const newChildren = (values.newChildren ?? []).map((row) => ({
+    name: row.name ?? '',
+    description: row.description ?? '',
+    quantity: row.quantity ?? null,
+    staffUserId: row.staffUserId ?? '',
+    asQa: Boolean(row.asQa),
+    qaLevel: row.qaLevel ?? null,
+  }));
+
+  return JSON.stringify({
+    description: values.description ?? '',
+    additionalFactors: values.additionalFactors ?? '',
+    quantity: values.quantity ?? null,
+    childQuantities: sortedChildEntries,
+    deadline: values.deadline?.isValid?.() ? values.deadline.toISOString() : null,
+    creativeDeadline: values.creativeDeadline?.isValid?.()
+      ? values.creativeDeadline.toISOString()
+      : null,
+    urgency: values.urgency ?? null,
+    designThinking: values.designThinking ?? null,
+    technical: values.technical ?? null,
+    contentProcessing: values.contentProcessing ?? null,
+    staffUserId: values.staffUserId ?? '',
+    cmUserId: values.cmUserId ?? '',
+    staffNote: values.staffNote ?? '',
+    changeReason: values.changeReason ?? '',
+    newChildren,
+  });
+};
+
 export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerProps) {
   const [form] = Form.useForm<EditFormValues>();
+  const baselineSnapshotRef = useRef<string | null>(null);
   const role = useAppSelector((state) => state.auth.user?.role);
   const userId = useAppSelector((state) => state.auth.user?.id);
   const { mutate, isPending } = useUpdateCreativePipeline();
@@ -367,7 +404,15 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
   );
 
   useEffect(() => {
-    if (!open || !task) return;
+    if (!open || !task) {
+      baselineSnapshotRef.current = null;
+      return;
+    }
+    // Wait for split family so hydrate + baseline match the fields the user actually sees.
+    if (needsSplitFamily && splitFamilyLoading) {
+      baselineSnapshotRef.current = null;
+      return;
+    }
     const childQuantities = Object.fromEntries(
       quantityFamily.map((child) => [child.id, child.quantity]),
     );
@@ -390,7 +435,10 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
       staffUserId: resolveWholeAssignStaff(task)[0]?.userId ?? task.staff[0]?.userId ?? undefined,
       cmUserId: task.creativeManager?.userId ?? task.staff[0]?.userId ?? undefined,
       staffNote: task.staffNote || task.cmNote || '',
+      changeReason: undefined,
+      newChildren: undefined,
     });
+    baselineSnapshotRef.current = snapshotEditFormValues(form.getFieldsValue(true));
     // quantityFamilyKey: stable content fingerprint (avoid reset on new [] identity each render)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omit quantityFamily array identity
   }, [
@@ -402,16 +450,24 @@ export function CreativeEditDrawer({ open, task, onClose }: CreativeEditDrawerPr
     effectiveParentTotal,
     splitParent,
     splitChild,
+    needsSplitFamily,
+    splitFamilyLoading,
   ]);
 
   const resetAndClose = () => {
+    baselineSnapshotRef.current = null;
     form.resetFields();
     onClose();
   };
 
+  const hasUnsavedEditChanges = () => {
+    if (!canEdit || !baselineSnapshotRef.current) return false;
+    return snapshotEditFormValues(form.getFieldsValue(true)) !== baselineSnapshotRef.current;
+  };
+
   const handleCloseRequest = () => {
     if (isPending) return;
-    if (canEdit && form.isFieldsTouched()) {
+    if (hasUnsavedEditChanges()) {
       Modal.confirm({
         title: 'Hủy chỉnh sửa?',
         content: 'Thông tin đã nhập sẽ không được lưu.',

@@ -254,7 +254,55 @@ describe('creativePipeline helpers', () => {
       filterCreativeQueue(items, 'cm', cm, ROLES.CREATIVE_MANAGER, 'execution').map(
         (item) => item.id,
       ),
-    ).toEqual(['child-mine', 'done-mine', 'split-mine']);
+    ).toEqual(['done-mine', 'split-mine', 'child-mine']);
+  });
+
+  it('CM execution keeps split parent above its children even when a child is newer', () => {
+    const cm = 'dev-creative_manager';
+    const cmRef = assignee({ userId: cm, name: 'Me' });
+    const items = [
+      task({
+        id: 'whole-fresh',
+        taskCode: 'PO.020-OTHER-001',
+        pipelineStage: 'assigned_staff',
+        creativeManager: cmRef,
+        staff: [assignee({ userId: 'staff-x' })],
+        updatedAt: '2026-11-07T12:00:00.000Z',
+      }),
+      task({
+        id: 'child-s2',
+        parentTaskId: 'parent-split',
+        taskKind: 'split',
+        taskCode: 'PO.020-CHRISTMA-001-S2',
+        pipelineStage: 'assigned_staff',
+        creativeManager: cmRef,
+        staff: [assignee({ userId: 'staff-2' })],
+        updatedAt: '2026-11-07T11:50:00.000Z',
+      }),
+      task({
+        id: 'parent-split',
+        taskCode: 'PO.020-CHRISTMA-001',
+        pipelineStage: 'split',
+        creativeManager: cmRef,
+        staff: [cmRef],
+        updatedAt: '2026-11-07T10:00:00.000Z',
+      }),
+      task({
+        id: 'child-s1',
+        parentTaskId: 'parent-split',
+        taskKind: 'split',
+        taskCode: 'PO.020-CHRISTMA-001-S1',
+        pipelineStage: 'assigned_staff',
+        creativeManager: cmRef,
+        staff: [assignee({ userId: 'staff-1' })],
+        updatedAt: '2026-11-07T11:40:00.000Z',
+      }),
+    ];
+    expect(
+      filterCreativeQueue(items, 'cm', cm, ROLES.CREATIVE_MANAGER, 'execution').map(
+        (item) => item.id,
+      ),
+    ).toEqual(['whole-fresh', 'parent-split', 'child-s1', 'child-s2']);
   });
 
   it('Admin CM intake sees awaiting_cm; execution sees staff work', () => {

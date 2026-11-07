@@ -28,6 +28,7 @@ import {
   formatRevisionQuantityExtra,
   getNextRevisionRound,
   REVISION_DEADLINE_BEFORE_WORK_DATE_MESSAGE,
+  resolveRevisionSourceDeadline,
   revisionQuantityExpandedCapacityHint,
 } from '../../utils/taskRevision';
 import { wholeTaskQuantityRule } from '../../utils/taskQuantity';
@@ -62,9 +63,10 @@ function truncateBrief(value: string, max = 140): string {
 }
 
 function defaultResubmissionDeadline(task: MyTask, workDate: Dayjs = dayjs()): Dayjs {
-  const parentDeadline = fromTaskDeadline(getTaskDeadline(task));
-  let deadline = parentDeadline.isValid()
-    ? parentDeadline.add(1, 'day').second(0).millisecond(0)
+  const source = fromTaskDeadline(resolveRevisionSourceDeadline(task));
+  // +1 day buffer for rework; clamp if that lands before the workload date.
+  let deadline = source.isValid()
+    ? source.add(1, 'day').second(0).millisecond(0)
     : defaultTaskDeadline().add(1, 'day');
   if (deadline.isBefore(workDate, 'day')) {
     deadline = workDate.hour(deadline.hour()).minute(deadline.minute()).second(0).millisecond(0);
@@ -301,7 +303,7 @@ export function RequestRevisionDrawer({
                     },
                   }),
                 ]}
-                extra={`Gốc: ${formatTaskDateTime(getTaskDeadline(task))}`}
+                extra={`Gốc: ${formatTaskDateTime(resolveRevisionSourceDeadline(task))}`}
               >
                 <DatePicker
                   showTime={{ format: 'HH:mm' }}
