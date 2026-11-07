@@ -83,7 +83,7 @@ export const PERMISSIONS = {
   // Quality
   VIEW_QUALITY: [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
 
-  // OT — approve is Head / Admin only (PM/CM/CH request + review results)
+  // OT — REQUEST: PM/CM/CH/Head/Admin; APPROVE (request + result review): Head/Admin only
   REQUEST_OT: [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
   APPROVE_OT: [ROLES.HEAD, ROLES.ADMIN],
 

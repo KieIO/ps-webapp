@@ -66,7 +66,7 @@ Menu Overtime hiện với ai có quyền **xin OT** hoặc **duyệt OT**.
 | Việc                                | Ai làm được                                      |
 | ----------------------------------- | ------------------------------------------------ |
 | Tạo request                         | PM, Creative Manager, Creative Head, Head, Admin |
-| Sửa request (chỉ khi **Chờ duyệt**) | Người có quyền xin OT                            |
+| Sửa request (chỉ khi **Chờ duyệt**) | **Người tạo** request (có quyền xin OT)          |
 | Duyệt / từ chối request             | Head, Admin                                      |
 | Gắn task OT sau khi duyệt           | Người có quyền xin OT                            |
 | Làm task OT và nộp giờ thực tế      | Staff (Employee) được chỉ định                   |
@@ -116,7 +116,7 @@ Chỉ sửa request khi còn **Chờ duyệt**. Đã duyệt / từ chối thì 
 
 - Trạng thái: **Chờ duyệt**
 - Head và Admin nhận thông báo
-- Có thể sửa request khi còn Chờ duyệt
+- **Người tạo** có thể sửa request khi còn Chờ duyệt (người khác dù có quyền xin OT cũng không sửa hộ)
 
 Lúc này **chưa** chọn task. Task gắn sau khi được duyệt.
 

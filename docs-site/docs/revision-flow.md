@@ -159,22 +159,8 @@ Mỗi task gốc chỉ được mở **một** revision chưa hoàn tất. Xong 
 
 ---
 
-## 8. Quy tắc cần nhớ
+## 8. Tóm tắt nhanh
 
-- Revision = **task con mới**, không phải đổi status task gốc.
-- Người nhận **giữ nguyên**; chưa đổi assignee trên form tạo.
-- Không tạo revision khi task gốc đã Finished hoặc Cancelled.
-- Không tạo revision trên một revision.
-- Đang có revision mở → khóa thao tác chính trên task gốc.
-- Số lượng làm lại linh hoạt (ít hơn / bằng / nhiều hơn gốc), miễn lớn hơn 0.
-- Deadline nộp lại không được trước ngày tính workload.
-
----
-
-## 9. Tóm tắt nhanh
-
-1. Mở task gốc → **Yêu cầu revision**.
-2. Nhập lý do, số lượng, level, ngày workload, deadline → **Tạo revision**.
-3. Staff làm trên task `…-Rn`; cập nhật và đánh giá trên revision.
-4. Task gốc tạm khóa Update / Edit / Evaluate đến khi revision đóng.
-5. Finished hoặc Cancelled revision → gốc mở lại; có thể tạo round tiếp theo.
+1. Mở **task gốc** → **Yêu cầu revision** → nhập lý do, số lượng, level, ngày workload, deadline → **Tạo revision** (task con `…-Rn`, người nhận giữ nguyên).
+2. Staff làm / cập nhật / đánh giá trên **revision**; task gốc khóa Update / Edit / Evaluate khi còn revision mở.
+3. Revision **Finished** hoặc **Cancelled** → gốc mở lại; có thể tạo round tiếp (`R2`, `R3`…). Mỗi lúc chỉ **một** revision mở; không tạo revision trên revision, cũng không tạo khi gốc đã Finished / Cancelled.

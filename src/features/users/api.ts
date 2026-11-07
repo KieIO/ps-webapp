@@ -8,6 +8,7 @@ import {
   mockCreateUser,
   mockGetUserById,
   mockGetUserList,
+  mockResetUserPassword,
   mockUpdateUser,
 } from './mock/users.mock';
 import {
@@ -79,5 +80,24 @@ export const userApi = {
       throw new Error(getApiErrorMessage(error, 'Failed to update user'));
     });
     return UserSchema.parse(response.data);
+  },
+
+  resetPassword: async (
+    id: string,
+    password?: string,
+  ): Promise<{ user: User; password: string }> => {
+    if (env.useUsersMock) {
+      return mockResetUserPassword(id, password);
+    }
+
+    const response = await api
+      .post(`/users/${id}/reset-password`, password ? { password } : {})
+      .catch((error: unknown) => {
+        throw new Error(getApiErrorMessage(error, 'Failed to reset password'));
+      });
+    return {
+      user: UserSchema.parse(response.data.user),
+      password: String(response.data.password ?? ''),
+    };
   },
 };

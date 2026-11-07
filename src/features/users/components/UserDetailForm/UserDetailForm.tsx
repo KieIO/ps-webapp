@@ -34,6 +34,7 @@ import {
   canEditUserProfile,
   canFullyManageUserProfiles,
 } from '../../utils/userProfileAccess';
+import { ResetPasswordModal } from '../ResetPasswordModal/ResetPasswordModal';
 import styles from './UserDetailForm.module.scss';
 
 const STATUS_VARIANT = {
@@ -63,6 +64,7 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
   const canEditOrg = canEditUserOrgFields(role, canManageUsers);
   const canManageLeave = can('MANAGE_LEAVE');
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [form] = Form.useForm<UserDetailFormValues>();
   const { data: user, isLoading, error } = useUser(userId);
   const { mutate, isPending } = useUpdateUser({ silentSuccess: true });
@@ -282,11 +284,16 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
           title={user.name}
           subtitle={`Joined ${dayjs(user.joinedAt).format(DATE_FORMAT)}`}
           actions={
-            user.updatedAt ? (
-              <span className={styles.meta}>
-                Last updated {dayjs(user.updatedAt).format(DATE_FORMAT)}
-              </span>
-            ) : undefined
+            <div className={styles.headerActions}>
+              {canManageUsers ? (
+                <Button onClick={() => setResetPasswordOpen(true)}>Reset password</Button>
+              ) : null}
+              {user.updatedAt ? (
+                <span className={styles.meta}>
+                  Last updated {dayjs(user.updatedAt).format(DATE_FORMAT)}
+                </span>
+              ) : null}
+            </div>
           }
         >
           <div className={styles.summary}>
@@ -468,6 +475,13 @@ export function UserDetailForm({ userId }: UserDetailFormProps) {
         userId={userId}
         userName={user.name}
         onClose={() => setLeaveModalOpen(false)}
+      />
+
+      <ResetPasswordModal
+        open={resetPasswordOpen}
+        userId={userId}
+        userName={user.name}
+        onClose={() => setResetPasswordOpen(false)}
       />
     </div>
   );

@@ -76,11 +76,34 @@ export const formatOtReasonCategories = (
     .join(', ');
 };
 
-/** Edit is only allowed while the request is still waiting for Head approval. */
-export const canEditOvertimeRequest = (status: OvertimeStatus): boolean => status === 'pending';
+export type OvertimeEditAccess = {
+  status: OvertimeStatus;
+  requestedByUserId?: string | null;
+  actorUserId?: string | null;
+};
 
-export const overtimeEditDisabledReason = (status: OvertimeStatus): string | null => {
-  if (canEditOvertimeRequest(status)) return null;
+/** Edit only while pending, and only by the requester who created the OT. */
+export const canEditOvertimeRequest = ({
+  status,
+  requestedByUserId,
+  actorUserId,
+}: OvertimeEditAccess): boolean => {
+  if (status !== 'pending') return false;
+  if (!requestedByUserId || !actorUserId) return false;
+  return requestedByUserId === actorUserId;
+};
+
+export const overtimeEditDisabledReason = ({
+  status,
+  requestedByUserId,
+  actorUserId,
+}: OvertimeEditAccess): string | null => {
+  if (status === 'pending') {
+    if (requestedByUserId && actorUserId && requestedByUserId !== actorUserId) {
+      return 'Chỉ người tạo OT request mới chỉnh sửa được';
+    }
+    return null;
+  }
   if (status === 'rejected') {
     return 'OT request đã bị từ chối nên không chỉnh sửa được';
   }

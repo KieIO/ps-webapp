@@ -2,6 +2,7 @@ import { Button, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { OvertimeStatusBadge } from '../OvertimeStatusBadge/OvertimeStatusBadge';
@@ -62,6 +63,7 @@ function OtReasonsCell({ record }: { record: OvertimeRecord }) {
 export function OvertimeTable({ records, loading, onRowClick, onEdit }: OvertimeTableProps) {
   const { can } = usePermission();
   const canRequest = can('REQUEST_OT');
+  const actorUserId = useAppSelector((state) => state.auth.user?.id);
 
   const columns: ColumnsType<OvertimeRecord> = [
     {
@@ -134,8 +136,13 @@ export function OvertimeTable({ records, loading, onRowClick, onEdit }: Overtime
       width: 100,
       fixed: 'right',
       render: (_, record) => {
-        const editable = canEditOvertimeRequest(record.status);
-        const disabledReason = overtimeEditDisabledReason(record.status);
+        const editAccess = {
+          status: record.status,
+          requestedByUserId: record.requestedBy.userId,
+          actorUserId,
+        };
+        const editable = canEditOvertimeRequest(editAccess);
+        const disabledReason = overtimeEditDisabledReason(editAccess);
         return (
           <Tooltip title={disabledReason ?? undefined}>
             <span

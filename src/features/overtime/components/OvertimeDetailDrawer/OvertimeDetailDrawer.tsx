@@ -14,6 +14,7 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DATE_FORMAT, DATETIME_SHORT_FORMAT, buildMyTaskDetailPath } from '@/config/constants';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { AssignOtTaskModal } from '../AssignOtTaskModal/AssignOtTaskModal';
 import { EditOvertimeModal } from '../EditOvertimeModal/EditOvertimeModal';
@@ -66,8 +67,17 @@ export function OvertimeDetailDrawer({ overtimeId, open, onClose }: OvertimeDeta
 
   const status = record?.status;
   const reasonCategoriesLabel = formatOtReasonCategories(record?.reasonCategories);
-  const canEdit = Boolean(status && canEditOvertimeRequest(status));
-  const editDisabledReason = status ? overtimeEditDisabledReason(status) : null;
+  const actorUserId = useAppSelector((state) => state.auth.user?.id);
+  const editAccess =
+    status && record
+      ? {
+          status,
+          requestedByUserId: record.requestedBy.userId,
+          actorUserId,
+        }
+      : null;
+  const canEdit = Boolean(editAccess && canEditOvertimeRequest(editAccess));
+  const editDisabledReason = editAccess ? overtimeEditDisabledReason(editAccess) : null;
 
   const editButton = canRequest ? (
     <Tooltip title={editDisabledReason ?? undefined}>

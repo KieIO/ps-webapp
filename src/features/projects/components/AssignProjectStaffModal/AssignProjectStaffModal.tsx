@@ -5,7 +5,12 @@ import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProje
 import { useUpdateProject } from '../../hooks/useUpdateProject';
 import type { Project } from '../../schemas/project.schema';
 import { buildUpdateProjectPayload } from '../../utils/buildUpdateProjectPayload';
-import { mergePersonOptions, resolvePersonRef } from '../../utils/personRef';
+import {
+  mergePersonOptions,
+  personSelectValue,
+  resolvePersonRef,
+  toPersonSelectOptions,
+} from '../../utils/personRef';
 import styles from '../EditProjectModal/EditProjectModal.module.scss';
 
 interface AssignProjectStaffModalProps {
@@ -15,8 +20,8 @@ interface AssignProjectStaffModalProps {
 }
 
 type AssignProjectStaffFormValues = {
-  departmentHeadCode: string;
-  pmCode: string;
+  departmentHeadUserId: string;
+  pmUserId: string;
 };
 
 const formatMemberNames = (project: Project) =>
@@ -44,8 +49,8 @@ export function AssignProjectStaffModal({ open, project, onClose }: AssignProjec
   useEffect(() => {
     if (open && project) {
       form.setFieldsValue({
-        departmentHeadCode: project.departmentHead.code,
-        pmCode: project.pm.code,
+        departmentHeadUserId: personSelectValue(project.departmentHead),
+        pmUserId: personSelectValue(project.pm),
       });
     }
   }, [open, project, form]);
@@ -63,11 +68,11 @@ export function AssignProjectStaffModal({ open, project, onClose }: AssignProjec
         id: project.id,
         payload: buildUpdateProjectPayload(project, {
           departmentHead: resolvePersonRef(
-            values.departmentHeadCode,
+            values.departmentHeadUserId,
             departmentHeadSelectOptions,
             project.departmentHead,
           ),
-          pm: resolvePersonRef(values.pmCode, pmSelectOptions, project.pm),
+          pm: resolvePersonRef(values.pmUserId, pmSelectOptions, project.pm),
         }),
         successMessage: 'Project staff assigned',
       },
@@ -108,7 +113,7 @@ export function AssignProjectStaffModal({ open, project, onClose }: AssignProjec
         <p className={styles.sectionTitle}>People</p>
         <div className={styles.row}>
           <Form.Item
-            name="departmentHeadCode"
+            name="departmentHeadUserId"
             label={PROJECT_TABLE_COLUMN_HEADERS.headName}
             rules={[{ required: true, message: 'Department head is required' }]}
           >
@@ -116,14 +121,11 @@ export function AssignProjectStaffModal({ open, project, onClose }: AssignProjec
               showSearch
               optionFilterProp="label"
               placeholder="Select department head"
-              options={departmentHeadSelectOptions.map((head) => ({
-                value: head.code,
-                label: head.name,
-              }))}
+              options={toPersonSelectOptions(departmentHeadSelectOptions)}
             />
           </Form.Item>
           <Form.Item
-            name="pmCode"
+            name="pmUserId"
             label={PROJECT_TABLE_COLUMN_HEADERS.pmName}
             rules={[{ required: true, message: 'PM is required' }]}
           >
@@ -131,10 +133,7 @@ export function AssignProjectStaffModal({ open, project, onClose }: AssignProjec
               showSearch
               optionFilterProp="label"
               placeholder="Select PM"
-              options={pmSelectOptions.map((pm) => ({
-                value: pm.code,
-                label: pm.name,
-              }))}
+              options={toPersonSelectOptions(pmSelectOptions)}
             />
           </Form.Item>
         </div>

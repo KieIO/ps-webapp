@@ -20,9 +20,11 @@ import { validateMilestones } from '../../utils/milestoneValidation';
 import { computeProjectLevel } from '../../utils/projectLevel';
 import {
   emptyPerson,
+  findPersonOption,
   hasPersonUserId,
   mergePersonOptions,
   resolvePersonFromForm,
+  toPersonSelectOptions,
 } from '../../utils/personRef';
 import {
   type EvaluationLevel,
@@ -109,12 +111,12 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
     onClose();
   };
 
-  const handleDepartmentHeadSelect = (code: string | undefined) => {
-    if (!code) {
+  const handleDepartmentHeadSelect = (userId: string | undefined) => {
+    if (!userId) {
       form.setFieldValue('departmentHead', emptyPerson());
       return;
     }
-    const head = departmentHeadSelectOptions.find((entry) => entry.code === code);
+    const head = findPersonOption(departmentHeadSelectOptions, userId);
     if (head) {
       form.setFieldValue('departmentHead', {
         code: head.code,
@@ -124,12 +126,12 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
     }
   };
 
-  const handlePmSelect = (code: string | undefined) => {
-    if (!code) {
+  const handlePmSelect = (userId: string | undefined) => {
+    if (!userId) {
       form.setFieldValue('pm', emptyPerson());
       return;
     }
-    const pm = pmSelectOptions.find((entry) => entry.code === code);
+    const pm = findPersonOption(pmSelectOptions, userId);
     if (pm) {
       form.setFieldValue('pm', { code: pm.code, name: pm.name, userId: pm.userId });
     }
@@ -293,7 +295,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
           <p className={styles.sectionTitle}>People</p>
           <div className={styles.row}>
             <Form.Item
-              name={['departmentHead', 'code']}
+              name={['departmentHead', 'userId']}
               label="Dept. head"
               rules={[{ required: true, message: 'Department head is required' }]}
             >
@@ -303,14 +305,11 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
                 optionFilterProp="label"
                 placeholder="Select department head"
                 onChange={handleDepartmentHeadSelect}
-                options={departmentHeadSelectOptions.map((head) => ({
-                  value: head.code,
-                  label: head.name,
-                }))}
+                options={toPersonSelectOptions(departmentHeadSelectOptions)}
               />
             </Form.Item>
             <Form.Item
-              name={['pm', 'code']}
+              name={['pm', 'userId']}
               label="PM"
               rules={[{ required: true, message: 'PM is required' }]}
             >
@@ -320,10 +319,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
                 optionFilterProp="label"
                 placeholder="Select PM"
                 onChange={handlePmSelect}
-                options={pmSelectOptions.map((pm) => ({
-                  value: pm.code,
-                  label: pm.name,
-                }))}
+                options={toPersonSelectOptions(pmSelectOptions)}
               />
             </Form.Item>
           </div>

@@ -11,7 +11,13 @@ import { useProjectHeadOptions, useProjectPmOptions } from '../../hooks/useProje
 import { useDepartmentOptions } from '@/features/departments/hooks/useDepartmentOptions';
 import { CREATE_PROJECT_DEFAULTS, resolveCreateDepartment } from '../../utils/projectDefaults';
 import { computeProjectLevel } from '../../utils/projectLevel';
-import { emptyPerson, hasPersonUserId, resolvePersonFromForm } from '../../utils/personRef';
+import {
+  emptyPerson,
+  findPersonOption,
+  hasPersonUserId,
+  resolvePersonFromForm,
+  toPersonSelectOptions,
+} from '../../utils/personRef';
 import type {
   CreateProjectRequest,
   EvaluationLevel,
@@ -117,8 +123,8 @@ export function CreateProjectModal({
   // Prefill dept. head without wiping fields the user may already have entered.
   useEffect(() => {
     if (!open || !defaultDepartmentHead) return;
-    const currentCode = form.getFieldValue(['departmentHead', 'code']);
-    if (currentCode) return;
+    const currentUserId = form.getFieldValue(['departmentHead', 'userId']);
+    if (currentUserId) return;
     form.setFieldValue('departmentHead', defaultDepartmentHead);
   }, [open, form, defaultDepartmentHead]);
 
@@ -127,12 +133,12 @@ export function CreateProjectModal({
     onClose();
   };
 
-  const handleDepartmentHeadSelect = (code: string | undefined) => {
-    if (!code) {
+  const handleDepartmentHeadSelect = (userId: string | undefined) => {
+    if (!userId) {
       form.setFieldValue('departmentHead', emptyPerson());
       return;
     }
-    const head = headOptions.find((entry) => entry.code === code);
+    const head = findPersonOption(headOptions, userId);
     if (head) {
       form.setFieldValue('departmentHead', {
         code: head.code,
@@ -142,12 +148,12 @@ export function CreateProjectModal({
     }
   };
 
-  const handlePmSelect = (code: string | undefined) => {
-    if (!code) {
+  const handlePmSelect = (userId: string | undefined) => {
+    if (!userId) {
       form.setFieldValue('pm', emptyPerson());
       return;
     }
-    const pm = pmOptions.find((entry) => entry.code === code);
+    const pm = findPersonOption(pmOptions, userId);
     if (pm) {
       form.setFieldValue('pm', { code: pm.code, name: pm.name, userId: pm.userId });
     }
@@ -292,7 +298,7 @@ export function CreateProjectModal({
           <p className={styles.sectionTitle}>People</p>
           <div className={styles.row}>
             <Form.Item
-              name={['departmentHead', 'code']}
+              name={['departmentHead', 'userId']}
               label="Dept. head"
               rules={[{ required: true, message: 'Department head is required' }]}
             >
@@ -302,14 +308,11 @@ export function CreateProjectModal({
                 optionFilterProp="label"
                 placeholder="Select department head"
                 onChange={handleDepartmentHeadSelect}
-                options={headOptions.map((head) => ({
-                  value: head.code,
-                  label: head.name,
-                }))}
+                options={toPersonSelectOptions(headOptions)}
               />
             </Form.Item>
             <Form.Item
-              name={['pm', 'code']}
+              name={['pm', 'userId']}
               label="PM"
               rules={[{ required: true, message: 'PM is required' }]}
             >
@@ -319,10 +322,7 @@ export function CreateProjectModal({
                 optionFilterProp="label"
                 placeholder="Select PM"
                 onChange={handlePmSelect}
-                options={pmOptions.map((pm) => ({
-                  value: pm.code,
-                  label: pm.name,
-                }))}
+                options={toPersonSelectOptions(pmOptions)}
               />
             </Form.Item>
           </div>

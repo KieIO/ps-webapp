@@ -7,6 +7,7 @@ import type {
 } from '../schemas/user.schema';
 import { mockDelay } from '@/shared/mock/mockDelay';
 import { getMockJobLevelsStore, getMockJobTitlesStore } from '@/features/titles/mock/titles.data';
+import { DEFAULT_INVITE_PASSWORD } from '../constants';
 import { getMockUsersStore, setMockUsersStore, type UserRecord } from './users.data';
 
 const enrichUser = (user: UserRecord): User => {
@@ -129,4 +130,30 @@ export const mockUpdateUser = async (id: string, payload: UpdateUserRequest): Pr
   next[index] = updated;
   setMockUsersStore(next);
   return enrichUser(updated);
+};
+
+export const mockResetUserPassword = async (
+  id: string,
+  password?: string,
+): Promise<{ user: User; password: string }> => {
+  await mockDelay();
+  const users = getMockUsersStore();
+  const index = users.findIndex((entry) => entry.id === id);
+  if (index === -1) {
+    throw new Error('User not found');
+  }
+
+  const resolved = password?.trim() || DEFAULT_INVITE_PASSWORD;
+  if (resolved.length < 5) {
+    throw new Error('Password must be at least 5 characters');
+  }
+
+  const updated: UserRecord = {
+    ...users[index],
+    updatedAt: new Date().toISOString(),
+  };
+  const next = [...users];
+  next[index] = updated;
+  setMockUsersStore(next);
+  return { user: enrichUser(updated), password: resolved };
 };
