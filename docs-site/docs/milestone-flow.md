@@ -1,12 +1,14 @@
 ---
-sidebar_position: 1
-sidebar_label: Mốc giao
+sidebar_position: 4
+sidebar_label: Quản lý mốc giao
 slug: /milestone
 ---
 
-# Mốc giao (milestone)
+# Quản lý mốc giao (milestone)
 
 Hướng dẫn này mô tả **mốc giao** trên Pokeslide: điểm deadline gắn trên thanh project Tracker (ngày giao, không phải khoảng làm việc).
+
+Tracker liên quan: [Timeline](/tracker) · [Urgency](/tracker/urgency)
 
 :::tip[Milestone là gì?]
 

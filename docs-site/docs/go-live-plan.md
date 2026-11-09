@@ -40,24 +40,25 @@ Kèm theo: **thông báo / UI nhận việc** xuyên suốt các module trên:
 
 ### 1. Tracker dự án
 
-- Danh sách projects trên timeline
-- Capacity còn lại trong ngày (**Còn lại / ngày**)
-- Số lượng công việc trong ngày theo project (tổng slides, tổng DA, …)
-- Quản lý **mốc giao** (milestone) trên thanh project (xem; Head / Admin thêm / sửa / xóa)
-- Quản lý mức **urgency** (mức ưu tiên) trên thanh project (xem; Head / Admin đổi qua chấm màu)
-- Thông tin Sale, PM, CM; tổng slides phải làm
-- Nhân viên **On leave** hiển thị trên tracker
+- Xem danh sách project trên timeline
+- Xem capacity còn lại theo ngày (**Còn lại / ngày**)
+- Xem khối lượng công việc theo ngày (slides, DA)
+- Quản lý mốc giao (milestone)
+- Quản lý mức urgency (mức ưu tiên)
+- Xem thông tin Sale, PM, CM trên thanh project
+- Xem tổng slides phải làm của project
+- Xem nhân viên đang On leave
 
-Xem thêm: [Mốc giao](/milestone), [FAQ capacity trên Tracker](/faq)
+Xem thêm: [Timeline](/tracker), [Còn lại / ngày](/tracker/remaining), [Khối lượng theo ngày](/tracker/workload), [Mốc giao](/milestone), [Urgency](/tracker/urgency), [Sale / PM / CM](/tracker/team), [Tổng slides](/tracker/total-slides), [On leave](/tracker/on-leave)
 
 ### 2. Quản lý Projects
 
-- Tạo project
-- Assign project cho PM
-- Archive project
-- Quản lý mức urgency (mức ưu tiên) của project
-- Quản lý mốc giao (milestone) trong form Create / Edit Project (Head / Admin)
-- Head Project Department đánh giá chất lượng project của PM
+- Tạo project mới
+- Gán project cho PM
+- Archive / bỏ archive project
+- Quản lý mức urgency (mức ưu tiên)
+- Quản lý mốc giao (milestone)
+- Head đánh giá chất lượng project của PM
 
 ### 3. Quản lý Task
 
@@ -74,11 +75,11 @@ Xem thêm: [Tạo task](/), [Chia task con](/split-task), [FAQ Decline Creative]
 
 ### 4. Quản lý Users
 
-- Tạo user
-- Assign vị trí (Level, Position code, Job title)
-- Trạng thái Active / On leave / Inactive / Invited (theo luồng leave hiện có)
+- Tạo tài khoản user
+- Gán vị trí (Level, Position code, Job title)
+- Quản lý trạng thái Active / On leave / Inactive / Invited
 
-Xem thêm: [FAQ đổi Level / Title](/faq), [Nghỉ phép](/leave)
+Xem thêm: [Tạo tài khoản](/users/create), [Gán vị trí](/users/assign-position), [Quản lý trạng thái](/users/status), [Nghỉ phép](/leave)
 
 ### Thông báo / giao diện nhận việc (xuyên suốt Phase 1)
 
@@ -95,43 +96,54 @@ Mục tiêu: mỗi role biết có việc mới, mở đúng chỗ, đi hết v�
 
 ### 5. Quản lý OT
 
-- Xin OT (theo quyền: PM, CM, Creative Head, Head, Admin, …)
-- Head / Admin duyệt hoặc từ chối
-- Gắn project task sau khi duyệt
-- Staff làm OT, nhập giờ thực tế, Finished
-- Head / Admin review kết quả
-- Theo dõi danh sách OT và giờ ước tính / thực tế
+- Nhân viên / quản lý xin OT
+- Head / Admin duyệt hoặc từ chối OT
+- Gắn project task vào request OT đã duyệt
+- Staff làm OT và nhập giờ thực tế
+- Head / Admin review kết quả OT
+- Theo dõi giờ ước tính và giờ thực tế
 
-Xem thêm: [Overtime (OT)](/overtime)
+Xem thêm: [Xin OT](/overtime), [Duyệt / từ chối](/overtime/approve), [Gắn task](/overtime/attach-task), [Staff làm OT](/overtime/work), [Review kết quả](/overtime/review), [Theo dõi giờ](/overtime/tracking)
 
 ### 6. Cấu hình chức vụ
 
-- CRUD chức vụ / Position code / Job title
+- Thêm / sửa / xóa chức vụ và Position code
 - Gắn Level và định mức capacity theo title
-- Đồng bộ với Users khi gán vị trí
+- Đồng bộ title khi gán vị trí cho user
+
+Xem thêm: [Thêm / sửa / xóa chức vụ](/titles), [Level và định mức capacity](/titles/capacity), [Đồng bộ title khi gán user](/titles/user-sync)
 
 ### 7. Quản lý phòng ban
 
-- CRUD phòng ban
-- Gắn user và phạm vi quản lý theo phòng (ví dụ leave, báo cáo team)
+- Thêm / sửa / xóa phòng ban
+- Gắn user vào phòng ban
+- Giới hạn phạm vi quản lý theo phòng
+
+Xem thêm: [Thêm / sửa / xóa phòng ban](/departments), [Gắn user vào phòng ban](/departments/assign-user), [Giới hạn phạm vi theo phòng](/departments/scope)
 
 ### 8. Quản lý khách hàng
 
-- CRUD client
-- Gắn client với project
-- Ghi chú / knowledge client (theo quyền hiện tại)
+- Thêm / sửa / xóa khách hàng (client)
+- Gắn client vào project
+- Ghi chú / knowledge theo client
+
+Xem thêm: [Thêm / sửa / xóa khách hàng](/clients), [Gắn client vào project](/clients/assign-project), [Ghi chú / knowledge](/clients/knowledge)
 
 ### 9. Quản lý công thức capacity
 
-- Cấu hình Capacity / ngày, tỷ lệ CM / quản lý, điểm task CM
-- Cơ sở quy đổi slides / DA trên Tracker (**Còn lại / ngày**)
+- Cấu hình Capacity / ngày theo title
+- Cấu hình tỷ lệ CM / quản lý
+- Cấu hình điểm task CM
+- Quy đổi điểm sang slides / DA trên Tracker
 
-Xem thêm: [FAQ Còn lại / ngày](/faq)
+Xem thêm: [Capacity / ngày](/capacity-formula), [Tỷ lệ CM / quản lý](/capacity-formula/ratio), [Điểm task CM](/capacity-formula/task-points), [Quy đổi trên Tracker](/capacity-formula/tracker)
 
 ### 10. Quản lý điểm của task
 
-- Cấu hình điểm / loại điểm theo task (task scores)
-- Phục vụ workload / capacity / đánh giá theo rule sản phẩm hiện tại
+- Cấu hình điểm và loại điểm của task
+- Dùng điểm cho workload / capacity / đánh giá
+
+Xem thêm: [Cấu hình điểm và loại điểm](/task-scores), [Dùng điểm cho workload / capacity / đánh giá](/task-scores/usage)
 
 ---
 
