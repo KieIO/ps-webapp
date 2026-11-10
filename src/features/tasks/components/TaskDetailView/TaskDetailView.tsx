@@ -12,7 +12,11 @@ import { TaskDetailSummaryCard } from '../TaskDetailSummaryCard/TaskDetailSummar
 import { TaskRevisionHistoryTab } from '../TaskRevisionHistoryTab/TaskRevisionHistoryTab';
 import { useMyTask } from '../../hooks/useMyTask';
 import { formatHasRevisionChildrenLabel, hasRevisionChildren } from '../../utils/taskRevision';
-import { isCreativeWholeAssigned } from '../../utils/taskEvaluation';
+import {
+  hasChEvaluation,
+  isCreativePastChToCmHandoff,
+  isCreativeWholeAssigned,
+} from '../../utils/taskEvaluation';
 import { formatEvaluationQuantitySummary, hasCmEvaluation } from '../../utils/evaluationRemainder';
 import { formatCompletionPercentDisplay } from '../../utils/evaluationCompletion';
 import styles from './TaskDetailView.module.scss';
@@ -254,9 +258,18 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
                 label: 'Evaluation',
                 children: (() => {
                   const quantitySummary = formatEvaluationQuantitySummary(task);
+                  const chScoreGrid = (
+                    <EvaluationScoreGrid
+                      title="Đánh giá của PM (Creative Head)"
+                      percent={task.chCompletionPercent}
+                      score={task.chEvaluation}
+                      note={task.chNote}
+                    />
+                  );
                   if (isCreativeWholeAssigned(task)) {
                     return (
                       <div className={styles.detailStack}>
+                        {chScoreGrid}
                         <EvaluationScoreGrid
                           title="Đánh giá của Creative Head"
                           percent={task.handoffCompletionPercent}
@@ -272,6 +285,23 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
                         />
                       </div>
                     );
+                  }
+                  if (isCreativePastChToCmHandoff(task) && hasChEvaluation(task)) {
+                    if (hasCmEvaluation(task)) {
+                      return (
+                        <div className={styles.detailStack}>
+                          {chScoreGrid}
+                          <EvaluationScoreGrid
+                            title="Đánh giá kết quả Staff"
+                            percent={task.completionPercent}
+                            score={task.pmEvaluation}
+                            note={task.pmNote}
+                            quantitySummary={quantitySummary}
+                          />
+                        </div>
+                      );
+                    }
+                    return <div className={styles.detailStack}>{chScoreGrid}</div>;
                   }
                   if (hasCmEvaluation(task)) {
                     return (

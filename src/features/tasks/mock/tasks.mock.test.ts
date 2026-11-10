@@ -999,6 +999,286 @@ describe('creative CH/CM pipeline', () => {
       ),
     ).rejects.toThrow(/kết quả Staff/);
   });
+
+  it('lets PM score Creative Head after CH→CM without overwriting CM/staff scores', async () => {
+    resetMockTasksStore();
+    const handed = await mockAssignCreativeHead(
+      'task-ch-031',
+      { cmUserId: 'dev-creative_manager' },
+      'dev-creative_head',
+    );
+
+    const pmOnAwaitingCm = await mockUpdateMyTaskPmEvaluation(
+      handed.id,
+      { completionPercent: 80, pmEvaluation: '4', pmNote: 'PM scores CH early' },
+      'dev-pm',
+    );
+    expect(pmOnAwaitingCm.chCompletionPercent).toBe(80);
+    expect(pmOnAwaitingCm.chEvaluation).toBe('4');
+    expect(pmOnAwaitingCm.chNote).toBe('PM scores CH early');
+    expect(pmOnAwaitingCm.completionPercent ?? null).toBeNull();
+    expect(pmOnAwaitingCm.handoffCompletionPercent ?? null).toBeNull();
+
+    const assigned = await mockAssignCreativeManager(
+      handed.id,
+      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: handed.quantity },
+      'dev-creative_manager',
+    );
+    await mockUpdateMyTaskPmEvaluation(
+      assigned.id,
+      { completionPercent: 40, pmEvaluation: '3', pmNote: 'staff result' },
+      'dev-creative_manager',
+    );
+    await mockUpdateMyTaskPmEvaluation(
+      assigned.id,
+      { completionPercent: 90, pmEvaluation: '5', pmNote: 'CH scores CM' },
+      'dev-creative_head',
+    );
+
+    const pmOnWhole = await mockUpdateMyTaskPmEvaluation(
+      assigned.id,
+      { completionPercent: 95, pmEvaluation: '5', pmNote: 'PM scores CH after staff' },
+      'dev-pm',
+    );
+    expect(pmOnWhole.chCompletionPercent).toBe(95);
+    expect(pmOnWhole.chEvaluation).toBe('5');
+    expect(pmOnWhole.chNote).toBe('PM scores CH after staff');
+    expect(pmOnWhole.completionPercent).toBe(40);
+    expect(pmOnWhole.pmEvaluation).toBe('3');
+    expect(pmOnWhole.handoffCompletionPercent).toBe(90);
+    expect(pmOnWhole.handoffEvaluation).toBe('5');
+
+    await expect(
+      mockUpdateMyTaskPmEvaluation(
+        assigned.id,
+        { completionPercent: 10, pmEvaluation: '1', pmNote: 'no', layer: 'handoff' },
+        'dev-pm',
+      ),
+    ).rejects.toThrow(/Creative Head/);
+  });
+});
+
+describe('ordered creative evaluation chain', () => {
+  afterEach(() => {
+    resetMockTasksStore();
+  });
+
+  it('runs PM→CH→CM→Staff then Staff finish → CM→Staff → CH→CM → PM→CH', async () => {
+    // 1) PM handoff already seed-awaiting_ch on task-ch-031
+    const awaitingCh = await mockGetMyTaskById('task-ch-031', 'dev-pm');
+    expect(awaitingCh.pipelineStage).toBe('awaiting_ch');
+
+    // 2) CH → CM
+    const awaitingCm = await mockAssignCreativeHead(
+      awaitingCh.id,
+      { cmUserId: 'dev-creative_manager' },
+      'dev-creative_head',
+    );
+    expect(awaitingCm.pipelineStage).toBe('awaiting_cm');
+
+    // 3) CM → Staff (whole)
+    const assigned = await mockAssignCreativeManager(
+      awaitingCm.id,
+      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: awaitingCm.quantity },
+      'dev-creative_manager',
+    );
+    expect(assigned.pipelineStage).toBe('assigned_staff');
+
+    // 4) Staff finishes
+    const finished = await mockUpdateMyTaskStatus(
+      assigned.id,
+      { staffConfirmation: 'finished', staffNote: 'done' },
+      'usr-creative-ha',
+    );
+    expect(finished.staffConfirmation).toBe('finished');
+
+    // 5) CM đánh giá Staff
+    const staffScore = await mockUpdateMyTaskPmEvaluation(
+      assigned.id,
+      { completionPercent: 100, pmEvaluation: '5', pmNote: 'CM→Staff' },
+      'dev-creative_manager',
+    );
+    expect(staffScore.pmEvaluation).toBe('5');
+    expect(staffScore.pmNote).toBe('CM→Staff');
+    expect(staffScore.handoffEvaluation ?? '').toBe('');
+    expect(staffScore.chEvaluation ?? '').toBe('');
+
+    // 6) CH đánh giá CM
+    const handoff = await mockUpdateMyTaskPmEvaluation(
+      assigned.id,
+      { completionPercent: 90, pmEvaluation: '4', pmNote: 'CH→CM' },
+      'dev-creative_head',
+    );
+    expect(handoff.pmEvaluation).toBe('5');
+    expect(handoff.handoffEvaluation).toBe('4');
+    expect(handoff.handoffNote).toBe('CH→CM');
+    expect(handoff.chEvaluation ?? '').toBe('');
+
+    // 7) PM đánh giá CH
+    const chScore = await mockUpdateMyTaskPmEvaluation(
+      assigned.id,
+      { completionPercent: 85, pmEvaluation: '3', pmNote: 'PM→CH' },
+      'dev-pm',
+    );
+    expect(chScore.completionPercent).toBe(100);
+    expect(chScore.pmEvaluation).toBe('5');
+    expect(chScore.pmNote).toBe('CM→Staff');
+    expect(chScore.handoffCompletionPercent).toBe(90);
+    expect(chScore.handoffEvaluation).toBe('4');
+    expect(chScore.handoffNote).toBe('CH→CM');
+    expect(chScore.chCompletionPercent).toBe(85);
+    expect(chScore.chEvaluation).toBe('3');
+    expect(chScore.chNote).toBe('PM→CH');
+  });
+});
+
+describe('PM → Creative Head evaluation layer', () => {
+  afterEach(() => {
+    resetMockTasksStore();
+  });
+
+  it('rejects PM scoring CH while task is still awaiting_ch', async () => {
+    const awaitingCh = await mockGetMyTaskById('task-ch-031', 'dev-pm');
+    expect(awaitingCh.pipelineStage).toBe('awaiting_ch');
+
+    await expect(
+      mockUpdateMyTaskPmEvaluation(
+        awaitingCh.id,
+        { completionPercent: 50, pmEvaluation: '3', pmNote: 'too early' },
+        'dev-pm',
+      ),
+    ).rejects.toThrow(/không được đánh giá|sau khi CH đã giao CM/i);
+  });
+
+  it('lets Admin write the ch layer on awaiting_cm', async () => {
+    const handed = await mockAssignCreativeHead(
+      'task-ch-031',
+      { cmUserId: 'dev-creative_manager' },
+      'dev-creative_head',
+    );
+
+    const scored = await mockUpdateMyTaskPmEvaluation(
+      handed.id,
+      { completionPercent: 70, pmEvaluation: '4', pmNote: 'Admin scores CH', layer: 'ch' },
+      'dev-admin',
+    );
+    expect(scored.chCompletionPercent).toBe(70);
+    expect(scored.chEvaluation).toBe('4');
+    expect(scored.chNote).toBe('Admin scores CH');
+    expect(scored.completionPercent ?? null).toBeNull();
+    expect(scored.handoffCompletionPercent ?? null).toBeNull();
+  });
+
+  it('rejects CH and CM from writing the ch layer', async () => {
+    const handed = await mockAssignCreativeHead(
+      'task-ch-031',
+      { cmUserId: 'dev-creative_manager' },
+      'dev-creative_head',
+    );
+    const assigned = await mockAssignCreativeManager(
+      handed.id,
+      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: handed.quantity },
+      'dev-creative_manager',
+    );
+
+    await expect(
+      mockUpdateMyTaskPmEvaluation(
+        assigned.id,
+        { completionPercent: 10, pmEvaluation: '1', pmNote: 'no', layer: 'ch' },
+        'dev-creative_head',
+      ),
+    ).rejects.toThrow(/Chỉ PM/);
+
+    await expect(
+      mockUpdateMyTaskPmEvaluation(
+        assigned.id,
+        { completionPercent: 10, pmEvaluation: '1', pmNote: 'no', layer: 'ch' },
+        'dev-creative_manager',
+      ),
+    ).rejects.toThrow(/Chỉ PM/);
+  });
+
+  it('lets PM score Creative Head on a split parent after CH→CM', async () => {
+    const handed = await mockAssignCreativeHead(
+      'task-ch-031',
+      { cmUserId: 'dev-creative_manager' },
+      'dev-creative_head',
+    );
+    const split = await mockAssignCreativeManager(
+      handed.id,
+      {
+        mode: 'split',
+        subtasks: [
+          {
+            name: 'Part A',
+            staffUserId: 'usr-creative-ha',
+            quantity: 2,
+            description: 'Brief A',
+          },
+          {
+            name: 'Part B',
+            staffUserId: 'usr-creative-tran',
+            quantity: 1,
+            description: 'Brief B',
+          },
+        ],
+      },
+      'dev-creative_manager',
+    );
+    expect(split.pipelineStage).toBe('split');
+
+    const scored = await mockUpdateMyTaskPmEvaluation(
+      split.id,
+      { completionPercent: 88, pmEvaluation: '5', pmNote: 'PM scores CH on split' },
+      'dev-pm',
+    );
+    expect(scored.chCompletionPercent).toBe(88);
+    expect(scored.chEvaluation).toBe('5');
+    expect(scored.chNote).toBe('PM scores CH on split');
+    expect(scored.completionPercent ?? null).toBeNull();
+    expect(scored.handoffCompletionPercent ?? null).toBeNull();
+  });
+
+  it('overwrites only the previous PM→CH score on re-evaluate', async () => {
+    const handed = await mockAssignCreativeHead(
+      'task-ch-031',
+      { cmUserId: 'dev-creative_manager' },
+      'dev-creative_head',
+    );
+    const assigned = await mockAssignCreativeManager(
+      handed.id,
+      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: handed.quantity },
+      'dev-creative_manager',
+    );
+    await mockUpdateMyTaskPmEvaluation(
+      assigned.id,
+      { completionPercent: 40, pmEvaluation: '3', pmNote: 'staff' },
+      'dev-creative_manager',
+    );
+    await mockUpdateMyTaskPmEvaluation(
+      assigned.id,
+      { completionPercent: 90, pmEvaluation: '5', pmNote: 'handoff' },
+      'dev-creative_head',
+    );
+    await mockUpdateMyTaskPmEvaluation(
+      assigned.id,
+      { completionPercent: 60, pmEvaluation: '3', pmNote: 'first CH score' },
+      'dev-pm',
+    );
+
+    const updated = await mockUpdateMyTaskPmEvaluation(
+      assigned.id,
+      { completionPercent: 99, pmEvaluation: '5', pmNote: 'revised CH score' },
+      'dev-pm',
+    );
+    expect(updated.chCompletionPercent).toBe(99);
+    expect(updated.chEvaluation).toBe('5');
+    expect(updated.chNote).toBe('revised CH score');
+    expect(updated.completionPercent).toBe(40);
+    expect(updated.pmEvaluation).toBe('3');
+    expect(updated.handoffCompletionPercent).toBe(90);
+    expect(updated.handoffEvaluation).toBe('5');
+  });
 });
 
 describe('mockCreateRevisionTask', () => {

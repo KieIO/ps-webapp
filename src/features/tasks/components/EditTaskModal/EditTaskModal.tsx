@@ -178,21 +178,28 @@ export function EditTaskModal({
         staffConfirmation: task.staffConfirmation,
         staffNote: task.staffNote,
         urgency: task.urgency,
-        completionPercent:
-          isCreativeWholeAssigned(task) &&
-          resolveEvaluationWriteLayerSafe(effectiveRole, task) === 'handoff'
-            ? (task.handoffCompletionPercent ?? 0)
-            : (task.completionPercent ?? 0),
-        pmEvaluation:
-          isCreativeWholeAssigned(task) &&
-          resolveEvaluationWriteLayerSafe(effectiveRole, task) === 'handoff'
-            ? (task.handoffEvaluation ?? '')
-            : task.pmEvaluation,
-        pmNote:
-          isCreativeWholeAssigned(task) &&
-          resolveEvaluationWriteLayerSafe(effectiveRole, task) === 'handoff'
-            ? (task.handoffNote ?? '')
-            : task.pmNote,
+        ...(() => {
+          const evalLayer = resolveEvaluationWriteLayerSafe(effectiveRole, task);
+          if (evalLayer === 'handoff') {
+            return {
+              completionPercent: task.handoffCompletionPercent ?? 0,
+              pmEvaluation: task.handoffEvaluation ?? '',
+              pmNote: task.handoffNote ?? '',
+            };
+          }
+          if (evalLayer === 'ch') {
+            return {
+              completionPercent: task.chCompletionPercent ?? 0,
+              pmEvaluation: task.chEvaluation ?? '',
+              pmNote: task.chNote ?? '',
+            };
+          }
+          return {
+            completionPercent: task.completionPercent ?? 0,
+            pmEvaluation: task.pmEvaluation,
+            pmNote: task.pmNote,
+          };
+        })(),
       });
     }
   }, [task, open, form, effectiveRole]);
@@ -264,6 +271,7 @@ export function EditTaskModal({
 
     const saveEvaluation = showEvaluationEditable
       ? () => {
+          const evalLayer = resolveEvaluationWriteLayerSafe(effectiveRole, task);
           updateEvaluation(
             {
               id: task.id,
@@ -275,8 +283,9 @@ export function EditTaskModal({
                   ? (values.pmEvaluation ?? '')
                   : task.pmEvaluation,
                 pmNote: hasField(editableFields, 'pmNote') ? (values.pmNote ?? '') : task.pmNote,
-                ...(isCreativeWholeAssigned(task)
-                  ? { layer: resolveEvaluationWriteLayerSafe(effectiveRole, task) }
+                ...(evalLayer &&
+                (isCreativeWholeAssigned(task) || evalLayer === 'ch' || evalLayer === 'handoff')
+                  ? { layer: evalLayer }
                   : {}),
               },
             },

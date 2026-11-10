@@ -28,7 +28,11 @@ import {
   computeAcceptedRemainderQuantity,
 } from '../../utils/evaluationRemainder';
 import { formatTaskStaffNames } from '../../utils/staff';
-import { isCreativeWholeAssigned, type EvaluationWriteLayer } from '../../utils/taskEvaluation';
+import {
+  isCreativePastChToCmHandoff,
+  isCreativeWholeAssigned,
+  type EvaluationWriteLayer,
+} from '../../utils/taskEvaluation';
 import editStyles from '../EditTaskModal/EditTaskModal.module.scss';
 import styles from './EvaluateTaskModal.module.scss';
 
@@ -52,6 +56,27 @@ type RemainderLink = {
   quantity: number;
 };
 
+const resolveLockedLayer = (
+  role: string | undefined,
+  wholeAssigned: boolean,
+  pastChToCm: boolean,
+): EvaluationWriteLayer | null => {
+  if (role === ROLES.ADMIN) {
+    if (wholeAssigned) return null;
+    if (pastChToCm) return 'ch';
+    return 'staff';
+  }
+  if (role === ROLES.PM) {
+    if (pastChToCm) return 'ch';
+    return 'staff';
+  }
+  if (role === ROLES.CREATIVE_MANAGER) return 'staff';
+  if (role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD) {
+    return wholeAssigned ? 'handoff' : 'staff';
+  }
+  return 'staff';
+};
+
 export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProps) {
   const [form] = Form.useForm<EvaluateTaskFormValues>();
   const role = useAppSelector((state) => state.auth.user?.role);
@@ -62,15 +87,10 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
   /** SL giao lúc mở modal — giữ sau spawn để UI không nhảy theo quantity đã thu nhỏ. */
   const [originalAssignedQuantity, setOriginalAssignedQuantity] = useState(0);
   const [acceptedAtSpawn, setAcceptedAtSpawn] = useState<number | null>(null);
-  const [adminLayer, setAdminLayer] = useState<EvaluationWriteLayer>('handoff');
+  const [adminLayer, setAdminLayer] = useState<EvaluationWriteLayer>('ch');
   const wholeAssigned = Boolean(task && isCreativeWholeAssigned(task));
-  const lockedLayer: EvaluationWriteLayer | null = !wholeAssigned
-    ? 'staff'
-    : role === ROLES.CREATIVE_MANAGER
-      ? 'staff'
-      : role === ROLES.ADMIN
-        ? null
-        : 'handoff';
+  const pastChToCm = Boolean(task && isCreativePastChToCmHandoff(task));
+  const lockedLayer = resolveLockedLayer(role, wholeAssigned, pastChToCm);
   const layer = lockedLayer ?? adminLayer;
 
   useEffect(() => {
@@ -96,6 +116,16 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
           completionPercent: task.handoffCompletionPercent ?? 0,
           pmEvaluation: task.handoffEvaluation ?? '',
           pmNote: task.handoffNote ?? '',
+        });
+        return;
+      }
+
+      if (layer === 'ch') {
+        form.setFieldsValue({
+          completedQuantity: 0,
+          completionPercent: task.chCompletionPercent ?? 0,
+          pmEvaluation: task.chEvaluation ?? '',
+          pmNote: task.chNote ?? '',
         });
         return;
       }
@@ -251,7 +281,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
           completionPercent,
           pmEvaluation: values.pmEvaluation ?? '',
           pmNote,
-          ...(wholeAssigned ? { layer } : {}),
+          ...(wholeAssigned || layer === 'ch' || layer === 'handoff' ? { layer } : {}),
         },
       },
       {
@@ -267,15 +297,18 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
     );
   };
 
+  const modalTitle =
+    layer === 'ch'
+      ? 'Đánh giá Creative Head'
+      : layer === 'handoff'
+        ? 'Đánh giá gói của CM'
+        : wholeAssigned
+          ? 'Đánh giá kết quả Staff'
+          : 'Evaluate task';
+
   return (
     <Modal
-      title={
-        layer === 'handoff'
-          ? 'Đánh giá gói của CM'
-          : wholeAssigned
-            ? 'Đánh giá kết quả Staff'
-            : 'Evaluate task'
-      }
+      title={modalTitle}
       open={open}
       onCancel={handleClose}
       onOk={() => form.submit()}
@@ -333,6 +366,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
               value={layer}
               onChange={(value) => setAdminLayer(value as EvaluationWriteLayer)}
               options={[
+                { label: 'Creative Head', value: 'ch' },
                 { label: 'Gói của CM', value: 'handoff' },
                 { label: 'Kết quả Staff', value: 'staff' },
               ]}

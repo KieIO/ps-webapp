@@ -28,6 +28,9 @@ export type TaskDto = {
   handoffEvaluation?: string;
   handoffNote?: string;
   handoffCompletionPercent?: number | null;
+  chEvaluation?: string;
+  chNote?: string;
+  chCompletionPercent?: number | null;
   staff?: Array<{ userId?: string; name?: string }>;
 };
 
@@ -104,10 +107,23 @@ export async function createCreativeHandoff(
   token: string,
   taskName: string,
   quantity = 1,
+  /** Required for PM creators — BE asserts projectManager.userId === actor. */
+  projectManagerUserId?: string,
 ): Promise<TaskDto> {
+  let pmUserId = projectManagerUserId?.trim();
+  if (!pmUserId) {
+    const { data: options } = await apiJson<
+      Array<{ userId?: string; code?: string; name?: string }>
+    >('GET', '/tasks/my/pm-options', token);
+    pmUserId = (options ?? []).find((entry) => entry.userId)?.userId;
+  }
+  if (!pmUserId) {
+    throw new Error('createCreativeHandoff: missing projectManager userId');
+  }
+
   const { data } = await apiJson<TaskDto>('POST', '/tasks/my', token, {
     projectName: process.env.E2E_PROJECT_NAME ?? 'SG Multibrand SEP',
-    projectManager: { code: 'PM.DEV', name: 'Dev PM' },
+    projectManager: { code: 'PM.DEV', name: 'Dev PM', userId: pmUserId },
     taskName,
     // Split assign requires parent qty === sum(subtask qty); seed qty up front.
     quantity,
@@ -218,6 +234,7 @@ export async function patchEval(
     completionPercent: number;
     pmEvaluation: string;
     pmNote: string;
+    layer?: 'staff' | 'handoff' | 'ch';
   },
 ): Promise<TaskDto> {
   const { data } = await apiJson<TaskDto>(
@@ -255,7 +272,7 @@ export async function setupAwaitingCh(
     SEED_ACCOUNTS.creative_manager.password,
   );
   const admin = await apiLogin(SEED_ACCOUNTS.admin.email, SEED_ACCOUNTS.admin.password);
-  const parent = await createCreativeHandoff(pm.token, taskName, quantity);
+  const parent = await createCreativeHandoff(pm.token, taskName, quantity, pm.user.id);
   return { parent, cm, ch, pm, admin };
 }
 
@@ -328,7 +345,7 @@ export async function setupSplitFamily(opts: {
   const qtyA = opts.qtyA ?? 8;
   const qtyB = opts.qtyB ?? 8;
 
-  const created = await createCreativeHandoff(pm.token, opts.taskName, qtyA + qtyB);
+  const created = await createCreativeHandoff(pm.token, opts.taskName, qtyA + qtyB, pm.user.id);
   await assignCm(ch.token, created.id, cm.user.id);
   const parent = await splitAssign(cm.token, created.id, staffA, staffB, qtyA, qtyB);
 

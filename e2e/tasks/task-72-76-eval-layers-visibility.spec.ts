@@ -19,14 +19,24 @@ async function openEvaluationTab(page: Page): Promise<void> {
 
 async function evaluateViaUi(
   page: Page,
-  opts: { score: string; note: string; completion?: string },
+  opts: {
+    score: string;
+    note: string;
+    completion?: string;
+    /** Modal title — layered evaluate uses Vietnamese titles. */
+    title?: string | RegExp;
+    /** When true, completion is the first spinbutton (handoff / CH layers). */
+    completionOnly?: boolean;
+  },
 ): Promise<void> {
   await page.getByRole('button', { name: /Evaluate/ }).click();
   const modal = page.getByRole('dialog');
-  await expect(modal.getByText('Evaluate task')).toBeVisible();
+  await expect(modal.getByText(opts.title ?? /Evaluate task|Đánh giá/)).toBeVisible();
 
   if (opts.completion) {
-    const completion = modal.getByRole('spinbutton').nth(1);
+    const completion = opts.completionOnly
+      ? modal.getByRole('spinbutton').first()
+      : modal.getByRole('spinbutton').nth(1);
     await completion.click();
     await completion.fill(opts.completion);
   }
@@ -118,28 +128,35 @@ test.describe('TASK-72–76 layered evaluation visibility', () => {
     await expect(page.getByText(note)).toBeVisible({ timeout: 15_000 });
   });
 
-  test('TASK-76 PM Evaluate trên task Creative; CM và CH xem trên tab Evaluation (không màn riêng)', async ({
+  test('TASK-76 PM Evaluate Creative Head; CH/CM xem điểm PM trên tab Evaluation', async ({
     page,
   }) => {
     const taskName = `E2E PM Eval Creative ${Date.now()}`;
     const note = `PM on creative ${Date.now()}`;
     const { parent, cm, ch } = await setupAwaitingCm(taskName);
 
-    // 1) PM đánh giá trên chính task (Evaluate modal) — không có màn đánh giá PM riêng
+    // 1) PM đánh giá Creative Head trên chính task (layer ch)
     await loginAs(page, 'pm');
     await page.goto(`/tasks/detail/${parent.id}`);
     await expect(page.getByText(taskName, { exact: false }).first()).toBeVisible({
       timeout: 30_000,
     });
     await expect(page.getByRole('button', { name: /Evaluate/ })).toBeVisible();
-    await evaluateViaUi(page, { score: '3', note, completion: '55' });
+    await evaluateViaUi(page, {
+      title: 'Đánh giá Creative Head',
+      score: '3',
+      note,
+      completion: '55',
+      completionOnly: true,
+    });
 
     const afterPm = await getTask(cm.token, parent.id);
-    expect(afterPm.pmEvaluation).toBe('3');
-    expect(afterPm.pmNote).toBe(note);
-    expect(afterPm.completionPercent).toBe(55);
+    expect(afterPm.chEvaluation).toBe('3');
+    expect(afterPm.chNote).toBe(note);
+    expect(afterPm.chCompletionPercent).toBe(55);
+    expect(afterPm.pmEvaluation ?? '').toBe('');
 
-    // 2) CM mở cùng task → tab Evaluation thấy điểm / note PM
+    // 2) CM mở cùng task → tab Evaluation thấy điểm / note PM→CH
     await logout(page);
     await loginAs(page, 'creative_manager');
     await page.goto(`/tasks/detail/${parent.id}`);
@@ -148,7 +165,7 @@ test.describe('TASK-72–76 layered evaluation visibility', () => {
     });
     await openEvaluationTab(page);
     const cmEval = page.getByRole('tabpanel', { name: /Evaluation/i });
-    await expect(cmEval.getByText('Completion')).toBeVisible();
+    await expect(cmEval.getByText('Đánh giá của PM (Creative Head)')).toBeVisible();
     await expect(cmEval.getByText(/55%/)).toBeVisible();
     await expect(cmEval.getByText(note)).toBeVisible({ timeout: 15_000 });
     await expect(cmEval.getByText('3', { exact: true })).toBeVisible();
@@ -164,7 +181,7 @@ test.describe('TASK-72–76 layered evaluation visibility', () => {
     const chEval = page.getByRole('tabpanel', { name: /Evaluation/i });
     await expect(chEval.getByText(note)).toBeVisible({ timeout: 15_000 });
     const seenCh = await getTask(ch.token, parent.id);
-    expect(seenCh.pmEvaluation).toBe('3');
-    expect(seenCh.pmNote).toBe(note);
+    expect(seenCh.chEvaluation).toBe('3');
+    expect(seenCh.chNote).toBe(note);
   });
 });

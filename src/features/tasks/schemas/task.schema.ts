@@ -158,10 +158,17 @@ export const MyTaskSchema = z.object({
   completionPercent: z.number().min(0).max(100).nullish(),
   pmEvaluation: z.string(),
   pmNote: z.string(),
-  /** CH/PM/Head score of the CM package. Only set on creative whole-assigned tasks. */
+  /** CH/Head score of the CM package. Only set on creative whole-assigned tasks. */
   handoffCompletionPercent: z.number().min(0).max(100).nullish(),
   handoffEvaluation: z.string().optional(),
   handoffNote: z.string().optional(),
+  /**
+   * PM score of Creative Head handoff (after CH assigned CM).
+   * Set on creative parents past awaiting_ch.
+   */
+  chCompletionPercent: z.number().min(0).max(100).nullish(),
+  chEvaluation: z.string().optional(),
+  chNote: z.string().optional(),
   staffConfirmation: z.enum(TASK_CONFIRMATION_STATUSES),
   staffNote: z.string(),
   /** Linked overtime request when this task was created from OT assign-task. */
@@ -313,8 +320,13 @@ export const UpdateMyTaskPmEvaluationRequestSchema = z.object({
   completionPercent: z.number().min(0).max(100),
   pmEvaluation: z.string(),
   pmNote: z.string(),
-  /** Whole-assign only. Omitted on every other task. */
-  layer: z.enum(['staff', 'handoff']).optional(),
+  /**
+   * Layered creative scores:
+   * - staff: CM → Staff (or single score on non-whole tasks)
+   * - handoff: CH/Head → CM package (whole-assign)
+   * - ch: PM → Creative Head (after CH assigned CM)
+   */
+  layer: z.enum(['staff', 'handoff', 'ch']).optional(),
 });
 
 /** CM: accept partial quantity on a finished split child → spawn remainder sibling. */

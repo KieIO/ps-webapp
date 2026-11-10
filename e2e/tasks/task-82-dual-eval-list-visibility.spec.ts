@@ -30,20 +30,24 @@ async function evaluateLayer(
   page: Page,
   opts: { title: string; score: string; note: string; completion: string; quantity?: string },
 ): Promise<void> {
-  await page.getByRole('button', { name: /^Evaluate$/ }).click();
+  await page.getByRole('button', { name: /Evaluate/ }).click();
   const modal = page.getByRole('dialog');
   await expect(modal.getByText(opts.title)).toBeVisible();
 
-  const spins = modal.getByRole('spinbutton');
-  if (opts.quantity) {
-    await spins.nth(0).click();
-    await spins.nth(0).fill(opts.quantity);
-    await spins.nth(1).click();
-    await spins.nth(1).fill(opts.completion);
-  } else {
-    await spins.first().click();
-    await spins.first().fill(opts.completion);
-  }
+  // Ant InputNumber remounts when Evaluate modal hydrates layer values — retry fills.
+  await expect(async () => {
+    if (opts.quantity) {
+      const qty = modal.locator('#completedQuantity');
+      const pct = modal.locator('#completionPercent');
+      await qty.fill(opts.quantity);
+      await pct.fill(opts.completion);
+      await expect(pct).toHaveValue(opts.completion);
+    } else {
+      const pct = modal.locator('#completionPercent');
+      await pct.fill(opts.completion);
+      await expect(pct).toHaveValue(opts.completion);
+    }
+  }).toPass({ timeout: 15_000 });
 
   await modal.locator('.ant-select').first().click();
   await page
@@ -114,6 +118,6 @@ test.describe('TASK-82 whole-assign evaluation visibility', () => {
     const staffPanel = page.getByRole('tabpanel', { name: /Evaluation/i });
     await expect(staffPanel.getByText('Đánh giá kết quả Staff')).toBeVisible();
     await expect(staffPanel.getByText(cmNote)).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('button', { name: /^Evaluate$/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Evaluate/ })).toHaveCount(0);
   });
 });

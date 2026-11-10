@@ -950,7 +950,7 @@ export const mockUpdateMyTaskPmEvaluation = async (
   }
 
   const role = editorUserId ? deriveDevRoleFromUserId(editorUserId) : undefined;
-  let layer: 'staff' | 'handoff' = 'staff';
+  let layer: 'staff' | 'handoff' | 'ch' = 'staff';
   try {
     layer = resolveEvaluationWriteLayer(role, tasks[index], payload.layer);
   } catch (error) {
@@ -966,6 +966,20 @@ export const mockUpdateMyTaskPmEvaluation = async (
       handoffCompletionPercent: payload.completionPercent,
       handoffEvaluation: payload.pmEvaluation,
       handoffNote: payload.pmNote,
+      updatedAt: new Date().toISOString(),
+    };
+    const next = [...tasks];
+    next[index] = updated;
+    setMockTasksStore(next);
+    return updated;
+  }
+
+  if (layer === 'ch') {
+    const updated: MyTask = {
+      ...current,
+      chCompletionPercent: payload.completionPercent,
+      chEvaluation: payload.pmEvaluation,
+      chNote: payload.pmNote,
       updatedAt: new Date().toISOString(),
     };
     const next = [...tasks];
