@@ -116,7 +116,9 @@ export const hasReadyBrief = (task: MyTask): boolean => Boolean(task.description
 
 export const isCreativePipelineParent = (task: MyTask): boolean => !task.parentTaskId;
 
-export const isCreativeDeptTask = (task: MyTask): boolean =>
+export const isCreativeDeptTask = (
+  task: Pick<MyTask, 'department' | 'assignDirection' | 'workflowKind'>,
+): boolean =>
   task.department === 'creative' ||
   Boolean(task.department?.startsWith('creative_')) ||
   task.assignDirection === 'creative_department' ||
