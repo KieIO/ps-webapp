@@ -31,6 +31,7 @@ import {
 import { formatCompletionPercentDisplay } from '@/features/tasks/utils/evaluationCompletion';
 import { formatTaskCodeShort, getTaskDeadline } from '@/features/tasks/utils/taskDetail';
 import { isMyTaskDateAtRisk } from '@/features/tasks/utils/taskDeadline';
+import { resolveAssigneePlainLabel } from '@/features/tasks/utils/assigneeDisplay';
 import {
   canEvaluateTaskLayer,
   isCreativeWholeAssigned,
@@ -239,7 +240,13 @@ export function ProjectDetailTaskTable({ tasks, loading, total }: ProjectDetailT
         key: 'assignee',
         width: 200,
         sorter: getMyTaskColumnSorter('staffName'),
-        render: (_, record) => <TaskStaffNameCell staff={record.staff} showAvatarForFirst />,
+        render: (_, record) => (
+          <TaskStaffNameCell
+            staff={record.staff}
+            showAvatarForFirst
+            plainLabel={resolveAssigneePlainLabel(role, record)}
+          />
+        ),
       },
       {
         title: MY_TASK_COLUMN_HEADERS.date,

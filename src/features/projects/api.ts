@@ -149,6 +149,27 @@ export const projectApi = {
     }
   },
 
+  updateSalesName: async (id: string, salesName: string): Promise<Project> => {
+    const normalized = salesName.trim();
+
+    if (env.useProjectsMock) {
+      const project = await mockGetProjectById(id);
+      return ProjectSchema.parse(
+        await mockUpdateProject(id, {
+          ...buildUpdateProjectPayload(project),
+          salesName: normalized,
+        }),
+      );
+    }
+
+    try {
+      const response = await api.patch(`/projects/${id}/sales-name`, { salesName: normalized });
+      return parseProjectResponse(response.data);
+    } catch (error) {
+      return rethrowApiError(error, 'Failed to update sales name');
+    }
+  },
+
   delete: async (id: string, userId?: string): Promise<void> => {
     if (env.useProjectsMock) {
       return mockDeleteProject(id, userId);

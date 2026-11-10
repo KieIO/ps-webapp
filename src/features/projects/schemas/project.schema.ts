@@ -73,6 +73,8 @@ export const ProjectRecordSchema = z.object({
   time: z.number().int().min(1).max(5),
   additionalFactors: z.string(),
   pm: PersonWithCodeSchema,
+  /** Free-text sales person; empty/omit = none. */
+  salesName: z.string().max(255).optional(),
   evaluation: z.string(),
   note: z.string(),
   status: z.enum(PROJECT_STATUSES),
@@ -142,6 +144,8 @@ export const UpdateProjectRequestSchema = z.object({
   time: z.number().int().min(1).max(5),
   additionalFactors: z.string(),
   pm: PersonWithCodeSchema,
+  /** Free-text sales person; empty string clears. */
+  salesName: z.string().max(255).optional(),
   evaluation: z.string(),
   note: z.string(),
   status: z.enum(PROJECT_STATUSES),

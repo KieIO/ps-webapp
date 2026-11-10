@@ -194,6 +194,7 @@ export const mockCreateProject = async (
     time: payload.time,
     additionalFactors: payload.additionalFactors,
     pm: payload.pm,
+    salesName: payload.salesName?.trim() ?? '',
     evaluation: payload.evaluation,
     note: payload.note,
     status: payload.status,
@@ -250,6 +251,8 @@ export const mockUpdateProject = async (
     time: payload.time,
     additionalFactors: payload.additionalFactors,
     pm: payload.pm,
+    salesName:
+      payload.salesName !== undefined ? payload.salesName.trim() : (current.salesName ?? ''),
     evaluation: payload.evaluation,
     note: payload.note,
     status: payload.status,

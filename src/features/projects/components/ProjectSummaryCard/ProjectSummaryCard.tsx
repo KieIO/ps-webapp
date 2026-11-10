@@ -94,6 +94,10 @@ export function ProjectSummaryCard({
         <div>
           <dl className={styles.metaList}>
             <div className={styles.metaItem}>
+              <dt className={styles.metaLabel}>Sales</dt>
+              <dd className={styles.metaValue}>{project.salesName?.trim() || '—'}</dd>
+            </div>
+            <div className={styles.metaItem}>
               <dt className={styles.metaLabel}>PM in Charge</dt>
               <dd className={styles.metaValue}>
                 <UserNameLink name={project.pm.name} userId={project.pm.userId} showAvatar />

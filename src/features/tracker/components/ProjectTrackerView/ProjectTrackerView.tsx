@@ -23,6 +23,7 @@ import {
   MilestoneQuickModal,
   type MilestoneQuickTarget,
 } from '../MilestoneQuickModal/MilestoneQuickModal';
+import { TrackerSalesCell } from '../TrackerSalesCell/TrackerSalesCell';
 import {
   TRACKER_ADMIN_DAY_ZOOM_DEFAULT,
   TRACKER_ADMIN_DAY_ZOOM_OPTIONS,
@@ -448,6 +449,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
               >
                 <div className={styles.leftHeaderTop}>
                   <div className={styles.leftHeaderName}>{PROJECT_NAME_COLUMN_LABEL}</div>
+                  <div className={styles.leftHeaderSales}>Sales</div>
                   <div className={styles.leftHeaderTeam}>PM/CM</div>
                   <div className={styles.leftHeaderSlides}>Total</div>
                 </div>
@@ -492,6 +494,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                           className={styles.projectNameLink}
                         />
                       </div>
+                      <TrackerSalesCell project={project} />
                       <div className={styles.teamCell}>
                         <div className={styles.pmName}>{project.pm}</div>
                         {(project.cm ?? []).map((name) => (
@@ -742,6 +745,7 @@ function EmptyProjectRow({ rowIndex, top }: EmptyProjectRowProps) {
       aria-hidden
     >
       <div className={styles.nameCell} />
+      <div className={styles.salesCellEmpty} />
       <div className={styles.teamCell} />
       <div className={styles.slidesCell} />
     </div>

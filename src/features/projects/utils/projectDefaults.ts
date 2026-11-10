@@ -36,6 +36,7 @@ export const withProjectListDefaults = (
     >,
 ): Project => ({
   ...record,
+  salesName: record.salesName ?? '',
   taskCount: record.taskCount ?? 0,
   members: record.members ?? EMPTY_MEMBERS,
   totalSlides: record.totalSlides ?? 0,

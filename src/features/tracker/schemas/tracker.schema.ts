@@ -32,6 +32,8 @@ export const TrackerProjectSchema = z.object({
   id: z.string(),
   name: z.string(),
   pm: z.string(),
+  /** Free-text sales person; older payloads omit → treat as empty. */
+  salesName: z.string().optional(),
   /** Creative Manager names from tasks.creative_manager_id on the project. */
   cm: z.array(z.string()).optional().default([]),
   team: z.array(z.string()),

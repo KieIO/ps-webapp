@@ -96,6 +96,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
         time: project.time,
         additionalFactors: project.additionalFactors,
         pm: { ...project.pm },
+        salesName: project.salesName ?? '',
         evaluation: project.evaluation,
         note: project.note,
         status: project.status,
@@ -169,6 +170,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
       time: values.time,
       additionalFactors: values.additionalFactors ?? '',
       pm,
+      salesName: values.salesName?.trim() ?? '',
       evaluation: values.evaluation ?? '',
       note: values.note ?? '',
       status: values.status,
@@ -323,6 +325,13 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
               />
             </Form.Item>
           </div>
+          <Form.Item
+            name="salesName"
+            label="Sales"
+            extra="Optional — tên sales person của project (text tự do)"
+          >
+            <Input maxLength={255} allowClear placeholder="e.g. Nguyen Van A" />
+          </Form.Item>
         </section>
 
         <section className={styles.section}>

@@ -29,6 +29,7 @@ import {
   getMyTaskTableScrollWidth,
 } from '../../utils/myTaskColumns';
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
+import { resolveAssigneePlainLabel } from '../../utils/assigneeDisplay';
 import { getMyTaskCompletionProgressStatus, isMyTaskDateAtRisk } from '../../utils/taskDeadline';
 import { getTaskDeadline } from '../../utils/taskDetail';
 import type { CmProjectTaskScope } from '../../utils/taskListVisibility';
@@ -271,7 +272,12 @@ export function MyTaskTable({
           showAvatar
         />
       ),
-      renderStaffName: (record) => <TaskStaffNameCell staff={record.staff} />,
+      renderStaffName: (record) => (
+        <TaskStaffNameCell
+          staff={record.staff}
+          plainLabel={resolveAssigneePlainLabel(role, record)}
+        />
+      ),
       renderDate,
       renderCompletion,
       renderUrgency: (urgency) => <ProjectUrgencyBadge urgency={urgency} />,

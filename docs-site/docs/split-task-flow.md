@@ -124,7 +124,7 @@ Thứ tự tạo quyết định mã `…S1`, `…S2`, …. Nếu sau này hệ 
 
 :::note[Xem task con trên project]
 
-Inbox **Project Tasks** (không lọc một project) với role PM / Head / Admin thường **chỉ hiện task cha**. Muốn thấy đủ task con và QA: mở **chi tiết project → tab Tasks**, hoặc lọc đúng tên project trên Project Tasks. Tracker vẫn hiện ô theo **ngày task**. Chi tiết: [Task trên project và Tracker](/project-task-views).
+Inbox **Project Tasks** (không lọc một project) với role PM / Head / Admin thường **chỉ hiện task cha**. Muốn thấy đủ task con và QA: mở **chi tiết project → tab Tasks** (Admin / Head / Creative Head), hoặc lọc đúng tên project trên Project Tasks. **PM** trên tab Tasks chi tiết project **không** hiện **Task nhỏ** (chỉ task cha / revision). Tracker vẫn hiện ô theo **ngày task**. Chi tiết: [Task trên project và Tracker](/project-task-views).
 
 :::
 

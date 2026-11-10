@@ -11,6 +11,7 @@ import { TaskDetailActions } from '../TaskDetailActions/TaskDetailActions';
 import { TaskNameBadge } from '../TaskNameBadge/TaskNameBadge';
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
 import { MY_TASK_COLUMN_HEADERS } from '../../constants';
+import { resolveAssigneePlainLabel } from '../../utils/assigneeDisplay';
 import { formatTaskDateTime } from '../../utils/taskDates';
 import {
   TASK_CATEGORY_DEPARTMENT_LABELS,
@@ -235,7 +236,11 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
         <div className={styles.metaItem}>
           <p className={styles.metaLabel}>Assignee</p>
           <p className={styles.metaValue}>
-            <TaskStaffNameCell staff={task.staff} showAvatarForFirst />
+            <TaskStaffNameCell
+              staff={task.staff}
+              showAvatarForFirst
+              plainLabel={resolveAssigneePlainLabel(role, task)}
+            />
           </p>
         </div>
 

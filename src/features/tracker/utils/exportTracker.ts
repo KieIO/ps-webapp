@@ -4,10 +4,11 @@ import type { TrackerProject } from '../schemas/tracker.schema';
 import { formatTrackerTotal } from './formatTrackerTotal';
 
 export const exportTrackerToCsv = (projects: TrackerProject[], monthKey?: string): void => {
-  const headers = ['Project', 'PM/CM', 'Team', 'Total'];
+  const headers = ['Project', 'Sales', 'PM/CM', 'Team', 'Total'];
   void monthKey;
   const rows = projects.map((project) => [
     project.name,
+    project.salesName?.trim() ?? '',
     [project.pm, ...(project.cm ?? [])].filter(Boolean).join(' / '),
     project.team.join(', '),
     formatTrackerTotal(project),

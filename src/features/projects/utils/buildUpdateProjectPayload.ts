@@ -17,6 +17,7 @@ export const buildUpdateProjectPayload = (
   time: project.time,
   additionalFactors: project.additionalFactors,
   pm: project.pm,
+  salesName: project.salesName ?? '',
   evaluation: project.evaluation,
   note: project.note,
   status: project.status,

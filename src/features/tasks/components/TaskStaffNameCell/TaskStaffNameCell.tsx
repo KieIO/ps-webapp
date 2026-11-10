@@ -7,9 +7,19 @@ import styles from './TaskStaffNameCell.module.scss';
 interface TaskStaffNameCellProps {
   staff: TaskAssignee[];
   showAvatarForFirst?: boolean;
+  /** When set, show plain text (no avatar / user links). */
+  plainLabel?: string | null;
 }
 
-export function TaskStaffNameCell({ staff, showAvatarForFirst = false }: TaskStaffNameCellProps) {
+export function TaskStaffNameCell({
+  staff,
+  showAvatarForFirst = false,
+  plainLabel,
+}: TaskStaffNameCellProps) {
+  if (plainLabel) {
+    return <span className={styles.plain}>{plainLabel}</span>;
+  }
+
   if (!staff.length) {
     return <span className={styles.empty}>{UNASSIGNED_STAFF_LABEL}</span>;
   }

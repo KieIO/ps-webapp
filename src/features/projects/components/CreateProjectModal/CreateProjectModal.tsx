@@ -73,6 +73,7 @@ const buildDefaultValues = (initialName?: string): CreateProjectFormValues => ({
   time: 2,
   additionalFactors: '',
   pm: emptyPerson(),
+  salesName: '',
   note: '',
   plannedSlides: null,
   milestones: [],
@@ -196,6 +197,7 @@ export function CreateProjectModal({
       time: values.time,
       additionalFactors: values.additionalFactors ?? '',
       pm,
+      salesName: values.salesName?.trim() ?? '',
       note: values.note ?? '',
       urgency: values.urgency,
       plannedSlides: values.plannedSlides ?? null,
@@ -326,6 +328,13 @@ export function CreateProjectModal({
               />
             </Form.Item>
           </div>
+          <Form.Item
+            name="salesName"
+            label="Sales"
+            extra="Optional — tên sales person của project (text tự do)"
+          >
+            <Input maxLength={255} allowClear placeholder="e.g. Nguyen Van A" />
+          </Form.Item>
         </section>
 
         <section className={styles.section}>

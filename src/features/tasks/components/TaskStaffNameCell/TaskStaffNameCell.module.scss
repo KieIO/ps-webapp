@@ -12,3 +12,10 @@
 .empty {
   color: var(--color-text-tertiary);
 }
+
+.plain {
+  color: inherit;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.4;
+}

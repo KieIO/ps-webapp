@@ -12,14 +12,15 @@ Trang này gom vài quy tắc dễ lệch khi đối chiếu **Project Tracker**
 
 ## 1. Hai chế độ danh sách task
 
-| Ngữ cảnh                                                                                        | Ai thường xem                  | Hiện gì                                                                                              |
-| ----------------------------------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| **Danh sách tổng** (Project Tasks, không chọn một project)                                      | PM, Creative Head, Head, Admin | Chủ yếu **task cha** (gói giao Creative). Task con sau khi chia nhỏ (kể cả QA) được ẩn để inbox gọn. |
-| **Theo một project** (chi tiết project → tab Tasks, hoặc Project Tasks đã lọc đúng tên project) | Cùng các role trên             | **Task cha và task con**, kể cả QA. Khớp các ô task trên Tracker của project đó.                     |
+| Ngữ cảnh                                                                                        | Ai thường xem                  | Hiện gì                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Danh sách tổng** (Project Tasks, không chọn một project)                                      | PM, Creative Head, Head, Admin | Chủ yếu **task cha** (gói giao Creative). Task con sau khi chia nhỏ (kể cả QA) được ẩn để inbox gọn.                                                                                                                                            |
+| **Theo một project** (chi tiết project → tab Tasks, hoặc Project Tasks đã lọc đúng tên project) | Creative Head, Head, Admin     | **Task cha và task con**, kể cả QA. Khớp các ô task trên Tracker của project đó.                                                                                                                                                                |
+| **Theo một project** (chi tiết project → tab Tasks)                                             | **PM**                         | **Task cha** (kể cả badge **Đã chia nhỏ**) và **revision**. **Không** hiện **Task nhỏ** (phần CM giao Staff), để PM theo dõi gói handoff. Cột **Assignee** với task Creative hiện plain text **Creative Department** (không link tên Staff/CM). |
 
 Staff và Creative Manager vốn đã thấy phần việc được giao cho mình (kể cả task con), không phụ thuộc bảng trên.
 
-**Ví dụ:** Project `christmas` trên Tracker có ô **QA** và **34 Slides**. Mở chi tiết project (hoặc Project Tasks lọc `christmas`) sẽ thấy các dòng đó. Mở Project Tasks **không** lọc project thì Admin / PM có thể không thấy các task con đó trong inbox tổng.
+**Ví dụ:** Project `christmas` trên Tracker có ô **QA** và **34 Slides**. Admin / Head / Creative Head mở chi tiết project (hoặc Project Tasks lọc `christmas`) sẽ thấy các dòng task con đó. **PM** mở cùng tab Tasks chỉ thấy task cha / revision, không thấy badge **Task nhỏ**. Mở Project Tasks **không** lọc project thì oversight thường chỉ thấy task cha.
 
 ---
 
@@ -50,7 +51,7 @@ Nếu project có **Planned slides** (nhập lúc tạo / sửa project — số
 
 1. Đang mở **đúng project** (chi tiết project hoặc filter Project trên Project Tasks)?
 2. Đang so **tháng Tracker** với **ngày task**, không chỉ cột Deadline?
-3. Ô trên Tracker là **task con / QA** không? Cần chế độ theo project (mục 1), không phải inbox tổng.
+3. Ô trên Tracker là **task con / QA** không? Cần chế độ theo project (mục 1), không phải inbox tổng. Nếu đang đăng nhập **PM**, tab Tasks chi tiết project cố ý ẩn **Task nhỏ** — đối chiếu bằng Admin / Head / Creative Head hoặc mở đúng task con từ Tracker.
 4. Tải lại trang hoặc đợi vài giây nếu vừa tạo hoặc vừa chia task (danh sách có thể chưa kịp cập nhật).
 
 Nếu cả bốn bước vẫn lệch, ghi lại mã task / ngày ô / role đang đăng nhập để team kỹ thuật lần theo API.
