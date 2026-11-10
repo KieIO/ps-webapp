@@ -1,6 +1,6 @@
 import { CloseOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { useUpdateProjectSalesName } from '@/features/projects/hooks/useUpdateProjectSalesName';
 import { usePermission } from '@/shared/hooks/usePermission';
 import type { TrackerProject } from '../../schemas/tracker.schema';
@@ -56,9 +56,15 @@ export function TrackerSalesCell({ project }: TrackerSalesCellProps) {
     }
   };
 
+  const stopRowNav = (event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   if (editing && canEdit) {
     return (
-      <div className={styles.cell}>
+      <div className={styles.subtitle} onClick={stopRowNav} onMouseDown={stopRowNav}>
+        <span className={styles.prefix}>Sales:</span>
         <input
           ref={inputRef}
           className={styles.input}
@@ -75,41 +81,61 @@ export function TrackerSalesCell({ project }: TrackerSalesCellProps) {
   }
 
   if (!canEdit) {
+    if (!currentValue) return null;
     return (
-      <div className={styles.cell}>
-        <span className={classNames(styles.value, !currentValue && styles.empty)}>
-          {currentValue || '—'}
-        </span>
+      <div className={styles.subtitle}>
+        <span className={styles.value}>Sales: {currentValue}</span>
+      </div>
+    );
+  }
+
+  if (!currentValue) {
+    return (
+      <div
+        className={classNames(styles.subtitle, styles.addOnly, isUpdating && styles.updating)}
+        data-tracker-sales-add=""
+      >
+        <button
+          type="button"
+          className={styles.addBtn}
+          title="Thêm Sales"
+          aria-label="Thêm Sales"
+          onClick={(event) => {
+            stopRowNav(event);
+            setEditing(true);
+          }}
+        >
+          + Sales
+        </button>
       </div>
     );
   }
 
   return (
-    <div className={classNames(styles.cell, styles.editable, isUpdating && styles.updating)}>
+    <div
+      className={classNames(styles.subtitle, styles.editable, isUpdating && styles.updating)}
+      onClick={stopRowNav}
+      onMouseDown={stopRowNav}
+    >
       <button
         type="button"
-        className={classNames(styles.trigger, !currentValue && styles.triggerEmpty)}
+        className={styles.valueBtn}
+        title="Sửa Sales"
+        aria-label={`Sales: ${currentValue}`}
         onClick={() => setEditing(true)}
-        title={currentValue ? 'Sửa Sales' : 'Thêm Sales'}
-        aria-label={currentValue ? `Sales: ${currentValue}` : 'Thêm Sales'}
       >
-        {currentValue || 'Thêm sales'}
+        Sales: {currentValue}
       </button>
-      {currentValue ? (
-        <button
-          type="button"
-          className={styles.clearBtn}
-          title="Xóa Sales"
-          aria-label="Xóa Sales"
-          disabled={isUpdating}
-          onClick={(event) => {
-            event.stopPropagation();
-            mutate({ id: project.id, salesName: '' });
-          }}
-        >
-          <CloseOutlined />
-        </button>
-      ) : null}
+      <button
+        type="button"
+        className={styles.clearBtn}
+        title="Xóa Sales"
+        aria-label="Xóa Sales"
+        disabled={isUpdating}
+        onClick={() => mutate({ id: project.id, salesName: '' })}
+      >
+        <CloseOutlined />
+      </button>
     </div>
   );
 }

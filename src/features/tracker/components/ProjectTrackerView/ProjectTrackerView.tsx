@@ -449,7 +449,6 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
               >
                 <div className={styles.leftHeaderTop}>
                   <div className={styles.leftHeaderName}>{PROJECT_NAME_COLUMN_LABEL}</div>
-                  <div className={styles.leftHeaderSales}>Sales</div>
                   <div className={styles.leftHeaderTeam}>PM/CM</div>
                   <div className={styles.leftHeaderSlides}>Total</div>
                 </div>
@@ -488,13 +487,15 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                         <span className={styles.rowIndex}>
                           {String(rowIndex + 1).padStart(2, '0')}.
                         </span>
-                        <ProjectNameLink
-                          name={project.name}
-                          projectId={project.id}
-                          className={styles.projectNameLink}
-                        />
+                        <div className={styles.nameStack}>
+                          <ProjectNameLink
+                            name={project.name}
+                            projectId={project.id}
+                            className={styles.projectNameLink}
+                          />
+                          <TrackerSalesCell project={project} />
+                        </div>
                       </div>
-                      <TrackerSalesCell project={project} />
                       <div className={styles.teamCell}>
                         <div className={styles.pmName}>{project.pm}</div>
                         {(project.cm ?? []).map((name) => (
@@ -745,7 +746,6 @@ function EmptyProjectRow({ rowIndex, top }: EmptyProjectRowProps) {
       aria-hidden
     >
       <div className={styles.nameCell} />
-      <div className={styles.salesCellEmpty} />
       <div className={styles.teamCell} />
       <div className={styles.slidesCell} />
     </div>

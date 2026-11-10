@@ -6,7 +6,7 @@ slug: /tracker/team
 
 # Xem thông tin Sale, PM, CM trên thanh project
 
-Trên mỗi hàng Project Tracker, cột team hiển thị người phụ trách gắn với project.
+Trên mỗi hàng Project Tracker, cột team và tên project hiển thị người phụ trách gắn với project.
 
 Liên quan: [Danh sách trên timeline](/tracker)
 
@@ -14,9 +14,7 @@ Liên quan: [Danh sách trên timeline](/tracker)
 
 ## 1. Hiện gì trên hàng project?
 
-Cột cạnh tên project hiện:
-
-- **Sales** — tên sales person (text tự do, có thể trống)
+- **Tên project** — link mở project; nếu đã có Sales thì hiện dòng phụ `Sales: …` ngay dưới tên
 - **PM** — tên Project Manager của project
 - **CM** — danh sách Creative Manager gắn với project / task (có thể nhiều dòng)
 
@@ -26,9 +24,9 @@ Cột cạnh tên project hiện:
 
 Người có quyền `EDIT_PROJECT` hoặc `EDIT_TRACKER_PROJECT` (PM / Head / Admin):
 
-1. Click ô **Sales** (hoặc placeholder _Thêm sales_) → nhập tên → **Enter** hoặc click ra ngoài để lưu.
-2. **Esc** để hủy khi đang sửa.
-3. Hover ô có tên → click **×** để xóa (để trống).
+1. **Chưa có Sales:** hover ô tên project → hiện `+ Sales` → click để nhập → **Enter** hoặc click ra ngoài để lưu.
+2. **Đã có:** click dòng `Sales: …` dưới tên để sửa; **Esc** để hủy.
+3. Hover dòng Sales → click **×** để xóa.
 
 Cũng có thể nhập Sales trong form **Create / Edit project** (mục People).
 
@@ -36,12 +34,12 @@ Cũng có thể nhập Sales trong form **Create / Edit project** (mục People)
 
 ## 3. Mục đích
 
-Nhìn nhanh ai đang phụ trách project khi duyệt timeline, không cần mở form Edit Project.
+Nhìn nhanh ai đang phụ trách project khi duyệt timeline, không cần mở form Edit Project. Sales chỉ hiện khi đã gán — không chiếm cột riêng.
 
 ---
 
 ## 4. Tóm tắt
 
-1. Hàng project → cột **Sales** + **PM/CM**.
+1. Sales là subtitle dưới tên project (`Sales: Tên`); trống thì không hiện.
 2. Sales là text tự do (không bắt buộc gắn user hệ thống).
-3. Gán PM / team làm ở quản lý Projects / Users.
+3. Cột PM/CM chỉ hiện delivery owners; gán PM / team làm ở quản lý Projects / Users.
