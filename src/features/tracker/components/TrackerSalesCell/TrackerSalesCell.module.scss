@@ -8,7 +8,12 @@
 }
 
 .addOnly {
-  /* Revealed by .nameCell:hover in ProjectTrackerView — keeps empty Tracker clean. */
+  /* Out of flow until hover — avoids reserving space under every empty name. */
+  position: absolute;
+  left: 0;
+  top: calc(100% + 1px);
+  z-index: 1;
+  margin-top: 0;
   opacity: 0;
   pointer-events: none;
 }

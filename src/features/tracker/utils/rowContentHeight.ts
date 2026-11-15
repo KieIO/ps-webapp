@@ -9,6 +9,8 @@ const NAME_CONTENT_WIDTH = 148;
 const PM_CONTENT_WIDTH = 106;
 const CELL_VERTICAL_PADDING = 12;
 const NAME_LINE_HEIGHT = 16.8;
+const SALES_LINE_HEIGHT = 12.6;
+const SALES_GAP = 2;
 const PM_LINE_HEIGHT = 14.4;
 const CM_LINE_HEIGHT = 13.2;
 const CM_GAP = 2;
@@ -30,7 +32,11 @@ export function estimateTrackerLeftRowHeight(project: TrackerProject): number {
     0,
   );
 
-  const nameHeight = CELL_VERTICAL_PADDING + nameLines * NAME_LINE_HEIGHT;
+  const hasSales = Boolean(project.salesName?.trim());
+  const nameHeight =
+    CELL_VERTICAL_PADDING +
+    nameLines * NAME_LINE_HEIGHT +
+    (hasSales ? SALES_GAP + SALES_LINE_HEIGHT : 0);
   const pmHeight =
     CELL_VERTICAL_PADDING +
     pmLines * PM_LINE_HEIGHT +
