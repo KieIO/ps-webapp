@@ -31,6 +31,7 @@ type ProjectRecord = {
   department?: string;
   status?: string;
   urgency?: string;
+  salesName?: string;
   volume?: number;
   nature?: number;
   time?: number;
@@ -227,10 +228,37 @@ export async function patchProjectUrgency(
   });
 }
 
-export async function fetchTrackerProjects(
+/** PATCH free-text Sales on a project (Tracker subtitle / project form). */
+export async function patchProjectSalesName(
   token: string,
-): Promise<
-  Array<{ id: string; name: string; blocks: Array<{ start: string; end: string; type: string }> }>
+  projectId: string,
+  salesName: string,
+): Promise<Response> {
+  return fetch(`${apiBase}/projects/${projectId}/sales-name`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ salesName }),
+  });
+}
+
+/**
+ * Name stack under a Tracker project title (hosts Sales subtitle / + Sales).
+ * Parent of ProjectNameLink — hover here reveals the add affordance.
+ */
+export function trackerNameStack(page: Page, projectName: string) {
+  return page.getByRole('button', { name: projectName, exact: true }).first().locator('..');
+}
+
+export async function fetchTrackerProjects(token: string): Promise<
+  Array<{
+    id: string;
+    name: string;
+    salesName?: string;
+    blocks: Array<{ start: string; end: string; type: string }>;
+  }>
 > {
   const response = await fetch(`${apiBase}/tracker`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -243,6 +271,7 @@ export async function fetchTrackerProjects(
       projects?: Array<{
         id: string;
         name: string;
+        salesName?: string;
         blocks: Array<{ start: string; end: string; type: string }>;
       }>;
     };

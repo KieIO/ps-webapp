@@ -61,7 +61,7 @@ npm run test:e2e:leave
 # Milestone tracker UI smoke (MS-03/05/09/11/19)
 npm run test:e2e:milestones
 
-# Tracker PM rights + VN dates (TRK-01…05)
+# Tracker PM rights + VN dates + Sales inline (TRK-01…06)
 npm run test:e2e:tracker
 
 # Headed / UI mode
@@ -96,7 +96,7 @@ e2e/
   task-scores/        # Task types & scores UI cases (TSCORE-39–45)
   capacity-formula/        # Capacity formula UI cases (CAP-27–33)
   milestones/              # Tracker milestone UI cases (MS-03/05/09/11/19)
-  tracker/                 # Tracker PM urgency/timeline/VN dates (TRK-01…05)
+  tracker/                 # Tracker PM urgency/timeline/VN dates/Sales (TRK-01…06)
   README.md
 ```
 
@@ -116,6 +116,7 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, depart
 | PM-11 / PM-13 Archive + Unarchive click        | `projects/pm-11-archive-unarchive-click.spec.ts`           |
 | PM-24 PM Archive/Delete hidden                 | `projects/pm-24-pm-archive-hidden.spec.ts`                 |
 | PM-48 Evaluate project modal                   | `projects/pm-48-evaluate-project-modal.spec.ts`            |
+| PM-49 Sales field on Edit project modal        | `projects/pm-49-sales-edit-modal.spec.ts`                  |
 | PM-52 Evaluate hidden (Employee)               | `projects/pm-52-evaluate-hidden-by-role.spec.ts`           |
 | PM-53 Head My Tasks → project eval             | `tasks/pm-53-head-edit-project-evaluation.spec.ts`         |
 | TASK-37/56 Project assign + split list hide    | `tasks/task-37-56-project-assign-visibility.spec.ts`       |
@@ -166,3 +167,4 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, depart
 | TRK-02/05 PM Edit timeline + YYYY-MM-DD body   | `tracker/trk-02-05-pm-edit-timeline-dateonly.spec.ts`      |
 | TRK-03 PM Add-milestone chrome on Tracker      | `tracker/trk-03-pm-milestone-chrome.spec.ts`               |
 | TRK-04 VN calendar bar end date via /tracker   | `tracker/trk-04-vn-timeline-bar.spec.ts`                   |
+| TRK-06 Sales add/edit/clear/Esc + /tracker API | `tracker/trk-06-sales-inline-on-tracker.spec.ts`           |
