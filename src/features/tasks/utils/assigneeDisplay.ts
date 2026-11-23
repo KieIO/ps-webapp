@@ -96,7 +96,7 @@ export const resolveAssignedByDisplay = (
 
   const assigned = task.assignedBy;
   const name = assigned?.name?.trim();
-  if (!name) return null;
+  if (!assigned || !name) return null;
   return {
     name,
     userId: assigned.userId,

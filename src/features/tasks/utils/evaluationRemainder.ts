@@ -41,7 +41,7 @@ export const buildEvaluationRemainderAutoNote = (input: {
   `CM chấp nhận ${Math.round(input.acceptedQuantity)}/${Math.round(input.originalAssignedQuantity)} · đã tạo ${input.remainderTaskCode} (${Math.round(input.remainderQuantity)})`;
 
 export const hasCmEvaluation = (
-  task: Pick<MyTask, 'completionPercent' | 'pmEvaluation'>,
+  task: Partial<Pick<MyTask, 'completionPercent' | 'pmEvaluation'>>,
 ): boolean => task.completionPercent != null || Boolean(task.pmEvaluation?.trim());
 
 /**

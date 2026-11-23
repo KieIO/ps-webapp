@@ -59,16 +59,15 @@ export const TASK_SUMMARY_BUCKET_OPTIONS = TASK_SUMMARY_BUCKET_ORDER.map((value)
  * Status picker (Update status / Edit / detail chips) — no «Cần đánh giá», no «Đã từ chối».
  * Hủy → `cancelled`. Từ chối chỉ qua CTA → `decline`.
  */
-export const TASK_STATUS_PICKER_BUCKET_ORDER: readonly TaskSummaryBucket[] = [
+export const TASK_STATUS_PICKER_BUCKET_ORDER = [
   'inProgress',
   'cancelled',
   'completed',
-] as const;
+] as const satisfies readonly TaskSummaryBucket[];
 
-export const TASK_STATUS_PICKER_LABELS: Record<
-  (typeof TASK_STATUS_PICKER_BUCKET_ORDER)[number],
-  string
-> = {
+export type TaskStatusPickerBucket = (typeof TASK_STATUS_PICKER_BUCKET_ORDER)[number];
+
+export const TASK_STATUS_PICKER_LABELS: Record<TaskStatusPickerBucket, string> = {
   inProgress: TASK_SUMMARY_BUCKET_LABELS.inProgress,
   cancelled: TASK_SUMMARY_BUCKET_LABELS.cancelled,
   completed: TASK_SUMMARY_BUCKET_LABELS.completed,
@@ -99,9 +98,11 @@ const EMPTY_SUMMARY: TaskConfirmationSummary = {
   completed: 0,
 };
 
-export const resolveTaskSummaryBucket = (
-  task: Pick<MyTask, 'staffConfirmation' | 'completionPercent' | 'pmEvaluation'>,
-): TaskSummaryBucket => {
+/** Status + optional evaluate fields (tests / partial rows may omit scores). */
+export type TaskSummaryInput = Pick<MyTask, 'staffConfirmation'> &
+  Partial<Pick<MyTask, 'completionPercent' | 'pmEvaluation'>>;
+
+export const resolveTaskSummaryBucket = (task: TaskSummaryInput): TaskSummaryBucket => {
   switch (task.staffConfirmation) {
     case 'not_updated':
     case 'confirmed':
@@ -123,9 +124,7 @@ export const resolveTaskSummaryBucket = (
  * - declined → Đang làm (từ chối không phải option Hủy)
  * - cancelled → Hủy
  */
-export const resolveTaskStatusPickerBucket = (
-  task: Pick<MyTask, 'staffConfirmation' | 'completionPercent' | 'pmEvaluation'>,
-): TaskSummaryBucket => {
+export const resolveTaskStatusPickerBucket = (task: TaskSummaryInput): TaskSummaryBucket => {
   if (task.staffConfirmation === 'decline') return 'inProgress';
   if (task.staffConfirmation === 'cancelled') return 'cancelled';
   const bucket = resolveTaskSummaryBucket(task);
@@ -133,7 +132,7 @@ export const resolveTaskStatusPickerBucket = (
 };
 
 export const computeTaskConfirmationSummary = (
-  tasks: Pick<MyTask, 'staffConfirmation' | 'completionPercent' | 'pmEvaluation'>[],
+  tasks: TaskSummaryInput[],
 ): TaskConfirmationSummary => {
   if (tasks.length === 0) return EMPTY_SUMMARY;
 
@@ -157,7 +156,7 @@ export type BucketToStatusResult =
 export const bucketToStaffConfirmation = (
   bucket: TaskSummaryBucket,
   _role?: Role,
-  _current?: Pick<MyTask, 'staffConfirmation' | 'completionPercent' | 'pmEvaluation'>,
+  _current?: TaskSummaryInput,
 ): BucketToStatusResult => {
   void _role;
   void _current;

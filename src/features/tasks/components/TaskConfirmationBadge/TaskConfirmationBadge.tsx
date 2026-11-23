@@ -22,8 +22,8 @@ export function TaskConfirmationBadge({
 }: TaskConfirmationBadgeProps) {
   const bucket = resolveTaskSummaryBucket({
     staffConfirmation: status,
-    completionPercent,
-    pmEvaluation,
+    completionPercent: completionPercent ?? undefined,
+    pmEvaluation: pmEvaluation ?? undefined,
   });
 
   return (
