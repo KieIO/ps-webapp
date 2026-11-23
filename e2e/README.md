@@ -46,7 +46,7 @@ npm run test:e2e:departments
 # Title-mgmt UI smoke (TITLE-35–44)
 npm run test:e2e:titles
 
-# Client-mgmt UI smoke (CLIENT-41, CLIENT-42, CLIENT-43)
+# Client-mgmt UI smoke (CLIENT-41–44)
 npm run test:e2e:clients
 
 # Task scores UI smoke (TSCORE-39–45)
@@ -92,7 +92,7 @@ e2e/
   projects/           # Project-mgmt UI cases (PM-31, 40, 41, …)
   departments/        # Dept-mgmt UI cases (DEPT-30–36)
   titles/             # Title-mgmt UI cases (TITLE-35–44, …)
-  clients/            # Client-mgmt UI cases (CLIENT-41, 42, 43, …)
+  clients/            # Client-mgmt UI cases (CLIENT-41–44, …)
   task-scores/        # Task types & scores UI cases (TSCORE-39–45)
   capacity-formula/        # Capacity formula UI cases (CAP-27–33)
   milestones/              # Tracker milestone UI cases (MS-03/05/09/11/19)
@@ -119,6 +119,11 @@ Add new UM UI specs under `e2e/um/`, project specs under `e2e/projects/`, depart
 | PM-49 Sales field on Edit project modal        | `projects/pm-49-sales-edit-modal.spec.ts`                  |
 | PM-52 Evaluate hidden (Employee)               | `projects/pm-52-evaluate-hidden-by-role.spec.ts`           |
 | PM-53 Head My Tasks → project eval             | `tasks/pm-53-head-edit-project-evaluation.spec.ts`         |
+| PM-54 PM Edit: difficulty locked / end date OK | `projects/pm-54-pm-edit-difficulty-locked.spec.ts`         |
+| CLIENT-41 Sidebar Clients by role              | `clients/client-41-sidebar-clients.spec.ts`                |
+| CLIENT-42 Create client button                 | `clients/client-42-create-button.spec.ts`                  |
+| CLIENT-43 PM settings clients blocked          | `clients/client-43-pm-settings-blocked.spec.ts`            |
+| CLIENT-44 Knowledge Add note by role           | `clients/client-44-knowledge-note-by-role.spec.ts`         |
 | TASK-37/56 Project assign + split list hide    | `tasks/task-37-56-project-assign-visibility.spec.ts`       |
 | TASK-47/50/51/57 Creative assign UI pipe       | `tasks/task-47-57-creative-assign-ui.spec.ts`              |
 | TASK-48/49/52/58 Assign guards (+ TASK-38 ~)   | `tasks/task-48-58-assign-guards.spec.ts`                   |

@@ -42,14 +42,17 @@ export const PERMISSIONS = {
   // Create / edit project records: Department Head (+ Admin) only.
   CREATE_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
   EDIT_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
-  // Tracker fields (urgency, start/end timeline): PM + Head + Admin (not client CRUD).
+  // PM allowlist on Edit Project: endDate, plannedSlides, status, note, milestones
+  // (+ dedicated urgency/sales endpoints). Not difficulty / full registry CRUD.
   EDIT_TRACKER_PROJECT: [ROLES.PM, ROLES.HEAD, ROLES.ADMIN],
   ARCHIVE_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
   DELETE_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
   CREATE_TASK: [ROLES.PM, ROLES.ADMIN],
   ASSIGN_TASK: [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
   REVIEW_CREATIVE_TASK: [ROLES.CREATIVE_HEAD],
-  // CM is scoped (assignee / CM ownership / assigned-by) — not org-wide.
+  // CH/Head/Admin: org-wide inbox. PM keeps this flag for oversight UX (no default
+  // "today" filter), but API scopes PM to projects where they are pm_id/handover.
+  // CM is ownership-scoped — not org-wide.
   VIEW_ALL_TASKS: [ROLES.PM, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
   EVALUATE_TASK: [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
 
@@ -105,6 +108,14 @@ export const PERMISSIONS = {
   MANAGE_TITLES: [ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
   MANAGE_DEPARTMENTS: [ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
   MANAGE_CLIENTS: [ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
+  // Client Knowledge notes: add/edit/delete. View uses MANAGE_PROJECTS (any project viewer).
+  EDIT_CLIENT_NOTE: [
+    ROLES.PM,
+    ROLES.CREATIVE_MANAGER,
+    ROLES.CREATIVE_HEAD,
+    ROLES.HEAD,
+    ROLES.ADMIN,
+  ],
   MANAGE_TASK_SCORES: [ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
   VIEW_AUDIT_LOG: [ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
 } as const;

@@ -3,9 +3,9 @@ import { DownloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
 import { FilterSection } from '@/shared/ui/FilterSection/FilterSection';
-import { CONFIRMATION_OPTIONS } from '../../constants';
 import { useMyTaskProjectOptions, useMyTaskStaffNameOptions } from '../../hooks/useMyTaskList';
 import type { MyTaskListFilters, TaskCategory } from '../../schemas/task.schema';
+import { TASK_SUMMARY_BUCKET_OPTIONS } from '../../utils/taskConfirmationSummary';
 import { todayWorkDate } from '../../utils/taskWorkDate';
 import styles from './MyTaskFilters.module.scss';
 
@@ -117,16 +117,18 @@ export function MyTaskFilters({
         ) : null}
 
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="my-task-confirmation-filter">
+          <label className={styles.label} htmlFor="my-task-status-bucket-filter">
             Trạng thái
           </label>
           <Select
-            id="my-task-confirmation-filter"
-            placeholder="All statuses"
+            id="my-task-status-bucket-filter"
+            placeholder="Tất cả trạng thái"
             allowClear
-            value={filters.confirmation}
-            onChange={(value) => onChange({ ...filters, confirmation: value })}
-            options={[...CONFIRMATION_OPTIONS]}
+            value={filters.statusBucket}
+            onChange={(value) =>
+              onChange({ ...filters, statusBucket: value, confirmation: undefined })
+            }
+            options={[...TASK_SUMMARY_BUCKET_OPTIONS]}
             className={styles.select}
           />
         </div>

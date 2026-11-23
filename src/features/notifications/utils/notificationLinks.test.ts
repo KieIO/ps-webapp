@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ROUTES } from '@/config/constants';
+import { ROLES } from '@/config/permissions';
 import { getNotificationPath } from './notificationLinks';
 import type { Notification } from '../schemas/notification.schema';
 
@@ -14,7 +15,7 @@ const base = (overrides: Partial<Notification>): Notification => ({
 });
 
 describe('getNotificationPath', () => {
-  it('routes creative handoff to Creative queue', () => {
+  it('routes creative handoff to Creative queue for CH/CM/Admin', () => {
     expect(
       getNotificationPath(
         base({
@@ -22,11 +23,12 @@ describe('getNotificationPath', () => {
           refType: 'task',
           refId: 'task-123',
         }),
+        ROLES.CREATIVE_HEAD,
       ),
     ).toBe(ROUTES.CREATIVE_REVIEW);
   });
 
-  it('routes creative CM assign to Creative queue (not task detail)', () => {
+  it('routes creative CM assign to Creative Queue for CM (not task detail)', () => {
     expect(
       getNotificationPath(
         base({
@@ -34,8 +36,32 @@ describe('getNotificationPath', () => {
           refType: 'task',
           refId: 'task-456',
         }),
+        ROLES.CREATIVE_MANAGER,
       ),
     ).toBe(ROUTES.CREATIVE_REVIEW);
+  });
+
+  it('routes creative queue notices to task detail for PM (no Creative Queue access)', () => {
+    expect(
+      getNotificationPath(
+        base({
+          type: 'task_creative_handoff',
+          refType: 'task',
+          refId: 'task-123',
+        }),
+        ROLES.PM,
+      ),
+    ).toContain('task-123');
+    expect(
+      getNotificationPath(
+        base({
+          type: 'task_creative_cm',
+          refType: 'task',
+          refId: 'task-456',
+        }),
+        ROLES.PM,
+      ),
+    ).toContain('task-456');
   });
 
   it('routes task_assigned to task detail', () => {

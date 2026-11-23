@@ -1,5 +1,7 @@
-import type { TaskConfirmationSummary } from '../../utils/taskConfirmationSummary';
-import { CONFIRMATION_LABELS } from '@/shared/constants/taskConfirmation';
+import {
+  TASK_SUMMARY_BUCKET_LABELS,
+  type TaskConfirmationSummary,
+} from '../../utils/taskConfirmationSummary';
 import styles from './TaskConfirmationSummaryBar.module.scss';
 
 interface TaskConfirmationSummaryBarProps {
@@ -10,20 +12,20 @@ export function TaskConfirmationSummaryBar({ summary }: TaskConfirmationSummaryB
   return (
     <div className={styles.bar}>
       <span className={styles.pillTotal}>Tổng: {summary.total}</span>
-      <span className={styles.pillNotUpdated}>
-        {CONFIRMATION_LABELS.not_updated}: {summary.notUpdated}
+      <span className={styles.pillInProgress}>
+        {TASK_SUMMARY_BUCKET_LABELS.inProgress}: {summary.inProgress}
       </span>
-      <span className={styles.pillFinished}>
-        {CONFIRMATION_LABELS.finished}: {summary.finished}
+      <span className={styles.pillNeedsEvaluation}>
+        {TASK_SUMMARY_BUCKET_LABELS.needsEvaluation}: {summary.needsEvaluation}
       </span>
-      <span className={styles.pillConfirmed}>
-        {CONFIRMATION_LABELS.confirmed}: {summary.confirmed}
-      </span>
-      <span className={styles.pillDecline}>
-        {CONFIRMATION_LABELS.decline}: {summary.decline}
+      <span className={styles.pillDeclined}>
+        {TASK_SUMMARY_BUCKET_LABELS.declined}: {summary.declined}
       </span>
       <span className={styles.pillCancelled}>
-        {CONFIRMATION_LABELS.cancelled}: {summary.cancelled}
+        {TASK_SUMMARY_BUCKET_LABELS.cancelled}: {summary.cancelled}
+      </span>
+      <span className={styles.pillCompleted}>
+        {TASK_SUMMARY_BUCKET_LABELS.completed}: {summary.completed}
       </span>
     </div>
   );

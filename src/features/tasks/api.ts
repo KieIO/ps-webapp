@@ -105,6 +105,11 @@ export const myTaskApi = {
   ): Promise<MyTaskListResponse> => {
     const params = { ...MyTaskListFiltersSchema.parse(filters) };
     delete params.otOnly;
+    // Business status groups are applied client-side (needs eval split).
+    if (params.statusBucket) {
+      delete params.confirmation;
+    }
+    delete params.statusBucket;
     if (!params.workDate) {
       delete params.workDate;
     }

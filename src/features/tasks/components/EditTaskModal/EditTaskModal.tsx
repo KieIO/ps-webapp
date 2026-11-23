@@ -1,4 +1,4 @@
-import { Alert, DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd';
+import { Alert, DatePicker, Form, Input, InputNumber, Modal, Select, message } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
@@ -47,12 +47,19 @@ import {
   canCancelTask,
   canChangeTaskStatus,
   confirmCancelTask,
-  getTaskStatusOptionsForRole,
+  isCancelledTask,
   isTaskMetaEditLockedByStatus,
   isTransitioningToCancelled,
   TASK_META_EDIT_STATUS_LOCKED_MESSAGE,
+  TASK_STATUS_ASSIGNEE_ONLY_MESSAGE,
   TASK_STATUS_LOCKED_MESSAGE,
 } from '../../utils/taskStatusLock';
+import {
+  bucketToStaffConfirmation,
+  getTaskStatusPickerOptions,
+  resolveTaskStatusPickerBucket,
+  type TaskSummaryBucket,
+} from '../../utils/taskConfirmationSummary';
 import type { ClassificationLevel, MyTask, UpdateMyTaskRequest } from '../../schemas/task.schema';
 import {
   CreativeDeadlineFieldExtra,
@@ -71,10 +78,14 @@ interface EditTaskModalProps {
   onClose: () => void;
 }
 
-type EditTaskFormValues = Omit<UpdateMyTaskRequest, 'date' | 'staff' | 'creativeDeadline'> & {
+type EditTaskFormValues = Omit<
+  UpdateMyTaskRequest,
+  'date' | 'staff' | 'creativeDeadline' | 'staffConfirmation'
+> & {
   date: Dayjs;
   creativeDeadline?: Dayjs;
   staffUserId?: string;
+  statusBucket: TaskSummaryBucket;
   completionPercent?: number;
   pmEvaluation?: string;
   pmNote?: string;
@@ -153,10 +164,12 @@ export function EditTaskModal({
     hasField(editableFields, 'completion') ||
     hasField(editableFields, 'evaluation') ||
     hasField(editableFields, 'pmNote');
-  const statusEditable = task ? canChangeTaskStatus(task, effectiveRole) : true;
+  const statusEditable = task ? canChangeTaskStatus(task, effectiveRole, userId) : true;
+  const statusLockMessage =
+    task && isCancelledTask(task) ? TASK_STATUS_LOCKED_MESSAGE : TASK_STATUS_ASSIGNEE_ONLY_MESSAGE;
   const statusOptions = useMemo(
-    () => getTaskStatusOptionsForRole(effectiveRole, task?.staffConfirmation),
-    [effectiveRole, task?.staffConfirmation],
+    () => getTaskStatusPickerOptions(effectiveRole, task ?? undefined),
+    [effectiveRole, task],
   );
 
   useEffect(() => {
@@ -175,7 +188,7 @@ export function EditTaskModal({
         contentProcessing: task.contentProcessing,
         additionalFactors: task.additionalFactors,
         staffUserId: wholeStaff ? staffOptionKey(wholeStaff) : undefined,
-        staffConfirmation: task.staffConfirmation,
+        statusBucket: resolveTaskStatusPickerBucket(task),
         staffNote: task.staffNote,
         urgency: task.urgency,
         ...(() => {
@@ -212,11 +225,20 @@ export function EditTaskModal({
   const handleFinish = async (values: EditTaskFormValues) => {
     if (!task || readOnly) return;
 
-    const nextConfirmation = hasField(editableFields, 'confirmation')
-      ? values.staffConfirmation
-      : task.staffConfirmation;
+    let nextConfirmation = task.staffConfirmation;
+    if (hasField(editableFields, 'confirmation')) {
+      const mapped = bucketToStaffConfirmation(values.statusBucket, effectiveRole, task);
+      if (!mapped.ok) {
+        message.warning(mapped.error);
+        return;
+      }
+      nextConfirmation = mapped.status;
+    }
 
-    if (!canChangeTaskStatus(task, effectiveRole) && nextConfirmation !== task.staffConfirmation) {
+    if (
+      !canChangeTaskStatus(task, effectiveRole, userId) &&
+      nextConfirmation !== task.staffConfirmation
+    ) {
       return;
     }
 
@@ -620,13 +642,13 @@ export function EditTaskModal({
               <Alert
                 type="info"
                 showIcon
-                message={TASK_STATUS_LOCKED_MESSAGE}
+                message={statusLockMessage}
                 style={{ marginBottom: 12 }}
               />
             ) : null}
             {hasField(editableFields, 'confirmation') ? (
               <Form.Item
-                name="staffConfirmation"
+                name="statusBucket"
                 rules={[{ required: true, message: 'Confirmation is required' }]}
               >
                 <Select

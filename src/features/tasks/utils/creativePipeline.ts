@@ -524,8 +524,8 @@ export const resolveCreativeDetailPipelineAction = (
  * Creative queue board:
  * - CH: all creative parent tasks in pipeline stages (including already assigned / split)
  * - CM intake: awaiting_cm parents only (work received from CH/PM)
- * - CM execution: assigned_staff / split parents + split children for staff management
- * Subtasks are excluded from CH and CM intake; execution includes split children.
+ * - CM execution (Giao Staff): assigned_staff / split **parents only** (no task nhỏ rows)
+ * Subtasks are excluded from every Creative Queue frame; open parent → Task nhỏ / detail.
  */
 export const filterCreativeQueue = (
   tasks: MyTask[],
@@ -566,13 +566,7 @@ export const filterCreativeQueue = (
       continue;
     }
 
-    // execution: staff-facing work
-    if (isSplitChildTask(task)) {
-      if (!isCmScopedExecutionTask(task, userId, role)) continue;
-      rows.push({ task, stage: 'assigned_staff' });
-      continue;
-    }
-
+    // execution: parents only (whole assigned_staff or split)
     if (!isCreativePipelineParent(task)) continue;
     const stage = resolveEffectivePipelineStage(task);
     if (stage !== 'assigned_staff' && stage !== 'split') continue;
@@ -624,11 +618,17 @@ export const countActionableQueueItems = (
       isAwaitingCm(task),
     ).length;
   }
-  return filterCreativeQueue(tasks, view, userId, role, 'execution').filter(
-    (task) =>
-      task.staffConfirmation === 'not_updated' &&
-      (isSplitChildTask(task) || resolveEffectivePipelineStage(task) === 'assigned_staff'),
-  ).length;
+  // Alert still counts staff units (whole parents + task nhỏ), even though the board
+  // only lists parents.
+  return tasks.filter((task) => {
+    if (task.taskCategory !== 'project' || !isCreativeDeptTask(task)) return false;
+    if (task.staffConfirmation !== 'not_updated') return false;
+    if (!isCmScopedExecutionTask(task, userId, role)) return false;
+    if (isSplitChildTask(task)) return true;
+    return (
+      isCreativePipelineParent(task) && resolveEffectivePipelineStage(task) === 'assigned_staff'
+    );
+  }).length;
 };
 
 export const filterCreativeManagers = (staffOptions: TaskAssignee[]): TaskAssignee[] =>

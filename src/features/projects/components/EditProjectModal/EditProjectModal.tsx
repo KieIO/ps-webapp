@@ -17,6 +17,7 @@ import { canManageProjectMilestones } from '../../utils/milestoneAuth';
 import { formRowsToMilestoneInputs, milestonesToFormRows } from '../../utils/milestoneForm';
 import { toReplaceMilestonePayload } from '../../utils/milestoneValidation';
 import { validateMilestones } from '../../utils/milestoneValidation';
+import { isPmLimitedProjectFieldEditor } from '../../utils/projectEditAuth';
 import { computeProjectLevel } from '../../utils/projectLevel';
 import {
   emptyPerson,
@@ -60,6 +61,9 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
   const { data: pmOptions = [] } = useProjectPmOptions();
   const role = useAppSelector((state) => state.auth.user?.role) as Role | undefined;
   const canEditMilestones = canManageProjectMilestones(role);
+  /** PM: only endDate, plannedSlides, status, note, milestones — lock difficulty & registry. */
+  const pmLimited = isPmLimitedProjectFieldEditor(role);
+  const lockRegistry = pmLimited;
 
   const volume = Form.useWatch('volume', form);
   const nature = Form.useWatch('nature', form);
@@ -244,14 +248,14 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
               label="Project name"
               rules={[{ required: true, message: 'Project name is required' }]}
             >
-              <Input />
+              <Input disabled={lockRegistry} />
             </Form.Item>
             <Form.Item
               name="clientId"
               label="Client"
               rules={[{ required: true, message: 'Client is required' }]}
             >
-              <ClientSelectField />
+              <ClientSelectField disabled={lockRegistry} />
             </Form.Item>
           </div>
 
@@ -261,7 +265,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
               label="Start date"
               rules={[{ required: true, message: 'Start date is required' }]}
             >
-              <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+              <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} disabled={lockRegistry} />
             </Form.Item>
             <Form.Item
               name="endDate"
@@ -276,12 +280,17 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
             name="urgency"
             label="Urgency"
             rules={[{ required: true, message: 'Urgency is required' }]}
+            extra={
+              lockRegistry
+                ? 'PM đổi urgency trên Tracker (chấm ưu tiên), không qua form này.'
+                : undefined
+            }
           >
-            <TaskUrgencySelect />
+            <TaskUrgencySelect disabled={lockRegistry} />
           </Form.Item>
 
           <Form.Item name="brief" label="Brief">
-            <Input.TextArea rows={2} />
+            <Input.TextArea rows={2} disabled={lockRegistry} />
           </Form.Item>
 
           <Form.Item
@@ -308,6 +317,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
                 placeholder="Select department head"
                 onChange={handleDepartmentHeadSelect}
                 options={toPersonSelectOptions(departmentHeadSelectOptions)}
+                disabled={lockRegistry}
               />
             </Form.Item>
             <Form.Item
@@ -322,45 +332,60 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
                 placeholder="Select PM"
                 onChange={handlePmSelect}
                 options={toPersonSelectOptions(pmSelectOptions)}
+                disabled={lockRegistry}
               />
             </Form.Item>
           </div>
           <Form.Item
             name="salesName"
             label="Sales"
-            extra="Optional — tên sales person của project (text tự do)"
+            extra={
+              lockRegistry
+                ? 'PM sửa Sales inline trên Tracker.'
+                : 'Optional — tên sales person của project (text tự do)'
+            }
           >
-            <Input maxLength={255} allowClear placeholder="e.g. Nguyen Van A" />
+            <Input
+              maxLength={255}
+              allowClear
+              placeholder="e.g. Nguyen Van A"
+              disabled={lockRegistry}
+            />
           </Form.Item>
         </section>
 
         <section className={styles.section}>
           <p className={styles.sectionTitle}>Evaluation</p>
+          {lockRegistry ? (
+            <p className={styles.readOnlyLabel}>
+              Độ khó (Volume / Nature / Time → Level) chỉ Head / Admin chỉnh được.
+            </p>
+          ) : null}
           <div className={styles.rowThree}>
             <Form.Item
               name="volume"
               label="Volume"
               rules={[{ required: true, message: 'Volume is required' }]}
             >
-              <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
+              <Select options={[...EVALUATION_LEVEL_OPTIONS]} disabled={lockRegistry} />
             </Form.Item>
             <Form.Item
               name="nature"
               label="Nature"
               rules={[{ required: true, message: 'Nature is required' }]}
             >
-              <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
+              <Select options={[...EVALUATION_LEVEL_OPTIONS]} disabled={lockRegistry} />
             </Form.Item>
             <Form.Item
               name="time"
               label="Time"
               rules={[{ required: true, message: 'Time is required' }]}
             >
-              <Select options={[...EVALUATION_LEVEL_OPTIONS]} />
+              <Select options={[...EVALUATION_LEVEL_OPTIONS]} disabled={lockRegistry} />
             </Form.Item>
           </div>
           <Form.Item name="additionalFactors" label="Additional factors">
-            <Input />
+            <Input disabled={lockRegistry} />
           </Form.Item>
         </section>
 
@@ -368,7 +393,12 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
           <p className={styles.sectionTitle}>Status</p>
           <div className={styles.row}>
             <Form.Item name="evaluation" label="Đánh giá">
-              <Select allowClear placeholder="—" options={[...EVALUATION_SCORE_OPTIONS]} />
+              <Select
+                allowClear
+                placeholder="—"
+                options={[...EVALUATION_SCORE_OPTIONS]}
+                disabled={lockRegistry}
+              />
             </Form.Item>
             <Form.Item
               name="status"

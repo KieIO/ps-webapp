@@ -4,9 +4,9 @@ sidebar_label: Ghi chú / knowledge theo client
 slug: /clients/knowledge
 ---
 
-# Ghi chú / knowledge theo client
+# Ghi chú / knowledge theo client (Client Note)
 
-Knowledge là ghi chú dùng chung theo **client** (preference, feedback, process…), chia sẻ qua các project của khách đó.
+Knowledge là **ghi chú client** dùng chung theo khách hàng (preference, feedback, process…), chia sẻ qua mọi project của client đó.
 
 Catalog: [Thêm / sửa / xóa khách hàng](/clients) · Gắn project: [Gắn client vào project](/clients/assign-project)
 
@@ -18,21 +18,21 @@ Catalog: [Thêm / sửa / xóa khách hàng](/clients) · Gắn project: [Gắn 
 Chi tiết client → tab Knowledge
   (hoặc panel Knowledge trên chi tiết project)
       │
-      ├── Add note (title, body, category, related project tuỳ chọn)
-      ├── Edit / xóa note (theo quyền)
-      └── Notes dùng chung mọi project của client
+      ├── Xem notes — mọi role mở được client / project
+      ├── Add note — PM, CM, CH, Head (+ Admin)
+      └── Edit / xóa note — cùng quyền Add
 ```
 
 ---
 
 ## 2. Ai làm được?
 
-| Việc                    | Ai làm được                                                            |
-| ----------------------- | ---------------------------------------------------------------------- |
-| Xem knowledge           | Ai mở được chi tiết client / project (theo quyền xem project / client) |
-| **Add note** / sửa note | Role có quyền **EDIT_PROJECT**                                         |
+| Việc                      | Ai làm được                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Xem** ghi chú client    | Mọi role mở được chi tiết client / project (quyền xem project — `MANAGE_PROJECTS`)                            |
+| **Thêm / sửa / xóa** note | **PM**, **CM** (Creative Manager), **CH** (Creative Head), **Head** (+ Admin) — permission `EDIT_CLIENT_NOTE` |
 
-Employee có thể được xem knowledge trên project tham gia (theo thiết kế quyền xem project).
+Employee và các role khác **chỉ xem**, không Add / Edit / Delete.
 
 ---
 
@@ -40,7 +40,7 @@ Employee có thể được xem knowledge trên project tham gia (theo thiết k
 
 | Chỗ                                    | Làm được gì                                      |
 | -------------------------------------- | ------------------------------------------------ |
-| **Client detail** → tab **Knowledge**  | Danh sách note; Add note                         |
+| **Client detail** → tab **Knowledge**  | Danh sách note; Add note (nếu có quyền)          |
 | **Chi tiết project** → panel Knowledge | Cùng knowledge của client; có thể mở link client |
 
 ---
@@ -58,8 +58,15 @@ Knowledge **theo client**, không mất khi đổi project — dùng chung để
 
 ---
 
-## 5. Tóm tắt
+## 5. Test coverage
 
-1. Mở client (hoặc project) → Knowledge → Add note.
-2. Sửa / thêm note cần quyền edit project.
-3. Note dùng chung mọi project của cùng client.
+API **CLIENT-32 / 32b–d / 39**, e2e **CLIENT-44** — xem `ps-webapp/docs/client-note-test-coverage.md`.
+
+---
+
+## 6. Tóm tắt
+
+1. Mở client (hoặc project) → Knowledge.
+2. **Xem:** mọi role được vào màn hình đó.
+3. **Thêm / sửa:** PM, CM, CH, Head (và Admin).
+4. Note dùng chung mọi project của cùng client.

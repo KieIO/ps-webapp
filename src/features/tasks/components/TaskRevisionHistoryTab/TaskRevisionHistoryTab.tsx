@@ -121,7 +121,11 @@ export function TaskRevisionHistoryTab({ task }: TaskRevisionHistoryTabProps) {
                           Mới nhất
                         </Tag>
                       ) : null}
-                      <TaskConfirmationBadge status={item.staffConfirmation} />
+                      <TaskConfirmationBadge
+                        status={item.staffConfirmation}
+                        completionPercent={item.completionPercent}
+                        pmEvaluation={item.pmEvaluation}
+                      />
                     </div>
                   </div>
                   <Link to={detailPath} className={styles.openLink}>

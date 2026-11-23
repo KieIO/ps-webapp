@@ -11,7 +11,7 @@ import { TaskDetailActions } from '../TaskDetailActions/TaskDetailActions';
 import { TaskNameBadge } from '../TaskNameBadge/TaskNameBadge';
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
 import { MY_TASK_COLUMN_HEADERS } from '../../constants';
-import { resolveAssigneePlainLabel } from '../../utils/assigneeDisplay';
+import { resolveAssigneePlainLabel, resolveAssignedByDisplay } from '../../utils/assigneeDisplay';
 import { formatTaskDateTime } from '../../utils/taskDates';
 import {
   TASK_CATEGORY_DEPARTMENT_LABELS,
@@ -56,19 +56,6 @@ interface TaskDetailSummaryCardProps {
   onOpenRevisionTab?: () => void;
 }
 
-const ASSIGNED_BY_ROLE_LABELS: Record<string, string> = {
-  [ROLES.EMPLOYEE]: 'Staff',
-  [ROLES.PM]: 'PM',
-  [ROLES.CREATIVE_MANAGER]: 'Creative Manager',
-  [ROLES.CREATIVE_HEAD]: 'Creative Head',
-  [ROLES.HEAD]: 'Head',
-  [ROLES.ADMIN]: 'Admin',
-};
-
-function assignedByRoleLabel(role: string): string {
-  return ASSIGNED_BY_ROLE_LABELS[role] ?? '';
-}
-
 function formatTaskDepartment(task: MyTask): string {
   if (task.department) {
     return getDepartmentLabel(task.department);
@@ -78,6 +65,7 @@ function formatTaskDepartment(task: MyTask): string {
 
 export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSummaryCardProps) {
   const { role } = usePermission();
+  const assignedByDisplay = resolveAssignedByDisplay(task);
   const showCreativeDeadline =
     isCreativeDeptTask(task) && canViewCreativeDeadline(role ?? ROLES.EMPLOYEE, task.department);
   const revision = isRevisionTask(task);
@@ -244,18 +232,16 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
           </p>
         </div>
 
-        {task.assignedBy?.name ? (
+        {assignedByDisplay ? (
           <div className={styles.metaItem}>
             <p className={styles.metaLabel}>Assigned by</p>
             <p className={styles.metaValue}>
               <UserNameLink
-                name={task.assignedBy.name}
-                userId={task.assignedBy.userId}
+                name={assignedByDisplay.name}
+                userId={assignedByDisplay.userId}
                 showAvatar
               />
-              {assignedByRoleLabel(task.assignedBy.role) ? (
-                <span> ({assignedByRoleLabel(task.assignedBy.role)})</span>
-              ) : null}
+              {assignedByDisplay.roleLabel ? <span> ({assignedByDisplay.roleLabel})</span> : null}
             </p>
           </div>
         ) : null}
@@ -268,7 +254,11 @@ export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSum
         <div className={styles.metaItem}>
           <p className={styles.metaLabel}>Status</p>
           <p className={styles.metaValue}>
-            <TaskConfirmationBadge status={task.staffConfirmation} />
+            <TaskConfirmationBadge
+              status={task.staffConfirmation}
+              completionPercent={task.completionPercent}
+              pmEvaluation={task.pmEvaluation}
+            />
           </p>
         </div>
 

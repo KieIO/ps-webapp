@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { ROLES } from '@/config/permissions';
-import { canEditProjectMeta } from './projectEditAuth';
+import { canEditProjectMeta, isPmLimitedProjectFieldEditor } from './projectEditAuth';
+
+describe('isPmLimitedProjectFieldEditor', () => {
+  it('is true only for PM', () => {
+    expect(isPmLimitedProjectFieldEditor(ROLES.PM)).toBe(true);
+    expect(isPmLimitedProjectFieldEditor(ROLES.HEAD)).toBe(false);
+    expect(isPmLimitedProjectFieldEditor(ROLES.ADMIN)).toBe(false);
+    expect(isPmLimitedProjectFieldEditor(undefined)).toBe(false);
+  });
+});
 
 describe('canEditProjectMeta', () => {
   const base = {
@@ -22,7 +31,7 @@ describe('canEditProjectMeta', () => {
     ).toBe(false);
   });
 
-  it('allows PM and Head on active projects (tracker timeline)', () => {
+  it('allows PM and Head on active projects (PM field-limited in Update/UI)', () => {
     expect(canEditProjectMeta(base, ROLES.PM, 'anyone')).toBe(true);
     expect(canEditProjectMeta(base, ROLES.HEAD, 'anyone')).toBe(true);
     expect(canEditProjectMeta(base, ROLES.EMPLOYEE, 'usr-creator')).toBe(true);

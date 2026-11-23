@@ -38,12 +38,13 @@ Deadline / mốc hiển thị **16/10** phải khớp cột **16/10** trên than
 
 ## 3. Ai xem / chỉnh timeline?
 
-| Việc                                       | Ai làm được                 |
-| ------------------------------------------ | --------------------------- |
-| Xem danh sách project trên Tracker         | Ai vào được Project Tracker |
-| Sửa ngày bắt đầu / kết thúc (Edit Project) | PM, Head, Admin             |
+| Việc                                 | Ai làm được                 |
+| ------------------------------------ | --------------------------- |
+| Xem danh sách project trên Tracker   | Ai vào được Project Tracker |
+| Sửa **ngày kết thúc** (Edit Project) | PM, Head, Admin             |
+| Sửa **ngày bắt đầu**                 | Head, Admin (PM khóa)       |
 
-Chi tiết quyền PM: [FAQ — PM trên Project Tracker](/faq).
+Chi tiết quyền PM: [PM chỉnh sửa project](/projects/pm-edit) · [FAQ](/faq).
 
 ---
 

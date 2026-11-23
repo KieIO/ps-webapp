@@ -8,6 +8,7 @@ import {
 import classNames from 'classnames';
 import { Empty, Spin } from 'antd';
 import { Link } from 'react-router-dom';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import type { Notification } from '../../schemas/notification.schema';
 import { formatNotificationRelativeTime } from '../../utils/formatRelativeTime';
 import { getNotificationPath } from '../../utils/notificationLinks';
@@ -60,6 +61,8 @@ export function NotificationFeed({
   dense,
   onItemClick,
 }: NotificationFeedProps) {
+  const role = useAppSelector((state) => state.auth.user?.role);
+
   if (isLoading) {
     return (
       <div className={styles.loading}>
@@ -77,7 +80,7 @@ export function NotificationFeed({
       {items.map((item) => {
         const tone = TYPE_TONE[item.type] ?? 'info';
         const Icon = TONE_ICON[tone];
-        const path = getNotificationPath(item);
+        const path = getNotificationPath(item, role);
         const content = (
           <>
             <span className={styles.icon} data-tone={tone}>

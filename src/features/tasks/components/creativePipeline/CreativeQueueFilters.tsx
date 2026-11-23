@@ -2,7 +2,6 @@ import { DatePicker, Input, Select } from 'antd';
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
 import { FilterSection } from '@/shared/ui/FilterSection/FilterSection';
-import { CONFIRMATION_OPTIONS } from '../../constants';
 import {
   CREATIVE_ASSIGN_SHAPE_OPTIONS,
   CREATIVE_EVALUATION_OPTIONS_HANDOFF,
@@ -12,7 +11,10 @@ import {
   type CreativeQueueFilterVisibility,
   type CreativeQueueListFilters,
 } from '../../utils/creativeQueueFilters';
-import type { TaskConfirmationStatus } from '../../schemas/task.schema';
+import {
+  TASK_SUMMARY_BUCKET_OPTIONS,
+  type TaskSummaryBucket,
+} from '../../utils/taskConfirmationSummary';
 import styles from '../MyTaskFilters/MyTaskFilters.module.scss';
 
 interface CreativeQueueFiltersProps {
@@ -144,18 +146,18 @@ export function CreativeQueueFilters({
 
         {visibility.showConfirmation ? (
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="creative-queue-confirmation">
-              Trạng thái Staff
+            <label className={styles.label} htmlFor="creative-queue-status-bucket">
+              Trạng thái
             </label>
             <Select
-              id="creative-queue-confirmation"
+              id="creative-queue-status-bucket"
               placeholder="Tất cả trạng thái"
               allowClear
-              value={filters.confirmation}
-              onChange={(value: TaskConfirmationStatus | undefined) =>
-                onChange({ ...filters, confirmation: value })
+              value={filters.statusBucket}
+              onChange={(value: TaskSummaryBucket | undefined) =>
+                onChange({ ...filters, statusBucket: value })
               }
-              options={[...CONFIRMATION_OPTIONS]}
+              options={[...TASK_SUMMARY_BUCKET_OPTIONS]}
               className={styles.select}
             />
           </div>

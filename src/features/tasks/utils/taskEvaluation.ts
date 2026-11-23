@@ -10,6 +10,20 @@ import { isRevisionTask } from './taskRevision';
 
 export type EvaluationWriteLayer = 'staff' | 'handoff' | 'ch';
 
+/** Tab Evaluation + Evaluate modal — same «Đánh giá [đối tượng] (bởi [người chấm])» pattern. */
+export const EVALUATION_LAYER_TITLES: Record<EvaluationWriteLayer, string> = {
+  ch: 'Đánh giá Creative Head (bởi PM)',
+  handoff: 'Đánh giá gói CM (bởi Creative Head)',
+  staff: 'Đánh giá Staff (bởi Creative Manager)',
+};
+
+/** Short list badges — đối tượng trước; tooltip dùng `EVALUATION_LAYER_TITLES`. */
+export const EVALUATION_LAYER_BADGE_LABELS: Record<EvaluationWriteLayer, string> = {
+  ch: 'Đã ĐG CH',
+  handoff: 'Đã ĐG gói CM',
+  staff: 'Đã ĐG Staff',
+};
+
 /**
  * Creative task giao nguyên: already assigned to Staff, not split and not a revision.
  * Stores CM→Staff + CH→CM (handoff) evaluations.
@@ -83,6 +97,12 @@ export const resolveEvaluationWriteLayer = (
     ) {
       return 'ch';
     }
+    // CH/Head never write Staff fields on Creative — handoff only on giao nguyên.
+    if ((role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD) && isCreativeDeptTask(task)) {
+      throw new Error(
+        'Creative Head đánh giá gói CM trên task giao nguyên sau khi CM đã giao Staff',
+      );
+    }
     if (!canEvaluateTaskLayer(role, task)) {
       throw new Error('Bạn không được đánh giá task ở tầng này');
     }
@@ -136,7 +156,7 @@ export const resolveEvaluationWriteLayerSafe = (
 /**
  * Layered evaluation visibility / CTA:
  * - PM: project staff; creative parents only after CH→CM
- * - CH / Head: parent handoff (CM package), not split children
+ * - CH / Head: Creative handoff only on giao nguyên (CM đã giao Staff); never Staff fields
  * - CM: staff execution (split children or whole assigned_staff)
  * - Admin: any layer
  */
@@ -157,7 +177,10 @@ export const canEvaluateTaskLayer = (role: Role | undefined, task: MyTask): bool
     return true;
   }
 
-  // Creative Head, Department Head — parent / handoff only
+  // Creative Head / Department Head — no split children; Creative = giao nguyên only.
   if (isSplitChildTask(task)) return false;
+  if ((role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD) && isCreativeDeptTask(task)) {
+    return isCreativeWholeAssigned(task);
+  }
   return true;
 };

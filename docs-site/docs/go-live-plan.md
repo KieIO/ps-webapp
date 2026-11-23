@@ -71,7 +71,7 @@ Xem thêm: [Timeline](/tracker), [Còn lại / ngày](/tracker/remaining), [Kh�
 - Creative Manager đánh giá Staff qua task đã giao
 - Các thông tin task có thể điều chỉnh sau khi đã assign (trong giới hạn rule hiện tại)
 
-Xem thêm: [Tạo task](/), [Chia task con](/split-task), [FAQ Decline Creative](/faq)
+Xem thêm: [Tạo task](/create-task), [Chia task con](/split-task), [FAQ Decline Creative](/faq)
 
 ### 4. Quản lý Users
 

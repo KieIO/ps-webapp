@@ -2,12 +2,41 @@ import { describe, expect, it } from 'vitest';
 import { ROLES } from '@/config/permissions';
 import {
   canCancelTask,
+  canChangeTaskStatus,
   canDeleteTask,
   canEditTask,
   canEditTaskMeta,
   canOpenTaskMetaEdit,
   TASK_META_EDIT_STATUS_LOCKED_MESSAGE,
 } from './taskStatusLock';
+
+describe('canChangeTaskStatus', () => {
+  const assigned = {
+    staffConfirmation: 'not_updated' as const,
+    staff: [{ code: 'E1', name: 'Emp', userId: 'usr-emp' }],
+  };
+  const unassigned = {
+    staffConfirmation: 'not_updated' as const,
+    staff: [] as { code: string; name: string; userId?: string }[],
+  };
+
+  it('allows assignee staff; blocks PM/Head when staff is assigned', () => {
+    expect(canChangeTaskStatus(assigned, ROLES.EMPLOYEE, 'usr-emp')).toBe(true);
+    expect(canChangeTaskStatus(assigned, ROLES.PM, 'usr-pm')).toBe(false);
+    expect(canChangeTaskStatus(assigned, ROLES.HEAD, 'usr-head')).toBe(false);
+    expect(canChangeTaskStatus(assigned, ROLES.ADMIN, 'usr-admin')).toBe(true);
+  });
+
+  it('allows status change when no assignee yet', () => {
+    expect(canChangeTaskStatus(unassigned, ROLES.PM, 'usr-pm')).toBe(true);
+  });
+
+  it('locks cancelled for non-admin', () => {
+    const cancelled = { ...assigned, staffConfirmation: 'cancelled' as const };
+    expect(canChangeTaskStatus(cancelled, ROLES.EMPLOYEE, 'usr-emp')).toBe(false);
+    expect(canChangeTaskStatus(cancelled, ROLES.ADMIN, 'usr-admin')).toBe(true);
+  });
+});
 
 describe('canEditTaskMeta', () => {
   const base = {

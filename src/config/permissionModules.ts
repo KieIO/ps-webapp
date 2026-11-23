@@ -162,7 +162,13 @@ export const PERMISSION_MODULES: PermissionModuleDef[] = [
     key: 'clients',
     label: 'Client Management',
     accessType: 'permission',
-    actions: [{ permission: 'MANAGE_CLIENTS', label: 'Manage clients' }],
+    actions: [
+      { permission: 'MANAGE_CLIENTS', label: 'Manage clients' },
+      {
+        permission: 'EDIT_CLIENT_NOTE',
+        label: 'Add / edit client knowledge notes',
+      },
+    ],
   },
   {
     key: 'task-scores',

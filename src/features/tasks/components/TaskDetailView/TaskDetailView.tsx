@@ -13,6 +13,7 @@ import { TaskRevisionHistoryTab } from '../TaskRevisionHistoryTab/TaskRevisionHi
 import { useMyTask } from '../../hooks/useMyTask';
 import { formatHasRevisionChildrenLabel, hasRevisionChildren } from '../../utils/taskRevision';
 import {
+  EVALUATION_LAYER_TITLES,
   hasChEvaluation,
   isCreativePastChToCmHandoff,
   isCreativeWholeAssigned,
@@ -205,16 +206,6 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
                       </p>
                     </section>
 
-                    {task.pmNote.trim() ? (
-                      <Alert
-                        className={styles.noteAlert}
-                        type="warning"
-                        showIcon
-                        message="Note from PM"
-                        description={task.pmNote}
-                      />
-                    ) : null}
-
                     {task.additionalFactors.trim() ? (
                       <section>
                         <p className={styles.sectionTitle}>Additional factors</p>
@@ -260,7 +251,7 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
                   const quantitySummary = formatEvaluationQuantitySummary(task);
                   const chScoreGrid = (
                     <EvaluationScoreGrid
-                      title="Đánh giá của PM (Creative Head)"
+                      title={EVALUATION_LAYER_TITLES.ch}
                       percent={task.chCompletionPercent}
                       score={task.chEvaluation}
                       note={task.chNote}
@@ -271,13 +262,13 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
                       <div className={styles.detailStack}>
                         {chScoreGrid}
                         <EvaluationScoreGrid
-                          title="Đánh giá của Creative Head"
+                          title={EVALUATION_LAYER_TITLES.handoff}
                           percent={task.handoffCompletionPercent}
                           score={task.handoffEvaluation}
                           note={task.handoffNote}
                         />
                         <EvaluationScoreGrid
-                          title="Đánh giá kết quả Staff"
+                          title={EVALUATION_LAYER_TITLES.staff}
                           percent={task.completionPercent}
                           score={task.pmEvaluation}
                           note={task.pmNote}
@@ -292,7 +283,7 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
                         <div className={styles.detailStack}>
                           {chScoreGrid}
                           <EvaluationScoreGrid
-                            title="Đánh giá kết quả Staff"
+                            title={EVALUATION_LAYER_TITLES.staff}
                             percent={task.completionPercent}
                             score={task.pmEvaluation}
                             note={task.pmNote}

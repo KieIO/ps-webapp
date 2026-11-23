@@ -11,10 +11,10 @@
 }
 
 .pillTotal,
-.pillNotUpdated,
-.pillFinished,
-.pillConfirmed,
-.pillDecline,
+.pillInProgress,
+.pillNeedsEvaluation,
+.pillCompleted,
+.pillDeclined,
 .pillCancelled {
   display: inline-flex;
   align-items: center;
@@ -29,22 +29,22 @@
   color: $status-on-leave-text;
 }
 
-.pillNotUpdated {
-  background: $status-pending-bg;
-  color: $status-pending-text;
-}
-
-.pillFinished {
-  background: $status-completed-bg;
-  color: $status-completed-text;
-}
-
-.pillConfirmed {
+.pillInProgress {
   background: $status-in-progress-bg;
   color: $status-in-progress-text;
 }
 
-.pillDecline {
+.pillNeedsEvaluation {
+  background: $status-pending-bg;
+  color: $status-pending-text;
+}
+
+.pillCompleted {
+  background: $status-completed-bg;
+  color: $status-completed-text;
+}
+
+.pillDeclined {
   background: $status-overdue-bg;
   color: $status-overdue-text;
 }

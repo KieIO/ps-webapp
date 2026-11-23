@@ -28,6 +28,7 @@ import {
 } from '../constants';
 import type { ClassificationLevel, MyTask } from '../schemas/task.schema';
 import { TASK_CONFIRMATION_STATUSES } from '../schemas/task.schema';
+import { formatAssignedByLabel } from './assigneeDisplay';
 import { resolveProjectContextFromTask } from './taskProjectContext';
 import { formatTaskStaffNames } from './staff';
 import { resolveTaskUrgencyDisplay } from './taskUrgency';
@@ -57,6 +58,8 @@ export const getMyTaskColumnSorter = (key: MyTaskColumnKey): ((a: MyTask, b: MyT
       return (a, b) => compareText(a.projectName, b.projectName);
     case 'projectManager':
       return (a, b) => compareText(a.projectManager.name, b.projectManager.name);
+    case 'assignedBy':
+      return (a, b) => compareText(formatAssignedByLabel(a), formatAssignedByLabel(b));
     case 'taskName':
       return (a, b) => compareText(a.taskName, b.taskName);
     case 'level':
@@ -165,6 +168,7 @@ export interface MyTaskColumnDef {
 const COLUMN_WIDTHS: Record<MyTaskColumnKey, number> = {
   projectName: 200,
   projectManager: 170,
+  assignedBy: 200,
   taskName: 140,
   level: 90,
   quantity: 110,
@@ -325,6 +329,8 @@ export const getMyTaskColumnExportValue = (task: MyTask, key: MyTaskColumnKey): 
       return task.projectName;
     case 'projectManager':
       return task.projectManager.name;
+    case 'assignedBy':
+      return formatAssignedByLabel(task);
     case 'taskName':
       return task.taskName;
     case 'level':
@@ -384,10 +390,11 @@ export type MyTaskTableRenderers = {
   renderEvaluationLevel: (level: EvaluationLevel) => ReactNode;
   renderText: (value: string) => ReactNode;
   renderTaskName: (name: string, record: MyTask) => ReactNode;
-  renderConfirmation: (status: MyTask['staffConfirmation']) => ReactNode;
+  renderConfirmation: (record: MyTask) => ReactNode;
   renderProjectStatus: (status: ProjectStatus) => ReactNode;
   renderProjectName: (record: MyTask) => ReactNode;
   renderProjectManager: (record: MyTask) => ReactNode;
+  renderAssignedBy?: (record: MyTask) => ReactNode;
   renderStaffName: (record: MyTask) => ReactNode;
   renderDate: (value: string, record: MyTask, columnKey: MyTaskColumnKey) => ReactNode;
   renderCompletion: (value: number | undefined, record: MyTask) => ReactNode;
@@ -423,6 +430,12 @@ export const buildMyTaskDataColumns = (
         return {
           ...base,
           render: (_, record) => renderers.renderProjectManager(record),
+        };
+      case 'assignedBy':
+        return {
+          ...base,
+          render: (_, record) =>
+            renderers.renderAssignedBy?.(record) ?? (formatAssignedByLabel(record) || '—'),
         };
       case 'taskName':
         return {
@@ -576,7 +589,8 @@ export const buildMyTaskDataColumns = (
         return {
           ...base,
           dataIndex: 'staffConfirmation',
-          render: (status: MyTask['staffConfirmation']) => renderers.renderConfirmation(status),
+          render: (_status: MyTask['staffConfirmation'], record: MyTask) =>
+            renderers.renderConfirmation(record),
         };
       case 'staffNote':
         return {

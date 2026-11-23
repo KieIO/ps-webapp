@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
 sidebar_label: Tạo task
-slug: /
+slug: /create-task
 ---
 
 # Tạo task mới (PM)
@@ -205,15 +205,19 @@ PM → Creative Head (bổ sung brief + Level) → giao CM → CM giao Staff →
 
 ### Creative Manager: Creative queue
 
-- Nhận task từ CH
+- Nhận task từ CH (tab **Nhận từ CH / PM**)
+- Tab **Giao Staff**: quản lý task đã giao Staff — chỉ hiện **task cha** (giao nguyên hoặc đã chia); **không** hiện từng task nhỏ trên list
 - **Giao nguyên** cho một Staff, hoặc **chia nhỏ** thành nhiều task con (mỗi phần có brief riêng)
 - **Không** phân loại lại Level (chỉ Admin / CH được đổi Level, và trước khi Staff confirm)
 
 Chi tiết điều kiện, mã `…-S1`, đánh giá và rule: xem [Luồng chia task con](/split-task).
 
-### PM / Admin trên Creative queue
+### Ai thấy Creative Queue
 
-PM vào **Creative queue** để theo dõi task đã chuyển Creative, và để **đưa lại CH** khi CH từ chối. PM **không** giao CM. Nút trên hàng chờ CH với task đang chờ là **Xem**, mở trang chi tiết, không mở form giao CM.
+| Role                                         | Creative Queue                                                                                                                                                                                        |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Creative Head / Creative Manager / Admin** | Có — menu **Task management → Creative Queue**                                                                                                                                                        |
+| **PM**                                       | **Không** — menu ẩn; vào URL trực tiếp cũng bị chặn. Theo dõi task Creative qua **Project Tasks** / **chi tiết task**. Khi CH từ chối, PM **Đưa lại CH** trên chi tiết task (không cần vào hàng chờ). |
 
 **Chỉ Creative Head** nhận task từ hàng chờ CH rồi giao CM. **Admin** làm được cùng bước giao CM này. Sau khi đã giao, đổi CM vẫn là Creative Head hoặc Admin, khi task còn chờ CM.
 
@@ -224,6 +228,8 @@ Người tạo task hoặc **Admin** có thể sửa **SL tổng** trên form **
 ### Đánh giá sau khi hoàn thành
 
 Người có quyền đánh giá task gồm **PM, Creative Head, Creative Manager, Head, Admin** — không chỉ riêng CH.
+
+Nhãn tab Evaluation / modal Evaluate: [Đánh giá task](/tasks/evaluation) (`Đánh giá … (bởi …)`).
 
 ---
 
@@ -256,9 +262,10 @@ Người có quyền đánh giá task gồm **PM, Creative Head, Creative Manage
 - Chuyển Creative → **tất cả Creative Head** nhận thông báo
 - CH giao CM → CM nhận thông báo
 
-### Xác nhận task
+### Xác nhận / trạng thái task
 
-- Sau khi được giao, Staff cần **confirm** (UI nhắc khung 15 phút; hiện chưa có timer tự động khóa task)
+- Sau khi được giao, **chỉ Staff được assign** cập nhật trạng thái (Confirm / Finished / …). **PM chỉ xem** — chi tiết: [Trạng thái Task](/tasks/status)
+- UI nhắc khung 15 phút; hiện chưa có timer tự động khóa task
 - Task còn **chưa cập nhật (not_updated)** xuất hiện trên hàng chờ hành động của quản lý (Home); quản lý có thể **remind** thủ công
 - Chưa có cảnh báo tự động riêng theo đúng mốc 15 phút cho PM/CM
 

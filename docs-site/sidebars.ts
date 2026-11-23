@@ -10,6 +10,12 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Changelog',
+      collapsed: false,
+      items: ['product-changelog'],
+    },
+    {
+      type: 'category',
       label: 'Go-live',
       collapsed: false,
       items: ['go-live-plan'],
@@ -34,8 +40,8 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Quản lý Projects',
       collapsed: false,
-      // CRUD project chưa có doc riêng; mốc giao dùng chung với Tracker
       items: [
+        'project-pm-edit',
         {
           type: 'link',
           label: 'Mốc giao',
@@ -47,8 +53,16 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Quản lý Task',
       collapsed: false,
-      // Theo vòng đời: tạo → chia → revision → đo on-time
-      items: ['create-task-flow', 'split-task-flow', 'revision-flow', 'on-time-rate'],
+      // Theo vòng đời: tạo → status → assignee → đánh giá → chia → revision → on-time
+      items: [
+        'create-task-flow',
+        'task-status',
+        'task-assignee-display',
+        'task-evaluation',
+        'split-task-flow',
+        'revision-flow',
+        'on-time-rate',
+      ],
     },
     {
       type: 'category',

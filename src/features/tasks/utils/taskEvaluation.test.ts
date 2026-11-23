@@ -3,6 +3,8 @@ import { ROLES } from '@/config/permissions';
 import type { MyTask } from '../schemas/task.schema';
 import {
   canEvaluateTaskLayer,
+  EVALUATION_LAYER_BADGE_LABELS,
+  EVALUATION_LAYER_TITLES,
   hasChEvaluation,
   isCreativePastChToCmHandoff,
   isCreativeWholeAssigned,
@@ -27,6 +29,24 @@ const task = (overrides: Partial<MyTask>): MyTask =>
     ...overrides,
   }) as MyTask;
 
+describe('EVALUATION_LAYER_TITLES', () => {
+  it('uses Đánh giá [đối tượng] (bởi [người chấm])', () => {
+    expect(EVALUATION_LAYER_TITLES).toEqual({
+      ch: 'Đánh giá Creative Head (bởi PM)',
+      handoff: 'Đánh giá gói CM (bởi Creative Head)',
+      staff: 'Đánh giá Staff (bởi Creative Manager)',
+    });
+  });
+
+  it('short list badges name the scored object', () => {
+    expect(EVALUATION_LAYER_BADGE_LABELS).toEqual({
+      ch: 'Đã ĐG CH',
+      handoff: 'Đã ĐG gói CM',
+      staff: 'Đã ĐG Staff',
+    });
+  });
+});
+
 describe('canEvaluateTaskLayer', () => {
   const awaitingCh = task({ id: 'awaiting-ch', pipelineStage: 'awaiting_ch' });
   const parent = task({ id: 'parent', pipelineStage: 'awaiting_cm' });
@@ -39,11 +59,15 @@ describe('canEvaluateTaskLayer', () => {
   });
   const wholeStaff = task({ id: 'whole', pipelineStage: 'assigned_staff' });
 
-  it('PM / CH / Head evaluate parents only, not split children', () => {
-    for (const role of [ROLES.PM, ROLES.CREATIVE_HEAD, ROLES.HEAD]) {
-      expect(canEvaluateTaskLayer(role, parent)).toBe(true);
-      expect(canEvaluateTaskLayer(role, child)).toBe(false);
-    }
+  it('PM evaluates creative parents after CH→CM; CH/Head only giao nguyên', () => {
+    expect(canEvaluateTaskLayer(ROLES.PM, parent)).toBe(true);
+    expect(canEvaluateTaskLayer(ROLES.PM, child)).toBe(false);
+    expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, wholeStaff)).toBe(true);
+    expect(canEvaluateTaskLayer(ROLES.HEAD, wholeStaff)).toBe(true);
+    expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, parent)).toBe(false);
+    expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, splitParent)).toBe(false);
+    expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, child)).toBe(false);
+    expect(canEvaluateTaskLayer(ROLES.HEAD, parent)).toBe(false);
   });
 
   it('PM cannot evaluate creative until CH has assigned a CM', () => {
@@ -51,6 +75,13 @@ describe('canEvaluateTaskLayer', () => {
     expect(canEvaluateTaskLayer(ROLES.PM, parent)).toBe(true);
     expect(canEvaluateTaskLayer(ROLES.PM, wholeStaff)).toBe(true);
     expect(canEvaluateTaskLayer(ROLES.PM, splitParent)).toBe(true);
+  });
+
+  it('CH cannot evaluate Creative while awaiting_cm or split (no Staff / not giao nguyên)', () => {
+    expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, awaitingCh)).toBe(false);
+    expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, parent)).toBe(false);
+    expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, splitParent)).toBe(false);
+    expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, wholeStaff)).toBe(true);
   });
 
   it('CM evaluates staff execution, not split parents', () => {
@@ -79,7 +110,12 @@ describe('whole-assign evaluation layers', () => {
     expect(resolveEvaluationWriteLayer(ROLES.CREATIVE_MANAGER, whole)).toBe('staff');
     expect(resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, whole)).toBe('handoff');
     expect(resolveEvaluationWriteLayer(ROLES.PM, whole)).toBe('ch');
-    expect(resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, awaiting)).toBe('staff');
+    expect(() => resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, awaiting)).toThrow(
+      /giao nguyên sau khi CM đã giao Staff/,
+    );
+    expect(() => resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, splitParent)).toThrow(
+      /giao nguyên sau khi CM đã giao Staff/,
+    );
     expect(() => resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, awaiting, 'other')).toThrow(
       /không hợp lệ/,
     );

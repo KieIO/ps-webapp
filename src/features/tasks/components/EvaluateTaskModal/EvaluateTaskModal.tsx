@@ -29,6 +29,7 @@ import {
 } from '../../utils/evaluationRemainder';
 import { formatTaskStaffNames } from '../../utils/staff';
 import {
+  EVALUATION_LAYER_TITLES,
   isCreativePastChToCmHandoff,
   isCreativeWholeAssigned,
   type EvaluationWriteLayer,
@@ -298,13 +299,11 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
   };
 
   const modalTitle =
-    layer === 'ch'
-      ? 'Đánh giá Creative Head'
-      : layer === 'handoff'
-        ? 'Đánh giá gói của CM'
-        : wholeAssigned
-          ? 'Đánh giá kết quả Staff'
-          : 'Evaluate task';
+    layer === 'ch' || layer === 'handoff'
+      ? EVALUATION_LAYER_TITLES[layer]
+      : wholeAssigned
+        ? EVALUATION_LAYER_TITLES.staff
+        : 'Evaluate task';
 
   return (
     <Modal

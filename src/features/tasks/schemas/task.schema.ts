@@ -138,7 +138,7 @@ export const MyTaskSchema = z.object({
   activeRevisionChildCount: z.number().int().min(0).optional(),
   /** User who clicked Create — used for post-confirm meta edit authz. */
   createdById: z.string().nullish(),
-  /** Who last handed this task to the current assignee. Detail responses only. */
+  /** Who last handed this task to the current assignee (list + detail). */
   assignedBy: z
     .object({
       userId: z.string(),
@@ -192,12 +192,23 @@ export const MyTaskSchema = z.object({
   projectFinishedDate: z.string().nullish(),
 });
 
+export const TASK_STATUS_BUCKET_FILTER_VALUES = [
+  'inProgress',
+  'needsEvaluation',
+  'declined',
+  'cancelled',
+  'completed',
+] as const;
+
 export const MyTaskListFiltersSchema = z.object({
   taskCategory: z.enum(TASK_CATEGORIES).optional(),
   search: z.string().optional(),
   projectName: z.string().optional(),
   staffName: z.string().optional(),
+  /** @deprecated Prefer `statusBucket` (business groups). Kept for API/mock compat. */
   confirmation: z.enum(TASK_CONFIRMATION_STATUSES).optional(),
+  /** List filter: 5 business buckets incl. separate Đã từ chối / Hủy (client-side). */
+  statusBucket: z.enum(TASK_STATUS_BUCKET_FILTER_VALUES).optional(),
   timeliness: z.enum(['completed', 'on_time', 'not_on_time']).optional(),
   completedMonth: z
     .string()

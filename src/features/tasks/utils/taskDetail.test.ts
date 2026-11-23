@@ -67,7 +67,7 @@ describe('buildFallbackTaskHistory', () => {
     expect(events.map((event) => event.description)).toEqual([
       'Task created',
       'Bui Thi Hoa assigned',
-      'Status: Đã xác nhận',
+      'Status: Đang làm',
       'Deadline',
     ]);
     expect(events[2]?.occurredAt).toBe('2026-06-12T18:39:00.000Z');

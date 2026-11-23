@@ -215,7 +215,7 @@ describe('creativePipeline helpers', () => {
     ).toEqual(['await-mine']);
   });
 
-  it('CM execution frame shows assigned_staff / split parents and split children for that CM', () => {
+  it('CM execution frame shows assigned_staff / split parents only (no task nhỏ)', () => {
     const cm = 'dev-creative_manager';
     const items = [
       task({
@@ -254,10 +254,10 @@ describe('creativePipeline helpers', () => {
       filterCreativeQueue(items, 'cm', cm, ROLES.CREATIVE_MANAGER, 'execution').map(
         (item) => item.id,
       ),
-    ).toEqual(['done-mine', 'split-mine', 'child-mine']);
+    ).toEqual(['done-mine', 'split-mine']);
   });
 
-  it('CM execution keeps split parent above its children even when a child is newer', () => {
+  it('CM execution sorts parents by family recency without listing children', () => {
     const cm = 'dev-creative_manager';
     const cmRef = assignee({ userId: cm, name: 'Me' });
     const items = [
@@ -302,7 +302,7 @@ describe('creativePipeline helpers', () => {
       filterCreativeQueue(items, 'cm', cm, ROLES.CREATIVE_MANAGER, 'execution').map(
         (item) => item.id,
       ),
-    ).toEqual(['whole-fresh', 'parent-split', 'child-s1', 'child-s2']);
+    ).toEqual(['whole-fresh', 'parent-split']);
   });
 
   it('Admin CM intake sees awaiting_cm; execution sees staff work', () => {

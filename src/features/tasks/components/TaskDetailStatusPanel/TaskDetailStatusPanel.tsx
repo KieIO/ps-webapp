@@ -1,16 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Input, InputNumber } from 'antd';
+import { Alert, Button, Input, InputNumber, message } from 'antd';
 import classNames from 'classnames';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
-import { CONFIRMATION_VARIANT, TASK_STATUS_CHANGE_NOTE_LABEL } from '../../constants';
+import { TASK_STATUS_CHANGE_NOTE_LABEL } from '../../constants';
 import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
-import type { MyTask, TaskConfirmationStatus } from '../../schemas/task.schema';
+import type { MyTask } from '../../schemas/task.schema';
+import {
+  bucketToStaffConfirmation,
+  getTaskStatusPickerOptions,
+  resolveTaskStatusPickerBucket,
+  TASK_SUMMARY_BUCKET_VARIANT,
+  type TaskSummaryBucket,
+} from '../../utils/taskConfirmationSummary';
 import {
   canCancelTask,
   canChangeTaskStatus,
   confirmCancelTask,
-  getTaskStatusOptionsForRole,
+  isCancelledTask,
   isTransitioningToCancelled,
+  TASK_STATUS_ASSIGNEE_ONLY_MESSAGE,
   TASK_STATUS_LOCKED_MESSAGE,
 } from '../../utils/taskStatusLock';
 import styles from './TaskDetailStatusPanel.module.scss';
@@ -29,34 +38,36 @@ interface TaskDetailStatusPanelProps {
 
 export function TaskDetailStatusPanel({ task }: TaskDetailStatusPanelProps) {
   const { role } = usePermission();
-  const statusEditable = canChangeTaskStatus(task, role);
-  const statusOptions = useMemo(
-    () => getTaskStatusOptionsForRole(role, task.staffConfirmation),
-    [role, task.staffConfirmation],
-  );
-  const [selectedStatus, setSelectedStatus] = useState<TaskConfirmationStatus>(
-    task.staffConfirmation,
+  const userId = useAppSelector((state) => state.auth.user?.id);
+  const statusEditable = canChangeTaskStatus(task, role, userId);
+  const statusLockMessage = isCancelledTask(task)
+    ? TASK_STATUS_LOCKED_MESSAGE
+    : TASK_STATUS_ASSIGNEE_ONLY_MESSAGE;
+  const statusOptions = useMemo(() => getTaskStatusPickerOptions(role, task), [role, task]);
+  const [selectedBucket, setSelectedBucket] = useState<TaskSummaryBucket>(() =>
+    resolveTaskStatusPickerBucket(task),
   );
   const [note, setNote] = useState(task.staffNote);
   const [actualHours, setActualHours] = useState<number | null>(task.actualHours ?? null);
   const { mutate, isPending } = useUpdateMyTaskStatus();
   const isOtTask = Boolean(task.overtimeRequestId);
-  const requiresActualHours = isOtTask && selectedStatus === 'finished';
+  const requiresActualHours = isOtTask && selectedBucket === 'completed';
+  const currentBucket = resolveTaskStatusPickerBucket(task);
 
   useEffect(() => {
-    setSelectedStatus(task.staffConfirmation);
+    setSelectedBucket(resolveTaskStatusPickerBucket(task));
     setNote(task.staffNote);
     setActualHours(task.actualHours ?? null);
-  }, [task.id, task.staffConfirmation, task.staffNote, task.actualHours]);
+  }, [task]);
 
   const hasChanges =
     statusEditable &&
-    (selectedStatus !== task.staffConfirmation ||
+    (selectedBucket !== currentBucket ||
       note.trim() !== task.staffNote.trim() ||
       (requiresActualHours && actualHours !== (task.actualHours ?? null)));
 
   const handleReset = () => {
-    setSelectedStatus(task.staffConfirmation);
+    setSelectedBucket(resolveTaskStatusPickerBucket(task));
     setNote(task.staffNote);
     setActualHours(task.actualHours ?? null);
   };
@@ -71,7 +82,14 @@ export function TaskDetailStatusPanel({ task }: TaskDetailStatusPanelProps) {
       return;
     }
 
-    if (isTransitioningToCancelled(task.staffConfirmation, selectedStatus)) {
+    const mapped = bucketToStaffConfirmation(selectedBucket, role, task);
+    if (!mapped.ok) {
+      message.warning(mapped.error);
+      return;
+    }
+    const nextStatus = mapped.status;
+
+    if (isTransitioningToCancelled(task.staffConfirmation, nextStatus)) {
       if (!canCancelTask(role)) return;
       const confirmed = await confirmCancelTask();
       if (!confirmed) return;
@@ -80,7 +98,7 @@ export function TaskDetailStatusPanel({ task }: TaskDetailStatusPanelProps) {
     mutate(
       {
         id: task.id,
-        staffConfirmation: selectedStatus,
+        staffConfirmation: nextStatus,
         staffNote: note.trim(),
         actualHours: requiresActualHours ? (actualHours ?? undefined) : undefined,
       },
@@ -97,12 +115,7 @@ export function TaskDetailStatusPanel({ task }: TaskDetailStatusPanelProps) {
       <span className={styles.label}>Task status</span>
 
       {!statusEditable ? (
-        <Alert
-          type="info"
-          showIcon
-          message={TASK_STATUS_LOCKED_MESSAGE}
-          style={{ marginBottom: 12 }}
-        />
+        <Alert type="info" showIcon message={statusLockMessage} style={{ marginBottom: 12 }} />
       ) : null}
 
       {isOtTask ? (
@@ -116,8 +129,8 @@ export function TaskDetailStatusPanel({ task }: TaskDetailStatusPanelProps) {
 
       <div className={styles.chips} role="group" aria-label="Task status">
         {statusOptions.map((option) => {
-          const variant = CONFIRMATION_VARIANT[option.value];
-          const isActive = selectedStatus === option.value;
+          const variant = TASK_SUMMARY_BUCKET_VARIANT[option.value];
+          const isActive = selectedBucket === option.value;
 
           return (
             <button
@@ -131,7 +144,7 @@ export function TaskDetailStatusPanel({ task }: TaskDetailStatusPanelProps) {
               aria-pressed={isActive}
               disabled={isPending || !statusEditable}
               onClick={() => {
-                if (statusEditable) setSelectedStatus(option.value);
+                if (statusEditable) setSelectedBucket(option.value);
               }}
             >
               {option.label}

@@ -64,13 +64,32 @@ export const canEditTask = (role: Role | undefined): boolean =>
 export const canDeleteTask = (role: Role | undefined): boolean =>
   role != null && role !== ROLES.EMPLOYEE && role !== ROLES.CREATIVE_MANAGER;
 
+/** True when the task has at least one linked assignee account. */
+export const taskHasAssignedStaff = (task: Pick<MyTask, 'staff'>): boolean =>
+  task.staff.some((member) => Boolean(member.userId));
+
+/** Current user is on the task's staff assignee list. */
+export const isTaskAssignee = (task: Pick<MyTask, 'staff'>, userId: string | undefined): boolean =>
+  Boolean(userId && task.staff.some((member) => member.userId === userId));
+
 /**
- * Cancelled tasks remain visible, but only admins may leave the cancelled status.
+ * Who may change staffConfirmation (task status):
+ * - Cancelled → Admin only (unchanged)
+ * - No assignee yet → anyone who can open the status UI (unchanged)
+ * - Has assignee → only that assigned staff (or Admin break-glass)
+ * PM / Head / others are view-only once staff is assigned.
  */
 export const canChangeTaskStatus = (
-  task: Pick<MyTask, 'staffConfirmation'>,
+  task: Pick<MyTask, 'staffConfirmation' | 'staff'>,
   role: Role | undefined,
-): boolean => !isCancelledTask(task) || role === ROLES.ADMIN;
+  userId?: string,
+): boolean => {
+  if (!role) return false;
+  if (isCancelledTask(task)) return role === ROLES.ADMIN;
+  if (!taskHasAssignedStaff(task)) return true;
+  if (role === ROLES.ADMIN) return true;
+  return isTaskAssignee(task, userId);
+};
 
 export const isTransitioningToCancelled = (
   current: TaskConfirmationStatus,
@@ -78,8 +97,8 @@ export const isTransitioningToCancelled = (
 ): boolean => isCancelledTaskStatus(next) && !isCancelledTaskStatus(current);
 
 /**
- * Status picker options — hide "Hủy" for employees unless the task is already cancelled
- * (so the locked current value still renders correctly).
+ * @deprecated Prefer `TASK_SUMMARY_BUCKET_OPTIONS` — status UI uses summary buckets.
+ * Kept for any raw API-status tooling.
  */
 export const getTaskStatusOptionsForRole = (
   role: Role | undefined,
@@ -93,6 +112,9 @@ export const getTaskStatusOptionsForRole = (
 
 export const TASK_STATUS_LOCKED_MESSAGE =
   'This task is cancelled. Only an admin can change its status.';
+
+export const TASK_STATUS_ASSIGNEE_ONLY_MESSAGE =
+  'Chỉ Staff được giao task mới cập nhật được trạng thái. PM chỉ xem.';
 
 /** Confirm copy — destructive-status pattern: consequence first, clear primary CTA. */
 export const TASK_CANCEL_CONFIRM = {

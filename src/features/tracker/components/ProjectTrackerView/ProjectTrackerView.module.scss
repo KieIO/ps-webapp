@@ -944,12 +944,12 @@ $row-alt: #f9fafb;
   }
 }
 
+/* `not_updated` → same visual as Đang làm (list folds both into inProgress). */
 .pending {
-  background: $status-pending-bg;
-  border: 1px solid $status-pending-text;
+  background: $status-in-progress-text;
 
   span {
-    color: $status-pending-text;
+    color: #fff;
   }
 }
 

@@ -14,7 +14,8 @@ export type TaskConfirmationStatus = (typeof TASK_CONFIRMATION_STATUSES)[number]
 export const CONFIRMATION_LABELS: Record<TaskConfirmationStatus, string> = {
   not_updated: 'Chưa cập nhật',
   finished: 'Hoàn thành',
-  confirmed: 'Đã xác nhận',
+  /** Staff đã Confirm nhận việc — đang thực hiện. */
+  confirmed: 'Đang làm',
   decline: 'Đã từ chối',
   cancelled: 'Hủy',
 };
@@ -56,8 +57,13 @@ export const TRACKER_BLOCK_CONFIRMATION: Record<
   decline: 'decline',
 };
 
+/**
+ * Timeline task block labels — same business wording as list buckets.
+ * `pending` (API `not_updated`) folds into «Đang làm» with `active`; decline/cancelled
+ * bars are omitted from the timeline so they stay out of the legend.
+ */
 export const TRACKER_BLOCK_LABELS: Record<(typeof TRACKER_TASK_BLOCK_TYPES)[number], string> = {
-  pending: CONFIRMATION_LABELS.not_updated,
+  pending: CONFIRMATION_LABELS.confirmed,
   active: CONFIRMATION_LABELS.confirmed,
   completed: CONFIRMATION_LABELS.finished,
   decline: CONFIRMATION_LABELS.decline,
@@ -74,7 +80,16 @@ export const TRACKER_PROJECT_STATUS_LEGEND: ReadonlyArray<{
   { key: 'cancelled', label: 'Hủy' },
 ];
 
-export const TRACKER_BLOCK_LEGEND = TRACKER_TASK_BLOCK_TYPES.map((key) => ({
+/**
+ * Task timeline legend: Đang làm + Hoàn thành only.
+ * `not_updated` bars still arrive as type `pending` from BE but share Đang làm styling.
+ */
+export const TRACKER_VISIBLE_TASK_BLOCK_TYPES = [
+  'active',
+  'completed',
+] as const satisfies ReadonlyArray<(typeof TRACKER_TASK_BLOCK_TYPES)[number]>;
+
+export const TRACKER_BLOCK_LEGEND = TRACKER_VISIBLE_TASK_BLOCK_TYPES.map((key) => ({
   key,
   label: TRACKER_BLOCK_LABELS[key],
 }));

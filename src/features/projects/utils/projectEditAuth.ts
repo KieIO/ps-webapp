@@ -6,8 +6,9 @@ export const isProjectMetaEditLockedByStatus = (status: Project['status'] | unde
   status === 'finish' || status === 'cancel';
 
 /**
- * Project meta edit: Admin (incl. finish/cancel), Head, PM (tracker timeline), or creator.
+ * Project meta edit: Admin (incl. finish/cancel), Head, PM (allowlisted fields), or creator.
  * Archived stays locked for everyone. Non-admin roles stay locked on finish/cancel.
+ * PM field allowlist: see `isPmLimitedProjectFieldEditor` / EditProjectModal.
  */
 export const canEditProjectMeta = (
   project: Pick<Project, 'status' | 'archivedAt' | 'createdById'> | null | undefined,
@@ -22,3 +23,10 @@ export const canEditProjectMeta = (
   if (userId && project.createdById && userId === project.createdById) return true;
   return false;
 };
+
+/**
+ * PM Edit Project allowlist (client requirement): endDate, plannedSlides, status,
+ * milestones, note — not difficulty (volume/nature/time) or full registry fields.
+ * Head/Admin use EDIT_PROJECT for full edit.
+ */
+export const isPmLimitedProjectFieldEditor = (role: Role | undefined): boolean => role === ROLES.PM;

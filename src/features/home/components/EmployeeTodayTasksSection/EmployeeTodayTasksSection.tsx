@@ -102,7 +102,11 @@ export function EmployeeTodayTasksSection({
                       <ProjectUrgencyBadge urgency={urgency} />
                     </td>
                     <td>
-                      <TaskConfirmationBadge status={task.staffConfirmation} />
+                      <TaskConfirmationBadge
+                        status={task.staffConfirmation}
+                        completionPercent={task.completionPercent}
+                        pmEvaluation={task.pmEvaluation}
+                      />
                     </td>
                     <td className={styles.actions}>
                       {task.staffConfirmation === 'not_updated' && (

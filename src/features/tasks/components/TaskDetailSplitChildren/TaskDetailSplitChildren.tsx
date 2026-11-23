@@ -111,7 +111,11 @@ export function TaskDetailSplitChildren({ task }: TaskDetailSplitChildrenProps) 
               key: 'status',
               width: 130,
               render: (_: unknown, row: MyTask) => (
-                <TaskConfirmationBadge status={row.staffConfirmation} />
+                <TaskConfirmationBadge
+                  status={row.staffConfirmation}
+                  completionPercent={row.completionPercent}
+                  pmEvaluation={row.pmEvaluation}
+                />
               ),
             },
           ]}

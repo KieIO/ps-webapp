@@ -37,14 +37,14 @@ Optional API UI: `http://localhost:8080/swagger/index.html`
 
 ### Seed accounts (password `ps123` for all)
 
-| Email                            | Role             | Notes                                                                                       |
-| -------------------------------- | ---------------- | ------------------------------------------------------------------------------------------- |
-| `admin@pokeslide.dev`            | admin            | Create / edit / delete / evaluate; `VIEW_ALL_TASKS`                                         |
-| `pm@pokeslide.dev`               | pm               | Create / evaluate / assign; `VIEW_ALL_TASKS`; meta edit only if **creator** (or Admin/Head) |
-| `head@pokeslide.dev`             | head             | **No** `CREATE_TASK` by default; can edit any meta; can delete; `VIEW_ALL_TASKS`            |
-| `creative-head@pokeslide.dev`    | creative_head    | No create by default; evaluate / creative pipeline; `VIEW_ALL_TASKS`                        |
-| `creative-manager@pokeslide.dev` | creative_manager | Scoped list (no `VIEW_ALL_TASKS`); **cannot delete**; evaluate                              |
-| `employee@pokeslide.dev`         | employee         | Assignee on seed project tasks; status updates; **no** create/meta-edit/delete/cancel       |
+| Email                            | Role             | Notes                                                                                                                    |
+| -------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `admin@pokeslide.dev`            | admin            | Create / edit / delete / evaluate; `VIEW_ALL_TASKS`                                                                      |
+| `pm@pokeslide.dev`               | pm               | Create / evaluate / assign; project-scoped task list (`pm_id`/`handover`); meta edit only if **creator** (or Admin/Head) |
+| `head@pokeslide.dev`             | head             | **No** `CREATE_TASK` by default; can edit any meta; can delete; `VIEW_ALL_TASKS`                                         |
+| `creative-head@pokeslide.dev`    | creative_head    | No create by default; evaluate / creative pipeline; `VIEW_ALL_TASKS`                                                     |
+| `creative-manager@pokeslide.dev` | creative_manager | Scoped list (no `VIEW_ALL_TASKS`); **cannot delete**; evaluate                                                           |
+| `employee@pokeslide.dev`         | employee         | Assignee on seed project tasks; status updates; **no** create/meta-edit/delete/cancel                                    |
 
 Routes: `/tasks/project` · `/tasks/non-project` · `/tasks/detail/:id`  
 API base: `/api/v1/tasks/my`  
@@ -345,13 +345,13 @@ v1: **soft delete** (`DELETE` → GORM `DeletedAt`); **no task archive** (projec
 | **Steps**         | `GET /tasks/my` as employee                                                                                  |
 | **Expected**      | Only tasks where employee is assignee / creator / assignedBy / CM / `task_assignees` — **not** full registry |
 
-### TASK-30 — Admin / PM see all (VIEW_ALL_TASKS)
+### TASK-30 — Admin sees all; PM sees own projects (and handover)
 
-|                   |                                                                                                          |
-| ----------------- | -------------------------------------------------------------------------------------------------------- |
-| **Preconditions** | Admin then PM                                                                                            |
-| **Steps**         | `GET /tasks/my?taskCategory=project` — count ≥ seeded demos (+ session creates)                          |
-| **Expected**      | Full visibility for oversight roles (split children may be hidden from list — parents + revisions shown) |
+|                   |                                                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Preconditions** | Admin then PM; tasks on seed PM project + another PM's project                                                      |
+| **Steps**         | `GET /tasks/my?taskCategory=project` as Admin and as PM                                                             |
+| **Expected**      | Admin sees all. PM sees tasks on projects where they are `pm_id` / `handover_pm_id` only (not other PMs' projects). |
 
 ### TASK-31 — Creative Manager list is scoped
 
@@ -879,7 +879,7 @@ Project path: `PATCH /tasks/my/{id}`. Creative path: `PATCH …/creative-edit` (
 - **No task archive** — cancel locks status; soft delete removes from lists.
 - Meta edit lock: blocked when `finished`/`cancelled`; otherwise Admin/Head **or** creator.
 - Create requires `CREATE_TASK` (PM/Admin by default) — **Head does not create** unless Roles matrix grants it.
-- List visibility uses `VIEW_ALL_TASKS` (PM, creative_head, head, admin) — CM and employee are scoped.
+- List visibility: Head / Creative Head / Admin = org-wide (`VIEW_ALL_TASKS`); PM = own projects (`pm_id`/`handover_pm_id`); CM and employee are ownership-scoped.
 - `ASSIGN_TASK` exists in the Roles matrix but assign HTTP routes are auth + service rules (not middleware-gated today).
 - Level = `round(avg(designThinking, technical, contentProcessing))` — server only.
 - Swagger: login → Authorize Bearer → `/tasks/my` CRUD + status / assign / assign-cm / assign-staff / creative-edit / pm-evaluation.

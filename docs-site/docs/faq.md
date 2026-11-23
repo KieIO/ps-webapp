@@ -102,22 +102,25 @@ Chi tiết: [Luồng nghỉ phép](/leave).
 
 ---
 
-## 4. PM làm được gì trên Project Tracker?
+## 4. PM làm được gì trên Project Tracker / Edit Project?
 
-Trên **Project Tracker**, **PM** được quyền gần giống **Admin** cho các thao tác vận hành project trên timeline:
+**PM không chỉnh độ khó project** (Volume / Nature / Time → Level). Chi tiết: [PM chỉnh sửa project](/projects/pm-edit).
 
-| Việc                                                     | PM  | Ghi chú                              |
-| -------------------------------------------------------- | :-: | ------------------------------------ |
-| Đổi **urgency** (chấm ưu tiên)                           |  ✓  | Click chấm urgency trên hàng project |
-| Thêm / sửa / xóa / tick hoàn thành **mốc giao**          |  ✓  | Cùng quyền với CM / Head / Admin     |
-| Sửa **ngày bắt đầu / kết thúc** (timeline thanh project) |  ✓  | Qua **Edit Project**                 |
-| Archive / xóa project, quản lý Client                    |  ✗  | Vẫn chỉ Head / Admin                 |
+Trên **Project Tracker** và form **Edit project**, PM được các thao tác vận hành sau:
+
+| Việc                                                    | PM  | Ghi chú                                  |
+| ------------------------------------------------------- | :-: | ---------------------------------------- |
+| Đổi **urgency** (chấm ưu tiên)                          |  ✓  | Click chấm urgency trên hàng project     |
+| Thêm / sửa / xóa / tick hoàn thành **mốc giao**         |  ✓  | Cùng quyền với Head / Admin              |
+| Sửa **ngày kết thúc**, planned slides, status, **note** |  ✓  | Qua **Edit Project** (ngày bắt đầu khóa) |
+| Sửa **độ khó** / tên / client / brief / người trên form |  ✗  | Chỉ Head / Admin (`EDIT_PROJECT`)        |
+| Archive / xóa project, quản lý Client                   |  ✗  | Vẫn chỉ Head / Admin                     |
 
 **Ngày trên Tracker** (timeline + mốc) dùng **múi giờ Việt Nam**. Deadline **16/10** phải khớp cột **16/10** trên thanh — không lệch sớm một ngày vì UTC.
 
-Xem thêm: [Mốc giao](/milestone).
+Xem thêm: [Mốc giao](/milestone) · [PM chỉnh sửa project](/projects/pm-edit).
 
-**Tóm lại:** PM sửa urgency / mốc / timeline trên Tracker; không mở rộng sang archive hay Client.
+**Tóm lại:** PM sửa urgency / mốc / end date / slides / status / note; **không** sửa độ khó hay archive / Client.
 
 ---
 

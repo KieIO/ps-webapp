@@ -11,6 +11,7 @@ import type { MyTaskColumnKey } from '../../constants';
 import type { ColumnsType } from 'antd/es/table';
 import { Link } from 'react-router-dom';
 import { buildMyTaskDetailPath, DATE_FORMAT, DATETIME_SHORT_FORMAT } from '@/config/constants';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { ClassificationLevelBadge } from '../ClassificationLevelBadge/ClassificationLevelBadge';
@@ -29,11 +30,19 @@ import {
   getMyTaskTableScrollWidth,
 } from '../../utils/myTaskColumns';
 import { TaskStaffNameCell } from '../TaskStaffNameCell/TaskStaffNameCell';
-import { resolveAssigneePlainLabel } from '../../utils/assigneeDisplay';
+import { resolveAssigneePlainLabel, resolveAssignedByDisplay } from '../../utils/assigneeDisplay';
 import { getMyTaskCompletionProgressStatus, isMyTaskDateAtRisk } from '../../utils/taskDeadline';
 import { getTaskDeadline } from '../../utils/taskDetail';
 import type { CmProjectTaskScope } from '../../utils/taskListVisibility';
-import { hasHandoffEvaluation, isCreativeWholeAssigned } from '../../utils/taskEvaluation';
+import {
+  canEvaluateTaskLayer,
+  EVALUATION_LAYER_BADGE_LABELS,
+  EVALUATION_LAYER_TITLES,
+  hasChEvaluation,
+  hasHandoffEvaluation,
+  isCreativePastChToCmHandoff,
+  isCreativeWholeAssigned,
+} from '../../utils/taskEvaluation';
 import { formatEvaluationBadgeLabel, hasCmEvaluation } from '../../utils/evaluationRemainder';
 import {
   inferParentTaskCodeFromSplit,
@@ -53,8 +62,12 @@ import {
   isRevisionTask,
   PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION,
 } from '../../utils/taskRevision';
-import { canEvaluateTaskLayer } from '../../utils/taskEvaluation';
-import { canChangeTaskStatus, TASK_STATUS_LOCKED_MESSAGE } from '../../utils/taskStatusLock';
+import {
+  canChangeTaskStatus,
+  isCancelledTask,
+  TASK_STATUS_ASSIGNEE_ONLY_MESSAGE,
+  TASK_STATUS_LOCKED_MESSAGE,
+} from '../../utils/taskStatusLock';
 import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/CompletionProgressCell';
 import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
 import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
@@ -112,6 +125,8 @@ const renderTaskDetailLink = (
   const showStaffBadge = evaluated && !(evaluationScope === 'received' && wholeAssigned);
   const showHandoffBadge =
     wholeAssigned && hasHandoffEvaluation(record) && evaluationScope !== 'staff';
+  const showChBadge =
+    isCreativePastChToCmHandoff(record) && hasChEvaluation(record) && evaluationScope !== 'staff';
   const remainderHint =
     record.evaluationRemainderTaskCode != null
       ? `Đã tách ${record.evaluationRemainderTaskCode}${
@@ -166,17 +181,24 @@ const renderTaskDetailLink = (
             </Tag>
           </Tooltip>
         ) : null}
-        {showStaffBadge ? (
-          <Tooltip title={remainderHint ?? 'CM đã evaluate task này'}>
-            <Tag color="green" className={styles.otBadge}>
-              {formatEvaluationBadgeLabel(record)}
+        {showChBadge ? (
+          <Tooltip title={EVALUATION_LAYER_TITLES.ch}>
+            <Tag color="geekblue" className={styles.otBadge}>
+              {EVALUATION_LAYER_BADGE_LABELS.ch}
             </Tag>
           </Tooltip>
         ) : null}
         {showHandoffBadge ? (
-          <Tooltip title="Đánh giá của Creative Head cho gói của CM">
+          <Tooltip title={EVALUATION_LAYER_TITLES.handoff}>
             <Tag color="gold" className={styles.otBadge}>
-              CH đã đánh giá
+              {EVALUATION_LAYER_BADGE_LABELS.handoff}
+            </Tag>
+          </Tooltip>
+        ) : null}
+        {showStaffBadge ? (
+          <Tooltip title={remainderHint ?? EVALUATION_LAYER_TITLES.staff}>
+            <Tag color="green" className={styles.otBadge}>
+              {formatEvaluationBadgeLabel(record)}
             </Tag>
           </Tooltip>
         ) : null}
@@ -241,6 +263,7 @@ export function MyTaskTable({
 }: MyTaskTableProps) {
   const { columnDefs } = useMyTaskColumns();
   const { role } = usePermission();
+  const userId = useAppSelector((state) => state.auth.user?.id);
   const actionsWidth = getMyTaskActionsWidth({
     hasUpdateStatus: Boolean(onUpdateStatus),
     canAssign: canAssign && Boolean(onAssign),
@@ -256,7 +279,13 @@ export function MyTaskTable({
       renderEvaluationLevel,
       renderText,
       renderTaskName: (name, record) => renderTaskDetailLink(name, record, evaluationScope),
-      renderConfirmation: (status) => <TaskConfirmationBadge status={status} />,
+      renderConfirmation: (record) => (
+        <TaskConfirmationBadge
+          status={record.staffConfirmation}
+          completionPercent={record.completionPercent}
+          pmEvaluation={record.pmEvaluation}
+        />
+      ),
       renderProjectStatus: (status) => <ProjectStatusBadge status={status} />,
       renderProjectName: (record) => (
         <ProjectNameLink
@@ -272,6 +301,16 @@ export function MyTaskTable({
           showAvatar
         />
       ),
+      renderAssignedBy: (record) => {
+        const display = resolveAssignedByDisplay(record);
+        if (!display) return <span className={styles.empty}>—</span>;
+        return (
+          <>
+            <UserNameLink name={display.name} userId={display.userId} showAvatar />
+            {display.roleLabel ? <span> ({display.roleLabel})</span> : null}
+          </>
+        );
+      },
       renderStaffName: (record) => (
         <TaskStaffNameCell
           staff={record.staff}
@@ -295,12 +334,16 @@ export function MyTaskTable({
         render: (_, record) => {
           const lockedByActiveRevision = areParentActionsLockedByActiveRevision(record);
           const canUpdateStatus =
-            Boolean(onUpdateStatus) && canChangeTaskStatus(record, role) && !lockedByActiveRevision;
+            Boolean(onUpdateStatus) &&
+            canChangeTaskStatus(record, role, userId) &&
+            !lockedByActiveRevision;
           const statusTooltip = lockedByActiveRevision
             ? PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION
             : canUpdateStatus
               ? 'Update status'
-              : TASK_STATUS_LOCKED_MESSAGE;
+              : isCancelledTask(record)
+                ? TASK_STATUS_LOCKED_MESSAGE
+                : TASK_STATUS_ASSIGNEE_ONLY_MESSAGE;
           const editTooltip = lockedByActiveRevision
             ? PARENT_ACTIONS_LOCKED_BY_ACTIVE_REVISION
             : 'Edit';
@@ -399,6 +442,7 @@ export function MyTaskTable({
     onEvaluate,
     onUpdateStatus,
     role,
+    userId,
   ]);
 
   return (

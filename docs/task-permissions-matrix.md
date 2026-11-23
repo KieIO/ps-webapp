@@ -53,19 +53,21 @@ Aligned with current FE + BE behavior (audit reference).
 
 Flow: PM creates → waiting for CH → CH assigns CM → waiting for CM → CM assigns Staff (whole or split).
 
-| Action                       | Staff | PM  | CM  | CH  | Head | Admin | Conditions                                          |
-| ---------------------------- | :---: | :-: | :-: | :-: | :--: | :---: | --------------------------------------------------- |
-| Assign CM                    |   ✗   |  ✓  |  ✗  |  ✓  |  ✗   |   ✓   | Waiting for Creative Head                           |
-| Assign Staff (whole / split) |   ✗   |  ✓  |  △  |  ✗  |  ✗   |   ✓   | Waiting for CM; CM must be assigned that task       |
-| Change Staff / quantity      |   ✗   | △²  |  △  |  ✗  |  △   |   ✓   | Staff already assigned; enough pipeline edit rights |
-| Change CM                    |   ✗   |  ✗  |  ✗  |  ✓  |  ✗   |   ✓   | Only while waiting for CM                           |
-| Rehand to CH                 |   ✗   |  ✓  |  ✗  |  ✗  |  ✗   |   ✓   | CH refused; task returned to PM                     |
-| CH refuse (back to PM)       |   ✗   |  ✗  |  ✗  |  ✓  |  ✗   |   ✓   | Waiting for Creative Head                           |
-| CM refuse (back to CH)       |   ✗   |  ✗  |  △  |  ✗  |  ✗   |   ✓   | Waiting for CM + task assigned to that CM           |
-| Staff Confirm / Decline      |   △   |  △  |  △  |  △  |  △   |   △   | User is assignee; status not updated yet            |
-| Staff Finish                 |   △   |  —  |  —  |  —  |  —   |   —   | User is assignee + already Confirmed                |
+| Action                       | Staff | PM  | CM  | CH  | Head | Admin | Conditions                                               |
+| ---------------------------- | :---: | :-: | :-: | :-: | :--: | :---: | -------------------------------------------------------- |
+| Assign CM                    |   ✗   |  ✓  |  ✗  |  ✓  |  ✗   |   ✓   | Waiting for Creative Head                                |
+| Assign Staff (whole / split) |   ✗   |  ✓  |  △  |  ✗  |  ✗   |   ✓   | Waiting for CM; CM must be assigned that task            |
+| Change Staff / quantity      |   ✗   | △²  |  △  |  ✗  |  △   |   ✓   | Staff already assigned; enough pipeline edit rights      |
+| Change CM                    |   ✗   |  ✗  |  ✗  |  ✓  |  ✗   |   ✓   | Only while waiting for CM                                |
+| Rehand to CH                 |   ✗   |  ✓  |  ✗  |  ✗  |  ✗   |   ✓   | CH refused; task returned to PM                          |
+| CH refuse (back to PM)       |   ✗   |  ✗  |  ✗  |  ✓  |  ✗   |   ✓   | Waiting for Creative Head                                |
+| CM refuse (back to CH)       |   ✗   |  ✗  |  △  |  ✗  |  ✗   |   ✓   | Waiting for CM + task assigned to that CM                |
+| Staff Confirm / Decline      |   △   | ✗⁶  |  △  |  △  |  ✗⁶  |   △   | User is assignee (PM/Head view-only once staff assigned) |
+| Staff Finish                 |   △   |  —  |  —  |  —  |  —   |   —   | User is assignee + already Confirmed                     |
+| Generic Update status        |   △   | ✗⁶  |  △  |  △  |  ✗⁶  |   ✓   | After staff assigned: assignee only (+ Admin)            |
 
-² PM only when they are the **project PM** or the **task creator** (not every PM account).
+² PM only when they are the **project PM** or the **task creator** (not every PM account).  
+⁶ Once the task has an assigned staff user: only that assignee (or Admin) may change `staffConfirmation`. PM/Head view status only. See [Trạng thái Task](../docs-site/docs/task-status.md).
 
 ---
 
@@ -90,7 +92,7 @@ Flow: PM creates → waiting for CH → CH assigns CM → waiting for CM → CM 
 | Name, description, qty, Deadline PM, Urgency, Staff | △ task creator |  ✓  |    —    |  —   |   ✓   |
 | Deadline Creative                                   |       ✗        | △²  |    —    |  —   |   ✓   |
 | Level (Design Thinking / Technical / Content)       |       ✗        |  ✓  |    —    |  —   |   ✓   |
-| Status in modal                                     |       △        |  ✓  |    —    |  —   |   ✓   |
+| Status in modal                                     |       △        | ✗⁶  |    —    |  —   |   ✓   |
 | Evaluation in modal                                 |       ✗        | ✗³  |    —    |  —   |  ✗³   |
 
 ³ Use the separate **Evaluate** action, not inline in this modal.

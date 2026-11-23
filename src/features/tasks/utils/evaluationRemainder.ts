@@ -1,6 +1,7 @@
 import type { MyTask } from '../schemas/task.schema';
 import { deriveCompletedQuantityFromPercent } from './evaluationCompletion';
 import { isSplitChildTask, isSplitParentTask } from './creativePipeline';
+import { EVALUATION_LAYER_BADGE_LABELS } from './taskEvaluation';
 
 export const computeAcceptedRemainderQuantity = (
   assignedQuantity: number,
@@ -57,10 +58,10 @@ export const formatEvaluationAcceptedLabel = (
   return `Đạt ${accepted}/${original}`;
 };
 
-/** Plain evaluate badge (no remainder spawn). Prefer VN over mixed “Đã evaluate”. */
-export const EVALUATED_BADGE_LABEL = 'Đã đánh giá';
+/** CM→Staff list/detail badge (no remainder spawn). */
+export const EVALUATED_BADGE_LABEL = EVALUATION_LAYER_BADGE_LABELS.staff;
 
-/** List/detail badge: `Đạt x/y` after spawn, otherwise `Đã đánh giá`. */
+/** List/detail badge: `Đạt x/y` after spawn, otherwise `Đã ĐG Staff`. */
 export const formatEvaluationBadgeLabel = (
   task: Pick<MyTask, 'quantity' | 'originalAssignedQuantity'>,
 ): string => formatEvaluationAcceptedLabel(task) ?? EVALUATED_BADGE_LABEL;

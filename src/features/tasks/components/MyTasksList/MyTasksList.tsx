@@ -23,7 +23,10 @@ import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { exportMyTasksToCsv } from '../../utils/exportMyTasks';
 import { shouldUseCreativePipelineEditDrawer } from '../../utils/creativePipeline';
 import { canDeleteTask, canEditTaskMeta } from '../../utils/taskStatusLock';
-import { computeTaskConfirmationSummary } from '../../utils/taskConfirmationSummary';
+import {
+  computeTaskConfirmationSummary,
+  resolveTaskSummaryBucket,
+} from '../../utils/taskConfirmationSummary';
 import { canEvaluateTaskLayer } from '../../utils/taskEvaluation';
 import {
   CM_PROJECT_TASK_SCOPE_HINTS,
@@ -247,17 +250,26 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
     [showCmScopeToggle, roleFilteredItems],
   );
 
-  const displayItems = useMemo(() => {
+  const scopedItems = useMemo(() => {
     if (!showCmScopeToggle) return roleFilteredItems;
     return filterTasksForCmProjectScope(roleFilteredItems, cmScope);
   }, [showCmScopeToggle, roleFilteredItems, cmScope]);
 
+  const displayItems = useMemo(() => {
+    if (!filters.statusBucket) return scopedItems;
+    return scopedItems.filter((task) => resolveTaskSummaryBucket(task) === filters.statusBucket);
+  }, [scopedItems, filters.statusBucket]);
+
+  // Counts stay on the scoped list so statusBucket filter does not collapse the overview bar.
   const confirmationSummary = useMemo(
-    () => computeTaskConfirmationSummary(displayItems),
-    [displayItems],
+    () => computeTaskConfirmationSummary(scopedItems),
+    [scopedItems],
   );
 
-  const tableTotal = filters.otOnly || showCmScopeToggle ? displayItems.length : (data?.total ?? 0);
+  const tableTotal =
+    filters.otOnly || showCmScopeToggle || filters.statusBucket
+      ? displayItems.length
+      : (data?.total ?? 0);
   const {
     mutate: deleteTask,
     isPending: isDeleting,
@@ -319,7 +331,7 @@ export function MyTasksList({ taskCategory }: MyTasksListProps) {
           </strong>
           <span>
             {' '}
-            từ {filters.otOnly ? displayItems.length : data.total} task ·{' '}
+            từ {filters.otOnly || filters.statusBucket ? displayItems.length : data.total} task ·{' '}
             {filters.outputMonth ?? ''}
           </span>
         </p>

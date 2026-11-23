@@ -111,12 +111,34 @@ const deriveDevRoleFromUserId = (userId: string): Role | undefined => {
   return Object.values(ROLES).includes(role) ? role : undefined;
 };
 
+const resolveViewerRole = (userId?: string, viewerRole?: Role): Role | undefined =>
+  viewerRole ?? (userId ? deriveDevRoleFromUserId(userId) : undefined);
+
+/** Org-wide oversight (Head / CH / Admin). PM is project-scoped — see isPmProjectVisible. */
 const canViewAllTasks = (userId?: string, viewerRole?: Role): boolean => {
-  if (viewerRole && roleHasDefaultPermission(viewerRole, 'VIEW_ALL_TASKS')) {
+  const role = resolveViewerRole(userId, viewerRole);
+  if (role === ROLES.PM) return false;
+  if (role && roleHasDefaultPermission(role, 'VIEW_ALL_TASKS')) {
     return true;
   }
-  const role = userId ? deriveDevRoleFromUserId(userId) : undefined;
-  return role != null && roleHasDefaultPermission(role, 'VIEW_ALL_TASKS');
+  return false;
+};
+
+const isPmProjectVisible = (task: MyTask, pmUserId: string): boolean => {
+  // Denormalized PM on the task row (project + non-project).
+  if (task.projectManager?.userId === pmUserId) return true;
+  if (task.taskCategory !== 'project') {
+    const assigneeIds = task.staff.map((member) => member.userId).filter(Boolean);
+    return (
+      assigneeIds.includes(pmUserId) ||
+      task.creativeManager?.userId === pmUserId ||
+      task.createdById === pmUserId
+    );
+  }
+  const project = getMockProjectsStore().find(
+    (entry) => entry.id === task.projectId || entry.name === task.projectName,
+  );
+  return project?.pm?.userId === pmUserId;
 };
 
 const canEvaluateTask = (userId?: string): boolean => {
@@ -186,13 +208,17 @@ export const filterMockTasks = (
   viewerRole?: Role,
 ): MyTaskListResponse['items'] => {
   const search = filters.search?.trim().toLowerCase();
+  const resolvedRole = resolveViewerRole(assigneeUserId, viewerRole);
   const viewAllTasks = canViewAllTasks(assigneeUserId, viewerRole);
-
-  const resolvedRole =
-    viewerRole ?? (assigneeUserId ? deriveDevRoleFromUserId(assigneeUserId) : undefined);
+  const isPmScoped = resolvedRole === ROLES.PM && Boolean(assigneeUserId);
+  const oversightList = viewAllTasks || isPmScoped;
 
   return tasks.filter((task) => {
-    if (assigneeUserId && !viewAllTasks) {
+    if (assigneeUserId && isPmScoped) {
+      if (!isPmProjectVisible(task, assigneeUserId)) {
+        return false;
+      }
+    } else if (assigneeUserId && !viewAllTasks) {
       const assigneeIds = task.staff.map((member) => member.userId).filter(Boolean);
       const isCreativeManager =
         task.creativeManager?.userId != null && task.creativeManager.userId === assigneeUserId;
@@ -201,10 +227,10 @@ export const filterMockTasks = (
         return false;
       }
     }
-    // Oversight roles (VIEW_ALL): hide CM→staff split children — parent handoff only.
-    // Project-scoped lists keep children (match Tracker / Project Detail).
+    // Oversight roles (VIEW_ALL / PM project scope): hide CM→staff split children —
+    // parent handoff only. Project-scoped lists keep children (Tracker / Project Detail).
     if (
-      viewAllTasks &&
+      oversightList &&
       !filters.projectName &&
       shouldHideSplitChildFromTaskList(task, resolvedRole)
     ) {
@@ -220,6 +246,7 @@ export const filterMockTasks = (
         return false;
       }
     }
+    // `statusBucket` is client-only (stripped in myTaskApi.getList); raw confirmation still for API/mock.
     if (filters.confirmation && task.staffConfirmation !== filters.confirmation) return false;
     if (filters.timeliness) {
       if (
@@ -271,6 +298,10 @@ export const mockGetMyTaskList = async (
 const canViewTask = (task: MyTask, viewerUserId?: string, viewerRole?: Role): boolean => {
   if (!viewerUserId) return false;
   if (canViewAllTasks(viewerUserId, viewerRole)) return true;
+  const role = resolveViewerRole(viewerUserId, viewerRole);
+  if (role === ROLES.PM) {
+    return isPmProjectVisible(task, viewerUserId);
+  }
   const assigneeIds = task.staff.map((member) => member.userId).filter(Boolean);
   if (task.creativeManager?.userId === viewerUserId) return true;
   return assigneeIds.includes(viewerUserId);
@@ -670,6 +701,10 @@ export const mockCreateMyTask = async (
 const canEditTask = (task: MyTask, editorUserId?: string): boolean => {
   if (!editorUserId) return false;
   if (canViewAllTasks(editorUserId)) return true;
+  const role = resolveViewerRole(editorUserId);
+  if (role === ROLES.PM) {
+    return isPmProjectVisible(task, editorUserId);
+  }
   const assigneeIds = task.staff.map((member) => member.userId).filter(Boolean);
   if (assigneeIds.length === 0) return true;
   return assigneeIds.includes(editorUserId);
@@ -697,6 +732,28 @@ const assertCanChangeCancelledStatus = (
   throw new Error('Only an admin can change status of a cancelled task');
 };
 
+/** After staff is assigned, only that assignee (or Admin) may change status. */
+const assertAssigneeOwnsTaskStatus = (
+  current: MyTask,
+  nextConfirmation: MyTask['staffConfirmation'],
+  editorUserId?: string,
+): void => {
+  assertCanChangeCancelledStatus(current, nextConfirmation, editorUserId);
+  const assigneeIds = current.staff.map((member) => member.userId).filter(Boolean) as string[];
+  if (assigneeIds.length === 0) return;
+  const role = resolveEditorRole(editorUserId);
+  if (role === ROLES.ADMIN) return;
+  if (editorUserId && assigneeIds.includes(editorUserId)) return;
+  const isCreativeDecline =
+    nextConfirmation === 'decline' &&
+    current.staffConfirmation !== 'decline' &&
+    typeof current.department === 'string' &&
+    (current.department === 'creative' || current.department.startsWith('creative_')) &&
+    current.taskKind !== 'revision';
+  if (isCreativeDecline) return; // CH/CM refuse validated separately below
+  throw new Error('Only the assigned staff can update this task status');
+};
+
 export const mockUpdateMyTask = async (
   id: string,
   payload: UpdateMyTaskRequest,
@@ -714,7 +771,11 @@ export const mockUpdateMyTask = async (
   if (!canEditTask(current, editorUserId)) {
     throw new Error('You do not have permission to edit this task');
   }
-  assertCanChangeCancelledStatus(current, payload.staffConfirmation, editorUserId);
+  if (payload.staffConfirmation !== current.staffConfirmation) {
+    assertAssigneeOwnsTaskStatus(current, payload.staffConfirmation, editorUserId);
+  } else {
+    assertCanChangeCancelledStatus(current, payload.staffConfirmation, editorUserId);
+  }
 
   if (
     payload.creativeDeadline !== undefined &&
@@ -882,7 +943,7 @@ export const mockUpdateMyTaskStatus = async (
   if (!canEditTask(current, editorUserId)) {
     throw new Error('You do not have permission to update this task status');
   }
-  assertCanChangeCancelledStatus(current, payload.staffConfirmation, editorUserId);
+  assertAssigneeOwnsTaskStatus(current, payload.staffConfirmation, editorUserId);
 
   if (
     payload.staffConfirmation === 'decline' &&
@@ -1283,12 +1344,18 @@ export const mockAssignCreativeManager = async (
     if (current.quantity >= 1 && payload.quantity > current.quantity) {
       throw new Error(`số lượng không được lớn hơn SL hiện tại (${current.quantity})`);
     }
+    const assigner = editorUserId
+      ? DEV_MOCK_USERS.find((user) => `dev-${user.role}` === editorUserId)
+      : undefined;
     const updated: MyTask = {
       ...current,
       staff,
       quantity: payload.quantity,
       pipelineStage: 'assigned_staff',
       assignedAt: now,
+      assignedBy: assigner
+        ? { userId: editorUserId!, name: assigner.name, role: assigner.role }
+        : current.assignedBy,
       staffConfirmation: 'not_updated',
       staffNote: payload.staffNote ?? current.staffNote,
       creativeDeadline:

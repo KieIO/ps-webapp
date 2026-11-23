@@ -9,9 +9,9 @@ import type { MyTask, TaskAssignee, TaskCategory } from '../schemas/task.schema'
 import { computeTaskLevel } from '../utils/taskLevel';
 import { enrichMockTaskWithProjectContext } from './mockTaskProjectEnrichment';
 
-const pm012 = { code: 'PO.012', name: 'Phan Thi Cam Tu' };
-const pm023 = { code: 'PO.023', name: 'Lam Ngoc Kim Ngan' };
-const pm031 = { code: 'PO.031', name: 'Hoang Thi Mai' };
+const pm012 = { code: 'PO.012', name: 'Phan Thi Cam Tu', userId: 'dev-pm' };
+const pm023 = { code: 'PO.023', name: 'Lam Ngoc Kim Ngan', userId: 'dev-pm2' };
+const pm031 = { code: 'PO.031', name: 'Hoang Thi Mai', userId: 'dev-pm3' };
 
 export const MOCK_PROJECT_MANAGERS = [pm012, pm023, pm031] as const;
 
@@ -372,7 +372,7 @@ export const INITIAL_MOCK_PROJECT_TASKS: MyTask[] = [
     id: 'task-ch-031',
     taskCode: 'T-031',
     projectName: 'CRM Redesign',
-    projectManager: pm031,
+    projectManager: pm012,
     taskName: 'Thiết kế banner campaign Q3',
     quantity: 3,
     date: toIso(14, 5, 2026),
@@ -518,7 +518,7 @@ export const INITIAL_MOCK_NON_PROJECT_TASKS: MyTask[] = [
     taskCategory: 'non_project',
     taskCode: 'INT.04.1006 - IT_ONBOARDING',
     projectName: 'IT Onboarding',
-    projectManager: pm023,
+    projectManager: pm012,
     taskName: 'Slides',
     quantity: 8,
     date: toIso(10, 6, 2026),

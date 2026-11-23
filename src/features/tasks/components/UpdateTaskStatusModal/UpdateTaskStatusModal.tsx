@@ -1,35 +1,41 @@
-import { Alert, Form, Input, InputNumber, Modal, Select } from 'antd';
+import { Alert, Form, Input, InputNumber, Modal, Select, message } from 'antd';
 import { useEffect, useMemo } from 'react';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
-import {
-  MY_TASK_COLUMN_HEADERS,
-  TASK_STATUS_CHANGE_NOTE_LABEL,
-  CONFIRMATION_LABELS,
-} from '../../constants';
+import { MY_TASK_COLUMN_HEADERS, TASK_STATUS_CHANGE_NOTE_LABEL } from '../../constants';
 import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
 import { TaskConfirmationBadge } from '../TaskConfirmationBadge/TaskConfirmationBadge';
-import type {
-  MyTask,
-  TaskConfirmationStatus,
-  UpdateMyTaskStatusRequest,
-} from '../../schemas/task.schema';
+import type { MyTask, TaskConfirmationStatus } from '../../schemas/task.schema';
+import {
+  bucketToStaffConfirmation,
+  getTaskStatusPickerOptions,
+  resolveTaskStatusPickerBucket,
+  TASK_SUMMARY_BUCKET_LABELS,
+  type TaskSummaryBucket,
+} from '../../utils/taskConfirmationSummary';
 import {
   canCancelTask,
   canChangeTaskStatus,
   confirmCancelTask,
-  getTaskStatusOptionsForRole,
+  isCancelledTask,
   isTransitioningToCancelled,
+  TASK_STATUS_ASSIGNEE_ONLY_MESSAGE,
   TASK_STATUS_LOCKED_MESSAGE,
 } from '../../utils/taskStatusLock';
 import styles from '../EditTaskModal/EditTaskModal.module.scss';
+
+type StatusFormValues = {
+  statusBucket: TaskSummaryBucket;
+  staffNote?: string;
+  actualHours?: number;
+};
 
 interface UpdateTaskStatusModalProps {
   open: boolean;
   task: MyTask | null;
   onClose: () => void;
   /**
-   * When set, status is fixed (no dropdown) — used for guided staff finish
-   * so users can still add an optional note / OT hours.
+   * When set, status is fixed (no dropdown) — guided staff finish → «Cần đánh giá».
    */
   lockedStatus?: TaskConfirmationStatus;
 }
@@ -40,39 +46,51 @@ export function UpdateTaskStatusModal({
   onClose,
   lockedStatus,
 }: UpdateTaskStatusModalProps) {
-  const [form] = Form.useForm<UpdateMyTaskStatusRequest>();
+  const [form] = Form.useForm<StatusFormValues>();
   const { mutate, isPending } = useUpdateMyTaskStatus();
   const { role } = usePermission();
-  const statusEditable = task ? canChangeTaskStatus(task, role) : true;
+  const userId = useAppSelector((state) => state.auth.user?.id);
+  const statusEditable = task ? canChangeTaskStatus(task, role, userId) : true;
+  const statusLockMessage =
+    task && isCancelledTask(task) ? TASK_STATUS_LOCKED_MESSAGE : TASK_STATUS_ASSIGNEE_ONLY_MESSAGE;
   const statusOptions = useMemo(
-    () => getTaskStatusOptionsForRole(role, task?.staffConfirmation),
-    [role, task?.staffConfirmation],
+    () => getTaskStatusPickerOptions(role, task ?? undefined),
+    [role, task],
   );
   const isOtTask = Boolean(task?.overtimeRequestId);
-  const selectedStatus = Form.useWatch('staffConfirmation', form);
-  const effectiveStatus = lockedStatus ?? selectedStatus;
-  const requiresActualHours = isOtTask && effectiveStatus === 'finished';
+  const selectedBucket = Form.useWatch('statusBucket', form);
   const isFinishFlow = lockedStatus === 'finished';
+  const effectiveBucket: TaskSummaryBucket | undefined = isFinishFlow
+    ? 'completed'
+    : selectedBucket;
+  const requiresActualHours = isOtTask && effectiveBucket === 'completed';
 
   useEffect(() => {
     if (open && task) {
       form.setFieldsValue({
-        staffConfirmation: lockedStatus ?? task.staffConfirmation,
+        statusBucket: isFinishFlow ? 'completed' : resolveTaskStatusPickerBucket(task),
         staffNote: task.staffNote,
         actualHours: task.actualHours ?? undefined,
       });
     }
-  }, [open, task, form, lockedStatus]);
+  }, [open, task, form, isFinishFlow]);
 
   const handleClose = () => {
     form.resetFields();
     onClose();
   };
 
-  const handleFinish = async (values: UpdateMyTaskStatusRequest) => {
+  const handleFinish = async (values: StatusFormValues) => {
     if (!task) return;
-    const nextStatus = lockedStatus ?? values.staffConfirmation;
-    if (!canChangeTaskStatus(task, role) && nextStatus !== task.staffConfirmation) {
+    const bucket: TaskSummaryBucket = isFinishFlow ? 'completed' : values.statusBucket;
+    const mapped = bucketToStaffConfirmation(bucket, role, task);
+    if (!mapped.ok) {
+      message.warning(mapped.error);
+      return;
+    }
+    const nextStatus = mapped.status;
+
+    if (!canChangeTaskStatus(task, role, userId) && nextStatus !== task.staffConfirmation) {
       return;
     }
 
@@ -122,7 +140,11 @@ export function UpdateTaskStatusModal({
           </span>
           <span>
             <span className={styles.readOnlyLabel}>{MY_TASK_COLUMN_HEADERS.confirmation}:</span>{' '}
-            <TaskConfirmationBadge status={task.staffConfirmation} />
+            <TaskConfirmationBadge
+              status={task.staffConfirmation}
+              completionPercent={task.completionPercent}
+              pmEvaluation={task.pmEvaluation}
+            />
           </span>
           {isOtTask ? (
             <Alert
@@ -136,7 +158,7 @@ export function UpdateTaskStatusModal({
 
       <Form form={form} layout="vertical" onFinish={handleFinish} requiredMark={false}>
         {isFinishFlow ? (
-          <Form.Item name="staffConfirmation" hidden>
+          <Form.Item name="statusBucket" hidden>
             <Input type="hidden" />
           </Form.Item>
         ) : (
@@ -146,12 +168,12 @@ export function UpdateTaskStatusModal({
               <Alert
                 type="info"
                 showIcon
-                message={TASK_STATUS_LOCKED_MESSAGE}
+                message={statusLockMessage}
                 style={{ marginBottom: 12 }}
               />
             ) : null}
             <Form.Item
-              name="staffConfirmation"
+              name="statusBucket"
               rules={[{ required: true, message: 'Status is required' }]}
             >
               <Select
@@ -163,7 +185,9 @@ export function UpdateTaskStatusModal({
           </>
         )}
         {isFinishFlow ? (
-          <p className={styles.sectionTitle}>Trạng thái mới: {CONFIRMATION_LABELS.finished}</p>
+          <p className={styles.sectionTitle}>
+            Trạng thái mới: {TASK_SUMMARY_BUCKET_LABELS.completed}
+          </p>
         ) : null}
         {requiresActualHours ? (
           <Form.Item

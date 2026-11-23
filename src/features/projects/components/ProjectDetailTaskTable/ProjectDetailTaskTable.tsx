@@ -334,7 +334,13 @@ export function ProjectDetailTaskTable({ tasks, loading, total }: ProjectDetailT
         key: 'staffConfirmation',
         width: 130,
         sorter: getMyTaskColumnSorter('confirmation'),
-        render: (status: MyTask['staffConfirmation']) => <TaskConfirmationBadge status={status} />,
+        render: (_status: MyTask['staffConfirmation'], record: MyTask) => (
+          <TaskConfirmationBadge
+            status={record.staffConfirmation}
+            completionPercent={record.completionPercent}
+            pmEvaluation={record.pmEvaluation}
+          />
+        ),
       },
       {
         title: 'Action',

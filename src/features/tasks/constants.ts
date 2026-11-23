@@ -50,6 +50,8 @@ export const UNASSIGNED_STAFF_LABEL = 'Unassigned';
 export type MyTaskColumnKey =
   | 'projectName'
   | 'projectManager'
+  /** Direct assigner (`assignedBy` / resolveAssignedByDisplay) — Employee list. */
+  | 'assignedBy'
   | 'taskName'
   | 'level'
   | 'quantity'
@@ -80,6 +82,7 @@ export type MyTaskColumnKey =
 export const MY_TASK_COLUMN_HEADERS: Record<MyTaskColumnKey, string> = {
   projectName: PROJECT_NAME_COLUMN_LABEL,
   projectManager: 'PM Name',
+  assignedBy: 'Assigned by',
   taskName: 'Task Name',
   level: 'Level',
   quantity: 'Quantity',
@@ -140,10 +143,10 @@ export const MY_TASK_HEAD_COLUMN_HEADERS: Partial<Record<MyTaskColumnKey, string
   finishedDate: 'Finished Date',
 };
 
-/** Employee — personal task view without classification / PM evaluation columns. */
+/** Employee — personal task view; Assigned by = người giao trực tiếp (không hiện PM project). */
 export const MY_TASK_EMPLOYEE_COLUMN_KEYS: MyTaskColumnKey[] = [
   'projectName',
-  'projectManager',
+  'assignedBy',
   'taskName',
   'quantity',
   'description',

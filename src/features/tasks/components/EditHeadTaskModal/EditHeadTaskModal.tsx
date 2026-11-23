@@ -1,4 +1,4 @@
-import { Alert, DatePicker, Form, Input, Modal, Select } from 'antd';
+import { Alert, DatePicker, Form, Input, Modal, Select, message } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect } from 'react';
 import { DATE_FORMAT } from '@/config/constants';
@@ -17,6 +17,7 @@ import type {
   ProjectStatus,
   ProjectUrgency,
 } from '@/features/projects/schemas/project.schema';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import {
   MY_TASK_HEAD_COLUMN_HEADERS,
@@ -25,20 +26,23 @@ import {
 } from '../../constants';
 import { useUpdateHeadMyTask } from '../../hooks/useUpdateHeadMyTask';
 import { useUpdateMyTask } from '../../hooks/useUpdateMyTask';
-import type {
-  MyTask,
-  TaskConfirmationStatus,
-  UpdateHeadMyTaskRequest,
-} from '../../schemas/task.schema';
+import type { MyTask, UpdateHeadMyTaskRequest } from '../../schemas/task.schema';
 import { resolveProjectContextFromTask } from '../../utils/taskProjectContext';
+import {
+  bucketToStaffConfirmation,
+  getTaskStatusPickerOptions,
+  resolveTaskStatusPickerBucket,
+  type TaskSummaryBucket,
+} from '../../utils/taskConfirmationSummary';
 import {
   canCancelTask,
   canChangeTaskStatus,
   confirmCancelTask,
-  getTaskStatusOptionsForRole,
+  isCancelledTask,
   isTaskMetaEditLockedByStatus,
   isTransitioningToCancelled,
   TASK_META_EDIT_STATUS_LOCKED_MESSAGE,
+  TASK_STATUS_ASSIGNEE_ONLY_MESSAGE,
   TASK_STATUS_LOCKED_MESSAGE,
 } from '../../utils/taskStatusLock';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
@@ -62,8 +66,8 @@ type HeadTaskFormValues = {
   additionalFactors: string;
   pmEvaluation: string;
   pmNote: string;
-  /** Task lifecycle status (staffConfirmation) — not project status. */
-  staffConfirmation: TaskConfirmationStatus;
+  /** Task lifecycle status bucket — maps to staffConfirmation on save. */
+  statusBucket: TaskSummaryBucket;
   staffNote: string;
   projectStatus: ProjectStatus;
   projectFinishedDate?: Dayjs;
@@ -79,6 +83,7 @@ export function EditHeadTaskModal({
 }: EditHeadTaskModalProps) {
   const [form] = Form.useForm<HeadTaskFormValues>();
   const { role } = usePermission();
+  const userId = useAppSelector((state) => state.auth.user?.id);
   const { mutateAsync: updateProjectAsync, isPending: isProjectPending } = useUpdateProject();
   const { mutateAsync: updateHeadTaskAsync, isPending: isTaskPending } = useUpdateHeadMyTask();
   const { mutateAsync: updateTaskAsync, isPending: isTaskUrgencyPending } = useUpdateMyTask();
@@ -98,8 +103,10 @@ export function EditHeadTaskModal({
   const nature = Form.useWatch('nature', form);
   const projectTime = Form.useWatch('projectTime', form);
   const projectStatus = Form.useWatch('projectStatus', form);
-  const statusEditable = task ? canChangeTaskStatus(task, role) : true;
-  const statusOptions = getTaskStatusOptionsForRole(role, task?.staffConfirmation);
+  const statusEditable = task ? canChangeTaskStatus(task, role, userId) : true;
+  const statusLockMessage =
+    task && isCancelledTask(task) ? TASK_STATUS_LOCKED_MESSAGE : TASK_STATUS_ASSIGNEE_ONLY_MESSAGE;
+  const statusOptions = getTaskStatusPickerOptions(role, task ?? undefined);
 
   const previewLevel: EvaluationLevel | undefined =
     volume != null && nature != null && projectTime != null
@@ -122,7 +129,7 @@ export function EditHeadTaskModal({
       additionalFactors: ctx.additionalFactors ?? '',
       pmEvaluation: ctx.pmEvaluation ?? '',
       pmNote: ctx.pmNote ?? '',
-      staffConfirmation: task.staffConfirmation,
+      statusBucket: resolveTaskStatusPickerBucket(task),
       staffNote: task.staffNote,
       projectStatus: (ctx.projectStatus ?? 'not_updated') as ProjectStatus,
       projectFinishedDate: ctx.projectFinishedDate ? dayjs(ctx.projectFinishedDate) : undefined,
@@ -138,11 +145,18 @@ export function EditHeadTaskModal({
   const handleFinish = async (values: HeadTaskFormValues) => {
     if (!task || readOnly) return;
 
-    if (!canChangeTaskStatus(task, role) && values.staffConfirmation !== task.staffConfirmation) {
+    const mapped = bucketToStaffConfirmation(values.statusBucket, role, task);
+    if (!mapped.ok) {
+      message.warning(mapped.error);
+      return;
+    }
+    const nextConfirmation = mapped.status;
+
+    if (!canChangeTaskStatus(task, role, userId) && nextConfirmation !== task.staffConfirmation) {
       return;
     }
 
-    if (isTransitioningToCancelled(task.staffConfirmation, values.staffConfirmation)) {
+    if (isTransitioningToCancelled(task.staffConfirmation, nextConfirmation)) {
       if (!canCancelTask(role)) return;
       const confirmed = await confirmCancelTask();
       if (!confirmed) return;
@@ -155,7 +169,7 @@ export function EditHeadTaskModal({
 
     const taskPayloadChanged =
       values.urgency !== task.urgency ||
-      values.staffConfirmation !== task.staffConfirmation ||
+      nextConfirmation !== task.staffConfirmation ||
       (values.staffNote ?? '') !== task.staffNote;
 
     try {
@@ -194,7 +208,7 @@ export function EditHeadTaskModal({
                 contentProcessing: task.contentProcessing,
                 additionalFactors: task.additionalFactors,
                 staff: task.staff,
-                staffConfirmation: values.staffConfirmation,
+                staffConfirmation: nextConfirmation,
                 staffNote: values.staffNote ?? '',
                 urgency: values.urgency,
               },
@@ -230,7 +244,7 @@ export function EditHeadTaskModal({
       const jobs: Promise<unknown>[] = [updateHeadTaskAsync({ id: task.id, payload })];
 
       if (
-        values.staffConfirmation !== task.staffConfirmation ||
+        nextConfirmation !== task.staffConfirmation ||
         (values.staffNote ?? '') !== task.staffNote
       ) {
         jobs.push(
@@ -246,7 +260,7 @@ export function EditHeadTaskModal({
               contentProcessing: task.contentProcessing,
               additionalFactors: values.additionalFactors ?? task.additionalFactors,
               staff: task.staff,
-              staffConfirmation: values.staffConfirmation,
+              staffConfirmation: nextConfirmation,
               staffNote: values.staffNote ?? '',
               urgency: values.urgency,
             },
@@ -382,12 +396,7 @@ export function EditHeadTaskModal({
         <section className={styles.section}>
           <p className={styles.sectionTitle}>Quality & status</p>
           {!statusEditable ? (
-            <Alert
-              type="info"
-              showIcon
-              message={TASK_STATUS_LOCKED_MESSAGE}
-              style={{ marginBottom: 12 }}
-            />
+            <Alert type="info" showIcon message={statusLockMessage} style={{ marginBottom: 12 }} />
           ) : null}
           <div className={styles.row}>
             <Form.Item name="pmEvaluation" label={headers.evaluation}>
@@ -398,12 +407,12 @@ export function EditHeadTaskModal({
               />
             </Form.Item>
             <Form.Item
-              name="staffConfirmation"
+              name="statusBucket"
               label={headers.confirmation}
               rules={[{ required: true, message: 'Task status is required' }]}
             >
               <Select
-                options={statusOptions}
+                options={[...statusOptions]}
                 disabled={!statusEditable}
                 placeholder="Select status"
               />

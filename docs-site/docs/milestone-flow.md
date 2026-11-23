@@ -23,7 +23,7 @@ Mỗi mốc là một **điểm trên timeline** (ngày giao slide / DA, hoặc 
 ```text
 PM / CM / Head / Admin tạo hoặc sửa mốc
       │
-      ├── Form Create / Edit Project (PM/Head/Admin sửa timeline + mốc)
+      ├── Form Create / Edit Project (PM: end date + mốc; Head/Admin: full)
       └── Tracker: click thanh project → thêm nhanh
             click chấm → sửa / tick hoàn thành / xóa
       │

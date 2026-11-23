@@ -1,4 +1,3 @@
-import type { TaskConfirmationStatus } from '../schemas/task.schema';
 import type { MyTask } from '../schemas/task.schema';
 import {
   isSplitChildTask,
@@ -9,6 +8,8 @@ import {
 } from './creativePipeline';
 import { hasCmEvaluation } from './evaluationRemainder';
 import { hasHandoffEvaluation, isCreativeWholeAssigned } from './taskEvaluation';
+import type { TaskSummaryBucket } from './taskConfirmationSummary';
+import { resolveTaskSummaryBucket } from './taskConfirmationSummary';
 
 /** How the Creative work unit was handed to Staff (or not yet). */
 export type CreativeAssignShapeFilter = 'all' | 'pending_staff' | 'whole' | 'split' | 'split_child';
@@ -22,7 +23,8 @@ export type CreativeQueueListFilters = {
   splitFrom?: string;
   splitTo?: string;
   evaluation?: CreativeEvaluationFilter;
-  confirmation?: TaskConfirmationStatus;
+  /** Business status groups — same as Project Tasks list filter. */
+  statusBucket?: TaskSummaryBucket;
 };
 
 export const EMPTY_CREATIVE_QUEUE_FILTERS: CreativeQueueListFilters = {
@@ -98,11 +100,12 @@ export const resolveCreativeQueueFilterVisibility = (
   const shape = filters.assignShape ?? 'all';
   return {
     showAssignShape: true,
-    showSplitDate: shape === 'split' || shape === 'split_child',
+    showSplitDate: shape === 'split',
     showEvaluation: true,
     showConfirmation: true,
     evaluationLayer: 'staff',
-    assignShapeOptions: ['all', 'whole', 'split', 'split_child'],
+    // Board lists parents only — no Task nhỏ rows / filter.
+    assignShapeOptions: ['all', 'whole', 'split'],
   };
 };
 
@@ -169,7 +172,7 @@ export const applyCreativeQueueFilters = (
   const projectName = filters.projectName;
   const assignShape = visibility.showAssignShape ? (filters.assignShape ?? 'all') : 'all';
   const evaluation = visibility.showEvaluation ? (filters.evaluation ?? 'all') : 'all';
-  const confirmation = visibility.showConfirmation ? filters.confirmation : undefined;
+  const statusBucket = visibility.showConfirmation ? filters.statusBucket : undefined;
   const splitFrom = visibility.showSplitDate ? filters.splitFrom : undefined;
   const splitTo = visibility.showSplitDate ? filters.splitTo : undefined;
 
@@ -179,7 +182,7 @@ export const applyCreativeQueueFilters = (
     if (!matchesAssignShape(task, assignShape)) return false;
     if (!matchesSplitDate(task, splitFrom, splitTo)) return false;
     if (!matchesEvaluation(task, evaluation, visibility.evaluationLayer)) return false;
-    if (confirmation && task.staffConfirmation !== confirmation) return false;
+    if (statusBucket && resolveTaskSummaryBucket(task) !== statusBucket) return false;
     return true;
   });
 };
@@ -203,7 +206,7 @@ export const sanitizeCreativeQueueFilters = (
     next.evaluation = filters.evaluation ?? 'all';
   }
   if (visibility.showConfirmation) {
-    next.confirmation = filters.confirmation;
+    next.statusBucket = filters.statusBucket;
   }
   if (visibility.showSplitDate) {
     next.splitFrom = filters.splitFrom;

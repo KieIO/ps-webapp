@@ -74,6 +74,10 @@ const config: Config = {
               label: 'FAQ',
               to: '/faq',
             },
+            {
+              label: 'Product changelog',
+              to: '/changelog',
+            },
           ],
         },
         {
@@ -90,7 +94,7 @@ const config: Config = {
           items: [
             {
               label: 'Tạo task',
-              to: '/',
+              to: '/create-task',
             },
             {
               label: 'Chia task con',

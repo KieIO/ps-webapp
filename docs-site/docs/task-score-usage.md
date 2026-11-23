@@ -40,7 +40,7 @@ Tạo / sửa task → chọn tên task từ catalog
 - Sau khi task Finished, quản lý **đánh giá** theo role (PM, CH, CM…) — xem go-live [Quản lý Task](/go-live).
 - KPI / báo cáo (On-time, Quality, Output, …) lấy từ task / đánh giá trong kỳ; loại và khối lượng task (từ catalog + số lượng) là đầu vào theo rule sản phẩm hiện tại.
 
-Chi tiết đánh giá theo luồng tạo / chia task: [Tạo task](/) · [Chia task con](/split-task).
+Chi tiết đánh giá theo luồng tạo / chia task: [Tạo task](/create-task) · [Chia task con](/split-task).
 
 ---
 

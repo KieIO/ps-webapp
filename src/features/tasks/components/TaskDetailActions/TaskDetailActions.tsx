@@ -98,7 +98,7 @@ export function TaskDetailActions({ task, onOpenRevisionTab }: TaskDetailActions
    * are not duplicated inside Update status.
    */
   const showUpdateStatus =
-    canChangeTaskStatus(task, role) &&
+    canChangeTaskStatus(task, role, userId) &&
     !showStaffConfirmDecline &&
     !showCmRefuse &&
     !showChRefuse &&

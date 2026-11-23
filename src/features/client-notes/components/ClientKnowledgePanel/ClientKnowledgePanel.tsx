@@ -28,7 +28,9 @@ export function ClientKnowledgePanel({
   showOpenClientLink = false,
 }: ClientKnowledgePanelProps) {
   const { can } = usePermission();
-  const canEdit = can('EDIT_PROJECT');
+  // View: anyone who can open the panel (MANAGE_PROJECTS / project access).
+  // Add/edit/delete: EDIT_CLIENT_NOTE (PM, CM, CH, Head, Admin).
+  const canEdit = can('EDIT_CLIENT_NOTE');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ClientNote | null>(null);
 
