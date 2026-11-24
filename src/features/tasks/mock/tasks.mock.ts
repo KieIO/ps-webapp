@@ -1338,10 +1338,6 @@ export const mockAssignCreativeManager = async (
   );
   const now = new Date().toISOString();
 
-  if (payload.mode === 'whole') {
-    throw new Error('Chỉ hỗ trợ chia task con');
-  }
-
   const subtasks = payload.subtasks ?? [];
   if (subtasks.length < 1) {
     throw new Error('Cần ít nhất 1 task con');
