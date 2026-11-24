@@ -1339,47 +1339,12 @@ export const mockAssignCreativeManager = async (
   const now = new Date().toISOString();
 
   if (payload.mode === 'whole') {
-    const staff = resolveStaffFromUserId(payload.staffUserId, staffPool);
-    const assignee = staff[0];
-    if (!assignee) {
-      throw new Error('Chọn Staff nhận task');
-    }
-    if (!isStaffAssignable(assignee.availability)) {
-      throw new Error('Không thể giao cho nhân viên đang nghỉ phép');
-    }
-    if (payload.quantity == null || payload.quantity <= 0) {
-      throw new Error('CM nhập số lượng trước khi giao');
-    }
-    if (current.quantity >= 1 && payload.quantity > current.quantity) {
-      throw new Error(`số lượng không được lớn hơn SL hiện tại (${current.quantity})`);
-    }
-    const assigner = editorUserId
-      ? DEV_MOCK_USERS.find((user) => `dev-${user.role}` === editorUserId)
-      : undefined;
-    const updated: MyTask = {
-      ...current,
-      staff,
-      quantity: payload.quantity,
-      pipelineStage: 'assigned_staff',
-      assignedAt: now,
-      assignedBy: assigner
-        ? { userId: editorUserId!, name: assigner.name, role: assigner.role }
-        : current.assignedBy,
-      staffConfirmation: 'not_updated',
-      staffNote: payload.staffNote ?? current.staffNote,
-      creativeDeadline:
-        payload.creativeDeadline || current.creativeDeadline || current.deadline || current.date,
-      updatedAt: now,
-    };
-    const next = [...tasks];
-    next[index] = updated;
-    setMockTasksStore(next);
-    return enrichMockTaskWithProjectContext(updated);
+    throw new Error('Chỉ hỗ trợ chia task con');
   }
 
   const subtasks = payload.subtasks ?? [];
-  if (subtasks.length < 2) {
-    throw new Error('Chia nhỏ cần ít nhất 2 task');
+  if (subtasks.length < 1) {
+    throw new Error('Cần ít nhất 1 task con');
   }
   if (current.quantity < 1) {
     throw new Error('task cha phải có số lượng lớn hơn 0');

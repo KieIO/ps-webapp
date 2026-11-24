@@ -60,23 +60,22 @@ test.describe('TASK-47/50/51/57 creative assign UI', () => {
     await page.getByRole('button', { name: /Giao cho Staff/ }).click();
     const staffDrawer = page.getByRole('dialog', { name: /Giao task cho Staff/ });
     await expect(staffDrawer).toBeVisible();
-    await expect(staffDrawer.getByText('Giao nguyên', { exact: true })).toBeVisible();
+    await expect(staffDrawer.getByText('Chia task con')).toBeVisible();
 
-    // Prefer API whole-assign for staff pick stability; assert drawer chrome then complete via API.
-    await expect(staffDrawer.getByRole('button', { name: /Giao nguyên task/ })).toBeVisible();
+    // Prefer API single-child split for staff pick stability; assert drawer chrome then complete via API.
+    await expect(staffDrawer.getByRole('button', { name: /Giao tất cả task nhỏ/ })).toBeVisible();
     await staffDrawer.getByRole('button', { name: /^Hủy$/ }).click();
-    await wholeAssign(cm.token, parent.id, employee.user.id, parent.quantity);
+    const child = await wholeAssign(cm.token, parent.id, employee.user.id, parent.quantity);
 
     const afterStaff = await getTask(cm.token, parent.id);
-    expect(afterStaff.pipelineStage).toBe('assigned_staff');
+    expect(afterStaff.pipelineStage).toBe('split');
     expect(afterStaff.quantity).toBe(parent.quantity);
 
-    // Confirm UI reflects assigned Staff (detail uses assignee chip, not pipeline label).
-    await page.reload();
+    // Confirm UI reflects assigned Staff on the child task.
+    await page.goto(`/tasks/detail/${child.id}`);
     await expect(page.getByRole('button', { name: /Dev Employee/ })).toBeVisible({
       timeout: 20_000,
     });
-    await expect(page.getByRole('button', { name: /Sửa \/ Đổi giao/ })).toBeVisible();
   });
 
   test('TASK-51 CM mở Chia nhỏ trên drawer; split hoàn tất qua API + UI stage', async ({

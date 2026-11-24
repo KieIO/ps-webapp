@@ -7,6 +7,7 @@ import {
   EVALUATION_LAYER_TITLES,
   hasChEvaluation,
   isCreativePastChToCmHandoff,
+  canEvaluateCmHandoffPackage,
   isCreativeWholeAssigned,
   resolveEvaluationWriteLayer,
   resolveEvaluationWriteLayerSafe,
@@ -59,13 +60,13 @@ describe('canEvaluateTaskLayer', () => {
   });
   const wholeStaff = task({ id: 'whole', pipelineStage: 'assigned_staff' });
 
-  it('PM evaluates creative parents after CH→CM; CH/Head only giao nguyên', () => {
+  it('PM evaluates creative parents after CH→CM; CH/Head on giao nguyên or split parent', () => {
     expect(canEvaluateTaskLayer(ROLES.PM, parent)).toBe(true);
     expect(canEvaluateTaskLayer(ROLES.PM, child)).toBe(false);
     expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, wholeStaff)).toBe(true);
     expect(canEvaluateTaskLayer(ROLES.HEAD, wholeStaff)).toBe(true);
     expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, parent)).toBe(false);
-    expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, splitParent)).toBe(false);
+    expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, splitParent)).toBe(true);
     expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, child)).toBe(false);
     expect(canEvaluateTaskLayer(ROLES.HEAD, parent)).toBe(false);
   });
@@ -77,10 +78,10 @@ describe('canEvaluateTaskLayer', () => {
     expect(canEvaluateTaskLayer(ROLES.PM, splitParent)).toBe(true);
   });
 
-  it('CH cannot evaluate Creative while awaiting_cm or split (no Staff / not giao nguyên)', () => {
+  it('CH cannot evaluate Creative while awaiting_cm; can on split parent or giao nguyên', () => {
     expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, awaitingCh)).toBe(false);
     expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, parent)).toBe(false);
-    expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, splitParent)).toBe(false);
+    expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, splitParent)).toBe(true);
     expect(canEvaluateTaskLayer(ROLES.CREATIVE_HEAD, wholeStaff)).toBe(true);
   });
 
@@ -104,17 +105,21 @@ describe('whole-assign evaluation layers', () => {
   const awaitingCh = task({ id: 'awaiting-ch', pipelineStage: 'awaiting_ch' });
   const splitParent = task({ id: 'split', pipelineStage: 'split' });
 
-  it('keeps layered write targets on creative whole assign', () => {
+  it('keeps layered write targets on creative whole assign and split parent handoff', () => {
     expect(isCreativeWholeAssigned(whole)).toBe(true);
     expect(isCreativeWholeAssigned(awaiting)).toBe(false);
+    expect(canEvaluateCmHandoffPackage(whole)).toBe(true);
+    expect(canEvaluateCmHandoffPackage(splitParent)).toBe(true);
+    expect(canEvaluateCmHandoffPackage(awaiting)).toBe(false);
     expect(resolveEvaluationWriteLayer(ROLES.CREATIVE_MANAGER, whole)).toBe('staff');
     expect(resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, whole)).toBe('handoff');
+    expect(resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, splitParent)).toBe('handoff');
     expect(resolveEvaluationWriteLayer(ROLES.PM, whole)).toBe('ch');
-    expect(() => resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, awaiting)).toThrow(
-      /giao nguyên sau khi CM đã giao Staff/,
+    expect(() => resolveEvaluationWriteLayer(ROLES.CREATIVE_MANAGER, splitParent)).toThrow(
+      /từng task nhỏ/,
     );
-    expect(() => resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, splitParent)).toThrow(
-      /giao nguyên sau khi CM đã giao Staff/,
+    expect(() => resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, awaiting)).toThrow(
+      /sau khi CM đã giao Staff/,
     );
     expect(() => resolveEvaluationWriteLayer(ROLES.CREATIVE_HEAD, awaiting, 'other')).toThrow(
       /không hợp lệ/,
@@ -128,6 +133,7 @@ describe('whole-assign evaluation layers', () => {
     expect(() => resolveEvaluationWriteLayer(ROLES.PM, whole, 'handoff')).toThrow(/Creative Head/);
     expect(() => resolveEvaluationWriteLayer(ROLES.ADMIN, whole)).toThrow(/chọn lớp/);
     expect(resolveEvaluationWriteLayer(ROLES.ADMIN, whole, 'handoff')).toBe('handoff');
+    expect(resolveEvaluationWriteLayer(ROLES.ADMIN, splitParent, 'handoff')).toBe('handoff');
     expect(resolveEvaluationWriteLayer(ROLES.ADMIN, whole, 'ch')).toBe('ch');
   });
 

@@ -445,17 +445,29 @@ describe('creative CH/CM pipeline', () => {
     );
     const updated = await mockAssignCreativeManager(
       before.id,
-      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: before.quantity },
+      {
+        mode: 'split',
+        subtasks: [
+          {
+            name: 'Part',
+            staffUserId: 'usr-creative-ha',
+            quantity: before.quantity,
+            description: 'brief',
+          },
+        ],
+      },
       'dev-creative_manager',
     );
-    expect(updated.pipelineStage).toBe('assigned_staff');
+    expect(updated.pipelineStage).toBe('split');
     expect(updated.level).toBe(before.level);
-    expect(updated.staff[0]?.userId).toBe('usr-creative-ha');
     expect(updated.quantity).toBe(before.quantity);
-    expect(updated.assignedAt).toBeTruthy();
+    const child = getMockTasksStore().find((item) => item.parentTaskId === before.id);
+    expect(child?.pipelineStage).toBe('assigned_staff');
+    expect(child?.staff[0]?.userId).toBe('usr-creative-ha');
+    expect(child?.quantity).toBe(before.quantity);
   });
 
-  it('rejects whole assign when CM quantity exceeds current SL', async () => {
+  it('rejects split when child quantity exceeds current SL', async () => {
     resetMockTasksStore();
     const before = await mockAssignCreativeHead(
       'task-ch-031',
@@ -465,10 +477,20 @@ describe('creative CH/CM pipeline', () => {
     await expect(
       mockAssignCreativeManager(
         before.id,
-        { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: before.quantity + 1 },
+        {
+          mode: 'split',
+          subtasks: [
+            {
+              name: 'Part',
+              staffUserId: 'usr-creative-ha',
+              quantity: before.quantity + 1,
+              description: 'brief',
+            },
+          ],
+        },
         'dev-creative_manager',
       ),
-    ).rejects.toThrow(/không được lớn hơn SL hiện tại/);
+    ).rejects.toThrow(/không được lớn hơn SL task cha/);
   });
 
   it('uses the parent task type when a split child name is left blank', async () => {
@@ -998,27 +1020,49 @@ describe('creative CH/CM pipeline', () => {
     await expect(
       mockAssignCreativeManager(
         'task-cm-025',
-        { mode: 'whole', staffUserId: 'usr-creative-khoa', quantity: 12 },
+        {
+          mode: 'split' as const,
+          subtasks: [
+            {
+              name: 'Part',
+              staffUserId: 'usr-creative-khoa',
+              quantity: 12,
+              description: 'brief',
+            },
+          ],
+        },
         'dev-creative_manager',
       ),
-    ).resolves.toMatchObject({ pipelineStage: 'assigned_staff', quantity: 12 });
+    ).resolves.toMatchObject({ pipelineStage: 'split' });
   });
 
-  it('keeps the CM staff score and the CH package score on one whole-assigned task', async () => {
+  it('keeps CM staff score on child and CH package score on split parent', async () => {
     resetMockTasksStore();
     const handed = await mockAssignCreativeHead(
       'task-ch-031',
       { cmUserId: 'dev-creative_manager' },
       'dev-creative_head',
     );
-    const assigned = await mockAssignCreativeManager(
+    const parent = await mockAssignCreativeManager(
       handed.id,
-      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: handed.quantity },
+      {
+        mode: 'split',
+        subtasks: [
+          {
+            name: 'Part',
+            staffUserId: 'usr-creative-ha',
+            quantity: handed.quantity,
+            description: 'brief',
+          },
+        ],
+      },
       'dev-creative_manager',
     );
+    const child = getMockTasksStore().find((item) => item.parentTaskId === parent.id);
+    expect(child).toBeTruthy();
 
     const staffScore = await mockUpdateMyTaskPmEvaluation(
-      assigned.id,
+      child!.id,
       { completionPercent: 40, pmEvaluation: '3', pmNote: 'staff result' },
       'dev-creative_manager',
     );
@@ -1026,24 +1070,28 @@ describe('creative CH/CM pipeline', () => {
     expect(staffScore.handoffEvaluation ?? '').toBe('');
 
     const handoff = await mockUpdateMyTaskPmEvaluation(
-      assigned.id,
-      { completionPercent: 90, pmEvaluation: '5', pmNote: 'CH scores CM' },
+      parent.id,
+      { completionPercent: 90, pmEvaluation: '5', pmNote: 'CH scores CM', layer: 'handoff' },
       'dev-creative_head',
     );
-    expect(handoff.completionPercent).toBe(40);
-    expect(handoff.pmEvaluation).toBe('3');
-    expect(handoff.pmNote).toBe('staff result');
-    expect(handoff.handoffCompletionPercent).toBe(90);
     expect(handoff.handoffEvaluation).toBe('5');
     expect(handoff.handoffNote).toBe('CH scores CM');
+    expect(handoff.handoffCompletionPercent).toBe(90);
+
+    const childAgain = await mockUpdateMyTaskPmEvaluation(
+      child!.id,
+      { completionPercent: 40, pmEvaluation: '3', pmNote: 'staff result' },
+      'dev-creative_manager',
+    );
+    expect(childAgain.pmEvaluation).toBe('3');
 
     await expect(
       mockUpdateMyTaskPmEvaluation(
-        assigned.id,
-        { completionPercent: 10, pmEvaluation: '1', pmNote: 'no', layer: 'handoff' },
+        parent.id,
+        { completionPercent: 10, pmEvaluation: '1', pmNote: 'nope', layer: 'handoff' },
         'dev-creative_manager',
       ),
-    ).rejects.toThrow(/kết quả Staff/);
+    ).rejects.toThrow();
   });
 
   it('lets PM score Creative Head after CH→CM without overwriting CM/staff scores', async () => {
@@ -1065,38 +1113,51 @@ describe('creative CH/CM pipeline', () => {
     expect(pmOnAwaitingCm.completionPercent ?? null).toBeNull();
     expect(pmOnAwaitingCm.handoffCompletionPercent ?? null).toBeNull();
 
-    const assigned = await mockAssignCreativeManager(
+    const parent = await mockAssignCreativeManager(
       handed.id,
-      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: handed.quantity },
+      {
+        mode: 'split' as const,
+        subtasks: [
+          {
+            name: 'Part',
+            staffUserId: 'usr-creative-ha',
+            quantity: handed.quantity,
+            description: 'brief',
+          },
+        ],
+      },
       'dev-creative_manager',
     );
+    const child = getMockTasksStore().find((item) => item.parentTaskId === parent.id)!;
     await mockUpdateMyTaskPmEvaluation(
-      assigned.id,
+      child.id,
       { completionPercent: 40, pmEvaluation: '3', pmNote: 'staff result' },
       'dev-creative_manager',
     );
     await mockUpdateMyTaskPmEvaluation(
-      assigned.id,
-      { completionPercent: 90, pmEvaluation: '5', pmNote: 'CH scores CM' },
+      parent.id,
+      { completionPercent: 90, pmEvaluation: '5', pmNote: 'CH scores CM', layer: 'handoff' },
       'dev-creative_head',
     );
 
-    const pmOnWhole = await mockUpdateMyTaskPmEvaluation(
-      assigned.id,
-      { completionPercent: 95, pmEvaluation: '5', pmNote: 'PM scores CH after staff' },
+    const pmOnParent = await mockUpdateMyTaskPmEvaluation(
+      parent.id,
+      { completionPercent: 95, pmEvaluation: '5', pmNote: 'PM scores CH after staff', layer: 'ch' },
       'dev-pm',
     );
-    expect(pmOnWhole.chCompletionPercent).toBe(95);
-    expect(pmOnWhole.chEvaluation).toBe('5');
-    expect(pmOnWhole.chNote).toBe('PM scores CH after staff');
-    expect(pmOnWhole.completionPercent).toBe(40);
-    expect(pmOnWhole.pmEvaluation).toBe('3');
-    expect(pmOnWhole.handoffCompletionPercent).toBe(90);
-    expect(pmOnWhole.handoffEvaluation).toBe('5');
+    expect(pmOnParent.chCompletionPercent).toBe(95);
+    expect(pmOnParent.chEvaluation).toBe('5');
+    expect(pmOnParent.chNote).toBe('PM scores CH after staff');
+    expect(pmOnParent.handoffCompletionPercent).toBe(90);
+    expect(pmOnParent.handoffEvaluation).toBe('5');
+
+    const childAgain = getMockTasksStore().find((item) => item.id === child.id)!;
+    expect(childAgain.completionPercent).toBe(40);
+    expect(childAgain.pmEvaluation).toBe('3');
 
     await expect(
       mockUpdateMyTaskPmEvaluation(
-        assigned.id,
+        parent.id,
         { completionPercent: 10, pmEvaluation: '1', pmNote: 'no', layer: 'handoff' },
         'dev-pm',
       ),
@@ -1122,25 +1183,37 @@ describe('ordered creative evaluation chain', () => {
     );
     expect(awaitingCm.pipelineStage).toBe('awaiting_cm');
 
-    // 3) CM → Staff (whole)
-    const assigned = await mockAssignCreativeManager(
+    // 3) CM → Staff (single-child split)
+    const parent = await mockAssignCreativeManager(
       awaitingCm.id,
-      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: awaitingCm.quantity },
+      {
+        mode: 'split' as const,
+        subtasks: [
+          {
+            name: 'Part',
+            staffUserId: 'usr-creative-ha',
+            quantity: awaitingCm.quantity,
+            description: 'brief',
+          },
+        ],
+      },
       'dev-creative_manager',
     );
-    expect(assigned.pipelineStage).toBe('assigned_staff');
+    expect(parent.pipelineStage).toBe('split');
+    const child = getMockTasksStore().find((item) => item.parentTaskId === parent.id)!;
+    expect(child.pipelineStage).toBe('assigned_staff');
 
     // 4) Staff finishes
     const finished = await mockUpdateMyTaskStatus(
-      assigned.id,
+      child.id,
       { staffConfirmation: 'finished', staffNote: 'done' },
       'usr-creative-ha',
     );
     expect(finished.staffConfirmation).toBe('finished');
 
-    // 5) CM đánh giá Staff
+    // 5) CM đánh giá Staff (child)
     const staffScore = await mockUpdateMyTaskPmEvaluation(
-      assigned.id,
+      child.id,
       { completionPercent: 100, pmEvaluation: '5', pmNote: 'CM→Staff' },
       'dev-creative_manager',
     );
@@ -1149,32 +1222,31 @@ describe('ordered creative evaluation chain', () => {
     expect(staffScore.handoffEvaluation ?? '').toBe('');
     expect(staffScore.chEvaluation ?? '').toBe('');
 
-    // 6) CH đánh giá CM
+    // 6) CH đánh giá CM (parent handoff)
     const handoff = await mockUpdateMyTaskPmEvaluation(
-      assigned.id,
-      { completionPercent: 90, pmEvaluation: '4', pmNote: 'CH→CM' },
+      parent.id,
+      { completionPercent: 90, pmEvaluation: '4', pmNote: 'CH→CM', layer: 'handoff' },
       'dev-creative_head',
     );
-    expect(handoff.pmEvaluation).toBe('5');
     expect(handoff.handoffEvaluation).toBe('4');
     expect(handoff.handoffNote).toBe('CH→CM');
     expect(handoff.chEvaluation ?? '').toBe('');
 
-    // 7) PM đánh giá CH
+    // 7) PM đánh giá CH (parent)
     const chScore = await mockUpdateMyTaskPmEvaluation(
-      assigned.id,
-      { completionPercent: 85, pmEvaluation: '3', pmNote: 'PM→CH' },
+      parent.id,
+      { completionPercent: 85, pmEvaluation: '3', pmNote: 'PM→CH', layer: 'ch' },
       'dev-pm',
     );
-    expect(chScore.completionPercent).toBe(100);
-    expect(chScore.pmEvaluation).toBe('5');
-    expect(chScore.pmNote).toBe('CM→Staff');
     expect(chScore.handoffCompletionPercent).toBe(90);
     expect(chScore.handoffEvaluation).toBe('4');
     expect(chScore.handoffNote).toBe('CH→CM');
     expect(chScore.chCompletionPercent).toBe(85);
     expect(chScore.chEvaluation).toBe('3');
     expect(chScore.chNote).toBe('PM→CH');
+    const childFinal = getMockTasksStore().find((item) => item.id === child.id)!;
+    expect(childFinal.completionPercent).toBe(100);
+    expect(childFinal.pmEvaluation).toBe('5');
   });
 });
 
@@ -1223,7 +1295,17 @@ describe('PM → Creative Head evaluation layer', () => {
     );
     const assigned = await mockAssignCreativeManager(
       handed.id,
-      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: handed.quantity },
+      {
+        mode: 'split' as const,
+        subtasks: [
+          {
+            name: 'Part',
+            staffUserId: 'usr-creative-ha',
+            quantity: handed.quantity,
+            description: 'brief',
+          },
+        ],
+      },
       'dev-creative_manager',
     );
 
@@ -1291,39 +1373,51 @@ describe('PM → Creative Head evaluation layer', () => {
       { cmUserId: 'dev-creative_manager' },
       'dev-creative_head',
     );
-    const assigned = await mockAssignCreativeManager(
+    const parent = await mockAssignCreativeManager(
       handed.id,
-      { mode: 'whole', staffUserId: 'usr-creative-ha', quantity: handed.quantity },
+      {
+        mode: 'split' as const,
+        subtasks: [
+          {
+            name: 'Part',
+            staffUserId: 'usr-creative-ha',
+            quantity: handed.quantity,
+            description: 'brief',
+          },
+        ],
+      },
       'dev-creative_manager',
     );
+    const child = getMockTasksStore().find((item) => item.parentTaskId === parent.id)!;
     await mockUpdateMyTaskPmEvaluation(
-      assigned.id,
+      child.id,
       { completionPercent: 40, pmEvaluation: '3', pmNote: 'staff' },
       'dev-creative_manager',
     );
     await mockUpdateMyTaskPmEvaluation(
-      assigned.id,
-      { completionPercent: 90, pmEvaluation: '5', pmNote: 'handoff' },
+      parent.id,
+      { completionPercent: 90, pmEvaluation: '5', pmNote: 'handoff', layer: 'handoff' },
       'dev-creative_head',
     );
     await mockUpdateMyTaskPmEvaluation(
-      assigned.id,
-      { completionPercent: 60, pmEvaluation: '3', pmNote: 'first CH score' },
+      parent.id,
+      { completionPercent: 60, pmEvaluation: '3', pmNote: 'first CH score', layer: 'ch' },
       'dev-pm',
     );
 
     const updated = await mockUpdateMyTaskPmEvaluation(
-      assigned.id,
-      { completionPercent: 99, pmEvaluation: '5', pmNote: 'revised CH score' },
+      parent.id,
+      { completionPercent: 99, pmEvaluation: '5', pmNote: 'revised CH score', layer: 'ch' },
       'dev-pm',
     );
     expect(updated.chCompletionPercent).toBe(99);
     expect(updated.chEvaluation).toBe('5');
     expect(updated.chNote).toBe('revised CH score');
-    expect(updated.completionPercent).toBe(40);
-    expect(updated.pmEvaluation).toBe('3');
     expect(updated.handoffCompletionPercent).toBe(90);
     expect(updated.handoffEvaluation).toBe('5');
+    const childAgain = getMockTasksStore().find((item) => item.id === child.id)!;
+    expect(childAgain.completionPercent).toBe(40);
+    expect(childAgain.pmEvaluation).toBe('3');
   });
 });
 

@@ -12,7 +12,7 @@ Liên quan: [Tạo task](/create-task) · [Chia task con](/split-task) · [Trạ
 
 ---
 
-## 1. Ba lớp đánh giá Creative (giao nguyên)
+## 1. Ba lớp đánh giá Creative
 
 Thứ tự handoff: **PM → Creative Head → CM → Staff**.
 
@@ -22,7 +22,7 @@ Thứ tự handoff: **PM → Creative Head → CM → Staff**.
 | **Đánh giá gói CM (bởi Creative Head)**   | Creative Head    | Gói giao cho CM |
 | **Đánh giá Staff (bởi Creative Manager)** | Creative Manager | Kết quả Staff   |
 
-**Creative Head — cửa sổ Evaluate:** chỉ **task giao nguyên** sau khi CM đã giao Staff. Không Evaluate khi còn `awaiting_cm`; không ghi điểm vào ô Staff. (Task cha đã chia: tạm chưa mở lớp gói CM — hỏi lại sau.)
+**Creative Head — cửa sổ Evaluate:** sau khi CM đã giao Staff — trên **task cha đã chia** (handoff) hoặc **giao nguyên legacy**. Không Evaluate khi còn `awaiting_cm`; không ghi điểm Staff (CM chấm từng task con / legacy whole parent).
 
 **Modal Evaluate (Staff / gói CM / CH):** nhập **Số lượng đạt** → hệ thống tự tính **% hoàn thành** và hiện **Tóm tắt** (`Đạt x / y · Còn z`). Tách phần còn lại (remainder) chỉ có ở lớp **Đánh giá Staff**.
 

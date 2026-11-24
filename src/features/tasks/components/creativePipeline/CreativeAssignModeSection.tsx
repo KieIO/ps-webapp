@@ -33,7 +33,7 @@ export function CreativeAssignModeSection({ task, allTasks }: CreativeAssignMode
         showIcon
         className={styles.banner}
         message="Chưa giao Staff"
-        description="Dùng nút Giao cho Staff trên queue để chọn giao nguyên hoặc chia nhỏ."
+        description="Dùng nút Giao cho Staff trên queue để chia task con (ít nhất 1 phần)."
       />
     );
   }

@@ -41,7 +41,7 @@ import {
   hasChEvaluation,
   hasHandoffEvaluation,
   isCreativePastChToCmHandoff,
-  isCreativeWholeAssigned,
+  canEvaluateCmHandoffPackage,
 } from '../../utils/taskEvaluation';
 import { formatEvaluationBadgeLabel, hasCmEvaluation } from '../../utils/evaluationRemainder';
 import {
@@ -121,10 +121,10 @@ const renderTaskDetailLink = (
   const parentHasRevisions = hasRevisionChildren(record);
   const parentHasActiveRevision = hasActiveRevisionChildren(record);
   const evaluated = hasCmEvaluation(record);
-  const wholeAssigned = isCreativeWholeAssigned(record);
-  const showStaffBadge = evaluated && !(evaluationScope === 'received' && wholeAssigned);
+  const handoffPackage = canEvaluateCmHandoffPackage(record);
+  const showStaffBadge = evaluated && !(evaluationScope === 'received' && handoffPackage);
   const showHandoffBadge =
-    wholeAssigned && hasHandoffEvaluation(record) && evaluationScope !== 'staff';
+    handoffPackage && hasHandoffEvaluation(record) && evaluationScope !== 'staff';
   const showChBadge =
     isCreativePastChToCmHandoff(record) && hasChEvaluation(record) && evaluationScope !== 'staff';
   const remainderHint =

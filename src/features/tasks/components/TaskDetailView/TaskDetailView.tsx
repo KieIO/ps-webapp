@@ -12,8 +12,10 @@ import { TaskDetailSummaryCard } from '../TaskDetailSummaryCard/TaskDetailSummar
 import { TaskRevisionHistoryTab } from '../TaskRevisionHistoryTab/TaskRevisionHistoryTab';
 import { useMyTask } from '../../hooks/useMyTask';
 import { formatHasRevisionChildrenLabel, hasRevisionChildren } from '../../utils/taskRevision';
+import { isSplitParentTask } from '../../utils/creativePipeline';
 import {
   EVALUATION_LAYER_TITLES,
+  canEvaluateCmHandoffPackage,
   hasChEvaluation,
   isCreativePastChToCmHandoff,
   isCreativeWholeAssigned,
@@ -273,6 +275,19 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
                           score={task.pmEvaluation}
                           note={task.pmNote}
                           quantitySummary={quantitySummary}
+                        />
+                      </div>
+                    );
+                  }
+                  if (canEvaluateCmHandoffPackage(task) && isSplitParentTask(task)) {
+                    return (
+                      <div className={styles.detailStack}>
+                        {chScoreGrid}
+                        <EvaluationScoreGrid
+                          title={EVALUATION_LAYER_TITLES.handoff}
+                          percent={task.handoffCompletionPercent}
+                          score={task.handoffEvaluation}
+                          note={task.handoffNote}
                         />
                       </div>
                     );

@@ -54,6 +54,7 @@ export const BRIEF_OWNERS = ['pm', 'ch'] as const;
 
 export type BriefOwner = (typeof BRIEF_OWNERS)[number];
 
+/** `whole` = legacy read-only shape (assigned_staff parent); new writes are `split` only. */
 export const CREATIVE_ASSIGN_MODES = ['whole', 'split'] as const;
 
 export type CreativeAssignMode = (typeof CREATIVE_ASSIGN_MODES)[number];
@@ -414,35 +415,16 @@ export const CreativeManagerSubtaskSchema = z
 
 export const AssignCreativeManagerRequestSchema = z
   .object({
-    mode: z.enum(CREATIVE_ASSIGN_MODES),
-    staffUserId: z.string().optional(),
+    mode: z.literal('split'),
     staffNote: z.string().optional(),
-    /** Required when mode=whole — CM confirms SL (≤ current task quantity) when assigning. */
-    quantity: z.number().int().positive('Số lượng phải là số nguyên lớn hơn 0').optional(),
-    /** Optional CM creative deadline for whole assign. */
-    creativeDeadline: z.string().optional(),
     subtasks: z.array(CreativeManagerSubtaskSchema).optional(),
   })
   .superRefine((value, ctx) => {
-    if (value.mode === 'whole' && !value.staffUserId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['staffUserId'],
-        message: 'Chọn Staff nhận task',
-      });
-    }
-    if (value.mode === 'whole' && (value.quantity == null || value.quantity <= 0)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['quantity'],
-        message: 'CM nhập số lượng trước khi giao',
-      });
-    }
-    if (value.mode === 'split' && (!value.subtasks || value.subtasks.length < 2)) {
+    if (!value.subtasks || value.subtasks.length < 1) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['subtasks'],
-        message: 'Chia nhỏ cần ít nhất 2 task',
+        message: 'Cần ít nhất 1 task con',
       });
     }
   });

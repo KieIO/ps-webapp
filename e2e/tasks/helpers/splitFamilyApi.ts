@@ -199,18 +199,39 @@ export async function patchStatus(
   });
 }
 
+/** Assign via single-child split (replaces legacy mode=whole). Returns the child task. */
 export async function wholeAssign(
   token: string,
   taskId: string,
   staffUserId: string,
   quantity: number,
 ): Promise<TaskDto> {
-  const { data } = await apiJson<TaskDto>('PATCH', `/tasks/my/${taskId}/assign-staff`, token, {
-    mode: 'whole',
-    staffUserId,
-    quantity,
-  });
-  return data;
+  const { data: parent } = await apiJson<TaskDto>(
+    'PATCH',
+    `/tasks/my/${taskId}/assign-staff`,
+    token,
+    {
+      mode: 'split',
+      subtasks: [
+        {
+          name: 'Part',
+          staffUserId,
+          quantity,
+          description: 'e2e single-child assign',
+        },
+      ],
+    },
+  );
+  const { data: childrenPayload } = await apiJson<{ items: TaskDto[] }>(
+    'GET',
+    `/tasks/my/${parent.id}/split-children`,
+    token,
+  );
+  const child = childrenPayload.items?.[0];
+  if (!child) {
+    throw new Error('wholeAssign: expected 1 split child');
+  }
+  return child;
 }
 
 export async function creativeEdit(

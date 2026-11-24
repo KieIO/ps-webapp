@@ -24,11 +24,9 @@ Task Creative đã giao cho CM
 (đang chờ CM giao Staff)
       │
       ▼
-PM hoặc Admin mở "Giao Staff"
+CM / PM / Admin mở "Giao Staff"
       │
-      ├── Giao nguyên → 1 Staff làm cả task
-      │
-      └── Chia nhỏ (ít nhất 2 phần)
+      └── Chia task con (ít nhất 1 phần)
             │
             ▼
       Mỗi phần: tên, brief, số lượng (có thể 0), Staff (tuỳ chọn), deadline (tuỳ chọn)
@@ -38,7 +36,7 @@ PM hoặc Admin mở "Giao Staff"
             │
             ├── Task gốc: badge "Đã chia nhỏ", SL tổng giữ nguyên (PM đã nhập > 0)
             ├── Task con: …-S1, -S2, … (tổng SL các phần ≤ SL task cha)
-            └── Staff nhận thông báo theo phần đã gán người
+            └── 1 Staff nhận cả gói → giữ 1 task con với đủ SL
 ```
 
 ---
@@ -47,19 +45,19 @@ PM hoặc Admin mở "Giao Staff"
 
 | Việc                                                               | Ai làm được                                              |
 | ------------------------------------------------------------------ | -------------------------------------------------------- |
-| Chọn **Chia nhỏ** và tạo task con lần đầu                          | PM, Admin                                                |
+| Chia task con lần đầu (form Giao Staff)                            | CM (task của mình), PM, Admin                            |
 | Thêm task con sau khi đã chia                                      | CM, Admin                                                |
 | Thêm task con **QA** (kiểm lại phần của người khác)                | CM, Admin                                                |
 | Sửa **SL tổng** sau khi đã chia                                    | Người tạo task (PM), Admin                               |
 | Sửa số lượng từng task con (tổng phần làm việc không vượt SL tổng) | Mọi role trừ **Nhân viên** (Admin / PM / Head / CH / CM) |
 | Confirm / làm việc / đánh dấu Finished                             | Staff được giao từng phần                                |
-| Đánh giá **từng task con**                                         | Creative Manager                                         |
-| Đánh giá **task gốc** (sau khi các phần xong theo luồng chung)     | PM, Creative Head, Department Head                       |
+| Đánh giá **từng task con** (Staff)                                 | Creative Manager                                         |
+| Đánh giá **gói CM** trên task gốc (handoff)                        | Creative Head / Head                                     |
+| Đánh giá **Creative Head** trên task gốc                           | PM (sau CH đã giao CM)                                   |
 | Xem Creative Queue                                                 | CM, CH, Admin (PM **không** thấy menu / trang này)       |
 | Theo dõi task đã chia (Project Tasks / chi tiết)                   | CM, CH, PM, Admin, Head (theo quyền)                     |
-| Không chia nhỏ                                                     | Creative Head (chỉ giao CM), Staff                       |
 
-Lần chia đầu (**Chia nhỏ** trên form giao Staff) hiện với PM và Admin. **Thêm task con sau khi đã chia** là việc của **CM** hoặc **Admin**. CM vẫn **Giao nguyên** cho Staff khi không chia.
+Không còn **Giao nguyên**. Một Staff nhận cả gói → tạo **1 task con**. **Thêm task con sau khi đã chia** vẫn là CM / Admin.
 
 ---
 
@@ -70,7 +68,7 @@ Lần chia đầu (**Chia nhỏ** trên form giao Staff) hiện với PM và Adm
 | Task Creative đã có **SL tổng > 0** (PM nhập lúc tạo)       | Cần                                     |
 | Task đang **chờ CM giao Staff** (khung **Nhận từ CH / PM**) | Cần cho lần chia đầu tiên               |
 | Người thao tác là **PM hoặc Admin**                         | Cần                                     |
-| Chọn **Chia nhỏ** lần đầu                                   | Ít nhất **2** task con                  |
+| Chọn chia task con lần đầu                                  | Ít nhất **1** task con                  |
 | Đã chia rồi                                                 | CM / Admin thêm task con trong form sửa |
 
 **Từ chối nhận** chỉ khi task còn chờ CM giao Staff — tức **trước** khi chia. Task gốc đã chia **không** từ chối cả cục; xử lý từng task con.

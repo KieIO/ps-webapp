@@ -35,7 +35,7 @@ import {
 } from '../../utils/editTaskFields';
 import { isCreativeDeptTask, resolveWholeAssignStaff } from '../../utils/creativePipeline';
 import {
-  isCreativeWholeAssigned,
+  canEvaluateCmHandoffPackage,
   resolveEvaluationWriteLayerSafe,
 } from '../../utils/taskEvaluation';
 import { resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
@@ -325,7 +325,7 @@ export function EditTaskModal({
                   : task.pmEvaluation,
                 pmNote: hasField(editableFields, 'pmNote') ? (values.pmNote ?? '') : task.pmNote,
                 ...(evalLayer &&
-                (isCreativeWholeAssigned(task) || evalLayer === 'ch' || evalLayer === 'handoff')
+                (canEvaluateCmHandoffPackage(task) || evalLayer === 'ch' || evalLayer === 'handoff')
                   ? { layer: evalLayer }
                   : {}),
               },

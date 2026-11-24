@@ -1,19 +1,8 @@
-import {
-  Alert,
-  Button,
-  DatePicker,
-  Drawer,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
-  Segmented,
-  Select,
-} from 'antd';
+import { Alert, Button, DatePicker, Drawer, Form, Input, InputNumber, Modal, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
-import { useOpenLeaves, useOpenLeavesInRange } from '@/features/leave/hooks/useLeave';
+import { useOpenLeavesInRange } from '@/features/leave/hooks/useLeave';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useAssignCreativeManager } from '../../hooks/useAssignCreativeManager';
@@ -21,14 +10,14 @@ import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
 import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
-import type { CreativeAssignMode, MyTask } from '../../schemas/task.schema';
+import type { MyTask } from '../../schemas/task.schema';
 import {
   buildLeaveChipByUserId,
   findLeaveOverlappingWindow,
   formatLeaveRangeLabel,
-  WHOLE_ASSIGN_LEAVE_CONFLICT_HINT,
-  WHOLE_ASSIGN_LEAVE_CONFLICT_TITLE,
-  WHOLE_ASSIGN_LEAVE_SWITCH_SPLIT_LABEL,
+  SPLIT_ASSIGN_LEAVE_CONFLICT_HINT,
+  SPLIT_ASSIGN_LEAVE_CONFLICT_TITLE,
+  type LeaveWindowHit,
 } from '../../utils/assignLeaveConflict';
 import {
   canCmRefuseCreativeAssignment,
@@ -49,7 +38,7 @@ import {
   toTaskDeadline,
 } from '../../utils/taskDates';
 import { getTaskDeadline } from '../../utils/taskDetail';
-import { wholeTaskQuantityRule, nonNegativeWholeQuantityRule } from '../../utils/taskQuantity';
+import { nonNegativeWholeQuantityRule } from '../../utils/taskQuantity';
 import { defaultSplitChildName } from '../../utils/taskScoreName';
 import { resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import {
@@ -76,9 +65,6 @@ type SubtaskForm = {
 };
 
 type ManagerFormValues = {
-  staffUserId?: string;
-  quantity?: number;
-  creativeDeadline?: dayjs.Dayjs | null;
   subtasks?: SubtaskForm[];
 };
 
@@ -110,7 +96,6 @@ export function CreativeManagerAssignDrawer({
   onClose,
 }: CreativeManagerAssignDrawerProps) {
   const [form] = Form.useForm<ManagerFormValues>();
-  const [mode, setMode] = useState<CreativeAssignMode>('whole');
   const [briefExpanded, setBriefExpanded] = useState(false);
   const currentUser = useAppSelector((state) => state.auth.user);
   const { mutate, isPending } = useAssignCreativeManager();
@@ -118,20 +103,16 @@ export function CreativeManagerAssignDrawer({
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
   const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
   const allTasks = useMemo(() => taskList?.items ?? [], [taskList?.items]);
-  const watchedCreativeDeadline = Form.useWatch('creativeDeadline', form);
-  const watchedStaffUserId = Form.useWatch('staffUserId', form) as string | undefined;
-  const watchedQuantity = Form.useWatch('quantity', form) as number | undefined;
   const watchedSubtasks = Form.useWatch('subtasks', form) as SubtaskForm[] | undefined;
+
   const capacityDeadlineOverride = useMemo(() => {
-    if (mode === 'whole') {
-      return watchedCreativeDeadline?.isValid() ? toTaskDeadline(watchedCreativeDeadline) : null;
-    }
     const isos = (watchedSubtasks ?? [])
       .map((row) => (row.creativeDeadline?.isValid() ? toTaskDeadline(row.creativeDeadline) : null))
       .filter((value): value is string => Boolean(value));
     if (isos.length === 0) return null;
     return [...isos].sort()[0];
-  }, [mode, watchedCreativeDeadline, watchedSubtasks]);
+  }, [watchedSubtasks]);
+
   const {
     capacityByUserId,
     periodNote,
@@ -141,9 +122,11 @@ export function CreativeManagerAssignDrawer({
 
   const assignWindowStart = useMemo(() => toTaskDateOnly(dayjs()), []);
   const assignWindowEnd = useMemo(() => {
-    if (watchedCreativeDeadline?.isValid()) {
-      return toTaskDateOnly(watchedCreativeDeadline);
-    }
+    const childEnds = (watchedSubtasks ?? [])
+      .map((row) => (row.creativeDeadline?.isValid() ? toTaskDateOnly(row.creativeDeadline) : null))
+      .filter((value): value is string => Boolean(value))
+      .sort();
+    if (childEnds[0]) return childEnds[0];
     if (task?.creativeDeadline) {
       return calendarDateFromTaskDeadline(task.creativeDeadline) ?? assignWindowStart;
     }
@@ -152,7 +135,7 @@ export function CreativeManagerAssignDrawer({
       return calendarDateFromTaskDeadline(pmDl) ?? assignWindowStart;
     }
     return assignWindowStart;
-  }, [watchedCreativeDeadline, task, assignWindowStart]);
+  }, [watchedSubtasks, task, assignWindowStart]);
 
   const { data: openLeavesInRange = [] } = useOpenLeavesInRange(
     assignWindowStart,
@@ -165,19 +148,22 @@ export function CreativeManagerAssignDrawer({
     [openLeavesInRange, assignWindowStart, assignWindowEnd],
   );
 
-  const { data: openLeaves = [], isFetching: openLeavesFetching } = useOpenLeaves(
-    watchedStaffUserId,
-    open && mode === 'whole' && Boolean(watchedStaffUserId),
-  );
-
-  const leaveConflict = useMemo(() => {
-    if (mode !== 'whole' || !watchedStaffUserId || !assignWindowEnd) return null;
-    return findLeaveOverlappingWindow(openLeaves, assignWindowStart, assignWindowEnd);
-  }, [mode, watchedStaffUserId, assignWindowStart, assignWindowEnd, openLeaves]);
+  const childLeaveConflicts = useMemo(() => {
+    const hits = new Map<number, LeaveWindowHit>();
+    (watchedSubtasks ?? []).forEach((row, index) => {
+      const userId = row.staffUserId?.trim();
+      if (!userId) return;
+      const hit = findLeaveOverlappingWindow(
+        openLeavesInRange.filter((leave) => leave.userId === userId),
+        assignWindowStart,
+        assignWindowEnd,
+      );
+      if (hit) hits.set(index, hit);
+    });
+    return hits;
+  }, [watchedSubtasks, openLeavesInRange, assignWindowStart, assignWindowEnd]);
 
   const canSubmit = Boolean(task && !readOnly && isAwaitingCm(task));
-  /** Initial split on assign — CM/Admin/PM. Adding more children later stays PM/Admin-only. */
-  const canSplitOnAssign = Boolean(canSubmit);
   const canRefuse = Boolean(
     task && !readOnly && canCmRefuseCreativeAssignment(task, currentUser?.id, currentUser?.role),
   );
@@ -188,10 +174,6 @@ export function CreativeManagerAssignDrawer({
   const pmDeadline = task ? fromTaskDeadline(getTaskDeadline(task)) : null;
   const pmDeadlineLabel = task ? formatTaskDateTime(getTaskDeadline(task)) : '—';
   const creativeDeadlineLabel = task ? resolveCreativeDeadlineLabel(task) : '—';
-  const wholeCreativeAfterPm = isCreativeDeadlineAfterPmDeadline(
-    watchedCreativeDeadline,
-    pmDeadline,
-  );
   const briefText = task?.description?.trim() || 'Chưa có mô tả';
   const briefLong = briefText.length > 140 || briefText.includes('\n');
   const splitLockedTotal = useMemo(
@@ -231,70 +213,30 @@ export function CreativeManagerAssignDrawer({
     ],
   );
 
-  const selectedStaffName = useMemo(() => {
-    if (!watchedStaffUserId) return '';
-    return (
-      staffSelectOptions.find((option) => option.value === watchedStaffUserId)?.label ??
-      watchedStaffUserId
-    );
-  }, [watchedStaffUserId, staffSelectOptions]);
-
-  const switchToSplitForLeaveConflict = () => {
-    if (!task || !watchedStaffUserId) return;
-    const splitName = defaultSplitChildName(task.taskName);
-    const creative = watchedCreativeDeadline?.isValid()
-      ? watchedCreativeDeadline
-      : task.creativeDeadline
-        ? fromTaskDeadline(task.creativeDeadline)
-        : undefined;
-    const seededQty =
-      typeof watchedQuantity === 'number' && Number.isFinite(watchedQuantity) && watchedQuantity > 0
-        ? watchedQuantity
-        : undefined;
-    const brief = task.description?.trim() || '';
-    form.setFieldsValue({
-      subtasks: [
-        {
-          name: splitName,
-          staffUserId: watchedStaffUserId,
-          quantity: seededQty,
-          description: brief,
-          creativeDeadline: creative,
-        },
-        {
-          ...emptySubtask(),
-          name: splitName,
-          creativeDeadline: creative,
-        },
-      ],
-    });
-    setMode('split');
-  };
-
   useEffect(() => {
     if (!open || !task) return;
-    setMode('whole');
     setBriefExpanded(false);
     const defaultCreative = task.creativeDeadline
       ? fromTaskDeadline(task.creativeDeadline)
       : undefined;
     const splitName = defaultSplitChildName(task.taskName);
+    const seededQty = task.quantity > 0 ? task.quantity : undefined;
+    const brief = task.description?.trim() || '';
     form.setFieldsValue({
-      staffUserId: undefined,
-      // CM owns quantity — do not prefill placeholder from create-time default.
-      quantity: undefined,
-      creativeDeadline: defaultCreative,
-      subtasks: [emptySubtask(), emptySubtask()].map((row) => ({
-        ...row,
-        name: splitName,
-        creativeDeadline: defaultCreative,
-      })),
+      subtasks: [
+        {
+          ...emptySubtask(),
+          name: splitName,
+          quantity: seededQty,
+          description: brief,
+          creativeDeadline: defaultCreative,
+        },
+      ],
     });
   }, [open, task, form]);
 
   const resetAndClose = () => {
     form.resetFields();
-    setMode('whole');
     setBriefExpanded(false);
     onClose();
   };
@@ -342,69 +284,44 @@ export function CreativeManagerAssignDrawer({
 
   const handleSubmit = async () => {
     if (!task) return;
-    if (mode === 'whole' && leaveConflict) {
+    if (childLeaveConflicts.size > 0) {
       Modal.warning({
-        title: WHOLE_ASSIGN_LEAVE_CONFLICT_TITLE,
-        content: WHOLE_ASSIGN_LEAVE_CONFLICT_HINT,
-        okText: WHOLE_ASSIGN_LEAVE_SWITCH_SPLIT_LABEL,
-        onOk: switchToSplitForLeaveConflict,
+        title: SPLIT_ASSIGN_LEAVE_CONFLICT_TITLE,
+        content: SPLIT_ASSIGN_LEAVE_CONFLICT_HINT,
       });
       return;
     }
-    const values = await form.validateFields(
-      mode === 'whole' ? ['staffUserId', 'quantity', 'creativeDeadline'] : ['subtasks'],
-    );
-    if (mode === 'whole' && task.quantity > 0 && Number(values.quantity) > task.quantity) {
+    const values = await form.validateFields(['subtasks']);
+    const childSum = (values.subtasks ?? []).reduce((sum, row) => {
+      const qty = Number(row.quantity);
+      return Number.isFinite(qty) && qty > 0 ? sum + qty : sum;
+    }, 0);
+    if (childSum > task.quantity) {
       form.setFields([
         {
-          name: 'quantity',
-          errors: [`Số lượng không được lớn hơn SL hiện tại (${task.quantity})`],
+          name: 'subtasks',
+          errors: [
+            `Tổng SL các phần (${childSum}) không được lớn hơn SL task cha (${task.quantity})`,
+          ],
         },
       ]);
       return;
     }
-    if (mode === 'split') {
-      const childSum = (values.subtasks ?? []).reduce((sum, row) => {
-        const qty = Number(row.quantity);
-        return Number.isFinite(qty) && qty > 0 ? sum + qty : sum;
-      }, 0);
-      if (childSum > task.quantity) {
-        form.setFields([
-          {
-            name: 'subtasks',
-            errors: [
-              `Tổng SL các phần (${childSum}) không được lớn hơn SL task cha (${task.quantity})`,
-            ],
-          },
-        ]);
-        return;
-      }
-    }
     mutate(
       {
         id: task.id,
-        payload:
-          mode === 'whole'
-            ? {
-                mode,
-                staffUserId: values.staffUserId,
-                quantity: values.quantity,
-                creativeDeadline: values.creativeDeadline?.isValid()
-                  ? toTaskDeadline(values.creativeDeadline)
-                  : undefined,
-              }
-            : {
-                mode,
-                subtasks: (values.subtasks ?? []).map((subtask) => ({
-                  name: (subtask.name ?? '').trim() || defaultSplitChildName(task.taskName),
-                  staffUserId: (subtask.staffUserId ?? '').trim(),
-                  quantity: subtask.quantity ?? 0,
-                  description: (subtask.description ?? '').trim(),
-                  creativeDeadline: subtask.creativeDeadline?.isValid()
-                    ? toTaskDeadline(subtask.creativeDeadline)
-                    : undefined,
-                })),
-              },
+        payload: {
+          mode: 'split',
+          subtasks: (values.subtasks ?? []).map((subtask) => ({
+            name: (subtask.name ?? '').trim() || defaultSplitChildName(task.taskName),
+            staffUserId: (subtask.staffUserId ?? '').trim(),
+            quantity: subtask.quantity ?? 0,
+            description: (subtask.description ?? '').trim(),
+            creativeDeadline: subtask.creativeDeadline?.isValid()
+              ? toTaskDeadline(subtask.creativeDeadline)
+              : undefined,
+          })),
+        },
       },
       { onSuccess: resetAndClose },
     );
@@ -417,7 +334,6 @@ export function CreativeManagerAssignDrawer({
       disabled={disabled}
       placeholder="Chọn Staff"
       allowClear
-      // Split row is narrow (beside quantity); keep popup as wide as whole-assign.
       popupMatchSelectWidth={false}
       classNames={{ popup: { root: styles.staffSelectPopup } }}
       styles={{ popup: { root: { minWidth: 400 } } }}
@@ -466,10 +382,10 @@ export function CreativeManagerAssignDrawer({
             <Button
               type="primary"
               loading={isPending}
-              disabled={busy || (mode === 'whole' && Boolean(leaveConflict))}
+              disabled={busy || childLeaveConflicts.size > 0}
               onClick={() => void handleSubmit()}
             >
-              {mode === 'split' ? 'Giao tất cả task nhỏ' : 'Giao nguyên task'}
+              Giao tất cả task nhỏ
             </Button>
           ) : null}
         </div>
@@ -494,7 +410,7 @@ export function CreativeManagerAssignDrawer({
                 <span className={styles.factLabel}>SL hiện tại</span>
                 <span className={styles.factValue}>
                   {task.quantity > 0 ? task.quantity : '—'}
-                  <span className={styles.factValueMuted}> · CM xác nhận khi giao</span>
+                  <span className={styles.factValueMuted}> · CM xác nhận khi chia</span>
                 </span>
               </div>{' '}
               <div className={styles.fact}>
@@ -547,140 +463,35 @@ export function CreativeManagerAssignDrawer({
 
           {canSubmit ? (
             <div className={styles.formSection}>
-              <p className={styles.sectionLabel}>Hình thức giao</p>
-              {canSplitOnAssign ? (
-                <Segmented
-                  className={styles.modeToggle}
-                  block
-                  size="small"
-                  value={mode}
-                  onChange={(value) => setMode(value as CreativeAssignMode)}
-                  options={[
-                    { label: 'Giao nguyên', value: 'whole' },
-                    { label: 'Chia nhỏ', value: 'split' },
-                  ]}
-                />
-              ) : null}
+              <p className={styles.sectionLabel}>Chia task con</p>
+              <p className={styles.splitSummaryHint} style={{ marginBottom: 8 }}>
+                Ít nhất 1 phần. Một Staff nhận cả gói → giữ 1 task con với đủ SL. {periodNote}
+                {capacityLoading ? ' · Đang tải capacity…' : null}
+                {capacityError ? ' · Dùng ước lượng tạm.' : null}
+              </p>
 
               <Form form={form} layout="vertical" size="small" className={styles.editForm}>
-                {mode === 'whole' ? (
-                  <div className={styles.formSectionStack}>
-                    <Form.Item
-                      name="quantity"
-                      label="Số lượng"
-                      rules={[
-                        { required: true, message: 'CM nhập số lượng trước khi giao' },
-                        wholeTaskQuantityRule,
-                        ...(task.quantity > 0
-                          ? [
-                              {
-                                type: 'number' as const,
-                                max: task.quantity,
-                                message: `Số lượng không được lớn hơn SL hiện tại (${task.quantity})`,
-                              },
-                            ]
-                          : []),
-                      ]}
-                      extra={
-                        task.quantity > 0
-                          ? `SL hiện tại (PM/Admin lúc tạo): ${task.quantity}. CM nhập SL chính thức khi giao (≤ ${task.quantity}).`
-                          : 'CM nhập số lượng khi giao Staff.'
-                      }
-                    >
-                      <InputNumber
-                        min={1}
-                        max={task.quantity > 0 ? task.quantity : undefined}
-                        precision={0}
-                        step={1}
-                        style={{ width: '100%' }}
-                        placeholder={task.quantity > 0 ? `VD: ${task.quantity}` : 'VD: 24'}
-                      />
-                    </Form.Item>{' '}
-                    <Form.Item
-                      name="staffUserId"
-                      label="Giao cho"
-                      rules={[{ required: true, message: 'Chọn Staff nhận task' }]}
-                      extra={
-                        <>
-                          Có thể chọn chính mình nếu CM tự thực thi. {periodNote}
-                          {capacityLoading ? ' · Đang tải capacity…' : null}
-                          {capacityError ? ' · Dùng ước lượng tạm.' : null}
-                          {openLeavesFetching ? ' · Đang kiểm tra lịch nghỉ…' : null}
-                        </>
-                      }
-                    >
-                      {renderStaffSelect(false)}
-                    </Form.Item>
-                    {leaveConflict ? (
-                      <Alert
-                        className={styles.leaveConflictAlert}
-                        type="warning"
-                        showIcon
-                        message={WHOLE_ASSIGN_LEAVE_CONFLICT_TITLE}
-                        description={
-                          <div className={styles.leaveConflictBody}>
-                            <p>
-                              {selectedStaffName
-                                ? `${selectedStaffName} nghỉ ${formatLeaveRangeLabel(leaveConflict)}`
-                                : `Nghỉ ${formatLeaveRangeLabel(leaveConflict)}`}
-                              {assignWindowEnd ? ` · Deadline ${assignWindowEnd}` : ''}.{' '}
-                              {WHOLE_ASSIGN_LEAVE_CONFLICT_HINT}
-                            </p>
-                            <Button
-                              type="primary"
-                              size="small"
-                              onClick={switchToSplitForLeaveConflict}
-                            >
-                              {WHOLE_ASSIGN_LEAVE_SWITCH_SPLIT_LABEL}
-                            </Button>
-                          </div>
-                        }
-                      />
-                    ) : null}
-                    <Form.Item
-                      name="creativeDeadline"
-                      label={
-                        <CreativeDeadlineFieldLabel>Creative deadline</CreativeDeadlineFieldLabel>
-                      }
-                      extra={
-                        <CreativeDeadlineFieldExtra
-                          afterPm={wholeCreativeAfterPm}
-                          base="Bỏ trống = giữ deadline hiện có."
-                        />
-                      }
-                    >
-                      <DatePicker
-                        showTime={{
-                          format: 'HH:mm',
-                          defaultValue: dayjs().second(0).millisecond(0),
-                        }}
-                        format={DATETIME_SHORT_FORMAT}
-                        style={{ width: '100%' }}
-                        allowClear
-                        showNow={false}
-                      />
-                    </Form.Item>
+                <div className={styles.formSectionStack}>
+                  <div className={styles.splitSummary}>
+                    <span className={styles.splitSummaryTotal}>
+                      {splitLockedTotal > 0
+                        ? `SL các phần: ${splitLockedTotal}`
+                        : 'Nhập SL từng phần (có thể 0)'}
+                    </span>
+                    <span className={styles.splitSummaryHint}>
+                      {`SL task cha: ${task.quantity}. Tổng các phần không được lớn hơn SL này. Có thể chưa gán Staff.`}
+                    </span>
                   </div>
-                ) : (
-                  <div className={styles.formSectionStack}>
-                    <div className={styles.splitSummary}>
-                      <span className={styles.splitSummaryTotal}>
-                        {splitLockedTotal > 0
-                          ? `SL tổng sẽ khoá: ${splitLockedTotal}`
-                          : 'SL tổng sẽ khoá khi nhập đủ các phần'}
-                      </span>
-                      <span className={styles.splitSummaryHint}>
-                        {`SL task cha: ${task.quantity}. Tổng các phần không được lớn hơn SL này. Có thể để SL 0 và chưa gán Staff.`}
-                      </span>{' '}
-                    </div>{' '}
-                    <Form.List name="subtasks">
-                      {(fields, { add, remove }) => (
-                        <>
-                          {fields.map((field, index) => (
+                  <Form.List name="subtasks">
+                    {(fields, { add, remove }) => (
+                      <>
+                        {fields.map((field, index) => {
+                          const leaveHit = childLeaveConflicts.get(index);
+                          return (
                             <div className={styles.subtaskCardCompact} key={field.key}>
                               <div className={styles.subtaskHeader}>
                                 <span>Task nhỏ {index + 1}</span>
-                                {fields.length > 2 ? (
+                                {fields.length > 1 ? (
                                   <Button type="link" danger onClick={() => remove(field.name)}>
                                     Xóa
                                   </Button>
@@ -731,6 +542,17 @@ export function CreativeManagerAssignDrawer({
                                   />
                                 </Form.Item>
                               </div>
+                              {leaveHit ? (
+                                <Alert
+                                  className={styles.leaveConflictAlert}
+                                  type="warning"
+                                  showIcon
+                                  message={SPLIT_ASSIGN_LEAVE_CONFLICT_TITLE}
+                                  description={`${formatLeaveRangeLabel(leaveHit)}${
+                                    assignWindowEnd ? ` · Deadline ${assignWindowEnd}` : ''
+                                  }. ${SPLIT_ASSIGN_LEAVE_CONFLICT_HINT}`}
+                                />
+                              ) : null}
                               <Form.Item
                                 name={[field.name, 'creativeDeadline']}
                                 label={
@@ -760,23 +582,26 @@ export function CreativeManagerAssignDrawer({
                                 />
                               </Form.Item>
                             </div>
-                          ))}
-                          <Button
-                            className={styles.addSubtask}
-                            onClick={() =>
-                              add({
-                                ...emptySubtask(),
-                                name: defaultSplitChildName(task.taskName),
-                              })
-                            }
-                          >
-                            + Thêm task nhỏ
-                          </Button>
-                        </>
-                      )}
-                    </Form.List>
-                  </div>
-                )}
+                          );
+                        })}
+                        <Button
+                          className={styles.addSubtask}
+                          onClick={() =>
+                            add({
+                              ...emptySubtask(),
+                              name: defaultSplitChildName(task.taskName),
+                              creativeDeadline: task.creativeDeadline
+                                ? fromTaskDeadline(task.creativeDeadline)
+                                : undefined,
+                            })
+                          }
+                        >
+                          + Thêm task nhỏ
+                        </Button>
+                      </>
+                    )}
+                  </Form.List>
+                </div>
               </Form>
             </div>
           ) : (

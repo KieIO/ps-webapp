@@ -31,7 +31,7 @@ import { formatTaskStaffNames } from '../../utils/staff';
 import {
   EVALUATION_LAYER_TITLES,
   isCreativePastChToCmHandoff,
-  isCreativeWholeAssigned,
+  canEvaluateCmHandoffPackage,
   type EvaluationWriteLayer,
 } from '../../utils/taskEvaluation';
 import editStyles from '../EditTaskModal/EditTaskModal.module.scss';
@@ -59,11 +59,11 @@ type RemainderLink = {
 
 const resolveLockedLayer = (
   role: string | undefined,
-  wholeAssigned: boolean,
+  handoffPackage: boolean,
   pastChToCm: boolean,
 ): EvaluationWriteLayer | null => {
   if (role === ROLES.ADMIN) {
-    if (wholeAssigned) return null;
+    if (handoffPackage) return null;
     if (pastChToCm) return 'ch';
     return 'staff';
   }
@@ -73,7 +73,7 @@ const resolveLockedLayer = (
   }
   if (role === ROLES.CREATIVE_MANAGER) return 'staff';
   if (role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD) {
-    return wholeAssigned ? 'handoff' : 'staff';
+    return handoffPackage ? 'handoff' : 'staff';
   }
   return 'staff';
 };
@@ -89,9 +89,9 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
   const [originalAssignedQuantity, setOriginalAssignedQuantity] = useState(0);
   const [acceptedAtSpawn, setAcceptedAtSpawn] = useState<number | null>(null);
   const [adminLayer, setAdminLayer] = useState<EvaluationWriteLayer>('ch');
-  const wholeAssigned = Boolean(task && isCreativeWholeAssigned(task));
+  const handoffPackage = Boolean(task && canEvaluateCmHandoffPackage(task));
   const pastChToCm = Boolean(task && isCreativePastChToCmHandoff(task));
-  const lockedLayer = resolveLockedLayer(role, wholeAssigned, pastChToCm);
+  const lockedLayer = resolveLockedLayer(role, handoffPackage, pastChToCm);
   const layer = lockedLayer ?? adminLayer;
 
   useEffect(() => {
@@ -285,7 +285,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
           completionPercent,
           pmEvaluation: values.pmEvaluation ?? '',
           pmNote,
-          ...(wholeAssigned || layer === 'ch' || layer === 'handoff' ? { layer } : {}),
+          ...(handoffPackage || layer === 'ch' || layer === 'handoff' ? { layer } : {}),
         },
       },
       {
@@ -304,7 +304,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
   const modalTitle =
     layer === 'ch' || layer === 'handoff'
       ? EVALUATION_LAYER_TITLES[layer]
-      : wholeAssigned
+      : handoffPackage
         ? EVALUATION_LAYER_TITLES.staff
         : 'Evaluate task';
 

@@ -189,7 +189,7 @@ export function CreativePipelineView() {
   const subtitle =
     view === 'cm'
       ? cmFrame === 'intake'
-        ? 'Task nhận từ Creative Head / PM — giao nguyên hoặc chia nhỏ cho Staff.'
+        ? 'Task nhận từ Creative Head / PM — chia task con (ít nhất 1 phần) rồi giao Staff.'
         : 'Task chờ giao / đã giao Staff — theo dõi hoàn thành và đánh giá.'
       : 'Nhận task từ PM, bổ sung brief nếu cần, rồi giao cho Creative Manager.';
   const showStaffAssignBoard = view === 'cm' && cmFrame === 'execution';

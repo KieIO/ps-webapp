@@ -97,9 +97,15 @@ test.describe('TASK-38/48/49/52/58 assign guards', () => {
     expect(
       (
         await apiFetch('PATCH', `/tasks/my/${parent.id}/assign-staff`, employee.token, {
-          mode: 'whole',
-          staffUserId: employee.user.id,
-          quantity: 2,
+          mode: 'split',
+          subtasks: [
+            {
+              name: 'Part',
+              staffUserId: employee.user.id,
+              quantity: 2,
+              description: 'e2e',
+            },
+          ],
         })
       ).status,
     ).toBe(403);
@@ -107,9 +113,15 @@ test.describe('TASK-38/48/49/52/58 assign guards', () => {
     expect(
       (
         await apiFetch('PATCH', `/tasks/my/${parent.id}/assign-staff`, cm.token, {
-          mode: 'whole',
-          staffUserId: employee.user.id,
-          quantity: 2,
+          mode: 'split',
+          subtasks: [
+            {
+              name: 'Part',
+              staffUserId: employee.user.id,
+              quantity: 2,
+              description: 'e2e',
+            },
+          ],
         })
       ).status,
     ).toBe(200);
@@ -119,20 +131,32 @@ test.describe('TASK-38/48/49/52/58 assign guards', () => {
     await expect(page.getByRole('button', { name: /Giao cho Staff/ })).toHaveCount(0);
   });
 
-  test('TASK-58 assign-staff validation rejects empty staff / zero qty / over SL', async () => {
+  test('TASK-58 assign-staff validation rejects whole mode / empty split / over SL', async () => {
     const { parent, cm } = await setupAwaitingCm(`E2E Val Staff ${Date.now()}`);
     const employee = await apiLogin(SEED_ACCOUNTS.employee.email, SEED_ACCOUNTS.employee.password);
-    const bad = await apiFetch('PATCH', `/tasks/my/${parent.id}/assign-staff`, cm.token, {
-      mode: 'whole',
-      staffUserId: '',
-      quantity: 0,
-    });
-    expect(bad.status).toBe(422);
-
-    const over = await apiFetch('PATCH', `/tasks/my/${parent.id}/assign-staff`, cm.token, {
+    const wholeRejected = await apiFetch('PATCH', `/tasks/my/${parent.id}/assign-staff`, cm.token, {
       mode: 'whole',
       staffUserId: employee.user.id,
-      quantity: parent.quantity + 1,
+      quantity: 2,
+    });
+    expect(wholeRejected.status).toBe(422);
+
+    const emptySplit = await apiFetch('PATCH', `/tasks/my/${parent.id}/assign-staff`, cm.token, {
+      mode: 'split',
+      subtasks: [],
+    });
+    expect(emptySplit.status).toBe(422);
+
+    const over = await apiFetch('PATCH', `/tasks/my/${parent.id}/assign-staff`, cm.token, {
+      mode: 'split',
+      subtasks: [
+        {
+          name: 'Part',
+          staffUserId: employee.user.id,
+          quantity: parent.quantity + 1,
+          description: 'e2e',
+        },
+      ],
     });
     expect(over.status).toBe(422);
   });

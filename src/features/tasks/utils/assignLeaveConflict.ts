@@ -99,10 +99,8 @@ export function buildLeaveChipByUserId(
   return out;
 }
 
-export const WHOLE_ASSIGN_LEAVE_CONFLICT_TITLE =
+export const SPLIT_ASSIGN_LEAVE_CONFLICT_TITLE =
   'Người nhận có ngày nghỉ trong khoảng tới deadline';
 
-export const WHOLE_ASSIGN_LEAVE_CONFLICT_HINT =
-  'Không giao nguyên được. Hãy chuyển sang Chia nhỏ, chỉnh số lượng từng phần và giao thêm người khác nếu cần.';
-
-export const WHOLE_ASSIGN_LEAVE_SWITCH_SPLIT_LABEL = 'Chuyển sang Chia nhỏ';
+export const SPLIT_ASSIGN_LEAVE_CONFLICT_HINT =
+  'Không giao phần này cho người đang nghỉ. Chọn người khác hoặc chia thêm phần.';

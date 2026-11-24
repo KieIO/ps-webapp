@@ -427,15 +427,15 @@ v1: **soft delete** (`DELETE` → GORM `DeletedAt`); **no task archive** (projec
 | **Steps**         | Create or assign with that userId                             |
 | **Expected**      | **422** `ASSIGNEE_ON_LEAVE`                                   |
 
-### TASK-38b — CM whole-assign blocked when leave overlaps today→deadline
+### TASK-38b — CM split-assign blocked when leave overlaps today→deadline
 
-|                    |                                                                                                                                             |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Preconditions**  | `awaiting_cm` task; staff Active with **scheduled** leave mid-window (e.g. leave 07/11, creative/PM deadline 11/11, today 03/11)            |
-| **Steps (UI)**     | CM mở **Giao task cho Staff** → **Giao nguyên** → chọn staff đó                                                                             |
-| **Expected (UI)**  | Warning + nút **Chuyển sang Chia nhỏ**; **Giao nguyên task** disabled; sang Chia nhỏ prefill 1 phần (staff + SL nếu đã nhập) + 1 phần trống |
-| **Steps (API)**    | `POST …/assign-staff` `{ mode: "whole", staffUserId, quantity }` với staff có leave overlap cửa sổ                                          |
-| **Expected (API)** | **422** validation: phải chia nhỏ / có ngày nghỉ trong khoảng tới deadline                                                                  |
+|                    |                                                                                                                                  |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Preconditions**  | `awaiting_cm` task; staff Active with **scheduled** leave mid-window (e.g. leave 07/11, creative/PM deadline 11/11, today 03/11) |
+| **Steps (UI)**     | CM mở **Giao task cho Staff** → chọn staff đó trên một task con                                                                  |
+| **Expected (UI)**  | Warning leave trên phần đó; **Giao tất cả task nhỏ** disabled cho đến khi đổi người / bỏ staff                                   |
+| **Steps (API)**    | `PATCH …/assign-staff` `{ mode: "split", subtasks: [{ staffUserId, quantity, description, … }] }` với staff leave overlap        |
+| **Expected (API)** | **422** validation: có ngày nghỉ trong khoảng tới deadline                                                                       |
 
 ### TASK-38c — On-leave staff visible but disabled on deadline day
 

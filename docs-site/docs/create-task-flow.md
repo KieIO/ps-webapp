@@ -208,7 +208,7 @@ PM → Creative Head (bổ sung brief + Level) → giao CM → CM giao Staff →
 - Nhận task từ CH (tab **Nhận từ CH / PM**)
 - Tab **Giao Staff**: chờ giao + đã giao Staff — chỉ hiện **task cha**; cột **TT hoàn thành** / **SL hoàn thành**; pills **Tổng · Cần giao · Đã giao · Hoàn thành** (bấm để lọc); **không** hiện từng task nhỏ trên list
 - Drawer **Sửa / Đổi giao**: nếu đã chia nhỏ, mỗi task con hiện badge trạng thái hoàn thành (Chưa xác nhận / Đang làm / Hoàn thành…); đổi SL task con → ô **Lý do đổi SL** ngay dưới dòng đó (bắt buộc; ẩn khi SL về đúng giá trị cũ); **Thêm task con** có ô **Creative deadline** (bỏ trống = dùng deadline task cha)
-- **Giao nguyên** cho một Staff, hoặc **chia nhỏ** thành nhiều task con (mỗi phần có brief riêng)
+- **Chia task con** (ít nhất 1 phần; 1 Staff nhận cả gói → 1 child) rồi giao Staff
 - **Không** phân loại lại Level (chỉ Admin / CH được đổi Level, và trước khi Staff confirm)
 
 Chi tiết điều kiện, mã `…-S1`, đánh giá và rule: xem [Luồng chia task con](/split-task).
