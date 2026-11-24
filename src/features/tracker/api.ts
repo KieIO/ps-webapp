@@ -7,20 +7,10 @@ import { env } from '@/config/env';
 import { mockGetTracker } from './mock/tracker.mock';
 import { TrackerResponseSchema, type TrackerResponse } from './schemas/tracker.schema';
 
-export type TrackerGetOptions = {
-  /**
-   * Mock-only: mirror backend admin aggregation (`Name ×N` same-day pills).
-   * Ignored for the real API — the server aggregates from the auth role.
-   */
-  aggregateTaskNames?: boolean;
-};
-
 export const trackerApi = {
-  getData: async (options?: TrackerGetOptions): Promise<TrackerResponse> => {
+  getData: async (): Promise<TrackerResponse> => {
     if (env.useTrackerMock) {
-      return TrackerResponseSchema.parse(
-        await mockGetTracker({ aggregateTaskNames: Boolean(options?.aggregateTaskNames) }),
-      );
+      return TrackerResponseSchema.parse(await mockGetTracker());
     }
 
     const response = await api.get('/tracker');

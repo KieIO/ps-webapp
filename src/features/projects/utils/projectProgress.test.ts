@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { MyTask } from '@/features/tasks/schemas/task.schema';
-import { computeProjectDetailStats, resolveProjectDetailStats } from './projectProgress';
+import {
+  aggregateQuantityByTaskType,
+  computeProjectDetailStats,
+  resolveProjectDetailStats,
+} from './projectProgress';
 
 const task = (overrides: Partial<MyTask>): MyTask =>
   ({
@@ -28,7 +32,7 @@ const task = (overrides: Partial<MyTask>): MyTask =>
   }) as MyTask;
 
 describe('computeProjectDetailStats', () => {
-  it('counts tasks, sums Slides-type quantity only, and averages completion', () => {
+  it('sums all counting task types and groups by base name', () => {
     const stats = computeProjectDetailStats([
       task({ id: 's1', taskName: 'Slides', quantity: 20, completionPercent: 50 }),
       task({ id: 's2', taskName: 'Slides 2', quantity: 10, completionPercent: 100 }),
@@ -38,7 +42,13 @@ describe('computeProjectDetailStats', () => {
     ]);
 
     expect(stats.taskCount).toBe(5);
-    expect(stats.totalSlides).toBe(30);
+    expect(stats.totalQuantity).toBe(53);
+    expect(stats.quantityByType).toEqual([
+      { name: 'DA', quantity: 8 },
+      { name: 'QA', quantity: 5 },
+      { name: 'Redo Slide', quantity: 10 },
+      { name: 'Slides', quantity: 30 },
+    ]);
     expect(stats.averageCompletionPercent).toBe(50);
   });
 
@@ -51,7 +61,7 @@ describe('computeProjectDetailStats', () => {
     expect(stats.averageCompletionPercent).toBe(80);
   });
 
-  it('excludes declined and cancelled quantity from slides total', () => {
+  it('excludes declined and cancelled quantity from totals', () => {
     const stats = computeProjectDetailStats([
       task({ id: 's1', taskName: 'Slides', quantity: 20, completionPercent: 50 }),
       task({
@@ -63,7 +73,7 @@ describe('computeProjectDetailStats', () => {
       }),
       task({
         id: 'cancelled',
-        taskName: 'Slides',
+        taskName: 'DA',
         quantity: 9,
         staffConfirmation: 'cancelled',
         completionPercent: 0,
@@ -71,7 +81,19 @@ describe('computeProjectDetailStats', () => {
     ]);
 
     expect(stats.taskCount).toBe(3);
-    expect(stats.totalSlides).toBe(20);
+    expect(stats.totalQuantity).toBe(20);
+    expect(stats.quantityByType).toEqual([{ name: 'Slides', quantity: 20 }]);
+  });
+});
+
+describe('aggregateQuantityByTaskType', () => {
+  it('merges Slides / Slides 2 under Slides', () => {
+    expect(
+      aggregateQuantityByTaskType([
+        task({ id: 'a', taskName: 'Slides', quantity: 4 }),
+        task({ id: 'b', taskName: 'Slides 3', quantity: 6 }),
+      ]),
+    ).toEqual([{ name: 'Slides', quantity: 10 }]);
   });
 });
 
@@ -84,7 +106,8 @@ describe('resolveProjectDetailStats', () => {
       ),
     ).toEqual({
       taskCount: 12,
-      totalSlides: 240,
+      totalQuantity: 240,
+      quantityByType: [],
       averageCompletionPercent: 61,
     });
   });

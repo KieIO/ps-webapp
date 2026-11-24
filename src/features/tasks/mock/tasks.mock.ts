@@ -50,6 +50,7 @@ import {
   filterCreativeStaff,
   isAwaitingCh,
   isAwaitingCm,
+  isCreativeDeptTask,
   isCreativeHandoffPayload,
   isCreativeLevelLockedByStaffConfirm,
   isQaSplitChildTask,
@@ -114,10 +115,10 @@ const deriveDevRoleFromUserId = (userId: string): Role | undefined => {
 const resolveViewerRole = (userId?: string, viewerRole?: Role): Role | undefined =>
   viewerRole ?? (userId ? deriveDevRoleFromUserId(userId) : undefined);
 
-/** Org-wide oversight (Head / CH / Admin). PM is project-scoped — see isPmProjectVisible. */
+/** Org-wide oversight (Head / Admin). CH is Creative-dept scoped — see filterMockTasks. PM is project-scoped. */
 const canViewAllTasks = (userId?: string, viewerRole?: Role): boolean => {
   const role = resolveViewerRole(userId, viewerRole);
-  if (role === ROLES.PM) return false;
+  if (role === ROLES.PM || role === ROLES.CREATIVE_HEAD) return false;
   if (role && roleHasDefaultPermission(role, 'VIEW_ALL_TASKS')) {
     return true;
   }
@@ -211,10 +212,15 @@ export const filterMockTasks = (
   const resolvedRole = resolveViewerRole(assigneeUserId, viewerRole);
   const viewAllTasks = canViewAllTasks(assigneeUserId, viewerRole);
   const isPmScoped = resolvedRole === ROLES.PM && Boolean(assigneeUserId);
-  const oversightList = viewAllTasks || isPmScoped;
+  const isCreativeHeadScoped = resolvedRole === ROLES.CREATIVE_HEAD;
+  const oversightList = viewAllTasks || isPmScoped || isCreativeHeadScoped;
 
   return tasks.filter((task) => {
-    if (assigneeUserId && isPmScoped) {
+    if (isCreativeHeadScoped) {
+      if (!isCreativeDeptTask(task)) {
+        return false;
+      }
+    } else if (assigneeUserId && isPmScoped) {
       if (!isPmProjectVisible(task, assigneeUserId)) {
         return false;
       }
@@ -299,6 +305,9 @@ const canViewTask = (task: MyTask, viewerUserId?: string, viewerRole?: Role): bo
   if (!viewerUserId) return false;
   if (canViewAllTasks(viewerUserId, viewerRole)) return true;
   const role = resolveViewerRole(viewerUserId, viewerRole);
+  if (role === ROLES.CREATIVE_HEAD) {
+    return isCreativeDeptTask(task);
+  }
   if (role === ROLES.PM) {
     return isPmProjectVisible(task, viewerUserId);
   }
@@ -953,7 +962,7 @@ export const mockUpdateMyTaskStatus = async (
     typeof current.department === 'string' &&
     (current.department === 'creative' || current.department.startsWith('creative_'))
   ) {
-    throw new Error('Chỉ từ chối task Creative khi trạng thái còn Chưa cập nhật');
+    throw new Error('Chỉ từ chối task Creative khi trạng thái còn Chưa xác nhận');
   }
 
   if (payload.staffConfirmation === 'decline' && current.staffConfirmation !== 'decline') {
@@ -1735,6 +1744,8 @@ export const mockUpdateCreativePipeline = async (
           pipelineStage: 'assigned_staff',
           splitAt: parent.splitAt ?? addedAt,
           staffConfirmation: 'not_updated',
+          creativeDeadline:
+            subtask.creativeDeadline || parent.creativeDeadline || parent.deadline || parent.date,
           updatedAt: addedAt,
         }),
       );

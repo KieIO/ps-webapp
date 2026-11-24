@@ -14,23 +14,25 @@ Liên quan: [Tạo task](/create-task) · [Trạng thái Task](/tasks/status) ·
 
 ## 1. Assignee
 
-| Tình huống                                                                                              | Hiển thị                                                             |
-| ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Task **chia khác phòng ban** (vd. PM → Creative, đang `awaiting_ch` / `awaiting_cm` / `returned_to_pm`) | **Tên phòng ban** (vd. `Creative`) — plain text, không link Staff/CM |
-| Task **chia trong phòng** hoặc đã giao Staff (`project_staff`, `assigned_staff`, …)                     | **Tên Staff** (link profile như bình thường)                         |
+| Tình huống                                                                     | Ai xem                              | Hiển thị                                                                 |
+| ------------------------------------------------------------------------------ | ----------------------------------- | ------------------------------------------------------------------------ |
+| Task **phòng Creative** (mọi stage, kể cả đã giao Staff)                       | **PM**                              | Luôn **`Creative Department`** — plain text, không lộ tên Staff Creative |
+| Task **chia khác phòng** đang `awaiting_ch` / `awaiting_cm` / `returned_to_pm` | Role khác                           | **Tên phòng** (`Creative`)                                               |
+| Task **Project Staff** hoặc Creative đã giao Staff                             | Role khác (CH / CM / Head / Admin…) | **Tên Staff** (link profile)                                             |
 
-Áp dụng cho mọi role xem task (không còn chỉ ẩn tên với PM).
+PM theo dõi gói bàn giao theo **phòng**, không theo tên từng Creative Staff trên list / chi tiết.
 
 ---
 
 ## 2. Assigned by
 
-| Tình huống                             | Hiển thị                                                         |
-| -------------------------------------- | ---------------------------------------------------------------- |
-| Đang handoff **khác phòng** (như trên) | **PM của project/task** + role, vd. `Anh Kiệt (Project Manager)` |
-| Đã giao trong phòng / đã có Staff      | Người **last handoff** (`assignedBy`), vd. CM / CH kèm role      |
+| Tình huống                                                      | Ai xem    | Hiển thị                                                                                     |
+| --------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------- |
+| Task **phòng Creative**                                         | **PM**    | Luôn **PM project** + role, vd. `Anh Kiệt (Project Manager)` — kể cả đã giao Staff / đã chia |
+| Đang handoff **khác phòng** (`awaiting_ch` / `awaiting_cm` / …) | Role khác | **PM project** + role                                                                        |
+| Đã giao trong phòng / đã có Staff                               | Role khác | Người **last handoff** (`assignedBy`), vd. CM / CH kèm role                                  |
 
-`AssignedByID` trên API vẫn ghi người giao gần nhất (CH/CM); UI ưu tiên **PM** khi Assignee đang là tên phòng ban, để khớp nghiệp vụ “ai assign task sang phòng nhận”.
+`AssignedByID` trên API vẫn ghi người giao gần nhất (CH/CM); UI của **PM** luôn ưu tiên **PM project** trên task Creative (khớp Assignee = `Creative`).
 
 UI (detail + list Employee): chỉ **tên** là link; `(Role)` plain text.
 
@@ -55,6 +57,6 @@ Role khác (PM, CH, CM, Head, Admin) vẫn giữ cột **PM Name** (`projectMana
 
 ## 5. Tóm tắt
 
-1. Khác phòng → Assignee = **phòng ban**; Assigned by = **PM (Project Manager)**.
-2. Trong phòng / đã giao Staff → Assignee = **tên staff**; Assigned by = người giao gần nhất.
+1. **PM** + task Creative → Assignee = **`Creative Department`**; Assigned by = **PM project** (kể cả đã giao Staff). Task Project vẫn hiện tên Staff.
+2. Role khác: handoff chờ CH/CM → Assignee **phòng ban** / Assigned by **PM**; đã giao Staff → tên staff / last handoff.
 3. List Employee: cột **Assigned by**, không hiện PM project.

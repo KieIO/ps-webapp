@@ -11,6 +11,7 @@ import { Button, Popconfirm, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { DATE_FORMAT } from '@/config/constants';
+import { ROLES } from '@/config/permissions';
 import { PROJECT_NAME_COLUMN_LABEL } from '../../constants';
 import { ProjectNameLink } from '@/shared/ui/ProjectNameLink/ProjectNameLink';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
@@ -128,6 +129,8 @@ export function ProjectTable({
   const canArchive = can('ARCHIVE_PROJECT');
   const canDelete = can('DELETE_PROJECT');
   const canEditMeta = (project: Project) => canEdit && canEditProjectMeta(project, role, userId);
+  /** Employee list: hide Level + Đánh giá (ops roles still see them). */
+  const showLevelAndEvaluation = role !== ROLES.EMPLOYEE;
   const actionsWidth = getProjectActionsWidth({
     hasUpdateStatus: canEdit && Boolean(onUpdateStatus),
     canAssign: canEdit && Boolean(onAssign),
@@ -137,7 +140,7 @@ export function ProjectTable({
     hasUnarchive: canArchive && archivedView && Boolean(onUnarchive),
     hasDelete: canDelete && Boolean(onDelete),
   });
-  const scrollX = 3150 + actionsWidth;
+  const scrollX = (showLevelAndEvaluation ? 3150 : 3150 - 110 - 120) + actionsWidth;
   const emptyTitle = archivedView ? 'Không có dự án đã lưu trữ' : 'Không tìm thấy dự án';
   const emptyDescription = archivedView
     ? 'Các dự án đã lưu trữ sẽ hiện ở đây.'
@@ -211,15 +214,19 @@ export function ProjectTable({
         <ProjectUrgencyBadge urgency={resolveProjectUrgencyDisplay(record)} />
       ),
     },
-    {
-      title: PROJECT_TABLE_COLUMN_HEADERS.level,
-      dataIndex: 'projectLevel',
-      key: 'projectLevel',
-      width: 110,
-      align: 'center',
-      sorter: (a, b) => compareNumber(a.projectLevel, b.projectLevel),
-      render: (level: EvaluationLevel) => renderLevel(level),
-    },
+    ...(showLevelAndEvaluation
+      ? [
+          {
+            title: PROJECT_TABLE_COLUMN_HEADERS.level,
+            dataIndex: 'projectLevel',
+            key: 'projectLevel',
+            width: 110,
+            align: 'center' as const,
+            sorter: (a: Project, b: Project) => compareNumber(a.projectLevel, b.projectLevel),
+            render: (level: EvaluationLevel) => renderLevel(level),
+          },
+        ]
+      : []),
     {
       title: PROJECT_TABLE_COLUMN_HEADERS.headName,
       key: 'departmentHeadName',
@@ -306,14 +313,18 @@ export function ProjectTable({
         <CompletionProgressCell percent={percent} variant={STATUS_VARIANT[record.status]} />
       ),
     },
-    {
-      title: PROJECT_TABLE_COLUMN_HEADERS.evaluation,
-      dataIndex: 'evaluation',
-      key: 'evaluation',
-      width: 120,
-      sorter: (a, b) => compareText(a.evaluation, b.evaluation),
-      render: renderText,
-    },
+    ...(showLevelAndEvaluation
+      ? [
+          {
+            title: PROJECT_TABLE_COLUMN_HEADERS.evaluation,
+            dataIndex: 'evaluation',
+            key: 'evaluation',
+            width: 120,
+            sorter: (a: Project, b: Project) => compareText(a.evaluation, b.evaluation),
+            render: renderText,
+          },
+        ]
+      : []),
     {
       title: PROJECT_TABLE_COLUMN_HEADERS.note,
       dataIndex: 'note',
@@ -354,7 +365,7 @@ export function ProjectTable({
 
         return (
           <div className={styles.actions}>
-            {canEdit && onUpdateStatus ? (
+            {canEditMeta(record) && onUpdateStatus ? (
               <Tooltip title="Update status">
                 <Button
                   type="text"

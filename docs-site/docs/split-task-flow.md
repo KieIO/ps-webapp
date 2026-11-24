@@ -45,19 +45,19 @@ PM hoặc Admin mở "Giao Staff"
 
 ## 2. Ai làm gì?
 
-| Việc                                                               | Ai làm được                                        |
-| ------------------------------------------------------------------ | -------------------------------------------------- |
-| Chọn **Chia nhỏ** và tạo task con lần đầu                          | PM, Admin                                          |
-| Thêm task con sau khi đã chia                                      | CM, Admin                                          |
-| Thêm task con **QA** (kiểm lại phần của người khác)                | CM, Admin                                          |
-| Sửa **SL tổng** sau khi đã chia                                    | Người tạo task (PM), Admin                         |
-| Sửa số lượng từng task con (tổng phần làm việc không vượt SL tổng) | CM, người tạo task, Admin                          |
-| Confirm / làm việc / đánh dấu Finished                             | Staff được giao từng phần                          |
-| Đánh giá **từng task con**                                         | Creative Manager                                   |
-| Đánh giá **task gốc** (sau khi các phần xong theo luồng chung)     | PM, Creative Head, Department Head                 |
-| Xem Creative Queue                                                 | CM, CH, Admin (PM **không** thấy menu / trang này) |
-| Theo dõi task đã chia (Project Tasks / chi tiết)                   | CM, CH, PM, Admin, Head (theo quyền)               |
-| Không chia nhỏ                                                     | Creative Head (chỉ giao CM), Staff                 |
+| Việc                                                               | Ai làm được                                              |
+| ------------------------------------------------------------------ | -------------------------------------------------------- |
+| Chọn **Chia nhỏ** và tạo task con lần đầu                          | PM, Admin                                                |
+| Thêm task con sau khi đã chia                                      | CM, Admin                                                |
+| Thêm task con **QA** (kiểm lại phần của người khác)                | CM, Admin                                                |
+| Sửa **SL tổng** sau khi đã chia                                    | Người tạo task (PM), Admin                               |
+| Sửa số lượng từng task con (tổng phần làm việc không vượt SL tổng) | Mọi role trừ **Nhân viên** (Admin / PM / Head / CH / CM) |
+| Confirm / làm việc / đánh dấu Finished                             | Staff được giao từng phần                                |
+| Đánh giá **từng task con**                                         | Creative Manager                                         |
+| Đánh giá **task gốc** (sau khi các phần xong theo luồng chung)     | PM, Creative Head, Department Head                       |
+| Xem Creative Queue                                                 | CM, CH, Admin (PM **không** thấy menu / trang này)       |
+| Theo dõi task đã chia (Project Tasks / chi tiết)                   | CM, CH, PM, Admin, Head (theo quyền)                     |
+| Không chia nhỏ                                                     | Creative Head (chỉ giao CM), Staff                       |
 
 Lần chia đầu (**Chia nhỏ** trên form giao Staff) hiện với PM và Admin. **Thêm task con sau khi đã chia** là việc của **CM** hoặc **Admin**. CM vẫn **Giao nguyên** cho Staff khi không chia.
 
@@ -87,7 +87,7 @@ Lần chia đầu (**Chia nhỏ** trên form giao Staff) hiện với PM và Adm
 
 Creative Manager mở cùng form nhưng chỉ thấy **Giao nguyên**.
 
-Sau khi đã chia, **CM** hoặc **Admin** mở form sửa task và bấm **Thêm task con**. Trong khung thêm có thể tick **Task QA** nếu cần phần kiểm lại (xem mục Task con QA bên dưới). **PM không** thêm task con ở bước này.
+Sau khi đã chia, **CM** hoặc **Admin** mở form sửa task và bấm **Thêm task con**. Trong khung thêm có **Creative deadline** (bỏ trống = dùng deadline task cha) và có thể tick **Task QA** nếu cần phần kiểm lại (xem mục Task con QA bên dưới). **PM không** thêm task con ở bước này.
 
 Sau khi chia:
 

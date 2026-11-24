@@ -46,7 +46,12 @@ import { canEditTaskMeta, canOpenTaskMetaEdit } from '@/features/tasks/utils/tas
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { DateWithRiskIndicator } from '@/shared/ui/DateWithRiskIndicator/DateWithRiskIndicator';
-import { PROJECT_TASKS_PAGE_SIZE, PROJECT_TASKS_PAGE_SIZE_OPTIONS } from '../../constants';
+import {
+  PROJECT_DETAIL_STAT_LABELS,
+  PROJECT_DETAIL_TOTAL_QUANTITY_HINT,
+  PROJECT_TASKS_PAGE_SIZE,
+  PROJECT_TASKS_PAGE_SIZE_OPTIONS,
+} from '../../constants';
 import { computeProjectDetailStats } from '../../utils/projectProgress';
 import { getMyTaskColumnSorter } from '@/features/tasks/utils/myTaskColumns';
 import type { ClassificationLevel, MyTask } from '@/features/tasks/schemas/task.schema';
@@ -56,8 +61,6 @@ const COMPLETION_COLUMN_HINT = 'Phần trăm hoàn thành do PM đánh giá khi 
 const COMPLETION_EMPTY_HINT = 'PM chưa nhập % hoàn thành cho task này.';
 const CREATIVE_DEADLINE_HINT =
   'Deadline nội bộ của phòng Creative. Để trống nếu task không đi qua Creative.';
-const SLIDES_QTY_SUMMARY_HINT =
-  'Tổng qty task loại Slides (không gồm DA, QA, Animation, …); không đếm trùng khi đã chia nhỏ';
 
 function ColumnTitleWithHint({
   label,
@@ -184,10 +187,13 @@ export function ProjectDetailTaskTable({ tasks, loading, total }: ProjectDetailT
     editingTask && shouldUseCreativePipelineEditDrawer(editingTask, role, userId),
   );
 
-  const slidesQtyTotal = useMemo(() => computeProjectDetailStats(tasks).totalSlides, [tasks]);
-  const slidesQtyLabel = useMemo(
-    () => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(slidesQtyTotal),
-    [slidesQtyTotal],
+  const detailStats = useMemo(() => computeProjectDetailStats(tasks), [tasks]);
+  const totalQuantityLabel = useMemo(
+    () =>
+      new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(
+        detailStats.totalQuantity,
+      ),
+    [detailStats.totalQuantity],
   );
   /** Columns before Qty: Task Code … % Hoàn thành (+ optional Deadline Creative). */
   const qtySummaryLabelColSpan = canViewCreativeDeadlineColumn ? 7 : 6;
@@ -414,19 +420,19 @@ export function ProjectDetailTaskTable({ tasks, loading, total }: ProjectDetailT
               <Table.Summary fixed>
                 <Table.Summary.Row className={styles.summaryRow}>
                   <Table.Summary.Cell index={0} colSpan={qtySummaryLabelColSpan}>
-                    <Tooltip title={SLIDES_QTY_SUMMARY_HINT}>
+                    <Tooltip title={PROJECT_DETAIL_TOTAL_QUANTITY_HINT}>
                       <span className={styles.summaryLabel}>
-                        Tổng số lượng slides
+                        {PROJECT_DETAIL_STAT_LABELS.totalQuantity}
                         <InfoCircleOutlined
                           className={styles.infoIcon}
-                          aria-label="Giải thích tổng số lượng slides"
+                          aria-label="Giải thích tổng số lượng"
                         />
                       </span>
                     </Tooltip>
                   </Table.Summary.Cell>
                   <Table.Summary.Cell index={qtySummaryLabelColSpan} align="right">
-                    <Tooltip title={SLIDES_QTY_SUMMARY_HINT}>
-                      <span className={styles.summaryValue}>{slidesQtyLabel}</span>
+                    <Tooltip title={PROJECT_DETAIL_TOTAL_QUANTITY_HINT}>
+                      <span className={styles.summaryValue}>{totalQuantityLabel}</span>
                     </Tooltip>
                   </Table.Summary.Cell>
                   <Table.Summary.Cell index={qtySummaryLabelColSpan + 1} />

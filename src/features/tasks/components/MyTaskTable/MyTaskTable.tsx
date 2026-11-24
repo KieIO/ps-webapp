@@ -302,7 +302,7 @@ export function MyTaskTable({
         />
       ),
       renderAssignedBy: (record) => {
-        const display = resolveAssignedByDisplay(record);
+        const display = resolveAssignedByDisplay(record, role);
         if (!display) return <span className={styles.empty}>—</span>;
         return (
           <>

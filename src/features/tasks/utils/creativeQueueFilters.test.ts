@@ -123,10 +123,18 @@ describe('applyCreativeQueueFilters', () => {
     expect(
       applyCreativeQueueFilters(
         [whole, splitParent, child],
+        { statusBucket: 'unconfirmed' },
+        visibility,
+      ).map((task) => task.id),
+    ).toEqual(['parent']);
+
+    expect(
+      applyCreativeQueueFilters(
+        [whole, splitParent, child],
         { statusBucket: 'inProgress' },
         visibility,
       ).map((task) => task.id),
-    ).toEqual(['parent', 'child']);
+    ).toEqual(['child']);
 
     // whole has completionPercent → evaluated → completed (not needsEvaluation).
     expect(

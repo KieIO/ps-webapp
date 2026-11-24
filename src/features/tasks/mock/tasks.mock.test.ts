@@ -31,6 +31,38 @@ const task = (overrides: Partial<MyTask>): MyTask => ({
   ...overrides,
 });
 
+describe('filterMockTasks role visibility', () => {
+  it('limits Creative Head to Creative department tasks', () => {
+    const creative = task({
+      id: 'ch-creative',
+      department: 'creative',
+      taskCategory: 'project',
+      staff: [],
+    });
+    const creativeHcm = task({
+      id: 'ch-creative-hcm',
+      department: 'creative_hcm',
+      taskCategory: 'project',
+      staff: [],
+    });
+    const projectStaff = task({
+      id: 'ch-project-staff',
+      department: 'project',
+      taskCategory: 'project',
+      staff: [{ code: 'E1', userId: 'usr-pm-staff', name: 'Project Staff', role: 'employee' }],
+    });
+
+    const listed = filterMockTasks(
+      [creative, creativeHcm, projectStaff],
+      { taskCategory: 'project' },
+      'dev-creative_head',
+      'creative_head',
+    ).map((item) => item.id);
+
+    expect(listed).toEqual(['ch-creative', 'ch-creative-hcm']);
+  });
+});
+
 describe('filterMockTasks dashboard drill-down filters', () => {
   it('filters completed tasks by month and timeliness', () => {
     const onTime = task({
@@ -128,6 +160,20 @@ describe('filterMockTasks dashboard drill-down filters', () => {
     expect(
       filterMockTasks([spanning, otherDay], { workDate: '2026-09-06' }).map((item) => item.id),
     ).toEqual(['spanning']);
+  });
+
+  it('filters by creativeDeadline day when set (Tracker placement)', () => {
+    const withCreative = task({
+      id: 'creative-dl',
+      date: '2026-11-27T00:00:00.000Z',
+      deadline: '2026-11-27T10:57:00.000Z',
+      creativeDeadline: '2026-11-25T10:57:00.000Z',
+    });
+
+    expect(
+      filterMockTasks([withCreative], { workDate: '2026-11-25' }).map((item) => item.id),
+    ).toEqual(['creative-dl']);
+    expect(filterMockTasks([withCreative], { workDate: '2026-11-27' })).toEqual([]);
   });
 });
 

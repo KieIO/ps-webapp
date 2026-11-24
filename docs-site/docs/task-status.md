@@ -14,27 +14,29 @@ Liên quan: [Tạo task](/create-task) · [Revision](/revision) · [OT — làm 
 
 ## 0. Trạng thái hiển thị (list vs modal)
 
-**Thanh tổng hợp list** (+ badge) — 5 nhóm:
+**Thanh tổng hợp list** (+ badge) — 6 nhóm:
 
-| Nhóm UI          | API / điều kiện                                                                            |
-| ---------------- | ------------------------------------------------------------------------------------------ |
-| **Đang làm**     | `not_updated` hoặc `confirmed`                                                             |
-| **Cần đánh giá** | `finished` **chưa** đánh giá Staff/CM — **chỉ đếm / badge / filter**, không có trong modal |
-| **Đã từ chối**   | `decline`                                                                                  |
-| **Hủy**          | `cancelled`                                                                                |
-| **Hoàn thành**   | `finished` **đã** đánh giá                                                                 |
+| Nhóm UI           | API / điều kiện                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| **Chưa xác nhận** | `not_updated` — task mới / chờ Staff Confirm                                               |
+| **Đang làm**      | `confirmed` — Staff đã xác nhận nhận việc                                                  |
+| **Cần đánh giá**  | `finished` **chưa** đánh giá Staff/CM — **chỉ đếm / badge / filter**, không có trong modal |
+| **Đã từ chối**    | `decline`                                                                                  |
+| **Hủy**           | `cancelled`                                                                                |
+| **Hoàn thành**    | `finished` **đã** đánh giá                                                                 |
 
-**Modal / panel chọn status** (Update status, Edit, chips chi tiết) — **3 option**:
+**Modal / panel chọn status** (Update status, Edit, chips chi tiết) — **4 option**:
 
-| Option         | Khi Save                                                                                    |
-| -------------- | ------------------------------------------------------------------------------------------- |
-| **Đang làm**   | Ghi `confirmed`                                                                             |
-| **Hủy**        | Ghi `cancelled` (Staff **không** thấy option này — từ chối qua CTA **Từ chối** → `decline`) |
-| **Hoàn thành** | Ghi `finished` (chưa Evaluate vẫn vào nhóm đếm «Cần đánh giá» trên list)                    |
+| Option            | Khi Save                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| **Chưa xác nhận** | Ghi `not_updated`                                                                           |
+| **Đang làm**      | Ghi `confirmed` (Staff Confirm / chọn Đang làm = đã xác nhận)                               |
+| **Hủy**           | Ghi `cancelled` (Staff **không** thấy option này — từ chối qua CTA **Từ chối** → `decline`) |
+| **Hoàn thành**    | Ghi `finished` (chưa Evaluate vẫn vào nhóm đếm «Cần đánh giá» trên list)                    |
 
-Filter **Trạng thái** trên Project Tasks / Creative Queue (CM execution) dùng **cùng 5 nhóm** (client-side; không gửi `statusBucket` lên API).
+Filter **Trạng thái** trên Project Tasks / Creative Queue (CM execution) dùng **cùng 6 nhóm** (client-side; không gửi `statusBucket` lên API).
 
-**Tracker** (legend task): **Đang làm** / **Hoàn thành** — `not_updated` và `confirmed` cùng màu «Đang làm» (không còn nhãn «Chưa cập nhật» trên task). Task `decline` / `cancelled` **không** hiện trên timeline. Tracker không tách «Cần đánh giá» (mọi `finished` = Hoàn thành trên bar). Legend **project** vẫn có «Chưa cập nhật» theo `project.status`.
+**Tracker** (legend task): **Chưa xác nhận** / **Đang làm** / **Hoàn thành** — `not_updated` ≠ `confirmed`. Task `decline` / `cancelled` **không** hiện trên timeline. Tracker không tách «Cần đánh giá» (mọi `finished` = Hoàn thành trên bar). Legend **project** vẫn có «Chưa cập nhật» theo `project.status`.
 
 ---
 
@@ -64,7 +66,7 @@ Ngoại lệ Creative: **CH / CM từ chối handoff** vẫn dùng CTA Từ ch�
 
 ## 3. Test coverage
 
-API **TASK-14 / TASK-14b**, unit `canChangeTaskStatus` + **5 nhóm UI** (`taskConfirmationSummary`) — xem `ps-webapp/docs/task-status-test-coverage.md`.
+API **TASK-14 / TASK-14b**, unit `canChangeTaskStatus` + **6 nhóm UI** (`taskConfirmationSummary`) — xem `ps-webapp/docs/task-status-test-coverage.md`.
 
 ---
 
@@ -73,4 +75,5 @@ API **TASK-14 / TASK-14b**, unit `canChangeTaskStatus` + **5 nhóm UI** (`taskCo
 1. Đã giao Staff → **chỉ assignee** cập nhật trạng thái.
 2. **PM chỉ view** status trên task đã giao.
 3. Admin vẫn đổi được (cancel / unlock / hỗ trợ vận hành).
-4. Thanh tổng hợp list: **Đang làm** / **Cần đánh giá** / **Đã từ chối** / **Hủy** / **Hoàn thành** (mục 0).
+4. Thanh tổng hợp list: **Chưa xác nhận** / **Đang làm** / **Cần đánh giá** / **Đã từ chối** / **Hủy** / **Hoàn thành** (mục 0).
+5. Task mới ở **Chưa xác nhận**; Staff Confirm / chọn **Đang làm** → `confirmed`.

@@ -1,6 +1,5 @@
 import {
   Alert,
-  Avatar,
   Button,
   DatePicker,
   Drawer,
@@ -28,14 +27,15 @@ import {
 import { useTaskScoreList } from '@/features/task-scores/hooks/useTaskScoreList';
 import { resolveTaskType } from '@/features/task-scores/utils/resolveTaskType';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
-import { getInitials } from '@/shared/utils/person';
 import { MY_TASK_COLUMN_HEADERS } from '../../constants';
+import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
 import {
   useCreateTaskPmOptions,
   useCreateTaskProjectOptions,
   useCreateTaskStaffOptions,
 } from '../../hooks/useCreateTaskOptions';
 import { useCreateMyTask } from '../../hooks/useCreateMyTask';
+import { useMyTaskList } from '../../hooks/useMyTaskList';
 import {
   buildCreateTaskPayload,
   CreateTaskPayloadError,
@@ -58,17 +58,10 @@ import {
 } from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import { wholeTaskQuantityRule } from '../../utils/taskQuantity';
-import {
-  isStaffAssignable,
-  STAFF_AVAILABILITY_LABELS,
-  staffMatchesDepartment,
-} from '../../utils/staffAvailability';
-import type {
-  AssignDirection,
-  StaffAvailability,
-  TaskPerson,
-  TaskWorkflowKind,
-} from '../../schemas/task.schema';
+import { staffMatchesDepartment } from '../../utils/staffAvailability';
+import { buildCapacityStaffSelectOptions } from '../../utils/staffAssignSelect';
+import type { AssignDirection, TaskPerson, TaskWorkflowKind } from '../../schemas/task.schema';
+import { AssigneeOptionLabel } from '../creativePipeline/AssigneeOptionLabel';
 import { ClassificationScale } from './ClassificationScale';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import styles from './CreateTaskDrawer.module.scss';
@@ -130,19 +123,12 @@ const DEFAULT_VALUES: CreateTaskFormValues = {
   assignDirection: undefined,
   staffUserId: undefined,
   staffNote: '',
-  urgency: 'auto',
+  urgency: 'green',
 };
 
 const codeFromDisplayName = (name: string): string => {
   const slug = name.trim().toUpperCase().replace(/\s+/g, '.');
   return slug || 'PM';
-};
-
-const AVAILABILITY_DOT: Record<StaffAvailability, string> = {
-  free: styles.dotFree,
-  normal: styles.dotNormal,
-  overloaded: styles.dotOverloaded,
-  on_leave: styles.dotLeave,
 };
 
 function WorkflowKindCards({ onSelect }: { onSelect: (kind: TaskWorkflowKind) => void }) {
@@ -238,6 +224,8 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
     [currentUser, pmOptions],
   );
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
+  const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
+  const allTasks = useMemo(() => taskList?.items ?? [], [taskList?.items]);
   const { data: scoreList, isLoading: scoresLoading } = useTaskScoreList(EMPTY_SCORE_FILTERS, {
     enabled: open,
   });
@@ -379,21 +367,24 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
     return options;
   }, [visiblePmOptions, defaultProjectManager]);
 
+  const capacityDeadlineOverride = useMemo(
+    () => (date?.isValid() ? toTaskDeadline(date) : null),
+    [date],
+  );
+  const { capacityByUserId, periodNote } = useAssignPickerCapacity(
+    null,
+    open,
+    capacityDeadlineOverride,
+  );
+
   const projectStaffOptions = useMemo(
     () =>
-      staffOptions
-        .filter((staff) => staffMatchesDepartment(staff, 'project'))
-        .map((staff) => {
-          const availability = staff.availability;
-          const assignable = isStaffAssignable(availability);
-          return {
-            value: staff.userId ?? staff.code,
-            label: staff.name,
-            disabled: !assignable,
-            staff,
-          };
-        }),
-    [staffOptions],
+      buildCapacityStaffSelectOptions(
+        staffOptions.filter((staff) => staffMatchesDepartment(staff, 'project')),
+        allTasks,
+        capacityByUserId,
+      ),
+    [staffOptions, allTasks, capacityByUserId],
   );
 
   const selectedStaff = useMemo(
@@ -869,7 +860,7 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                         name="staffUserId"
                         label="Giao cho"
                         rules={[{ required: true, message: 'Chọn nhân viên' }]}
-                        extra="Không chọn được khi nhân viên đang nghỉ phép. Overloaded vẫn giao được."
+                        extra={`Không chọn được khi nhân viên đang nghỉ phép. Overloaded vẫn giao được. ${periodNote}`}
                       >
                         <Select
                           showSearch
@@ -877,22 +868,14 @@ export function CreateTaskDrawer({ open, onClose, preset, onCreated }: CreateTas
                           placeholder="Chọn Project Staff"
                           options={projectStaffOptions}
                           optionRender={(option) => {
-                            const availability = (
-                              option.data as { staff?: { availability?: StaffAvailability } }
-                            ).staff?.availability;
+                            const data = option.data as (typeof projectStaffOptions)[number];
                             return (
-                              <span className={styles.staffOption}>
-                                <Avatar size={22}>{getInitials(String(option.label ?? ''))}</Avatar>
-                                <span>{option.label}</span>
-                                {availability ? (
-                                  <span className={styles.staffMeta}>
-                                    <span
-                                      className={`${styles.dot} ${AVAILABILITY_DOT[availability]}`}
-                                    />
-                                    {STAFF_AVAILABILITY_LABELS[availability]}
-                                  </span>
-                                ) : null}
-                              </span>
+                              <AssigneeOptionLabel
+                                staff={data.staff}
+                                activeCount={data.activeCount}
+                                capacityPercent={data.capacityPercent}
+                                availability={data.availability}
+                              />
                             );
                           }}
                         />

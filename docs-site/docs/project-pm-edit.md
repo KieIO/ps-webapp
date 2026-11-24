@@ -29,20 +29,20 @@ Server **không** nhận Level do client gửi; luôn tính lại từ 3 tiêu c
 
 Trên form **Edit project** (Projects / Tracker):
 
-| Field                                                                              | PM  | Ghi chú                               |
-| ---------------------------------------------------------------------------------- | :-: | ------------------------------------- |
-| **Ngày kết thúc** (`endDate`)                                                      |  ✓  | Ngày bắt đầu khóa với PM              |
-| **Số lượng slide** (`plannedSlides`)                                               |  ✓  | Planned slides trên Tracker Total     |
-| **Status**                                                                         |  ✓  |                                       |
-| **Mốc bàn giao** (milestones)                                                      |  ✓  | Cùng quyền PM/Head/Admin trên Tracker |
-| **Note**                                                                           |  ✓  |                                       |
-| Độ khó (Volume / Nature / Time)                                                    |  ✗  | Chỉ Head / Admin                      |
-| Tên, client, brief, người, Sales trên form, đánh giá chất lượng, urgency trên form |  ✗  | Registry / đánh giá: Head–Admin       |
+| Field                                                                              | PM  | Ghi chú                                                                      |
+| ---------------------------------------------------------------------------------- | :-: | ---------------------------------------------------------------------------- |
+| **Ngày kết thúc** (`endDate`)                                                      |  ✓  | Ngày bắt đầu khóa với PM                                                     |
+| **Số lượng slide** (`plannedSlides`)                                               |  ✓  | Planned slides trên Tracker Total                                            |
+| **Status**                                                                         |  ✓  | Kể cả project **Hoàn thành / Hủy**; đổi status → bắt buộc **lý do thay đổi** |
+| **Mốc bàn giao** (milestones)                                                      |  ✓  | Cùng quyền PM/Head/Admin trên Tracker                                        |
+| **Note**                                                                           |  ✓  |                                                                              |
+| Độ khó (Volume / Nature / Time)                                                    |  ✗  | Chỉ Head / Admin                                                             |
+| Tên, client, brief, người, Sales trên form, đánh giá chất lượng, urgency trên form |  ✗  | Registry / đánh giá: Head–Admin                                              |
 
 **Ngoài form Edit** (Tracker):
 
 - Đổi **urgency** (chấm ưu tiên) — endpoint riêng.
-- Sửa **Sales** inline trên hàng project — endpoint riêng.
+- Sửa **Sales** trên Tracker qua modal (hover `+ Sales` / click `Sales: …`) — endpoint riêng; có tùy chọn sắp xếp hàng theo Sales.
 
 Xem thêm: [FAQ — PM trên Tracker](/faq) · [Mốc giao](/milestone) · [Timeline](/tracker)
 
@@ -58,4 +58,5 @@ API **PM-54 / PM-55**, unit allowlist, e2e **PM-54** — xem `ps-webapp/docs/pro
 
 1. PM **không** sửa độ khó project.
 2. PM sửa: **end date**, **planned slides**, **status**, **milestones**, **note**.
-3. Head / Admin sửa full (gồm Evaluation criteria → Level).
+3. Project **Hoàn thành / Hủy**: **Head không** edit nữa; **PM** (và Admin) vẫn edit được. Khi PM **đổi status** → bắt buộc nhập **lý do thay đổi**.
+4. Head / Admin sửa full trên project đang mở (gồm Evaluation criteria → Level).

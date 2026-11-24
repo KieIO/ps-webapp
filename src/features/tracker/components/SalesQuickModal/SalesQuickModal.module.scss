@@ -1,0 +1,67 @@
+.modal {
+  :global(.ant-modal-body) {
+    padding-top: 12px;
+  }
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.footerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.clearBtn {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    color: #b91c1c;
+  }
+}
+
+.sortRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.sortCopy {
+  min-width: 0;
+  flex: 1;
+}
+
+.sortTitle {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sortHint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #64748b;
+}

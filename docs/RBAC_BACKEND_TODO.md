@@ -72,29 +72,29 @@ Matrix column order (least → most privileged): `employee`, `pm`, `creative_man
 
 ### Permission keys
 
-| Key                    | Default granted roles                                      |
-| ---------------------- | ---------------------------------------------------------- |
-| `MANAGE_PROJECTS`      | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `EDIT_PROJECT`         | `head`, `admin`                                            |
-| `ASSIGN_TASK`          | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `REVIEW_CREATIVE_TASK` | `creative_head`                                            |
-| `VIEW_ALL_TASKS`       | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `EVALUATE_TASK`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `VIEW_CAPACITY`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `VIEW_CAPACITY_FULL`   | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `VIEW_WORKLOAD`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `VIEW_PERFORMANCE`     | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `EDIT_KPI_SETTINGS`    | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `VIEW_QUALITY`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `REQUEST_OT`           | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `APPROVE_OT`           | `head`, `admin`                                            |
-| `EXPORT_REPORT`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `VIEW_USER`            | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `MANAGE_USERS`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `MANAGE_LEAVE`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `REACTIVATE_USER`      | `admin`                                                    |
-| `MANAGE_TITLES`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
-| `VIEW_AUDIT_LOG`       | `pm`, `creative_manager`, `creative_head`, `head`, `admin` |
+| Key                    | Default granted roles                                                                              |
+| ---------------------- | -------------------------------------------------------------------------------------------------- |
+| `MANAGE_PROJECTS`      | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `EDIT_PROJECT`         | `head`, `admin`                                                                                    |
+| `ASSIGN_TASK`          | `pm`, `creative_manager`, `head`, `admin` (not `creative_head` — CH assigns CM via Creative Queue) |
+| `REVIEW_CREATIVE_TASK` | `creative_head`                                                                                    |
+| `VIEW_ALL_TASKS`       | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `EVALUATE_TASK`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `VIEW_CAPACITY`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `VIEW_CAPACITY_FULL`   | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `VIEW_WORKLOAD`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `VIEW_PERFORMANCE`     | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `EDIT_KPI_SETTINGS`    | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `VIEW_QUALITY`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `REQUEST_OT`           | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `APPROVE_OT`           | `head`, `admin`                                                                                    |
+| `EXPORT_REPORT`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `VIEW_USER`            | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `MANAGE_USERS`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `MANAGE_LEAVE`         | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `REACTIVATE_USER`      | `admin`                                                                                            |
+| `MANAGE_TITLES`        | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
+| `VIEW_AUDIT_LOG`       | `pm`, `creative_manager`, `creative_head`, `head`, `admin`                                         |
 
 Backend must reject unknown permission or role keys on write.
 

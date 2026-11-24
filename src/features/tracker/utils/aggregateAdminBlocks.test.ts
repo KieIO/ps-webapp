@@ -5,7 +5,7 @@ import {
   formatQuantityTaskLabel,
   inferOutputMetricFromTaskName,
   parseTrackerTaskBaseLabel,
-  withAdminAggregatedBlocks,
+  withAggregatedTrackerBlocks,
 } from './aggregateAdminBlocks';
 
 const baseProject = (overrides: Partial<TrackerProject> = {}): TrackerProject => ({
@@ -216,13 +216,8 @@ describe('inferOutputMetricFromTaskName', () => {
   });
 });
 
-describe('withAdminAggregatedBlocks', () => {
-  it('returns the same array reference when not admin', () => {
-    const projects = [baseProject()];
-    expect(withAdminAggregatedBlocks(projects, false)).toBe(projects);
-  });
-
-  it('maps projects when admin', () => {
+describe('withAggregatedTrackerBlocks', () => {
+  it('aggregates same-day same-name pills for every role', () => {
     const projects = [
       baseProject({
         blocks: [
@@ -245,7 +240,7 @@ describe('withAdminAggregatedBlocks', () => {
         ],
       }),
     ];
-    const next = withAdminAggregatedBlocks(projects, true);
+    const next = withAggregatedTrackerBlocks(projects);
     expect(next).not.toBe(projects);
     expect(next[0].blocks[0].label).toBe('3 DA');
     expect(projects[0].blocks).toHaveLength(2); // original untouched

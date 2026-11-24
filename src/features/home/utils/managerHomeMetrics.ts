@@ -20,7 +20,7 @@ import {
 export type ManagerActionIssue = 'unconfirmed' | 'deadline_risk';
 
 export const MANAGER_ACTION_ISSUE_LABELS: Record<ManagerActionIssue, string> = {
-  unconfirmed: 'Chưa cập nhật',
+  unconfirmed: 'Chưa xác nhận',
   deadline_risk: 'Sắp quá deadline',
 };
 

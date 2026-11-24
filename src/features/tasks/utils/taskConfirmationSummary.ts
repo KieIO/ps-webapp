@@ -10,6 +10,7 @@ import { hasCmEvaluation } from './evaluationRemainder';
  * «Từ chối» and «Hủy» are separate — picker write path only exposes Hủy.
  */
 export type TaskSummaryBucket =
+  | 'unconfirmed'
   | 'inProgress'
   | 'needsEvaluation'
   | 'declined'
@@ -18,6 +19,7 @@ export type TaskSummaryBucket =
 
 export interface TaskConfirmationSummary {
   total: number;
+  unconfirmed: number;
   inProgress: number;
   needsEvaluation: number;
   declined: number;
@@ -25,8 +27,9 @@ export interface TaskConfirmationSummary {
   completed: number;
 }
 
-/** Order: Đang làm → Cần đánh giá → Đã từ chối → Hủy → Hoàn thành. */
+/** Order: Chưa xác nhận → Đang làm → Cần đánh giá → Đã từ chối → Hủy → Hoàn thành. */
 export const TASK_SUMMARY_BUCKET_ORDER: readonly TaskSummaryBucket[] = [
+  'unconfirmed',
   'inProgress',
   'needsEvaluation',
   'declined',
@@ -35,6 +38,7 @@ export const TASK_SUMMARY_BUCKET_ORDER: readonly TaskSummaryBucket[] = [
 ] as const;
 
 export const TASK_SUMMARY_BUCKET_LABELS: Record<TaskSummaryBucket, string> = {
+  unconfirmed: 'Chưa xác nhận',
   inProgress: 'Đang làm',
   needsEvaluation: 'Cần đánh giá',
   declined: CONFIRMATION_LABELS.decline,
@@ -43,6 +47,7 @@ export const TASK_SUMMARY_BUCKET_LABELS: Record<TaskSummaryBucket, string> = {
 };
 
 export const TASK_SUMMARY_BUCKET_VARIANT: Record<TaskSummaryBucket, StatusPillVariant> = {
+  unconfirmed: 'pending',
   inProgress: 'in-progress',
   needsEvaluation: 'pending',
   declined: 'overdue',
@@ -57,9 +62,11 @@ export const TASK_SUMMARY_BUCKET_OPTIONS = TASK_SUMMARY_BUCKET_ORDER.map((value)
 
 /**
  * Status picker (Update status / Edit / detail chips) — no «Cần đánh giá», no «Đã từ chối».
+ * Staff chọn Đang làm = xác nhận nhận việc (`confirmed`).
  * Hủy → `cancelled`. Từ chối chỉ qua CTA → `decline`.
  */
 export const TASK_STATUS_PICKER_BUCKET_ORDER = [
+  'unconfirmed',
   'inProgress',
   'cancelled',
   'completed',
@@ -68,6 +75,7 @@ export const TASK_STATUS_PICKER_BUCKET_ORDER = [
 export type TaskStatusPickerBucket = (typeof TASK_STATUS_PICKER_BUCKET_ORDER)[number];
 
 export const TASK_STATUS_PICKER_LABELS: Record<TaskStatusPickerBucket, string> = {
+  unconfirmed: TASK_SUMMARY_BUCKET_LABELS.unconfirmed,
   inProgress: TASK_SUMMARY_BUCKET_LABELS.inProgress,
   cancelled: TASK_SUMMARY_BUCKET_LABELS.cancelled,
   completed: TASK_SUMMARY_BUCKET_LABELS.completed,
@@ -91,6 +99,7 @@ export const getTaskStatusPickerOptions = (
 
 const EMPTY_SUMMARY: TaskConfirmationSummary = {
   total: 0,
+  unconfirmed: 0,
   inProgress: 0,
   needsEvaluation: 0,
   declined: 0,
@@ -105,6 +114,7 @@ export type TaskSummaryInput = Pick<MyTask, 'staffConfirmation'> &
 export const resolveTaskSummaryBucket = (task: TaskSummaryInput): TaskSummaryBucket => {
   switch (task.staffConfirmation) {
     case 'not_updated':
+      return 'unconfirmed';
     case 'confirmed':
       return 'inProgress';
     case 'decline':
@@ -114,18 +124,18 @@ export const resolveTaskSummaryBucket = (task: TaskSummaryInput): TaskSummaryBuc
     case 'finished':
       return hasCmEvaluation(task) ? 'completed' : 'needsEvaluation';
     default:
-      return 'inProgress';
+      return 'unconfirmed';
   }
 };
 
 /**
  * Map current task → picker selection.
  * - needsEvaluation → Hoàn thành (picker không có Cần đánh giá)
- * - declined → Đang làm (từ chối không phải option Hủy)
+ * - declined → Chưa xác nhận (từ chối không phải option Hủy; re-open về chờ xác nhận)
  * - cancelled → Hủy
  */
 export const resolveTaskStatusPickerBucket = (task: TaskSummaryInput): TaskSummaryBucket => {
-  if (task.staffConfirmation === 'decline') return 'inProgress';
+  if (task.staffConfirmation === 'decline') return 'unconfirmed';
   if (task.staffConfirmation === 'cancelled') return 'cancelled';
   const bucket = resolveTaskSummaryBucket(task);
   return bucket === 'needsEvaluation' ? 'completed' : bucket;
@@ -152,6 +162,7 @@ export type BucketToStatusResult =
 /**
  * Map picker/summary bucket → API `staffConfirmation` on save.
  * «Hủy» → `cancelled`. «Đã từ chối» không ghi từ picker (CTA riêng).
+ * «Đang làm» = staff đã xác nhận → `confirmed`.
  */
 export const bucketToStaffConfirmation = (
   bucket: TaskSummaryBucket,
@@ -161,6 +172,8 @@ export const bucketToStaffConfirmation = (
   void _role;
   void _current;
   switch (bucket) {
+    case 'unconfirmed':
+      return { ok: true, status: 'not_updated' };
     case 'inProgress':
       return { ok: true, status: 'confirmed' };
     case 'needsEvaluation':
@@ -174,6 +187,6 @@ export const bucketToStaffConfirmation = (
         error: 'Từ chối task qua CTA Từ chối, không chọn trong form trạng thái.',
       };
     default:
-      return { ok: true, status: 'confirmed' };
+      return { ok: true, status: 'not_updated' };
   }
 };

@@ -2,21 +2,11 @@ import { mockDelay } from '@/shared/mock/mockDelay';
 import { TRACKER_OFF_DAYS } from './offDays.data';
 import { TRACKER_PROJECTS } from './tracker.data';
 import type { TrackerResponse } from '../schemas/tracker.schema';
-import { withAdminAggregatedBlocks } from '../utils/aggregateAdminBlocks';
+import { withAggregatedTrackerBlocks } from '../utils/aggregateAdminBlocks';
 
-export type MockGetTrackerOptions = {
-  /** When true, collapse same-day same-name task blocks like the admin API. */
-  aggregateTaskNames?: boolean;
-};
-
-export const mockGetTracker = async (
-  options: MockGetTrackerOptions = {},
-): Promise<TrackerResponse> => {
+export const mockGetTracker = async (): Promise<TrackerResponse> => {
   await mockDelay();
-  const projects = withAdminAggregatedBlocks(
-    TRACKER_PROJECTS,
-    Boolean(options.aggregateTaskNames),
-  ).map((project) => ({
+  const projects = withAggregatedTrackerBlocks(TRACKER_PROJECTS).map((project) => ({
     ...project,
     milestones: project.milestones ?? [],
   }));

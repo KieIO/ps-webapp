@@ -879,7 +879,7 @@ Project path: `PATCH /tasks/my/{id}`. Creative path: `PATCH …/creative-edit` (
 - **No task archive** — cancel locks status; soft delete removes from lists.
 - Meta edit lock: blocked when `finished`/`cancelled`; otherwise Admin/Head **or** creator.
 - Create requires `CREATE_TASK` (PM/Admin by default) — **Head does not create** unless Roles matrix grants it.
-- List visibility: Head / Creative Head / Admin = org-wide (`VIEW_ALL_TASKS`); PM = own projects (`pm_id`/`handover_pm_id`); CM and employee are ownership-scoped.
+- List visibility: Head / Admin = org-wide (`VIEW_ALL_TASKS`); Creative Head = Creative department tasks only (`creative` / `creative_*`); PM = own projects (`pm_id`/`handover_pm_id`); CM and employee are ownership-scoped.
 - `ASSIGN_TASK` exists in the Roles matrix but assign HTTP routes are auth + service rules (not middleware-gated today).
 - Level = `round(avg(designThinking, technical, contentProcessing))` — server only.
 - Swagger: login → Authorize Bearer → `/tasks/my` CRUD + status / assign / assign-cm / assign-staff / creative-edit / pm-evaluation.

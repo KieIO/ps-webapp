@@ -108,7 +108,7 @@ PM nhập:
 | Tên task         | Chọn từ danh mục task (catalog)                                                                                                                |
 | Số lượng         | Số slide / đơn vị công việc                                                                                                                    |
 | Deadline         | Ngày và giờ hoàn thành; project trong catalog → chỉ chọn trong `startDate`–`endDate`                                                           |
-| Urgency          | Mức ưu tiên (có thể để Auto theo deadline)                                                                                                     |
+| Urgency          | Mức ưu tiên — mặc định **Low priority**; có thể đổi sang Auto theo deadline hoặc mức khác                                                      |
 | Brief            | Mô tả công việc, yêu cầu kỹ thuật                                                                                                              |
 | Phân loại độ khó | 3 tiêu chí, mỗi tiêu chí chọn mức 1 đến 5                                                                                                      |
 
@@ -200,13 +200,14 @@ PM → Creative Head (bổ sung brief + Level) → giao CM → CM giao Staff →
 - Vào **Task management → Creative queue**
 - Task thiếu brief: **“Bổ sung brief & giao CM”** (nút lưu: **“Lưu & giao CM”**)
 - Task đủ brief: **“Giao cho CM”**
-- **Chỉ khi task thiếu brief**, CH được chỉnh **deadline Creative** và **urgency**
+- **Chỉ khi task thiếu brief**, CH được chỉnh **urgency** (CH **không** set Deadline Creative khi giao CM — CM/Staff set sau)
 - Có thể thêm ghi chú cho CM
 
 ### Creative Manager: Creative queue
 
 - Nhận task từ CH (tab **Nhận từ CH / PM**)
-- Tab **Giao Staff**: quản lý task đã giao Staff — chỉ hiện **task cha** (giao nguyên hoặc đã chia); **không** hiện từng task nhỏ trên list
+- Tab **Giao Staff**: chờ giao + đã giao Staff — chỉ hiện **task cha**; cột **TT hoàn thành** / **SL hoàn thành**; pills **Tổng · Cần giao · Đã giao · Hoàn thành** (bấm để lọc); **không** hiện từng task nhỏ trên list
+- Drawer **Sửa / Đổi giao**: nếu đã chia nhỏ, mỗi task con hiện badge trạng thái hoàn thành (Chưa xác nhận / Đang làm / Hoàn thành…); đổi SL task con → ô **Lý do đổi SL** ngay dưới dòng đó (bắt buộc; ẩn khi SL về đúng giá trị cũ); **Thêm task con** có ô **Creative deadline** (bỏ trống = dùng deadline task cha)
 - **Giao nguyên** cho một Staff, hoặc **chia nhỏ** thành nhiều task con (mỗi phần có brief riêng)
 - **Không** phân loại lại Level (chỉ Admin / CH được đổi Level, và trước khi Staff confirm)
 
@@ -223,7 +224,7 @@ Chi tiết điều kiện, mã `…-S1`, đánh giá và rule: xem [Luồng chia
 
 Sau khi task đã **chia nhỏ**, **CM** hoặc **Admin** có thể **Thêm task con** trên form sửa (kể cả task **QA** để Staff kiểm lại phần của người khác). **PM không** thêm task con ở bước này. Chi tiết: [Luồng chia task con](/split-task#task-con-qa).
 
-Người tạo task hoặc **Admin** có thể sửa **SL tổng** trên form **Sửa / Đổi giao** (kể cả khi task còn chờ CM giao Staff). Đổi SL tổng, đổi SL phần, thêm task con, hoặc đổi Staff / CM đều cần điền **Lý do thay đổi**. Chi tiết: [FAQ câu 6–7](/faq) và [Luồng chia task con — quy tắc](/split-task).
+Người tạo task hoặc **Admin** có thể sửa **SL tổng** trên form **Sửa / Đổi giao** (kể cả khi task còn chờ CM giao Staff). **Đổi SL từng phần** (task con còn mở): mọi role trừ **Nhân viên** — nhập **Lý do đổi SL** ngay dưới ô SL đó. Đổi SL tổng, thêm task con, hoặc đổi Staff / CM → điền **Lý do thay đổi** ở cuối form. Chi tiết: [FAQ câu 6–7](/faq) và [Luồng chia task con — quy tắc](/split-task).
 
 ### Đánh giá sau khi hoàn thành
 
@@ -235,16 +236,17 @@ Nhãn tab Evaluation / modal Evaluate: [Đánh giá task](/tasks/evaluation) (`�
 
 ## 8. So sánh nhanh hai loại task
 
-|                                                   | Project Task                | Creative Task       |
-| ------------------------------------------------- | --------------------------- | ------------------- |
-| PM viết brief?                                    | Có                          | Không               |
-| PM phân loại Level?                               | Có                          | Không               |
-| PM nhập số lượng?                                 | Có                          | Không               |
-| Hướng giao sau khi tạo                            | Project Staff hoặc Creative | Luôn sang Creative  |
-| CH cần viết brief?                                | Không (nếu PM đã viết)      | Có                  |
-| CH phân loại Level?                               | Không (PM đã phân loại)     | Có                  |
-| CH chỉnh deadline Creative / urgency khi giao CM? | Không (brief đã sẵn)        | Có (vì thiếu brief) |
-| CM có thể chia task nhỏ?                          | Có                          | Có                  |
+|                                       | Project Task                | Creative Task       |
+| ------------------------------------- | --------------------------- | ------------------- |
+| PM viết brief?                        | Có                          | Không               |
+| PM phân loại Level?                   | Có                          | Không               |
+| PM nhập số lượng?                     | Có                          | Không               |
+| Hướng giao sau khi tạo                | Project Staff hoặc Creative | Luôn sang Creative  |
+| CH cần viết brief?                    | Không (nếu PM đã viết)      | Có                  |
+| CH phân loại Level?                   | Không (PM đã phân loại)     | Có                  |
+| CH chỉnh urgency khi giao CM?         | Không (brief đã sẵn)        | Có (vì thiếu brief) |
+| CH set Deadline Creative khi giao CM? | Không                       | Không               |
+| CM có thể chia task nhỏ?              | Có                          | Có                  |
 
 ---
 
@@ -254,7 +256,7 @@ Nhãn tab Evaluation / modal Evaluate: [Đánh giá task](/tasks/evaluation) (`�
 
 - **Không** chọn Staff **đang nghỉ phép** (On leave / Off)
 - Staff **Overloaded** (capacity ≥ **80%**) vẫn chọn được — chỉ là nhãn cảnh báo workload
-- Hệ thống hiển thị trạng thái workload khi chọn người (áp dụng Project Staff lẫn Creative)
+- Dropdown chọn Staff hiện **số task đang làm + % capacity + trạng thái** (giống Creative Queue _Giao task cho Staff_) — áp dụng **Tạo task mới**, Edit / Assign task, và drawer Creative; capacity theo ngày deadline (hoặc hôm nay)
 
 ### Thông báo
 
@@ -266,7 +268,7 @@ Nhãn tab Evaluation / modal Evaluate: [Đánh giá task](/tasks/evaluation) (`�
 
 - Sau khi được giao, **chỉ Staff được assign** cập nhật trạng thái (Confirm / Finished / …). **PM chỉ xem** — chi tiết: [Trạng thái Task](/tasks/status)
 - UI nhắc khung 15 phút; hiện chưa có timer tự động khóa task
-- Task còn **chưa cập nhật (not_updated)** xuất hiện trên hàng chờ hành động của quản lý (Home); quản lý có thể **remind** thủ công
+- Task còn **chưa xác nhận (`not_updated`)** xuất hiện trên hàng chờ hành động của quản lý (Home); quản lý có thể **remind** thủ công
 - Chưa có cảnh báo tự động riêng theo đúng mốc 15 phút cho PM/CM
 
 ### Đóng form giữa chừng

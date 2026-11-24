@@ -37,7 +37,7 @@ Khác với [duyệt request xin OT](/overtime/approve) lúc đầu.
 - **Phải** nhập ghi chú / lý do
 - Request quay lại **Đang làm**
 - Giờ thực tế và ghi chú staff trên OT bị xóa
-- Task OT về **Chưa cập nhật** để Staff làm và nộp lại
+- Task OT về **Chưa xác nhận** để Staff làm và nộp lại
 
 ---
 

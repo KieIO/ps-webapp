@@ -9,11 +9,13 @@ import { ROLES } from '@/config/permissions';
 import { ProjectUrgencyBadge } from '@/features/projects/components/ProjectUrgencyBadge/ProjectUrgencyBadge';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { CardWrapper } from '@/shared/ui/CardWrapper/CardWrapper';
+import { StatusPill } from '@/shared/ui/StatusPill/StatusPill';
 import { TableWrapper } from '@/shared/ui/TableWrapper/TableWrapper';
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useRehandCreativeToCH } from '../../hooks/useRehandCreativeToCH';
 import type { MyTask } from '../../schemas/task.schema';
+import { CmStaffAssignSummaryBar } from '../CmStaffAssignSummaryBar/CmStaffAssignSummaryBar';
 import {
   canEditCreativePipelineTask,
   canProcessChQueue,
@@ -45,6 +47,15 @@ import {
   sanitizeCreativeQueueFilters,
   type CreativeQueueListFilters,
 } from '../../utils/creativeQueueFilters';
+import {
+  computeCmStaffAssignSummary,
+  formatCmStaffCompletedQuantityLabel,
+  formatCmStaffCompletionStatusLabel,
+  resolveCmStaffAssignBucket,
+  resolveCmStaffCompletionBucket,
+  type CmStaffAssignBucket,
+} from '../../utils/cmStaffAssignSummary';
+import { TASK_SUMMARY_BUCKET_VARIANT } from '../../utils/taskConfirmationSummary';
 import { getTaskDeadline } from '../../utils/taskDetail';
 import { resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { CreativeEditDrawer } from './CreativeEditDrawer';
@@ -72,6 +83,7 @@ export function CreativePipelineView() {
   const [listFilters, setListFilters] = useState<CreativeQueueListFilters>(() => ({
     ...EMPTY_CREATIVE_QUEUE_FILTERS,
   }));
+  const [staffAssignBucket, setStaffAssignBucket] = useState<CmStaffAssignBucket | undefined>();
 
   useEffect(() => {
     setView(defaultCreativeQueueView(role));
@@ -88,6 +100,7 @@ export function CreativePipelineView() {
         resolveCreativeQueueFilterVisibility(view, cmFrame, current),
       ),
     );
+    if (cmFrame !== 'execution') setStaffAssignBucket(undefined);
   }, [view, cmFrame]);
 
   const { data, isLoading } = useMyTaskList({ taskCategory: 'project' });
@@ -102,10 +115,23 @@ export function CreativePipelineView() {
     () => resolveCreativeQueueFilterVisibility(view, cmFrame, listFilters),
     [view, cmFrame, listFilters],
   );
-  const queue = useMemo(
+  const filteredQueue = useMemo(
     () => applyCreativeQueueFilters(scopedQueue, listFilters, filterVisibility),
     [scopedQueue, listFilters, filterVisibility],
   );
+  const staffAssignSummary = useMemo(
+    () =>
+      view === 'cm' && cmFrame === 'execution'
+        ? computeCmStaffAssignSummary(scopedQueue, tasks)
+        : null,
+    [view, cmFrame, scopedQueue, tasks],
+  );
+  const queue = useMemo(() => {
+    if (!staffAssignBucket || view !== 'cm' || cmFrame !== 'execution') return filteredQueue;
+    return filteredQueue.filter(
+      (task) => resolveCmStaffAssignBucket(task, tasks) === staffAssignBucket,
+    );
+  }, [filteredQueue, staffAssignBucket, view, cmFrame, tasks]);
   const projectOptions = useMemo(() => {
     const names = new Set<string>();
     for (const task of scopedQueue) {
@@ -149,9 +175,7 @@ export function CreativePipelineView() {
   const closeDrawer = () => setSelected(null);
 
   const openHeadAssign = Boolean(selected && chEnabled && view === 'ch' && isAwaitingCh(selected));
-  const openManagerAssign = Boolean(
-    selected && view === 'cm' && cmFrame === 'intake' && isAwaitingCm(selected),
-  );
+  const openManagerAssign = Boolean(selected && view === 'cm' && isAwaitingCm(selected));
   const openEdit = Boolean(
     selected &&
       !openHeadAssign &&
@@ -166,8 +190,9 @@ export function CreativePipelineView() {
     view === 'cm'
       ? cmFrame === 'intake'
         ? 'Task nhận từ Creative Head / PM — giao nguyên hoặc chia nhỏ cho Staff.'
-        : 'Task đã giao Staff (nguyên hoặc task nhỏ) — quản lý và đánh giá nhân viên.'
+        : 'Task chờ giao / đã giao Staff — theo dõi hoàn thành và đánh giá.'
       : 'Nhận task từ PM, bổ sung brief nếu cần, rồi giao cho Creative Manager.';
+  const showStaffAssignBoard = view === 'cm' && cmFrame === 'execution';
 
   const columns: ColumnsType<MyTask> = useMemo(
     () => [
@@ -316,6 +341,43 @@ export function CreativePipelineView() {
           return <Tag color={status.color}>{status.label}</Tag>;
         },
       },
+      ...(showStaffAssignBoard
+        ? ([
+            {
+              title: (
+                <Tooltip title="Trạng thái hoàn thành theo Staff (xác nhận / đánh giá)">
+                  <span>TT hoàn thành</span>
+                </Tooltip>
+              ),
+              key: 'completionStatus',
+              width: 118,
+              render: (_: unknown, record: MyTask) => {
+                if (isAwaitingCm(record)) return '—';
+                const bucket = resolveCmStaffCompletionBucket(record, tasks);
+                return (
+                  <StatusPill
+                    label={formatCmStaffCompletionStatusLabel(record, tasks)}
+                    variant={TASK_SUMMARY_BUCKET_VARIANT[bucket]}
+                  />
+                );
+              },
+            },
+            {
+              title: (
+                <Tooltip title="Task nguyên: SL đạt / SL giao. Task đã chia: số task con đã hoàn thành / tổng task con.">
+                  <span>SL hoàn thành</span>
+                </Tooltip>
+              ),
+              key: 'completedQuantity',
+              width: 100,
+              render: (_: unknown, record: MyTask) => (
+                <span className={styles.completedQtyCell}>
+                  {formatCmStaffCompletedQuantityLabel(record, tasks)}
+                </span>
+              ),
+            },
+          ] as ColumnsType<MyTask>)
+        : []),
       {
         title: '',
         key: 'action',
@@ -335,12 +397,11 @@ export function CreativePipelineView() {
         ),
       },
     ],
-    [tasks, view, role, user?.id],
+    [tasks, view, role, user?.id, showStaffAssignBoard],
   );
 
   const headReadOnly = !selected || !chEnabled || !isAwaitingCh(selected) || view !== 'ch';
-  const managerReadOnly =
-    !selected || !cmEnabled || !isAwaitingCm(selected) || view !== 'cm' || cmFrame !== 'intake';
+  const managerReadOnly = !selected || !cmEnabled || !isAwaitingCm(selected) || view !== 'cm';
 
   return (
     <div className={styles.page}>
@@ -398,20 +459,30 @@ export function CreativePipelineView() {
           visibility={filterVisibility}
           projectOptions={projectOptions}
           onChange={setListFilters}
-          onReset={() => setListFilters({ ...EMPTY_CREATIVE_QUEUE_FILTERS })}
+          onReset={() => {
+            setListFilters({ ...EMPTY_CREATIVE_QUEUE_FILTERS });
+            setStaffAssignBucket(undefined);
+          }}
         />
+        {showStaffAssignBoard && staffAssignSummary ? (
+          <CmStaffAssignSummaryBar
+            summary={staffAssignSummary}
+            activeBucket={staffAssignBucket}
+            onBucketChange={setStaffAssignBucket}
+          />
+        ) : null}
         <TableWrapper
           loading={isLoading}
           isEmpty={!isLoading && queue.length === 0}
           emptyTitle="Chưa có task trong hàng chờ"
           emptyDescription={
             scopedQueue.length > 0 && queue.length === 0
-              ? 'Không có task khớp bộ lọc hiện tại. Thử Reset filter.'
+              ? 'Không có task khớp bộ lọc hiện tại. Thử Reset filter hoặc bỏ chọn phân loại.'
               : view === 'ch'
                 ? 'Task Creative từ PM sẽ xuất hiện tại đây khi cần bạn xử lý.'
                 : cmFrame === 'intake'
                   ? 'Task Creative Head giao cho bạn sẽ xuất hiện tại đây.'
-                  : 'Task đã giao Staff (nguyên hoặc chia nhỏ) sẽ xuất hiện tại đây.'
+                  : 'Task chờ giao hoặc đã giao Staff sẽ xuất hiện tại đây.'
           }
         >
           <Table
@@ -419,7 +490,7 @@ export function CreativePipelineView() {
             size="middle"
             pagination={false}
             tableLayout="fixed"
-            scroll={{ x: 1080 }}
+            scroll={{ x: showStaffAssignBoard ? 1280 : 1080 }}
             columns={columns}
             dataSource={queue}
             rowClassName={(record) => {

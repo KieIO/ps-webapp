@@ -115,6 +115,19 @@ export const PROJECT_TABLE_COLUMN_HEADERS = {
   finishedDate: 'Ngày hoàn thành',
 } as const;
 
+/** Project detail summary blocks (Tasks / total qty / per-type / %). */
+export const PROJECT_DETAIL_STAT_LABELS = {
+  tasks: 'Tasks',
+  totalQuantity: 'Tổng số lượng',
+  completion: '% Hoàn thành',
+} as const;
+
+export const PROJECT_DETAIL_TOTAL_QUANTITY_HINT =
+  'Tổng qty mọi loại task trên trang (không đếm trùng khi đã chia nhỏ; bỏ từ chối / hủy)';
+
+export const PROJECT_DETAIL_TYPE_QUANTITY_HINT =
+  'Tổng qty theo loại task trên trang (không đếm trùng khi đã chia nhỏ; bỏ từ chối / hủy)';
+
 export const PROJECT_FILTER_LABELS = {
   search: 'Tìm kiếm',
   searchPlaceholder: 'Tìm dự án, khách hàng hoặc brief...',

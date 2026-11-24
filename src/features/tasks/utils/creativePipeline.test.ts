@@ -8,6 +8,7 @@ import {
   canChRefuseCreativeHandoff,
   canCmRefuseCreativeAssignment,
   canEditCreativePipelineTask,
+  canEditSplitChildQuantities,
   canEditSplitParentTotal,
   canOpenCreativePipelineEdit,
   canReassignCreativeManager,
@@ -254,7 +255,7 @@ describe('creativePipeline helpers', () => {
       filterCreativeQueue(items, 'cm', cm, ROLES.CREATIVE_MANAGER, 'execution').map(
         (item) => item.id,
       ),
-    ).toEqual(['done-mine', 'split-mine']);
+    ).toEqual(['await-mine', 'done-mine', 'split-mine']);
   });
 
   it('CM execution sorts parents by family recency without listing children', () => {
@@ -325,7 +326,7 @@ describe('creativePipeline helpers', () => {
     ).toEqual(['cm1']);
     expect(
       filterCreativeQueue(items, 'cm', 'admin', ROLES.ADMIN, 'execution').map((item) => item.id),
-    ).toEqual(['cm2']);
+    ).toEqual(['cm1', 'cm2']);
   });
 
   it('PM CM intake sees awaiting_cm; execution sees staff work', () => {
@@ -348,7 +349,7 @@ describe('creativePipeline helpers', () => {
     ).toEqual(['cm1']);
     expect(
       filterCreativeQueue(items, 'cm', 'pm-1', ROLES.PM, 'execution').map((item) => item.id),
-    ).toEqual(['cm2']);
+    ).toEqual(['cm1', 'cm2']);
   });
 
   it('CM with missing userId sees an empty board', () => {
@@ -526,8 +527,18 @@ describe('creativePipeline helpers', () => {
     expect(canChangeCreativeLevelRole(ROLES.CREATIVE_HEAD)).toBe(true);
     expect(canEditCreativePipelineTask(assigned, ROLES.CREATIVE_MANAGER, 'cm-1')).toBe(true);
     expect(canEditCreativePipelineTask(assigned, ROLES.CREATIVE_MANAGER, 'other')).toBe(false);
-    expect(shouldUseCreativePipelineEditDrawer(assigned, ROLES.PM, 'other-pm')).toBe(false);
+    expect(shouldUseCreativePipelineEditDrawer(assigned, ROLES.PM, 'other-pm')).toBe(true);
     expect(shouldUseCreativePipelineEditDrawer(assigned, ROLES.PM, 'pm-1')).toBe(true);
+    expect(canEditSplitChildQuantities(ROLES.EMPLOYEE)).toBe(false);
+    expect(canEditSplitChildQuantities(ROLES.CREATIVE_MANAGER)).toBe(true);
+    expect(canEditSplitChildQuantities(ROLES.CREATIVE_HEAD)).toBe(true);
+    expect(
+      canOpenCreativePipelineEdit(
+        { ...assigned, pipelineStage: 'split' as const, staffConfirmation: 'not_updated' as const },
+        ROLES.CREATIVE_HEAD,
+        'ch-1',
+      ),
+    ).toBe(true);
     // Finished: still open drawer (read-only), but writes stay locked for non-admin.
     const finished = { ...assigned, staffConfirmation: 'finished' as const };
     expect(canEditCreativePipelineTask(finished, ROLES.PM, 'pm-1')).toBe(false);
@@ -670,7 +681,7 @@ describe('creativePipeline helpers', () => {
       creativeManager: assignee({ userId: 'cm-1' }),
       staff: [assignee({ userId: 'staff-1', name: 'An' })],
     });
-    expect(resolveCreativeDetailPipelineAction(assigned, ROLES.PM, 'pm')?.action).toBeUndefined();
+    expect(resolveCreativeDetailPipelineAction(assigned, ROLES.PM, 'pm')?.action).toBe('edit');
     expect(
       resolveCreativeDetailPipelineAction({ ...assigned, createdById: 'pm' }, ROLES.PM, 'pm')
         ?.action,

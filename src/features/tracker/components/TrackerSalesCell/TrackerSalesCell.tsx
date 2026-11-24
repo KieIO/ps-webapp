@@ -1,84 +1,38 @@
 import { CloseOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
-import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import type { MouseEvent } from 'react';
 import { useUpdateProjectSalesName } from '@/features/projects/hooks/useUpdateProjectSalesName';
 import { usePermission } from '@/shared/hooks/usePermission';
 import type { TrackerProject } from '../../schemas/tracker.schema';
+import type { SalesQuickTarget } from '../SalesQuickModal/SalesQuickModal';
 import styles from './TrackerSalesCell.module.scss';
 
 interface TrackerSalesCellProps {
   project: TrackerProject;
+  onOpenSales: (target: SalesQuickTarget) => void;
 }
 
-export function TrackerSalesCell({ project }: TrackerSalesCellProps) {
+export function TrackerSalesCell({ project, onOpenSales }: TrackerSalesCellProps) {
   const { can } = usePermission();
   const canEdit = can('EDIT_PROJECT') || can('EDIT_TRACKER_PROJECT');
   const { mutate, isPending, variables } = useUpdateProjectSalesName();
   const isUpdating = isPending && variables?.id === project.id;
 
   const currentValue = project.salesName?.trim() ?? '';
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(currentValue);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!editing) {
-      setDraft(currentValue);
-    }
-  }, [currentValue, editing]);
-
-  useEffect(() => {
-    if (editing) {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }
-  }, [editing]);
-
-  const commit = (next: string) => {
-    const normalized = next.trim();
-    setEditing(false);
-    if (normalized === currentValue) return;
-    mutate({ id: project.id, salesName: normalized });
-  };
-
-  const cancel = () => {
-    setDraft(currentValue);
-    setEditing(false);
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      commit(draft);
-    } else if (event.key === 'Escape') {
-      event.preventDefault();
-      cancel();
-    }
-  };
 
   const stopRowNav = (event: MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
   };
 
-  if (editing && canEdit) {
-    return (
-      <div className={styles.subtitle} onClick={stopRowNav} onMouseDown={stopRowNav}>
-        <span className={styles.prefix}>Sales:</span>
-        <input
-          ref={inputRef}
-          className={styles.input}
-          value={draft}
-          maxLength={255}
-          disabled={isUpdating}
-          aria-label="Sales"
-          onChange={(event) => setDraft(event.target.value)}
-          onBlur={() => commit(draft)}
-          onKeyDown={handleKeyDown}
-        />
-      </div>
-    );
-  }
+  const openModal = (event: MouseEvent) => {
+    stopRowNav(event);
+    onOpenSales({
+      projectId: project.id,
+      projectName: project.name,
+      salesName: currentValue,
+    });
+  };
 
   if (!canEdit) {
     if (!currentValue) return null;
@@ -100,10 +54,7 @@ export function TrackerSalesCell({ project }: TrackerSalesCellProps) {
           className={styles.addBtn}
           title="Thêm Sales"
           aria-label="Thêm Sales"
-          onClick={(event) => {
-            stopRowNav(event);
-            setEditing(true);
-          }}
+          onClick={openModal}
         >
           + Sales
         </button>
@@ -122,7 +73,7 @@ export function TrackerSalesCell({ project }: TrackerSalesCellProps) {
         className={styles.valueBtn}
         title="Sửa Sales"
         aria-label={`Sales: ${currentValue}`}
-        onClick={() => setEditing(true)}
+        onClick={openModal}
       >
         Sales: {currentValue}
       </button>
@@ -132,7 +83,10 @@ export function TrackerSalesCell({ project }: TrackerSalesCellProps) {
         title="Xóa Sales"
         aria-label="Xóa Sales"
         disabled={isUpdating}
-        onClick={() => mutate({ id: project.id, salesName: '' })}
+        onClick={(event) => {
+          stopRowNav(event);
+          mutate({ id: project.id, salesName: '' });
+        }}
       >
         <CloseOutlined />
       </button>

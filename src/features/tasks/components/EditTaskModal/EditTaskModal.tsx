@@ -14,7 +14,9 @@ import {
   TASK_STATUS_CHANGE_NOTE_LABEL,
   UNASSIGNED_STAFF_LABEL,
 } from '../../constants';
+import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
 import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
+import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateMyTask } from '../../hooks/useUpdateMyTask';
 import { useUpdateMyTaskPmEvaluation } from '../../hooks/useUpdateMyTaskPmEvaluation';
 import { computeTaskLevel } from '../../utils/taskLevel';
@@ -36,7 +38,8 @@ import {
   isCreativeWholeAssigned,
   resolveEvaluationWriteLayerSafe,
 } from '../../utils/taskEvaluation';
-import { mergeStaffSelectOptions, resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
+import { resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
+import { buildCapacityStaffSelectOptions } from '../../utils/staffAssignSelect';
 import {
   fromTaskDeadline,
   isCreativeDeadlineAfterPmDeadline,
@@ -65,6 +68,7 @@ import {
   CreativeDeadlineFieldExtra,
   CreativeDeadlineFieldLabel,
 } from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
+import { AssigneeOptionLabel } from '../creativePipeline/AssigneeOptionLabel';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import styles from './EditTaskModal.module.scss';
 
@@ -119,7 +123,9 @@ export function EditTaskModal({
     [effectiveRole, canEvaluate],
   );
 
-  const { data: staffOptions = [] } = useCreateTaskStaffOptions();
+  const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
+  const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
+  const allTasks = useMemo(() => taskList?.items ?? [], [taskList?.items]);
   const staffRequired = Boolean(task && requiresStaffOnGenericEdit(task));
 
   const designThinking = Form.useWatch('designThinking', form);
@@ -127,16 +133,29 @@ export function EditTaskModal({
   const contentProcessing = Form.useWatch('contentProcessing', form);
   const watchedDate = Form.useWatch('date', form);
   const watchedCreativeDeadline = Form.useWatch('creativeDeadline', form);
+  const capacityDeadlineOverride = useMemo(() => {
+    if (watchedCreativeDeadline?.isValid()) return toTaskDeadline(watchedCreativeDeadline);
+    if (watchedDate?.isValid()) return toTaskDeadline(watchedDate);
+    return null;
+  }, [watchedCreativeDeadline, watchedDate]);
+  const { capacityByUserId, periodNote } = useAssignPickerCapacity(
+    task,
+    open,
+    capacityDeadlineOverride,
+  );
 
   const previewLevel: ClassificationLevel | undefined =
     designThinking != null && technical != null && contentProcessing != null
       ? computeTaskLevel(designThinking, technical, contentProcessing)
       : (task?.level as ClassificationLevel | undefined);
 
-  const staffSelectOptions = useMemo(
-    () => mergeStaffSelectOptions(staffOptions, task?.staff ?? []),
-    [staffOptions, task?.staff],
-  );
+  const staffSelectOptions = useMemo(() => {
+    const byKey = new Map<string, (typeof staffOptions)[number]>();
+    for (const staff of [...staffOptions, ...(task?.staff ?? [])]) {
+      byKey.set(staffOptionKey(staff), staff);
+    }
+    return buildCapacityStaffSelectOptions([...byKey.values()], allTasks, capacityByUserId);
+  }, [staffOptions, task?.staff, allTasks, capacityByUserId]);
 
   const showLevelPreview = showsTaskLevelPreview(effectiveRole);
   const showEvaluationReadOnly = showsEvaluationReadOnly(effectiveRole, canEvaluate);
@@ -578,6 +597,7 @@ export function EditTaskModal({
                   ? [{ required: true, message: 'Select a staff member for this project task' }]
                   : []
               }
+              extra={periodNote}
             >
               <Select
                 allowClear={!staffRequired}
@@ -585,6 +605,17 @@ export function EditTaskModal({
                 optionFilterProp="label"
                 placeholder={staffRequired ? 'Select staff for this task' : UNASSIGNED_STAFF_LABEL}
                 options={staffSelectOptions}
+                optionRender={(option) => {
+                  const data = option.data as (typeof staffSelectOptions)[number];
+                  return (
+                    <AssigneeOptionLabel
+                      staff={data.staff}
+                      activeCount={data.activeCount}
+                      capacityPercent={data.capacityPercent}
+                      availability={data.availability}
+                    />
+                  );
+                }}
               />
             </Form.Item>
           </section>

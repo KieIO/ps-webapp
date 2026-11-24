@@ -33,11 +33,11 @@ Bấm "Tạo revision"
       │
       ├── Task con mới: …-R1, R2, …
       ├── Người nhận = staff của task gốc
-      ├── Status con: Chưa cập nhật
+      ├── Status con: Chưa xác nhận
       │
       ▼
 Trong lúc revision còn mở
-(Chưa cập nhật / Đã confirm / Decline):
+(Chưa xác nhận / Đang làm / Decline):
   • Không tạo thêm revision trên cùng task gốc
   • Task gốc khóa Update status, Edit, Evaluate
   → Làm việc trên task revision
@@ -79,7 +79,7 @@ Chỉ tạo revision trên **task gốc** (hoặc task split), **không** tạo 
 | Đang có revision chưa xong   | Nút bị khóa, phải đóng revision hiện tại trước |
 | Đang đứng trên task revision | Không hiện nút tạo                             |
 
-Revision được coi là **đang mở** khi trạng thái là **Chưa cập nhật**, **Đã confirm**, hoặc **Decline**.
+Revision được coi là **đang mở** khi trạng thái là **Chưa xác nhận**, **Đang làm**, hoặc **Decline**.
 
 Revision **Finished** hoặc **Cancelled** không còn chặn việc tạo round tiếp theo.
 

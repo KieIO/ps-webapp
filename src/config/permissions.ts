@@ -48,11 +48,12 @@ export const PERMISSIONS = {
   ARCHIVE_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
   DELETE_PROJECT: [ROLES.HEAD, ROLES.ADMIN],
   CREATE_TASK: [ROLES.PM, ROLES.ADMIN],
-  ASSIGN_TASK: [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
+  /** Project Tasks “Assign staff” — not Creative Head (CH giao CM qua Creative Queue). */
+  ASSIGN_TASK: [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.HEAD, ROLES.ADMIN],
   REVIEW_CREATIVE_TASK: [ROLES.CREATIVE_HEAD],
-  // CH/Head/Admin: org-wide inbox. PM keeps this flag for oversight UX (no default
-  // "today" filter), but API scopes PM to projects where they are pm_id/handover.
-  // CM is ownership-scoped — not org-wide.
+  // Head/Admin: org-wide inbox. CH keeps this flag for oversight UX but API scopes
+  // to Creative department tasks. PM keeps it for oversight UX, scoped to
+  // pm_id/handover. CM is ownership-scoped — not org-wide.
   VIEW_ALL_TASKS: [ROLES.PM, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
   EVALUATE_TASK: [ROLES.PM, ROLES.CREATIVE_MANAGER, ROLES.CREATIVE_HEAD, ROLES.HEAD, ROLES.ADMIN],
 

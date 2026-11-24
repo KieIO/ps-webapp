@@ -64,7 +64,7 @@ export const snapshotCreateTaskDraft = (values: DraftFormLike): CreateTaskDraftS
   assignDirection: normalizeText(values.assignDirection),
   staffUserId: normalizeText(values.staffUserId),
   staffNote: normalizeText(values.staffNote),
-  urgency: normalizeText(values.urgency) || 'auto',
+  urgency: normalizeText(values.urgency) || 'green',
 });
 
 export const hasCreateTaskDraftChanges = (

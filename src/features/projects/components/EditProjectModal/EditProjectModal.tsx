@@ -17,7 +17,10 @@ import { canManageProjectMilestones } from '../../utils/milestoneAuth';
 import { formRowsToMilestoneInputs, milestonesToFormRows } from '../../utils/milestoneForm';
 import { toReplaceMilestonePayload } from '../../utils/milestoneValidation';
 import { validateMilestones } from '../../utils/milestoneValidation';
-import { isPmLimitedProjectFieldEditor } from '../../utils/projectEditAuth';
+import {
+  isPmLimitedProjectFieldEditor,
+  requiresProjectStatusChangeReason,
+} from '../../utils/projectEditAuth';
 import { computeProjectLevel } from '../../utils/projectLevel';
 import {
   emptyPerson,
@@ -30,6 +33,7 @@ import {
 import {
   type EvaluationLevel,
   type Project,
+  type ProjectStatus,
   type UpdateProjectRequest,
 } from '../../schemas/project.schema';
 import { ClientSelectField } from '../ClientSelectField/ClientSelectField';
@@ -52,6 +56,7 @@ type EditProjectFormValues = Omit<
   startDate: Dayjs;
   endDate: Dayjs;
   milestones?: MilestoneFormRow[];
+  changeReason?: string;
 };
 
 export function EditProjectModal({ open, project, onClose }: EditProjectModalProps) {
@@ -70,6 +75,12 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
   const time = Form.useWatch('time', form);
   const watchedStart = Form.useWatch('startDate', form);
   const watchedEnd = Form.useWatch('endDate', form);
+  const watchedStatus = Form.useWatch('status', form) as ProjectStatus | undefined;
+  const needsStatusChangeReason = requiresProjectStatusChangeReason(
+    role,
+    project?.status,
+    watchedStatus,
+  );
 
   const previewLevel: EvaluationLevel | undefined =
     volume != null && nature != null && time != null
@@ -106,6 +117,7 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
         status: project.status,
         urgency: project.urgency,
         plannedSlides: project.plannedSlides ?? null,
+        changeReason: undefined,
         milestones: canEditMilestones ? milestonesToFormRows(project.milestones) : undefined,
       });
     }
@@ -145,6 +157,15 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
   const handleFinish = (values: EditProjectFormValues) => {
     if (!project) return;
 
+    if (requiresProjectStatusChangeReason(role, project.status, values.status)) {
+      const reason = (values.changeReason ?? '').trim();
+      if (!reason) {
+        form.setFields([{ name: 'changeReason', errors: ['Nhập lý do thay đổi trạng thái'] }]);
+        message.warning('Nhập lý do thay đổi trạng thái rồi bấm Save.');
+        return;
+      }
+    }
+
     const stored = form.getFieldsValue(true) as EditProjectFormValues;
     const departmentHead = resolvePersonFromForm(
       values.departmentHead,
@@ -180,6 +201,9 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
       status: values.status,
       urgency: values.urgency,
       plannedSlides: values.plannedSlides ?? null,
+      ...(requiresProjectStatusChangeReason(role, project.status, values.status)
+        ? { changeReason: (values.changeReason ?? '').trim() }
+        : {}),
     };
 
     if (canEditMilestones) {
@@ -408,6 +432,19 @@ export function EditProjectModal({ open, project, onClose }: EditProjectModalPro
               <Select options={[...STATUS_OPTIONS]} />
             </Form.Item>
           </div>
+          {needsStatusChangeReason ? (
+            <Form.Item
+              name="changeReason"
+              label="Lý do thay đổi trạng thái"
+              rules={[{ required: true, message: 'Nhập lý do thay đổi trạng thái' }]}
+              extra="Bắt buộc khi PM đổi status (ghi nhận audit)."
+            >
+              <Input.TextArea
+                rows={2}
+                placeholder="Ví dụ: reopen project theo yêu cầu client / điều chỉnh sau review"
+              />
+            </Form.Item>
+          ) : null}
           <Form.Item name="note" label="Note">
             <Input.TextArea rows={2} />
           </Form.Item>

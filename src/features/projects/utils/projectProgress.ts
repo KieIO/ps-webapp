@@ -1,14 +1,23 @@
 import type { MyTask } from '@/features/tasks/schemas/task.schema';
 import { countsTowardQuantityAggregates } from '@/features/tasks/utils/creativePipeline';
-import { isSlidesTypeTaskName } from '@/features/tasks/utils/taskName';
+import { parseTaskScoreName } from '@/features/tasks/utils/taskScoreName';
 import type { Project } from '../schemas/project.schema';
 import { isTaskForProject } from './projectTaskCount';
 
 type ProjectLike = Pick<Project, 'id' | 'code' | 'name'>;
 
+export interface ProjectDetailQuantityByType {
+  /** Catalog base name (Slides, DA, QA, …). */
+  name: string;
+  quantity: number;
+}
+
 export interface ProjectDetailStats {
   taskCount: number;
-  totalSlides: number;
+  /** Sum of qty across all counting tasks on the detail table (every type). */
+  totalQuantity: number;
+  /** Per task-type qty for types present on the current task list. */
+  quantityByType: ProjectDetailQuantityByType[];
   averageCompletionPercent: number;
 }
 
@@ -18,7 +27,7 @@ export const getProjectTasks = (
   allProjects: ProjectLike[],
 ): MyTask[] => tasks.filter((task) => isTaskForProject(project, task, allProjects));
 
-/** List-page total: every task quantity, including Creative DA. Do not merge with computeProjectDetailStats. */
+/** List-page total: every task quantity, including Creative DA. */
 export const computeProjectTotalSlides = (
   project: ProjectLike,
   tasks: MyTask[],
@@ -37,37 +46,69 @@ export const computeProjectCompletionPercent = (
   const projectTasks = getProjectTasks(project, tasks, allProjects).filter(
     countsTowardQuantityAggregates,
   );
-  const totalSlides = projectTasks.reduce((sum, task) => sum + task.quantity, 0);
-  if (totalSlides === 0) return 0;
+  const totalQuantity = projectTasks.reduce((sum, task) => sum + task.quantity, 0);
+  if (totalQuantity === 0) return 0;
 
   const weightedSum = projectTasks.reduce(
     (sum, task) => sum + (task.completionPercent ?? 0) * task.quantity,
     0,
   );
 
-  return Math.round(weightedSum / totalSlides);
+  return Math.round(weightedSum / totalQuantity);
+};
+
+const taskTypeLabel = (taskName: string): string => {
+  const base = parseTaskScoreName(taskName).baseName.trim();
+  return base || taskName.trim() || '—';
+};
+
+/** Aggregate counting tasks by catalog base name; stable A–Z by name. */
+export const aggregateQuantityByTaskType = (tasks: MyTask[]): ProjectDetailQuantityByType[] => {
+  const byKey = new Map<string, { name: string; quantity: number }>();
+
+  for (const task of tasks) {
+    if (!countsTowardQuantityAggregates(task)) continue;
+    const name = taskTypeLabel(task.taskName);
+    const key = name.toLowerCase();
+    const current = byKey.get(key);
+    if (current) {
+      current.quantity += task.quantity;
+    } else {
+      byKey.set(key, { name, quantity: task.quantity });
+    }
+  }
+
+  return [...byKey.values()]
+    .map((row) => ({ name: row.name, quantity: Math.round(row.quantity) }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
 };
 
 const fromProjectRecord = (
   project: Pick<Project, 'taskCount' | 'totalSlides' | 'completionPercent'>,
 ): ProjectDetailStats => ({
   taskCount: project.taskCount,
-  totalSlides: project.totalSlides,
+  totalQuantity: project.totalSlides,
+  quantityByType: [],
   averageCompletionPercent: Math.round(project.completionPercent),
 });
 
-/** Stats for the project-detail summary: Slides-type qty only; % is unweighted among evaluated tasks. */
+/**
+ * Stats for the project-detail summary:
+ * - totalQuantity = every counting task on the table
+ * - quantityByType = one block per task type present
+ * - % = unweighted average among evaluated tasks
+ */
 export const computeProjectDetailStats = (tasks: MyTask[]): ProjectDetailStats => {
   const percents = tasks
     .map((task) => task.completionPercent)
     .filter((value): value is number => value != null);
-  const totalSlides = tasks
-    .filter((task) => isSlidesTypeTaskName(task.taskName) && countsTowardQuantityAggregates(task))
-    .reduce((sum, task) => sum + task.quantity, 0);
+  const quantityByType = aggregateQuantityByTaskType(tasks);
+  const totalQuantity = quantityByType.reduce((sum, row) => sum + row.quantity, 0);
 
   return {
     taskCount: tasks.length,
-    totalSlides: Math.round(totalSlides),
+    totalQuantity,
+    quantityByType,
     averageCompletionPercent:
       percents.length === 0
         ? 0

@@ -19,13 +19,16 @@ import {
   MY_TASK_COLUMN_HEADERS,
   UNASSIGNED_STAFF_LABEL,
 } from '../../constants';
+import { useAssignPickerCapacity } from '../../hooks/useAssignPickerCapacity';
 import {
   useCreateTaskPmOptions,
   useCreateTaskProjectOptions,
   useCreateTaskStaffOptions,
 } from '../../hooks/useCreateTaskOptions';
 import { useCreateMyTask } from '../../hooks/useCreateMyTask';
-import { mergeStaffSelectOptions, resolveStaffFromUserId } from '../../utils/staff';
+import { useMyTaskList } from '../../hooks/useMyTaskList';
+import { resolveStaffFromUserId, staffOptionKey } from '../../utils/staff';
+import { buildCapacityStaffSelectOptions } from '../../utils/staffAssignSelect';
 import {
   isCreateTaskPmLockedToSelf,
   pmOptionsForCreateTask,
@@ -38,6 +41,7 @@ import type {
   TaskDepartment,
   TaskPerson,
 } from '../../schemas/task.schema';
+import { AssigneeOptionLabel } from '../creativePipeline/AssigneeOptionLabel';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
 import styles from '../EditTaskModal/EditTaskModal.module.scss';
 
@@ -89,7 +93,7 @@ const DEFAULT_VALUES: CreateTaskFormValues = {
   level: 1,
   quantity: 1,
   date: defaultTaskDeadline(),
-  urgency: 'auto',
+  urgency: 'green',
   description: '',
   designThinking: 1,
   technical: 1,
@@ -140,6 +144,8 @@ export function CreateTaskModal({
     [currentUser, pmOptions],
   );
   const { data: staffOptions = [] } = useCreateTaskStaffOptions(open);
+  const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
+  const allTasks = useMemo(() => taskList?.items ?? [], [taskList?.items]);
   const { options: departmentOptions, isLoading: departmentLoading } = useDepartmentOptions({
     enabled: open,
   });
@@ -153,7 +159,20 @@ export function CreateTaskModal({
   const technical = Form.useWatch('technical', form);
   const contentProcessing = Form.useWatch('contentProcessing', form);
   const formDepartment = Form.useWatch('department', form);
-  const staffSelectOptions = useMemo(() => mergeStaffSelectOptions(staffOptions), [staffOptions]);
+  const watchedDate = Form.useWatch('date', form);
+  const capacityDeadlineOverride = useMemo(
+    () => (watchedDate?.isValid() ? toTaskDeadline(watchedDate) : null),
+    [watchedDate],
+  );
+  const { capacityByUserId, periodNote } = useAssignPickerCapacity(
+    null,
+    open,
+    capacityDeadlineOverride,
+  );
+  const staffSelectOptions = useMemo(
+    () => buildCapacityStaffSelectOptions(staffOptions, allTasks, capacityByUserId),
+    [staffOptions, allTasks, capacityByUserId],
+  );
 
   const scoreItems = scoreList?.items ?? [];
 
@@ -226,20 +245,22 @@ export function CreateTaskModal({
   const filteredStaffSelectOptions = useMemo(() => {
     let options = staffSelectOptions;
     if (normalizedTaskDepartment) {
-      const staffByOptionValue = new Map(
-        staffOptions.map((staff) => [staff.userId ?? staff.code, staff] as const),
+      options = staffSelectOptions.filter(
+        (option) =>
+          normalizeDepartment(option.staff.department ?? undefined) === normalizedTaskDepartment,
       );
-      options = staffSelectOptions.filter((option) => {
-        const matchedStaff = staffByOptionValue.get(option.value);
-        if (!matchedStaff) return false;
-        return (
-          normalizeDepartment(matchedStaff.department ?? undefined) === normalizedTaskDepartment
-        );
-      });
     }
 
     if (preset?.lockStaff && preset.staffUserId) {
-      const locked = staffSelectOptions.find((option) => option.value === preset.staffUserId);
+      const locked =
+        staffSelectOptions.find((option) => option.value === preset.staffUserId) ??
+        (() => {
+          const fromList = staffOptions.find(
+            (staff) => staffOptionKey(staff) === preset.staffUserId,
+          );
+          if (!fromList) return undefined;
+          return buildCapacityStaffSelectOptions([fromList], allTasks, capacityByUserId)[0];
+        })();
       if (locked && !options.some((option) => option.value === locked.value)) {
         options = [locked, ...options];
       }
@@ -250,6 +271,8 @@ export function CreateTaskModal({
     normalizedTaskDepartment,
     staffOptions,
     staffSelectOptions,
+    allTasks,
+    capacityByUserId,
     preset?.lockStaff,
     preset?.staffUserId,
   ]);
@@ -643,6 +666,7 @@ export function CreateTaskModal({
                   ? [{ required: true, message: 'Select a staff member for this project task' }]
                   : []
             }
+            extra={periodNote}
           >
             <Select
               allowClear={!isProjectTask && !preset?.lockStaff}
@@ -659,6 +683,17 @@ export function CreateTaskModal({
                       : UNASSIGNED_STAFF_LABEL
               }
               options={filteredStaffSelectOptions}
+              optionRender={(option) => {
+                const data = option.data as (typeof filteredStaffSelectOptions)[number];
+                return (
+                  <AssigneeOptionLabel
+                    staff={data.staff}
+                    activeCount={data.activeCount}
+                    capacityPercent={data.capacityPercent}
+                    availability={data.availability}
+                  />
+                );
+              }}
             />
           </Form.Item>
           <Form.Item name="staffNote" label={MY_TASK_COLUMN_HEADERS.staffNote}>

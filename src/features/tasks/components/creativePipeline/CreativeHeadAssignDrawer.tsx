@@ -1,5 +1,5 @@
-import { Alert, Button, DatePicker, Drawer, Form, Input, Modal, Select } from 'antd';
-import dayjs, { type Dayjs } from 'dayjs';
+import { Alert, Button, Drawer, Form, Input, Modal, Select } from 'antd';
+import dayjs from 'dayjs';
 import { useEffect, useMemo } from 'react';
 import { DATETIME_SHORT_FORMAT } from '@/config/constants';
 import type { ProjectUrgency } from '@/features/projects/schemas/project.schema';
@@ -11,11 +11,6 @@ import { useCreateTaskStaffOptions } from '../../hooks/useCreateTaskOptions';
 import { useMyTaskList } from '../../hooks/useMyTaskList';
 import { useUpdateMyTaskStatus } from '../../hooks/useUpdateMyTaskStatus';
 import type { MyTask } from '../../schemas/task.schema';
-import {
-  fromTaskDeadline,
-  isCreativeDeadlineAfterPmDeadline,
-  toTaskDeadline,
-} from '../../utils/taskDates';
 import { computeTaskLevel } from '../../utils/taskLevel';
 import {
   canChRefuseCreativeHandoff,
@@ -32,10 +27,6 @@ import { getTaskDeadline } from '../../utils/taskDetail';
 import { normalizeTaskUrgencySetting, resolveTaskUrgencyDisplay } from '../../utils/taskUrgency';
 import { ClassificationScale } from '../CreateTaskDrawer/ClassificationScale';
 import { TaskUrgencySelect } from '../TaskUrgencySelect/TaskUrgencySelect';
-import {
-  CreativeDeadlineFieldExtra,
-  CreativeDeadlineFieldLabel,
-} from '../CreativeDeadlineFieldLabel/CreativeDeadlineFieldLabel';
 import { AssigneeOptionLabel } from './AssigneeOptionLabel';
 import styles from './creativePipeline.module.scss';
 
@@ -53,7 +44,6 @@ type HeadFormValues = {
   contentProcessing?: number;
   cmUserId?: string;
   cmNote?: string;
-  creativeDeadline?: Dayjs | null;
   urgency?: ProjectUrgency;
 };
 
@@ -84,24 +74,12 @@ export function CreativeHeadAssignDrawer({
   const { data: taskList } = useMyTaskList({ taskCategory: 'project' }, { enabled: open });
   const allTasks = useMemo(() => taskList?.items ?? [], [taskList?.items]);
 
-  const creativeDeadlineWatch = Form.useWatch('creativeDeadline', form);
-  const capacityTask = useMemo(() => {
-    if (!task) return null;
-    if (creativeDeadlineWatch?.isValid()) {
-      return {
-        ...task,
-        creativeDeadline: toTaskDeadline(creativeDeadlineWatch),
-      };
-    }
-    return task;
-  }, [task, creativeDeadlineWatch]);
-
   const {
     capacityByUserId,
     periodNote,
     isLoading: capacityLoading,
     isError: capacityError,
-  } = useAssignPickerCapacity(capacityTask, open);
+  } = useAssignPickerCapacity(task, open);
 
   const fillBrief = Boolean(task && needsChBrief(task));
   const lockedBrief = Boolean(task && !needsChBrief(task));
@@ -111,7 +89,6 @@ export function CreativeHeadAssignDrawer({
   );
   const busy = isPending || isRefusing;
   const canEditUrgency = fillBrief && canSubmit;
-  const canEditCreativeDeadline = fillBrief && canSubmit;
 
   const designThinking = Form.useWatch('designThinking', form);
   const technical = Form.useWatch('technical', form);
@@ -122,8 +99,6 @@ export function CreativeHeadAssignDrawer({
       : task?.level;
 
   const pmDeadlineLabel = task ? formatDeadlineShort(resolvePmDeadlineIso(task)) : '—';
-  const pmDeadline = task ? fromTaskDeadline(resolvePmDeadlineIso(task)) : null;
-  const creativeAfterPm = isCreativeDeadlineAfterPmDeadline(creativeDeadlineWatch, pmDeadline);
   const urgencyDisplay = task ? resolveTaskUrgencyDisplay(task) : null;
 
   const cmOptions = useMemo(
@@ -145,9 +120,6 @@ export function CreativeHeadAssignDrawer({
 
   useEffect(() => {
     if (!open || !task) return;
-    const defaultCreativeDeadline = fromTaskDeadline(
-      task.creativeDeadline || resolvePmDeadlineIso(task),
-    );
     form.setFieldsValue({
       description: task.description,
       designThinking: fillBrief ? undefined : task.designThinking,
@@ -155,7 +127,6 @@ export function CreativeHeadAssignDrawer({
       contentProcessing: fillBrief ? undefined : task.contentProcessing,
       cmUserId: task.creativeManager?.userId ?? task.staff[0]?.userId ?? undefined,
       cmNote: task.cmNote ?? '',
-      creativeDeadline: defaultCreativeDeadline,
       urgency: normalizeTaskUrgencySetting(task.urgency),
     });
   }, [open, task, fillBrief, form]);
@@ -210,9 +181,7 @@ export function CreativeHeadAssignDrawer({
     if (!task) return;
     const values = await form.validateFields();
     if (!values.cmUserId) return;
-    const creativeDeadline = values.creativeDeadline?.isValid()
-      ? toTaskDeadline(values.creativeDeadline)
-      : resolvePmDeadlineIso(task);
+    // CH no longer sets Deadline Creative — BE keeps existing or falls back to PM deadline.
     mutate(
       {
         id: task.id,
@@ -223,7 +192,6 @@ export function CreativeHeadAssignDrawer({
           technical: values.technical,
           contentProcessing: values.contentProcessing,
           cmNote: values.cmNote,
-          creativeDeadline,
           ...(fillBrief && values.urgency ? { urgency: values.urgency } : {}),
         },
       },
@@ -287,34 +255,9 @@ export function CreativeHeadAssignDrawer({
             requiredMark={fillBrief}
             className={styles.compactForm}
           >
-            <div className={styles.deadlineRow}>
-              <Form.Item label="Deadline gốc" className={styles.deadlineField}>
-                <div className={styles.deadlineValue}>{pmDeadlineLabel}</div>
-              </Form.Item>
-              <Form.Item
-                name="creativeDeadline"
-                label={<CreativeDeadlineFieldLabel>Deadline Creative</CreativeDeadlineFieldLabel>}
-                className={styles.deadlineField}
-                extra={
-                  canEditCreativeDeadline ? (
-                    <CreativeDeadlineFieldExtra afterPm={creativeAfterPm} />
-                  ) : undefined
-                }
-              >
-                <DatePicker
-                  showTime={{
-                    format: 'HH:mm',
-                    defaultValue: dayjs().second(0).millisecond(0),
-                  }}
-                  format={DATETIME_SHORT_FORMAT}
-                  style={{ width: '100%' }}
-                  allowClear={canEditCreativeDeadline}
-                  disabled={readOnly || !canEditCreativeDeadline}
-                  placeholder="Nội bộ"
-                  showNow={false}
-                />
-              </Form.Item>
-            </div>
+            <Form.Item label="Deadline gốc" className={styles.deadlineField}>
+              <div className={styles.deadlineValue}>{pmDeadlineLabel}</div>
+            </Form.Item>
 
             {canEditUrgency ? (
               <Form.Item

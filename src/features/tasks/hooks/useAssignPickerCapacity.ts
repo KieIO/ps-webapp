@@ -10,11 +10,12 @@ import {
 import { calendarDateFromTaskDeadline } from '../utils/taskDates';
 
 /**
- * Loads real capacity for the assign picker on the task deadline day
- * (optional form override → creativeDeadline → deadline → today).
+ * Loads real capacity for staff assign pickers on the deadline day
+ * (optional form override → task creativeDeadline/deadline → today).
+ * Works for create flows when `task` is null (uses override or today).
  */
 export const useAssignPickerCapacity = (
-  task: MyTask | null,
+  task: Pick<MyTask, 'creativeDeadline' | 'deadline'> | null,
   enabled: boolean,
   /** ISO creative/PM deadline from the open form — preferred over persisted task dates. */
   deadlineOverrideIso?: string | null,
@@ -23,16 +24,21 @@ export const useAssignPickerCapacity = (
     if (deadlineOverrideIso) {
       const date = calendarDateFromTaskDeadline(deadlineOverrideIso);
       if (date) {
-        return { date, source: 'creative_deadline' };
+        // Label from the override day itself — not "has any creativeDeadline on task"
+        // (PM deadline override must not read as creative when task already has one).
+        const creativeDate = task?.creativeDeadline
+          ? calendarDateFromTaskDeadline(task.creativeDeadline)
+          : null;
+        return {
+          date,
+          source: creativeDate && creativeDate === date ? 'creative_deadline' : 'deadline',
+        };
       }
     }
     return resolveAssignCapacityDate(task);
   }, [task, deadlineOverrideIso]);
 
-  const query = useCapacityList(
-    { mode: 'date', date: period.date },
-    { enabled: enabled && Boolean(task) },
-  );
+  const query = useCapacityList({ mode: 'date', date: period.date }, { enabled });
 
   const capacityByUserId = useMemo(
     () => buildCapacityByUserId(query.data?.items),

@@ -40,13 +40,13 @@ function groupByIssue(items: ManagerActionTaskItem[]) {
 
 function buildSubtitle(items: ManagerActionTaskItem[]): string {
   if (items.length === 0) {
-    return 'Chưa cập nhật hoặc sắp quá deadline';
+    return 'Chưa xác nhận hoặc sắp quá deadline';
   }
   const deadlineCount = items.filter((item) => item.issue === 'deadline_risk').length;
   const unconfirmedCount = items.filter((item) => item.issue === 'unconfirmed').length;
   const parts = [`${items.length} task`];
   if (deadlineCount > 0) parts.push(`${deadlineCount} sắp quá deadline`);
-  if (unconfirmedCount > 0) parts.push(`${unconfirmedCount} chưa cập nhật`);
+  if (unconfirmedCount > 0) parts.push(`${unconfirmedCount} chưa xác nhận`);
   return parts.join(' · ');
 }
 

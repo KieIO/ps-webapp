@@ -112,9 +112,10 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
       setOriginalAssignedQuantity(originalAssigned);
 
       if (layer === 'handoff') {
+        const percent = task.handoffCompletionPercent ?? 0;
         form.setFieldsValue({
-          completedQuantity: 0,
-          completionPercent: task.handoffCompletionPercent ?? 0,
+          completedQuantity: deriveCompletedQuantityFromPercent(percent, originalAssigned),
+          completionPercent: percent,
           pmEvaluation: task.handoffEvaluation ?? '',
           pmNote: task.handoffNote ?? '',
         });
@@ -122,9 +123,10 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
       }
 
       if (layer === 'ch') {
+        const percent = task.chCompletionPercent ?? 0;
         form.setFieldsValue({
-          completedQuantity: 0,
-          completionPercent: task.chCompletionPercent ?? 0,
+          completedQuantity: deriveCompletedQuantityFromPercent(percent, originalAssigned),
+          completionPercent: percent,
           pmEvaluation: task.chEvaluation ?? '',
           pmNote: task.chNote ?? '',
         });
@@ -254,12 +256,13 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
 
     // Always derive % from SL đạt when quantity is the source of truth. Integer % alone
     // cannot distinguish nearby quantities (17/117 and 18/117 both round to 15%).
+    // Staff / handoff (CH) / ch (PM) all use the same SL → % rule when SL giao > 0.
     const assignedForPercent =
       originalAssignedQuantity > 0 ? originalAssignedQuantity : assignedQuantity;
     let completionPercent = values.completionPercent ?? 0;
-    if (layer === 'staff' && assignedForPercent > 0) {
+    if (assignedForPercent > 0) {
       const accepted =
-        remainderLink && acceptedAtSpawn != null
+        layer === 'staff' && remainderLink && acceptedAtSpawn != null
           ? acceptedAtSpawn
           : Math.round(values.completedQuantity ?? 0);
       completionPercent = computeCompletionPercentFromQuantity(accepted, assignedForPercent);
@@ -333,7 +336,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
               {formatTaskStaffNames(workingTask.staff, '—')}
             </span>
           </div>
-          {layer === 'staff' ? (
+          {assignedQuantity > 0 ? (
             <div className={editStyles.contextItem}>
               <span className={editStyles.readOnlyLabel}>
                 {EVALUATE_TASK_ASSIGNED_QUANTITY_LABEL}
@@ -341,7 +344,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
               <span className={editStyles.contextValue}>{assignedQuantity}</span>
             </div>
           ) : null}
-          {layer === 'staff' && remainderSummary ? (
+          {remainderSummary ? (
             <div className={editStyles.contextItem}>
               <span className={editStyles.readOnlyLabel}>Tóm tắt</span>
               <span className={editStyles.contextValue}>{remainderSummary}</span>
@@ -372,7 +375,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
             />
           </Form.Item>
         ) : null}
-        {layer === 'staff' ? (
+        {assignedQuantity > 0 ? (
           <div className={editStyles.row}>
             <Form.Item
               name="completedQuantity"
@@ -385,16 +388,14 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
                 },
               ]}
               extra={
-                assignedQuantity > 0
-                  ? remainderLink
-                    ? `Đã tách phần còn lại · giữ ${completedQuantity} / ${assignedQuantity}`
-                    : `Tối đa ${assignedQuantity}`
-                  : undefined
+                remainderLink
+                  ? `Đã tách phần còn lại · giữ ${completedQuantity} / ${assignedQuantity}`
+                  : `Tối đa ${assignedQuantity}`
               }
             >
               <InputNumber
                 min={0}
-                max={assignedQuantity > 0 ? assignedQuantity : undefined}
+                max={assignedQuantity}
                 precision={0}
                 step={1}
                 disabled={Boolean(remainderLink) || isPending || isSpawning}
@@ -408,7 +409,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
               extra={
                 remainderLink
                   ? 'Theo SL giao ban đầu (đạt / giao) — phần còn lại đã tách sang task mới.'
-                  : undefined
+                  : 'Tự tính từ số lượng đạt / số lượng giao'
               }
             >
               <InputNumber
@@ -416,7 +417,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
                 max={100}
                 precision={0}
                 addonAfter="%"
-                disabled={Boolean(remainderLink) || isPending || isSpawning}
+                disabled
                 style={{ width: '100%' }}
               />
             </Form.Item>

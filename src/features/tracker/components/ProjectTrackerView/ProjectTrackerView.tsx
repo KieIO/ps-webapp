@@ -23,7 +23,10 @@ import {
   MilestoneQuickModal,
   type MilestoneQuickTarget,
 } from '../MilestoneQuickModal/MilestoneQuickModal';
+import { SalesQuickModal, type SalesQuickTarget } from '../SalesQuickModal/SalesQuickModal';
 import { TrackerSalesCell } from '../TrackerSalesCell/TrackerSalesCell';
+import { useTrackerSortBySales } from '../../hooks/useTrackerSortBySales';
+import { sortProjectsBySalesName } from '../../utils/sortBySalesName';
 import {
   TRACKER_ADMIN_DAY_ZOOM_DEFAULT,
   TRACKER_ADMIN_DAY_ZOOM_OPTIONS,
@@ -146,6 +149,8 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   const [dayZoom, setDayZoom] = useState<TrackerAdminDayZoom>(TRACKER_ADMIN_DAY_ZOOM_DEFAULT);
   const [panelWidth, setPanelWidth] = useState(0);
   const [milestoneTarget, setMilestoneTarget] = useState<MilestoneQuickTarget | null>(null);
+  const [salesTarget, setSalesTarget] = useState<SalesQuickTarget | null>(null);
+  const { sortBySalesName, setSortBySalesName } = useTrackerSortBySales();
   const [rowLayout, setRowLayout] = useState(() => ({
     visibleRowCount: projects.length,
     canvasHeight: projects.length * TRACKER_ROW_HEIGHT,
@@ -153,6 +158,10 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
   const sourceProjectsById = useMemo(
     () => new Map(projects.map((project) => [project.id, project])),
     [projects],
+  );
+  const orderedProjects = useMemo(
+    () => (sortBySalesName ? sortProjectsBySalesName(projects) : projects),
+    [projects, sortBySalesName],
   );
 
   const days = useMemo(
@@ -172,8 +181,11 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
     [selectedMonth],
   );
   const monthScopedProjects = useMemo(
-    () => projects.map((project) => withMonthScopedTrackerMetrics(project, monthStart, monthEnd)),
-    [projects, monthStart, monthEnd],
+    () =>
+      orderedProjects.map((project) =>
+        withMonthScopedTrackerMetrics(project, monthStart, monthEnd),
+      ),
+    [orderedProjects, monthStart, monthEnd],
   );
   const months = useMemo(() => buildCalendarMonths(days), [days]);
   const dayWidth = useMemo(
@@ -419,6 +431,17 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                 ))}
               </div>
             </div>
+            {sortBySalesName ? (
+              <button
+                type="button"
+                className={styles.salesSortChip}
+                title="Đang sắp xếp theo Sales A→Z — click để tắt"
+                aria-pressed
+                onClick={() => setSortBySalesName(false)}
+              >
+                Sort Sales A→Z
+              </button>
+            ) : null}
 
             <Popover
               trigger="click"
@@ -493,7 +516,7 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
                             projectId={project.id}
                             className={styles.projectNameLink}
                           />
-                          <TrackerSalesCell project={project} />
+                          <TrackerSalesCell project={project} onOpenSales={setSalesTarget} />
                         </div>
                       </div>
                       <div className={styles.teamCell}>
@@ -727,6 +750,12 @@ export function ProjectTrackerView({ projects, offDays }: ProjectTrackerViewProp
       </div>
 
       <MilestoneQuickModal target={milestoneTarget} onClose={() => setMilestoneTarget(null)} />
+      <SalesQuickModal
+        target={salesTarget}
+        sortBySalesName={sortBySalesName}
+        onSortBySalesNameChange={setSortBySalesName}
+        onClose={() => setSalesTarget(null)}
+      />
     </div>
   );
 }

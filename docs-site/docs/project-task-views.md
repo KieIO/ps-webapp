@@ -12,29 +12,30 @@ Trang này gom vài quy tắc dễ lệch khi đối chiếu **Project Tracker**
 
 ## 1. Hai chế độ danh sách task
 
-| Ngữ cảnh                                                                                        | Ai thường xem              | Hiện gì                                                                                                                                                                                                                                                                                                                         |
-| ----------------------------------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Danh sách tổng** (Project Tasks, không chọn một project)                                      | Creative Head, Head, Admin | Chủ yếu **task cha** (gói giao Creative), **toàn org**. Task con sau khi chia nhỏ (kể cả QA) được ẩn để inbox gọn.                                                                                                                                                                                                              |
-| **Danh sách tổng** (Project Tasks, không chọn một project)                                      | **PM**                     | Cùng kiểu inbox task cha / revision, nhưng **chỉ project** mình là PM hoặc handover PM (khớp trang Projects).                                                                                                                                                                                                                   |
-| **Theo một project** (chi tiết project → tab Tasks, hoặc Project Tasks đã lọc đúng tên project) | Creative Head, Head, Admin | **Task cha và task con**, kể cả QA. Khớp các ô task trên Tracker của project đó.                                                                                                                                                                                                                                                |
-| **Theo một project** (chi tiết project → tab Tasks)                                             | **PM**                     | **Task cha** (kể cả badge **Đã chia nhỏ**) và **revision**. **Không** hiện **Task nhỏ** (phần CM giao Staff), để PM theo dõi gói handoff. Cột **Assignee**: handoff Creative chưa giao Staff → plain text **tên phòng** (vd. Creative); đã giao Staff → tên Staff. Chi tiết: [Assignee & Assigned by](/tasks/assignee-display). |
+| Ngữ cảnh                                                                                        | Ai thường xem              | Hiện gì                                                                                                                                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Danh sách tổng** (Project Tasks, không chọn một project)                                      | Creative Head, Head, Admin | Chủ yếu **task cha** (gói giao Creative), **toàn org**. Task con sau khi chia nhỏ (kể cả QA) được ẩn để inbox gọn.                                                                                                                                                                                      |
+| **Danh sách tổng** (Project Tasks, không chọn một project)                                      | **PM**                     | Cùng kiểu inbox task cha / revision, nhưng **chỉ project** mình là PM hoặc handover PM (khớp trang Projects).                                                                                                                                                                                           |
+| **Theo một project** (chi tiết project → tab Tasks, hoặc Project Tasks đã lọc đúng tên project) | Creative Head, Head, Admin | **Task cha và task con**, kể cả QA. Khớp các ô task trên Tracker của project đó.                                                                                                                                                                                                                        |
+| **Theo một project** (chi tiết project → tab Tasks)                                             | **PM**                     | **Task cha** (kể cả badge **Đã chia nhỏ**) và **revision**. **Không** hiện **Task nhỏ** (phần CM giao Staff), để PM theo dõi gói handoff. Cột **Assignee**: task Creative luôn plain text **`Creative Department`** (kể cả đã giao Staff). Chi tiết: [Assignee & Assigned by](/tasks/assignee-display). |
 
 Staff và Creative Manager vốn đã thấy phần việc được giao cho mình (kể cả task con), không phụ thuộc bảng trên.
 
-**Ví dụ:** Project `christmas` trên Tracker có ô **QA** và **34 Slides**. Admin / Head / Creative Head mở chi tiết project (hoặc Project Tasks lọc `christmas`) sẽ thấy các dòng task con đó. **PM** mở cùng tab Tasks chỉ thấy task cha / revision, không thấy badge **Task nhỏ**. Mở Project Tasks **không** lọc project: Head / CH / Admin thấy task cha toàn org; **PM** chỉ thấy task cha / revision trên project mình.
+**Ví dụ:** Project `christmas` trên Tracker có ô **QA** và **34 Slides**. Admin / Head / Creative Head mở chi tiết project (hoặc Project Tasks lọc `christmas`) sẽ thấy các dòng task con đó (CH chỉ khi task thuộc phòng Creative). **PM** mở cùng tab Tasks chỉ thấy task cha / revision, không thấy badge **Task nhỏ**. Mở Project Tasks **không** lọc project: Head / Admin thấy task cha toàn org; **Creative Head** chỉ task phòng Creative; **PM** chỉ thấy task cha / revision trên project mình.
 
 ---
 
-## 2. Tracker đặt ô theo ngày task, không theo deadline
+## 2. Tracker đặt ô theo Deadline Creative (nếu có), không theo Deadline PM
 
-| Trường                      | Dùng để                                           | Hiện ở đâu                                 |
-| --------------------------- | ------------------------------------------------- | ------------------------------------------ |
-| **Ngày task** (`task date`) | Ngày làm việc / ngày gắn khối lượng trên timeline | Ô màu trên **Project Tracker** (cột ngày)  |
-| **Deadline**                | Hạn hoàn thành                                    | Cột Deadline trên bảng task, chi tiết task |
+| Ưu tiên | Field                      | Hiện ở đâu                                                       |
+| ------- | -------------------------- | ---------------------------------------------------------------- |
+| **1**   | **Deadline Creative**      | Ô màu Tracker (khi task có giá trị này)                          |
+| **2**   | **Ngày task** / Start date | Ô Tracker khi chưa có Creative DL                                |
+| —       | **Deadline PM**            | Chi tiết / list task — không đẩy ô Tracker nếu đã có Creative DL |
 
-Hai mốc **độc lập**. Project có thể **kết thúc** (end date) vào cuối tháng 10, trong khi một task con vẫn có **ngày task** sang tháng 11: Tracker tháng 11 vẫn hiện ô đó. Đó là đúng nghiệp vụ, không phải lỗi lệch lịch.
+Ví dụ: Deadline PM 27/11, Creative DL 25/11 → ô Tracker nằm cột **25**, không phải 27.
 
-Khi bấm một ô task trên Tracker, hệ thống mở Project Tasks với project + tên task + **ngày làm việc** trùng ngày ô đó, để bạn đối chiếu đúng “ngày task”, không ép theo deadline.
+Khi bấm một ô task trên Tracker, hệ thống mở Project Tasks với project + tên task + **ngày làm việc** trùng ngày ô đó.
 
 ---
 

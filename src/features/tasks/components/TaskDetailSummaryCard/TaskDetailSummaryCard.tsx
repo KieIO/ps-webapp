@@ -65,9 +65,11 @@ function formatTaskDepartment(task: MyTask): string {
 
 export function TaskDetailSummaryCard({ task, onOpenRevisionTab }: TaskDetailSummaryCardProps) {
   const { role } = usePermission();
-  const assignedByDisplay = resolveAssignedByDisplay(task);
+  const assignedByDisplay = resolveAssignedByDisplay(task, role);
+  /** Show Creative DL whenever set; otherwise keep empty hint for Creative viewers. */
   const showCreativeDeadline =
-    isCreativeDeptTask(task) && canViewCreativeDeadline(role ?? ROLES.EMPLOYEE, task.department);
+    Boolean(task.creativeDeadline?.trim()) ||
+    (isCreativeDeptTask(task) && canViewCreativeDeadline(role ?? ROLES.EMPLOYEE, task.department));
   const revision = isRevisionTask(task);
   const splitChild = isSplitChildTask(task);
   const splitParent = isSplitParentTask(task);

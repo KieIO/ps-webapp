@@ -12,6 +12,9 @@ export function TaskConfirmationSummaryBar({ summary }: TaskConfirmationSummaryB
   return (
     <div className={styles.bar}>
       <span className={styles.pillTotal}>Tổng: {summary.total}</span>
+      <span className={styles.pillUnconfirmed}>
+        {TASK_SUMMARY_BUCKET_LABELS.unconfirmed}: {summary.unconfirmed}
+      </span>
       <span className={styles.pillInProgress}>
         {TASK_SUMMARY_BUCKET_LABELS.inProgress}: {summary.inProgress}
       </span>

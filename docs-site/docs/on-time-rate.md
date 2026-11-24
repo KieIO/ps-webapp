@@ -44,7 +44,7 @@ Ngày hoàn thành  ≤  Ngày Deadline trên task
 
 ## Deadline Creative thì sao?
 
-Task thuộc Creative có thể có thêm field **Deadline Creative** trên UI (CH/CM nhập; staff Creative xem được).
+Task thuộc Creative có thể có thêm field **Deadline Creative** trên UI (CM/Staff nhập ở bước giao/sửa; CH **không** set khi giao CM; staff Creative xem được).
 
 Field này **không** tham gia tính on-time rate, **không** dùng cho Auto Urgency.
 

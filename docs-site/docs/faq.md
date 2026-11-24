@@ -205,7 +205,7 @@ Sau khi CM **chia nhỏ** task Creative. Chi tiết luồng chia: [Luồng chia 
 
 Quy tắc chung sau khi chia:
 
-1. **SL tổng** do PM nhập lúc tạo task (**> 0**) và **không** bị ghi đè bằng tổng các phần. Tổng SL các phần **làm việc** (không gồm QA) **không được lớn hơn** SL tổng. **Đổi SL tổng** (kể cả lúc task còn **chờ giao Staff**, hoặc sau khi đã chia) chỉ **người tạo task (PM)** hoặc **Admin** làm được. **Creative Manager không sửa SL tổng**. **Thêm task con** sau khi đã chia: **CM** hoặc **Admin** (câu 7, 11). CM cũng phân bổ lại SL các phần còn mở trong giới hạn SL tổng.
+1. **SL tổng** do PM nhập lúc tạo task (**> 0**) và **không** bị ghi đè bằng tổng các phần. Tổng SL các phần **làm việc** (không gồm QA) **không được lớn hơn** SL tổng. **Đổi SL tổng** (kể cả lúc task còn **chờ giao Staff**, hoặc sau khi đã chia) chỉ **người tạo task (PM)** hoặc **Admin** làm được. **Creative Manager không sửa SL tổng**. **Thêm task con** sau khi đã chia: **CM** hoặc **Admin** (câu 7, 11). **Sửa SL các phần còn mở:** mọi role trừ **Nhân viên** (Admin / PM / Head / CH / CM), trong giới hạn SL tổng.
 2. Mỗi phần **có thể chưa gán Staff** và **số lượng có thể bằng 0**. Có Staff thì một người một phần. Có thể đổi Staff, deadline, SL trên phần còn mở.
 3. Phần **Finished** hoặc **Cancelled**: SL khóa.
 4. **Xóa** task nhỏ tùy ý sau lần chia đầu: chưa hỗ trợ. **Thêm** task con: CM hoặc Admin làm được (câu 7, 11). Tách phần còn lại khi Evaluate: câu 8.
@@ -215,7 +215,7 @@ Quy tắc chung sau khi chia:
 
 ## 7. Sửa lại scope các task nhỏ được không?
 
-**Được một phần:** người tạo task (PM) hoặc Admin đổi SL tổng; **CM** hoặc **Admin** thêm task con (kể cả SL 0, chưa gán Staff, hoặc task **QA**). CM, người tạo task và Admin phân bổ lại SL giữa các phần làm việc còn mở. Tổng phần làm việc không được lớn hơn SL tổng. CM không sửa SL tổng. **PM không thêm task con** sau khi đã chia. Mọi lần đổi SL / thêm con / đổi người trên form sửa đều cần **Lý do thay đổi**.
+**Được một phần:** người tạo task (PM) hoặc Admin đổi SL tổng; **CM** hoặc **Admin** thêm task con (kể cả SL 0, chưa gán Staff, hoặc task **QA**). **Mọi role trừ Nhân viên** phân bổ lại SL giữa các phần làm việc còn mở. Tổng phần làm việc không được lớn hơn SL tổng. CM không sửa SL tổng. **PM không thêm task con** sau khi đã chia. Mọi lần đổi SL / thêm con / đổi người trên form sửa đều cần **Lý do thay đổi**.
 
 **Làm được**
 
@@ -231,11 +231,11 @@ Quy tắc chung sau khi chia:
 2. Xóa task nhỏ tùy ý sau lần chia đầu.
 3. Đổi SL tổng xuống thấp hơn tổng các phần đã khóa (Finished hoặc Cancelled).
 
-**Ví dụ:** Tổng 20. Phần 1 Finished = 8 (khóa). Người tạo task hoặc Admin có thể tăng SL tổng lên 25 (phần còn mở nhận thêm). CM có thể chia lại 12 còn lại giữa phần 2 và 3. Không giảm tổng xuống dưới 8 cộng phần mở tối thiểu.
+**Ví dụ:** Tổng 20. Phần 1 Finished = 8 (khóa). Người tạo task hoặc Admin có thể tăng SL tổng lên 25 (phần còn mở nhận thêm). CM / PM / CH / Head có thể chia lại 12 còn lại giữa phần 2 và 3. Không giảm tổng xuống dưới 8 cộng phần mở tối thiểu.
 
 Muốn hai người cùng làm phần còn lại: đổi Staff, chia lại SL giữa phần đã có, hoặc tách phần còn lại qua Evaluate (câu 8).
 
-**Tóm lại:** Sửa scope là đổi SL tổng (người tạo hoặc Admin), thêm task con (kể cả QA), hoặc CM chia lại SL phần còn mở trong giới hạn SL tổng — và điền **Lý do thay đổi** khi đổi SL / thêm con / đổi người. Không sửa Finished hoặc Cancelled.
+**Tóm lại:** Sửa scope là đổi SL tổng (người tạo hoặc Admin), thêm task con (kể cả QA), hoặc chia lại SL phần còn mở (mọi role trừ Nhân viên) trong giới hạn SL tổng — và điền **Lý do thay đổi** khi đổi SL / thêm con / đổi người. Không sửa Finished hoặc Cancelled.
 
 ---
 
@@ -315,7 +315,7 @@ Có thể tạo task con với **số lượng 0** và **chưa gán Staff**. Bri
 
 **Ví dụ:** SL cha 20. Lần đầu tạo hai phần 10 và 0 (phần 0 chưa gán Staff). Sau đó CM thêm một phần 10 khi đã biết người làm. Tổng 20, không vượt cha.
 
-CM cũng sửa SL các phần đã có. **PM không** dùng **Thêm task con** sau khi đã chia.
+Mọi role trừ Nhân viên cũng sửa SL các phần đã có. **PM không** dùng **Thêm task con** sau khi đã chia.
 
 **Tóm lại:** Plan dở trong giới hạn SL task cha: tạo phần trước (kể cả SL 0 và chưa có Staff), rồi CM hoặc Admin thêm phần sau.
 

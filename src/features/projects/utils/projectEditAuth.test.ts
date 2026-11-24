@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ROLES } from '@/config/permissions';
-import { canEditProjectMeta, isPmLimitedProjectFieldEditor } from './projectEditAuth';
+import {
+  canEditProjectMeta,
+  isPmLimitedProjectFieldEditor,
+  requiresProjectStatusChangeReason,
+} from './projectEditAuth';
 
 describe('isPmLimitedProjectFieldEditor', () => {
   it('is true only for PM', () => {
@@ -18,11 +22,15 @@ describe('canEditProjectMeta', () => {
     createdById: 'usr-creator',
   };
 
-  it('allows Admin on finish/cancel; locks other roles', () => {
+  it('allows Admin and PM on finish/cancel; locks Head', () => {
     expect(canEditProjectMeta({ ...base, status: 'finish' }, ROLES.ADMIN, 'anyone')).toBe(true);
     expect(canEditProjectMeta({ ...base, status: 'cancel' }, ROLES.ADMIN, 'anyone')).toBe(true);
+    expect(canEditProjectMeta({ ...base, status: 'finish' }, ROLES.PM, 'anyone')).toBe(true);
+    expect(canEditProjectMeta({ ...base, status: 'cancel' }, ROLES.PM, 'anyone')).toBe(true);
     expect(canEditProjectMeta({ ...base, status: 'finish' }, ROLES.HEAD, 'anyone')).toBe(false);
-    expect(canEditProjectMeta({ ...base, status: 'finish' }, ROLES.PM, 'usr-creator')).toBe(false);
+    expect(canEditProjectMeta({ ...base, status: 'finish' }, ROLES.EMPLOYEE, 'usr-creator')).toBe(
+      false,
+    );
   });
 
   it('keeps archived locked even for Admin', () => {
@@ -36,5 +44,14 @@ describe('canEditProjectMeta', () => {
     expect(canEditProjectMeta(base, ROLES.HEAD, 'anyone')).toBe(true);
     expect(canEditProjectMeta(base, ROLES.EMPLOYEE, 'usr-creator')).toBe(true);
     expect(canEditProjectMeta(base, ROLES.EMPLOYEE, 'other')).toBe(false);
+  });
+});
+
+describe('requiresProjectStatusChangeReason', () => {
+  it('is required only for PM when status changes', () => {
+    expect(requiresProjectStatusChangeReason(ROLES.PM, 'finish', 'in_progress')).toBe(true);
+    expect(requiresProjectStatusChangeReason(ROLES.PM, 'in_progress', 'in_progress')).toBe(false);
+    expect(requiresProjectStatusChangeReason(ROLES.HEAD, 'finish', 'in_progress')).toBe(false);
+    expect(requiresProjectStatusChangeReason(ROLES.ADMIN, 'finish', 'cancel')).toBe(false);
   });
 });

@@ -11,6 +11,7 @@
 }
 
 .pillTotal,
+.pillUnconfirmed,
 .pillInProgress,
 .pillNeedsEvaluation,
 .pillCompleted,
@@ -27,6 +28,11 @@
 .pillTotal {
   background: $status-on-leave-bg;
   color: $status-on-leave-text;
+}
+
+.pillUnconfirmed {
+  background: $status-pending-bg;
+  color: $status-pending-text;
 }
 
 .pillInProgress {

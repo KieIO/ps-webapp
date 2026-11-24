@@ -193,6 +193,7 @@ export const MyTaskSchema = z.object({
 });
 
 export const TASK_STATUS_BUCKET_FILTER_VALUES = [
+  'unconfirmed',
   'inProgress',
   'needsEvaluation',
   'declined',
@@ -207,7 +208,7 @@ export const MyTaskListFiltersSchema = z.object({
   staffName: z.string().optional(),
   /** @deprecated Prefer `statusBucket` (business groups). Kept for API/mock compat. */
   confirmation: z.enum(TASK_CONFIRMATION_STATUSES).optional(),
-  /** List filter: 5 business buckets incl. separate Đã từ chối / Hủy (client-side). */
+  /** List filter: 6 business buckets incl. Chưa xác nhận + separate Đã từ chối / Hủy (client-side). */
   statusBucket: z.enum(TASK_STATUS_BUCKET_FILTER_VALUES).optional(),
   timeliness: z.enum(['completed', 'on_time', 'not_on_time']).optional(),
   completedMonth: z

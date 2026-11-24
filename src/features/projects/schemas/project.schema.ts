@@ -159,6 +159,8 @@ export const UpdateProjectRequestSchema = z.object({
    * Omit to leave milestones unchanged (e.g. urgency-only / non-admin saves).
    */
   milestones: z.array(ProjectMilestoneInputSchema).optional(),
+  /** Required when PM changes project status (audit). */
+  changeReason: z.string().optional(),
 });
 
 export const CreateProjectRequestSchema = UpdateProjectRequestSchema;

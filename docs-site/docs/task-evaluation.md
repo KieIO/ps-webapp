@@ -24,6 +24,10 @@ Thứ tự handoff: **PM → Creative Head → CM → Staff**.
 
 **Creative Head — cửa sổ Evaluate:** chỉ **task giao nguyên** sau khi CM đã giao Staff. Không Evaluate khi còn `awaiting_cm`; không ghi điểm vào ô Staff. (Task cha đã chia: tạm chưa mở lớp gói CM — hỏi lại sau.)
 
+**Modal Evaluate (Staff / gói CM / CH):** nhập **Số lượng đạt** → hệ thống tự tính **% hoàn thành** và hiện **Tóm tắt** (`Đạt x / y · Còn z`). Tách phần còn lại (remainder) chỉ có ở lớp **Đánh giá Staff**.
+
+**Quyền trên chi tiết task / project:** mọi role liên quan **xem** được điểm đã chấm trên tab Evaluation. Nút **Evaluate** theo lớp: CM → Staff; Creative Head / Head → gói CM; PM → Creative Head (sau CH đã giao CM). PM **không** chấm gói CM / Staff.
+
 Code: `EVALUATION_LAYER_TITLES` trong `taskEvaluation.ts` (tab chi tiết + modal Evaluate + tooltip list).
 
 ### Badge trên list (Project Tasks)
@@ -57,3 +61,4 @@ Trên Details vẫn có:
 1. Cùng một mẫu nhãn: đối tượng trước, người chấm trong ngoặc `(bởi …)`.
 2. List badge ngắn (`Đã ĐG …`); tooltip = nhãn tab Evaluation.
 3. Note đánh giá → tab Evaluation; không gắn lên Details như «Note from PM».
+4. Evaluate: **SL đạt → % tự tính + tóm tắt**; tách remainder chỉ lớp Staff.

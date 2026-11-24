@@ -54,6 +54,7 @@ export const canEditSplitParentTotal = (
   if (userId && task.createdById && userId === task.createdById) return true;
   return role === ROLES.PM && !task.createdById;
 };
+
 export const SPLIT_PARENT_BADGE_HINT = 'CM đã chia task này thành các task nhỏ';
 export const SPLIT_CHILD_BADGE_HINT = 'Đây là một phần của task cha (sau khi CM chia nhỏ)';
 export const WHOLE_ASSIGNED_BADGE_HINT = 'Task Creative đã giao nguyên cho Staff (không chia nhỏ)';
@@ -357,6 +358,13 @@ export const canEditCreativePipelineRole = (role: Role | undefined): boolean =>
   role === ROLES.CREATIVE_HEAD ||
   role === ROLES.CREATIVE_MANAGER;
 
+/**
+ * Redistribute SL of existing split children (not finished/cancelled).
+ * Every pipeline editor role may do this — Employee cannot.
+ */
+export const canEditSplitChildQuantities = (role: Role | undefined): boolean =>
+  canEditCreativePipelineRole(role);
+
 export const canChangeCreativeLevelRole = (role: Role | undefined): boolean =>
   role === ROLES.ADMIN || role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD;
 
@@ -383,30 +391,22 @@ export const canOpenCreativePipelineEdit = (
   // Admin break-glass.
   if (role === ROLES.ADMIN) return true;
 
-  // Head / creator / project PM: full meta after assign/confirm.
-  if (role === ROLES.HEAD) return true;
+  // Head / any PM / creator: open edit (incl. redistribute child SL after split).
+  if (role === ROLES.HEAD || role === ROLES.PM) return true;
   if (userId && task.createdById && userId === task.createdById) return true;
-  if (
-    role === ROLES.PM &&
-    userId &&
-    task.projectManager?.userId &&
-    userId === task.projectManager.userId
-  ) {
-    return true;
-  }
 
-  // CM: operational edits on owned tasks (Staff / creative deadline).
+  // CM: operational edits on owned tasks (Staff / creative deadline / child SL).
   if (role === ROLES.CREATIVE_MANAGER) {
     if (!userId) return false;
     return isAssignedToUser(task, userId);
   }
 
-  // CH: may open edit while awaiting_cm to reassign CM (operational).
+  // CH: awaiting CM (reassign) and after Staff assign / split (incl. child SL).
   if (role === ROLES.CREATIVE_HEAD) {
-    return resolveEffectivePipelineStage(task) === 'awaiting_cm';
+    const stage = resolveEffectivePipelineStage(task);
+    return stage === 'awaiting_cm' || stage === 'assigned_staff' || stage === 'split';
   }
 
-  // Other PMs (not creator / not project PM): no pipeline meta edit.
   return false;
 };
 
@@ -524,7 +524,8 @@ export const resolveCreativeDetailPipelineAction = (
  * Creative queue board:
  * - CH: all creative parent tasks in pipeline stages (including already assigned / split)
  * - CM intake: awaiting_cm parents only (work received from CH/PM)
- * - CM execution (Giao Staff): assigned_staff / split **parents only** (no task nhỏ rows)
+ * - CM execution (Giao Staff): awaiting_cm + assigned_staff / split **parents only**
+ *   (Cần giao · Đã giao · Hoàn thành; no task nhỏ rows)
  * Subtasks are excluded from every Creative Queue frame; open parent → Task nhỏ / detail.
  */
 export const filterCreativeQueue = (
@@ -566,10 +567,10 @@ export const filterCreativeQueue = (
       continue;
     }
 
-    // execution: parents only (whole assigned_staff or split)
+    // execution (Giao Staff): awaiting_cm + assigned parents (whole / split)
     if (!isCreativePipelineParent(task)) continue;
     const stage = resolveEffectivePipelineStage(task);
-    if (stage !== 'assigned_staff' && stage !== 'split') continue;
+    if (stage !== 'awaiting_cm' && stage !== 'assigned_staff' && stage !== 'split') continue;
     if (!canSeeFullCmQueue(role) && (!userId || !isAssignedToUser(task, userId))) continue;
     rows.push({ task, stage });
   }

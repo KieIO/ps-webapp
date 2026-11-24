@@ -3,6 +3,7 @@ import type { AuthUser } from '@/features/auth/schemas/auth.schema';
 import type { EmployeeCapacity } from '@/features/capacity/schemas/capacity.schema';
 import type { Project } from '@/features/projects/schemas/project.schema';
 import type { MyTask } from '@/features/tasks/schemas/task.schema';
+import { isCreativeDeptTask } from '@/features/tasks/utils/creativePipeline';
 import type { User } from '@/features/users/schemas/user.schema';
 import { USER_DEPARTMENTS, type UserDepartment } from '@/features/users/constants';
 import { mapJobLevelCode } from '@/features/users/utils/jobLevel';
@@ -62,7 +63,7 @@ export const scopeProjectsForHome = (
   }
 
   if (isCreativeHomeRole(user.role)) {
-    return scopeCreativeHeadProjects(active, context?.tasks ?? [], context?.users ?? []);
+    return scopeCreativeHeadProjects(active, context?.tasks ?? []);
   }
 
   if (user.role === ROLES.CREATIVE_MANAGER) {
@@ -77,25 +78,16 @@ export const scopeProjectsForHome = (
 };
 
 /**
- * Creative Head scope: creative-department projects, plus running projects that have
- * creative-department assignees on tasks.
+ * Creative Head scope: creative-department projects, plus projects that have
+ * Creative-department tasks (department = creative / creative_*).
  */
 export const scopeCreativeHeadProjects = (
   activeProjects: Project[],
   tasks: MyTask[],
-  users: User[],
 ): Project[] => {
-  const creativeUserIds = new Set(
-    users.filter((entry) => isCreativeUserDepartment(entry.department)).map((entry) => entry.id),
-  );
-
   const relatedNames = new Set(
     tasks
-      .filter(
-        (task) =>
-          task.department === 'creative' ||
-          task.staff.some((member) => member.userId != null && creativeUserIds.has(member.userId)),
-      )
+      .filter((task) => isCreativeDeptTask(task))
       .map((task) => task.projectName)
       .filter(Boolean),
   );
@@ -119,11 +111,7 @@ export const scopeTasksForHome = (
   }
 
   if (isCreativeHomeRole(user.role)) {
-    return tasks.filter((task) => {
-      if (task.department === 'creative') return true;
-      if (task.projectId && projectIds.has(task.projectId)) return true;
-      return projectNames.has(task.projectName);
-    });
+    return tasks.filter((task) => isCreativeDeptTask(task));
   }
 
   if (user.role === ROLES.CREATIVE_MANAGER) {

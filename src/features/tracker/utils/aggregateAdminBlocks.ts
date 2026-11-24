@@ -82,11 +82,11 @@ export const inferOutputMetricFromTaskName = (
 };
 
 /**
- * Admin tracker view helper (mock parity with backend `aggregateTaskBlocksByNameAndDay`):
+ * Mock parity with backend `aggregateTaskBlocksByNameAndDay` (all roles):
  * keep the project timeline bar, collapse same-day task blocks that share a task name
  * into one pill labeled with total quantity (e.g. `122 Slides`).
  *
- * Real API responses are already aggregated for admin — only the mock layer should call this.
+ * Real API responses are already aggregated — only the mock layer should call this.
  */
 export const aggregateAdminTrackerBlocks = (project: TrackerProject): TrackerBlock[] => {
   const projectBars: TrackerBlock[] = [];
@@ -151,13 +151,17 @@ export const aggregateAdminTrackerBlocks = (project: TrackerProject): TrackerBlo
   return [...projectBars, ...aggregated];
 };
 
-export const withAdminAggregatedBlocks = (
-  projects: TrackerProject[],
-  isAdmin: boolean,
-): TrackerProject[] => {
-  if (!isAdmin) return projects;
-  return projects.map((project) => ({
+export const withAggregatedTrackerBlocks = (projects: TrackerProject[]): TrackerProject[] =>
+  projects.map((project) => ({
     ...project,
     blocks: aggregateAdminTrackerBlocks(project),
   }));
+
+/** @deprecated Use `withAggregatedTrackerBlocks` — aggregation applies to every role. */
+export const withAdminAggregatedBlocks = (
+  projects: TrackerProject[],
+  _isAdmin = true,
+): TrackerProject[] => {
+  void _isAdmin;
+  return withAggregatedTrackerBlocks(projects);
 };

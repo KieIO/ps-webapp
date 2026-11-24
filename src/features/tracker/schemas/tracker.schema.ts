@@ -24,7 +24,7 @@ export const TrackerBlockSchema = z.object({
   label: z.string(),
   type: z.enum(TRACKER_BLOCK_TYPES),
   band: z.union([z.literal(0), z.literal(1)]).optional(),
-  /** Task quantity (slides/DA). Summed when admin aggregates same-day same-name blocks. */
+  /** Task quantity (slides/DA). Summed when same-day same-name blocks are aggregated. */
   quantity: z.number().optional(),
 });
 

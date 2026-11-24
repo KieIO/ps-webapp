@@ -38,10 +38,14 @@ export const shouldDefaultWorkDate = (
 };
 
 /**
- * True when the selected calendar day falls in the task work window:
- * start (`date`) ≤ workDate ≤ deadline.
+ * True when the selected calendar day matches Tracker placement:
+ * creativeDeadline day if set, else start (`date`) ≤ workDate ≤ deadline.
  */
 export const isTaskActiveOnWorkDate = (task: MyTask, workDate: string): boolean => {
+  const creativeKey = task.creativeDeadline?.trim().slice(0, 10);
+  if (creativeKey && isValidWorkDate(creativeKey)) {
+    return creativeKey === workDate;
+  }
   const startKey = getTaskStartDate(task).slice(0, 10);
   const endKey = getTaskDeadline(task).slice(0, 10);
   return workDate >= startKey && workDate <= endKey;

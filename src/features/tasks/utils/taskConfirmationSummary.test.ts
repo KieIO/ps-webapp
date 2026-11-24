@@ -13,8 +13,9 @@ import {
 } from './taskConfirmationSummary';
 
 describe('picker vs summary options', () => {
-  it('summary splits Đã từ chối / Hủy; picker uses Hủy only and omits Cần đánh giá', () => {
+  it('summary splits Chưa xác nhận / Đang làm / Đã từ chối / Hủy; picker omits Cần đánh giá', () => {
     expect(TASK_SUMMARY_BUCKET_OPTIONS.map((o) => o.label)).toEqual([
+      'Chưa xác nhận',
       'Đang làm',
       'Cần đánh giá',
       'Đã từ chối',
@@ -22,6 +23,7 @@ describe('picker vs summary options', () => {
       'Hoàn thành',
     ]);
     expect(TASK_STATUS_PICKER_OPTIONS.map((o) => o.label)).toEqual([
+      'Chưa xác nhận',
       'Đang làm',
       'Hủy',
       'Hoàn thành',
@@ -37,7 +39,7 @@ describe('picker vs summary options', () => {
       getTaskStatusPickerOptions(ROLES.EMPLOYEE, { staffConfirmation: 'confirmed' }).map(
         (o) => o.value,
       ),
-    ).toEqual(['inProgress', 'completed']);
+    ).toEqual(['unconfirmed', 'inProgress', 'completed']);
     expect(
       getTaskStatusPickerOptions(ROLES.EMPLOYEE, { staffConfirmation: 'cancelled' }).map(
         (o) => o.value,
@@ -50,8 +52,8 @@ describe('picker vs summary options', () => {
 });
 
 describe('resolveTaskSummaryBucket', () => {
-  it('folds not_updated + confirmed into Đang làm', () => {
-    expect(resolveTaskSummaryBucket({ staffConfirmation: 'not_updated' })).toBe('inProgress');
+  it('keeps not_updated as Chưa xác nhận and confirmed as Đang làm', () => {
+    expect(resolveTaskSummaryBucket({ staffConfirmation: 'not_updated' })).toBe('unconfirmed');
     expect(resolveTaskSummaryBucket({ staffConfirmation: 'confirmed' })).toBe('inProgress');
   });
 
@@ -86,7 +88,7 @@ describe('resolveTaskSummaryBucket', () => {
 });
 
 describe('resolveTaskStatusPickerBucket', () => {
-  it('maps finished→Hoàn thành, cancelled→Hủy, decline→Đang làm (not Hủy)', () => {
+  it('maps finished→Hoàn thành, cancelled→Hủy, decline→Chưa xác nhận', () => {
     expect(resolveTaskStatusPickerBucket({ staffConfirmation: 'finished' })).toBe('completed');
     expect(
       resolveTaskStatusPickerBucket({
@@ -96,7 +98,8 @@ describe('resolveTaskStatusPickerBucket', () => {
       }),
     ).toBe('completed');
     expect(resolveTaskStatusPickerBucket({ staffConfirmation: 'cancelled' })).toBe('cancelled');
-    expect(resolveTaskStatusPickerBucket({ staffConfirmation: 'decline' })).toBe('inProgress');
+    expect(resolveTaskStatusPickerBucket({ staffConfirmation: 'decline' })).toBe('unconfirmed');
+    expect(resolveTaskStatusPickerBucket({ staffConfirmation: 'not_updated' })).toBe('unconfirmed');
     expect(resolveTaskStatusPickerBucket({ staffConfirmation: 'confirmed' })).toBe('inProgress');
   });
 });
@@ -114,9 +117,12 @@ describe('bucketToStaffConfirmation', () => {
     ).toBe(false);
   });
 
-  it('maps Đang làm / Hoàn thành / Cần đánh giá→finished', () => {
+  it('maps Chưa xác nhận→not_updated, Đang làm→confirmed, completed→finished', () => {
     expect(
-      bucketToStaffConfirmation('inProgress', ROLES.PM, { staffConfirmation: 'not_updated' }),
+      bucketToStaffConfirmation('unconfirmed', ROLES.PM, { staffConfirmation: 'confirmed' }),
+    ).toEqual({ ok: true, status: 'not_updated' });
+    expect(
+      bucketToStaffConfirmation('inProgress', ROLES.EMPLOYEE, { staffConfirmation: 'not_updated' }),
     ).toEqual({ ok: true, status: 'confirmed' });
     expect(
       bucketToStaffConfirmation('completed', ROLES.EMPLOYEE, { staffConfirmation: 'confirmed' }),
@@ -137,10 +143,11 @@ describe('computeTaskConfirmationSummary + list filter contract', () => {
     { staffConfirmation: 'finished' as const, completionPercent: 80, pmEvaluation: '' },
   ];
 
-  it('counts all five buckets separately', () => {
+  it('counts all six buckets separately', () => {
     expect(computeTaskConfirmationSummary(sample)).toEqual({
       total: 6,
-      inProgress: 2,
+      unconfirmed: 1,
+      inProgress: 1,
       needsEvaluation: 1,
       declined: 1,
       cancelled: 1,
@@ -152,7 +159,8 @@ describe('computeTaskConfirmationSummary + list filter contract', () => {
     const byBucket = (bucket: (typeof TASK_SUMMARY_BUCKET_ORDER)[number]) =>
       sample.filter((task) => resolveTaskSummaryBucket(task) === bucket);
 
-    expect(byBucket('inProgress')).toHaveLength(2);
+    expect(byBucket('unconfirmed')).toHaveLength(1);
+    expect(byBucket('inProgress')).toHaveLength(1);
     expect(byBucket('needsEvaluation')).toHaveLength(1);
     expect(byBucket('declined')).toHaveLength(1);
     expect(byBucket('cancelled')).toHaveLength(1);

@@ -16,7 +16,12 @@ import { CompletionProgressCell } from '@/shared/ui/CompletionProgressCell/Compl
 import { EvaluationLevelBadge } from '../EvaluationLevelBadge/EvaluationLevelBadge';
 import { ProjectStatusBadge } from '../ProjectStatusBadge/ProjectStatusBadge';
 import { useProjectTasks } from '../../hooks/useProjectTasks';
-import { PROJECT_TABLE_COLUMN_HEADERS, STATUS_VARIANT } from '../../constants';
+import {
+  PROJECT_DETAIL_STAT_LABELS,
+  PROJECT_DETAIL_TOTAL_QUANTITY_HINT,
+  PROJECT_DETAIL_TYPE_QUANTITY_HINT,
+  STATUS_VARIANT,
+} from '../../constants';
 import { resolveProjectDetailStats } from '../../utils/projectProgress';
 import { canEditProjectMeta } from '../../utils/projectEditAuth';
 import type { EvaluationLevel, Project } from '../../schemas/project.schema';
@@ -57,9 +62,9 @@ export function ProjectSummaryCard({
     () => resolveProjectDetailStats(project, canViewAllTasks ? taskList?.items : undefined),
     [canViewAllTasks, project, taskList?.items],
   );
-  const slidesLabel = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(
-    stats.totalSlides,
-  );
+  const formatQty = (value: number) =>
+    new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value);
+  const totalQuantityLabel = formatQty(stats.totalQuantity);
 
   return (
     <section className={styles.card}>
@@ -195,23 +200,33 @@ export function ProjectSummaryCard({
 
       <dl className={styles.stats}>
         <div className={styles.stat}>
-          <dt className={styles.statLabel}>{PROJECT_TABLE_COLUMN_HEADERS.tasks}</dt>
+          <dt className={styles.statLabel}>{PROJECT_DETAIL_STAT_LABELS.tasks}</dt>
           <dd className={styles.statValue}>
-            <Tooltip title="Tổng số task của project">
+            <Tooltip title="Tổng số task của project trên trang này">
               <span>{stats.taskCount}</span>
             </Tooltip>
           </dd>
         </div>
         <div className={styles.stat}>
-          <dt className={styles.statLabel}>{PROJECT_TABLE_COLUMN_HEADERS.slides}</dt>
+          <dt className={styles.statLabel}>{PROJECT_DETAIL_STAT_LABELS.totalQuantity}</dt>
           <dd className={styles.statValue}>
-            <Tooltip title="Tổng qty task loại Slides (không gồm DA, QA, Animation, …); không đếm trùng khi đã chia nhỏ">
-              <span>{slidesLabel}</span>
+            <Tooltip title={PROJECT_DETAIL_TOTAL_QUANTITY_HINT}>
+              <span>{totalQuantityLabel}</span>
             </Tooltip>
           </dd>
         </div>
+        {stats.quantityByType.map((row) => (
+          <div className={styles.stat} key={row.name.toLowerCase()}>
+            <dt className={styles.statLabel}>{row.name}</dt>
+            <dd className={styles.statValue}>
+              <Tooltip title={`${PROJECT_DETAIL_TYPE_QUANTITY_HINT}: ${row.name}`}>
+                <span>{formatQty(row.quantity)}</span>
+              </Tooltip>
+            </dd>
+          </div>
+        ))}
         <div className={styles.stat}>
-          <dt className={styles.statLabel}>{PROJECT_TABLE_COLUMN_HEADERS.completion}</dt>
+          <dt className={styles.statLabel}>{PROJECT_DETAIL_STAT_LABELS.completion}</dt>
           <dd className={styles.statProgress}>
             <Tooltip title="Trung bình % hoàn thành của các task đã có đánh giá">
               <div>
