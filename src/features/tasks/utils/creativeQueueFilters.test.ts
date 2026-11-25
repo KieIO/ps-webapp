@@ -43,6 +43,7 @@ describe('resolveCreativeQueueFilterVisibility', () => {
     expect(visibility.showEvaluation).toBe(true);
     expect(visibility.showConfirmation).toBe(false);
     expect(visibility.evaluationLayer).toBe('handoff');
+    expect(visibility.assignShapeOptions).toEqual(['all', 'pending_staff', 'split']);
     expect(visibility.assignShapeOptions).not.toContain('split_child');
   });
 
@@ -62,7 +63,7 @@ describe('resolveCreativeQueueFilterVisibility', () => {
     expect(visibility.showEvaluation).toBe(true);
     expect(visibility.showConfirmation).toBe(true);
     expect(visibility.evaluationLayer).toBe('staff');
-    expect(visibility.assignShapeOptions).toEqual(['all', 'whole', 'split']);
+    expect(visibility.assignShapeOptions).toEqual(['all', 'split']);
   });
 });
 
@@ -72,12 +73,6 @@ describe('applyCreativeQueueFilters', () => {
   });
 
   it('filters by assign shape, evaluation, status bucket, and split date', () => {
-    const whole = base({
-      id: 'whole',
-      pipelineStage: 'assigned_staff',
-      completionPercent: 80,
-      staffConfirmation: 'finished',
-    });
     const splitParent = base({
       id: 'parent',
       pipelineStage: 'split',
@@ -95,34 +90,50 @@ describe('applyCreativeQueueFilters', () => {
       completionPercent: null,
       pmEvaluation: '',
     });
+    const finishedChild = base({
+      id: 'finished-child',
+      taskCode: 'PO.1-S2',
+      parentTaskId: 'parent',
+      taskKind: 'split',
+      pipelineStage: 'assigned_staff',
+      staffConfirmation: 'finished',
+      completionPercent: 80,
+    });
 
     expect(
       applyCreativeQueueFilters(
-        [whole, splitParent, child],
-        { assignShape: 'whole' },
+        [splitParent, child, finishedChild],
+        { assignShape: 'split' },
         visibility,
       ).map((task) => task.id),
-    ).toEqual(['whole']);
+    ).toEqual(['parent']);
 
     expect(
       applyCreativeQueueFilters(
-        [whole, splitParent, child],
+        [splitParent, child, finishedChild],
         { assignShape: 'split_child', evaluation: 'not_evaluated' },
         visibility,
       ).map((task) => task.id),
     ).toEqual(['child']);
 
+    const dateVisibility = resolveCreativeQueueFilterVisibility('cm', 'execution', {
+      assignShape: 'split',
+    });
     expect(
       applyCreativeQueueFilters(
-        [whole, splitParent, child],
-        { assignShape: 'split_child', splitFrom: '2026-10-11', splitTo: '2026-10-13' },
-        visibility,
+        [splitParent, child, finishedChild],
+        {
+          assignShape: 'split_child',
+          splitFrom: '2026-10-11',
+          splitTo: '2026-10-13',
+        },
+        dateVisibility,
       ).map((task) => task.id),
     ).toEqual(['child']);
 
     expect(
       applyCreativeQueueFilters(
-        [whole, splitParent, child],
+        [splitParent, child, finishedChild],
         { statusBucket: 'unconfirmed' },
         visibility,
       ).map((task) => task.id),
@@ -130,23 +141,24 @@ describe('applyCreativeQueueFilters', () => {
 
     expect(
       applyCreativeQueueFilters(
-        [whole, splitParent, child],
+        [splitParent, child, finishedChild],
         { statusBucket: 'inProgress' },
         visibility,
       ).map((task) => task.id),
     ).toEqual(['child']);
 
-    // whole has completionPercent → evaluated → completed (not needsEvaluation).
     expect(
       applyCreativeQueueFilters(
-        [whole, splitParent, child],
+        [splitParent, child, finishedChild],
         { statusBucket: 'completed' },
         visibility,
       ).map((task) => task.id),
-    ).toEqual(['whole']);
+    ).toEqual(['finished-child']);
 
     const awaitingEval = base({
       id: 'awaiting-eval',
+      parentTaskId: 'parent',
+      taskKind: 'split',
       pipelineStage: 'assigned_staff',
       staffConfirmation: 'finished',
       completionPercent: null,
@@ -154,69 +166,22 @@ describe('applyCreativeQueueFilters', () => {
     });
     expect(
       applyCreativeQueueFilters(
-        [whole, awaitingEval],
+        [awaitingEval],
         { statusBucket: 'needsEvaluation' },
         visibility,
       ).map((task) => task.id),
     ).toEqual(['awaiting-eval']);
-
-    const declined = base({
-      id: 'declined',
-      staffConfirmation: 'decline',
-      completionPercent: null,
-      pmEvaluation: '',
-    });
-    const cancelled = base({
-      id: 'cancelled',
-      staffConfirmation: 'cancelled',
-      completionPercent: null,
-      pmEvaluation: '',
-    });
-    expect(
-      applyCreativeQueueFilters(
-        [declined, cancelled, child],
-        { statusBucket: 'declined' },
-        visibility,
-      ).map((task) => task.id),
-    ).toEqual(['declined']);
-    expect(
-      applyCreativeQueueFilters(
-        [declined, cancelled, child],
-        { statusBucket: 'cancelled' },
-        visibility,
-      ).map((task) => task.id),
-    ).toEqual(['cancelled']);
-  });
-
-  it('uses handoff evaluation on CH visibility', () => {
-    const chVisibility = resolveCreativeQueueFilterVisibility('ch', 'intake', {});
-    const scored = base({
-      id: 'scored',
-      pipelineStage: 'assigned_staff',
-      handoffCompletionPercent: 90,
-      completionPercent: null,
-    });
-    const pending = base({
-      id: 'pending',
-      pipelineStage: 'assigned_staff',
-      handoffCompletionPercent: null,
-      handoffEvaluation: '',
-    });
-    expect(
-      applyCreativeQueueFilters([scored, pending], { evaluation: 'evaluated' }, chVisibility).map(
-        (task) => task.id,
-      ),
-    ).toEqual(['scored']);
   });
 });
 
 describe('sanitizeCreativeQueueFilters', () => {
-  it('clears execution-only filters when moving to CM intake', () => {
+  it('clears execution-only filters on CM intake', () => {
     const sanitized = sanitizeCreativeQueueFilters(
       {
         search: 'x',
-        assignShape: 'split_child',
-        evaluation: 'not_evaluated',
+        projectName: undefined,
+        assignShape: 'split',
+        evaluation: 'evaluated',
         statusBucket: 'completed',
         splitFrom: '2026-10-01',
       },
@@ -230,12 +195,12 @@ describe('sanitizeCreativeQueueFilters', () => {
     });
   });
 
-  it('keeps statusBucket on CM execution', () => {
+  it('keeps statusBucket on CM execution; drops unknown assignShape', () => {
     const sanitized = sanitizeCreativeQueueFilters(
-      { statusBucket: 'declined', assignShape: 'whole' },
-      resolveCreativeQueueFilterVisibility('cm', 'execution', { assignShape: 'whole' }),
+      { statusBucket: 'declined', assignShape: 'whole' as 'split' },
+      resolveCreativeQueueFilterVisibility('cm', 'execution', { assignShape: 'split' }),
     );
     expect(sanitized.statusBucket).toBe('declined');
-    expect(sanitized.assignShape).toBe('whole');
+    expect(sanitized.assignShape).toBe('all');
   });
 });

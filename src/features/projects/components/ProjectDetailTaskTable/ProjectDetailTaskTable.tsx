@@ -25,17 +25,12 @@ import {
   SPLIT_CHILD_BADGE_LABEL,
   SPLIT_PARENT_BADGE_HINT,
   SPLIT_PARENT_BADGE_LABEL,
-  WHOLE_ASSIGNED_BADGE_HINT,
-  WHOLE_ASSIGNED_BADGE_LABEL,
 } from '@/features/tasks/utils/creativePipeline';
 import { formatCompletionPercentDisplay } from '@/features/tasks/utils/evaluationCompletion';
 import { formatTaskCodeShort, getTaskDeadline } from '@/features/tasks/utils/taskDetail';
 import { isMyTaskDateAtRisk } from '@/features/tasks/utils/taskDeadline';
 import { resolveAssigneePlainLabel } from '@/features/tasks/utils/assigneeDisplay';
-import {
-  canEvaluateTaskLayer,
-  isCreativeWholeAssigned,
-} from '@/features/tasks/utils/taskEvaluation';
+import { canEvaluateTaskLayer } from '@/features/tasks/utils/taskEvaluation';
 import {
   areParentActionsLockedByActiveRevision,
   formatRevisionLabel,
@@ -106,7 +101,6 @@ function TaskNameCell({ record }: { record: MyTask }) {
   const isRevision = isRevisionTask(record);
   const splitParent = isSplitParentTask(record);
   const splitChild = isSplitChildTask(record);
-  const wholeAssigned = isCreativeWholeAssigned(record);
   const splitChildParentCode = splitChild ? inferParentTaskCodeFromSplit(record.taskCode) : null;
 
   return (
@@ -150,13 +144,6 @@ function TaskNameCell({ record }: { record: MyTask }) {
           >
             <Tag color="cyan" className={styles.shapeBadge}>
               {SPLIT_CHILD_BADGE_LABEL}
-            </Tag>
-          </Tooltip>
-        ) : null}
-        {wholeAssigned ? (
-          <Tooltip title={WHOLE_ASSIGNED_BADGE_HINT}>
-            <Tag color="geekblue" className={styles.shapeBadge}>
-              {WHOLE_ASSIGNED_BADGE_LABEL}
             </Tag>
           </Tooltip>
         ) : null}

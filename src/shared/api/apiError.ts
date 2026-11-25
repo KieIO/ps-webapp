@@ -60,7 +60,10 @@ const cleanApiValidationMessage = (message: string): string => {
     'assignee must be a Creative Manager': 'Chỉ được assign cho Creative Manager.',
     'assign Creative Staff, not CM/CH': 'Chỉ được giao cho Creative Staff.',
     'split requires at least 2 subtasks': 'Chia nhỏ cần ít nhất 2 task.',
-    'mode must be whole or split': 'Chọn giao nguyên task hoặc chia nhỏ.',
+    'split requires at least 1 subtask': 'Cần ít nhất 1 task con.',
+    'mode must be whole or split': 'Chỉ được chia task con (không còn giao nguyên).',
+    'mode must be split': 'Chỉ được chia task con (không còn giao nguyên).',
+    'chỉ hỗ trợ chia task con (mode=split)': 'Chỉ được chia task con (không còn giao nguyên).',
     'cmUserId is required': 'Chọn Creative Manager.',
     'chỉ đổi CM khi task đang chờ Creative Manager':
       'Chỉ đổi CM khi task đang chờ Creative Manager xử lý.',

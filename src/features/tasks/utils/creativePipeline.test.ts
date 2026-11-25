@@ -595,7 +595,7 @@ describe('creativePipeline helpers', () => {
 
   it('resolves assign mode and split subtasks for edit UI', () => {
     expect(resolveCreativeAssignMode(task({ pipelineStage: 'awaiting_cm' }))).toBeNull();
-    expect(resolveCreativeAssignMode(task({ pipelineStage: 'assigned_staff' }))).toBe('whole');
+    expect(resolveCreativeAssignMode(task({ pipelineStage: 'assigned_staff' }))).toBeNull();
     expect(resolveCreativeAssignMode(task({ pipelineStage: 'split' }))).toBe('split');
 
     const parent = task({ id: 'p1', pipelineStage: 'split' });

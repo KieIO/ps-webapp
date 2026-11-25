@@ -15,10 +15,8 @@ import { formatHasRevisionChildrenLabel, hasRevisionChildren } from '../../utils
 import { isSplitParentTask } from '../../utils/creativePipeline';
 import {
   EVALUATION_LAYER_TITLES,
-  canEvaluateCmHandoffPackage,
   hasChEvaluation,
   isCreativePastChToCmHandoff,
-  isCreativeWholeAssigned,
 } from '../../utils/taskEvaluation';
 import { formatEvaluationQuantitySummary, hasCmEvaluation } from '../../utils/evaluationRemainder';
 import { formatCompletionPercentDisplay } from '../../utils/evaluationCompletion';
@@ -259,27 +257,7 @@ export function TaskDetailView({ taskId }: TaskDetailViewProps) {
                       note={task.chNote}
                     />
                   );
-                  if (isCreativeWholeAssigned(task)) {
-                    return (
-                      <div className={styles.detailStack}>
-                        {chScoreGrid}
-                        <EvaluationScoreGrid
-                          title={EVALUATION_LAYER_TITLES.handoff}
-                          percent={task.handoffCompletionPercent}
-                          score={task.handoffEvaluation}
-                          note={task.handoffNote}
-                        />
-                        <EvaluationScoreGrid
-                          title={EVALUATION_LAYER_TITLES.staff}
-                          percent={task.completionPercent}
-                          score={task.pmEvaluation}
-                          note={task.pmNote}
-                          quantitySummary={quantitySummary}
-                        />
-                      </div>
-                    );
-                  }
-                  if (canEvaluateCmHandoffPackage(task) && isSplitParentTask(task)) {
+                  if (isSplitParentTask(task)) {
                     return (
                       <div className={styles.detailStack}>
                         {chScoreGrid}

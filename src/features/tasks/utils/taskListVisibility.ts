@@ -1,12 +1,6 @@
 import { ROLES, type Role } from '@/config/permissions';
 import type { MyTask } from '../schemas/task.schema';
-import {
-  isCreativeDeptTask,
-  isCreativePipelineParent,
-  isSplitChildTask,
-  resolveEffectivePipelineStage,
-} from './creativePipeline';
-import { isCreativeWholeAssigned } from './taskEvaluation';
+import { isCreativeDeptTask, isCreativePipelineParent, isSplitChildTask } from './creativePipeline';
 import { isRevisionTask } from './taskRevision';
 
 /** Roles that oversee Creative handoffs and should not see CM→staff slices on Project Tasks. */
@@ -34,7 +28,7 @@ export const filterTasksForViewerRole = (
 /**
  * CM Project Tasks scopes (option C):
  * - received: CH→CM parents still on the handoff layer (awaiting_cm + split parents)
- * - staff: units Staff works on (whole-assign parents + split children)
+ * - staff: units Staff works on (split children)
  */
 export type CmProjectTaskScope = 'received' | 'staff';
 
@@ -47,8 +41,8 @@ export const CM_PROJECT_TASK_SCOPE_LABELS: Record<CmProjectTaskScope, string> = 
 
 /** Management-oriented hints — distinct from Creative Queue inbox copy. */
 export const CM_PROJECT_TASK_SCOPE_HINTS: Record<CmProjectTaskScope, string> = {
-  received: 'Gói việc CH giao cho bạn, kể cả task đã giao nguyên. Theo dõi đánh giá từ CH.',
-  staff: 'Việc đã giao Staff (nguyên hoặc task nhỏ) - quản lý và đánh giá nhân viên.',
+  received: 'Gói việc CH giao cho bạn (kể cả đã chia). Theo dõi đánh giá từ CH.',
+  staff: 'Task nhỏ đã giao Staff — quản lý và đánh giá nhân viên.',
 };
 
 export const parseCmProjectTaskScope = (value: string | null | undefined): CmProjectTaskScope =>
@@ -72,15 +66,7 @@ export const matchesCmProjectTaskScope = (task: MyTask, scope: CmProjectTaskScop
     return scope === 'staff';
   }
 
-  const stage = resolveEffectivePipelineStage(task);
-
-  // Whole-assign parent stays on both tabs: CH scores the CM package, CM scores Staff.
-  if (stage === 'assigned_staff') {
-    if (isCreativeWholeAssigned(task)) return true;
-    return scope === 'staff';
-  }
-
-  // awaiting_cm / split / awaiting_ch / returned_to_pm / unknown → Task nhận.
+  // Parents (awaiting_cm / split / awaiting_ch / returned_to_pm / unknown) → Task nhận.
   return scope === 'received';
 };
 

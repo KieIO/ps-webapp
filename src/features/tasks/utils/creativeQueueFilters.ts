@@ -7,12 +7,12 @@ import {
   type CreativeQueueView,
 } from './creativePipeline';
 import { hasCmEvaluation } from './evaluationRemainder';
-import { hasHandoffEvaluation, isCreativeWholeAssigned } from './taskEvaluation';
+import { hasHandoffEvaluation } from './taskEvaluation';
 import type { TaskSummaryBucket } from './taskConfirmationSummary';
 import { resolveTaskSummaryBucket } from './taskConfirmationSummary';
 
 /** How the Creative work unit was handed to Staff (or not yet). */
-export type CreativeAssignShapeFilter = 'all' | 'pending_staff' | 'whole' | 'split' | 'split_child';
+export type CreativeAssignShapeFilter = 'all' | 'pending_staff' | 'split' | 'split_child';
 
 export type CreativeEvaluationFilter = 'all' | 'evaluated' | 'not_evaluated';
 
@@ -38,7 +38,6 @@ export const CREATIVE_ASSIGN_SHAPE_OPTIONS: {
 }[] = [
   { value: 'all', label: 'Tất cả' },
   { value: 'pending_staff', label: 'Chưa giao Staff' },
-  { value: 'whole', label: 'Giao nguyên' },
   { value: 'split', label: 'Đã chia nhỏ' },
   { value: 'split_child', label: 'Task nhỏ' },
 ];
@@ -84,7 +83,7 @@ export const resolveCreativeQueueFilterVisibility = (
       showEvaluation: true,
       showConfirmation: false,
       evaluationLayer: 'handoff',
-      assignShapeOptions: ['all', 'pending_staff', 'whole', 'split'],
+      assignShapeOptions: ['all', 'pending_staff', 'split'],
     };
   }
   if (cmFrame === 'intake') {
@@ -105,7 +104,7 @@ export const resolveCreativeQueueFilterVisibility = (
     showConfirmation: true,
     evaluationLayer: 'staff',
     // Board lists parents only — no Task nhỏ rows / filter.
-    assignShapeOptions: ['all', 'whole', 'split'],
+    assignShapeOptions: ['all', 'split'],
   };
 };
 
@@ -123,7 +122,6 @@ const matchesAssignShape = (task: MyTask, shape: CreativeAssignShapeFilter): boo
   if (shape === 'all') return true;
   if (shape === 'split_child') return isSplitChildTask(task);
   if (shape === 'split') return isSplitParentTask(task);
-  if (shape === 'whole') return isCreativeWholeAssigned(task);
   if (shape === 'pending_staff') {
     if (isSplitChildTask(task)) return false;
     const stage = resolveEffectivePipelineStage(task);

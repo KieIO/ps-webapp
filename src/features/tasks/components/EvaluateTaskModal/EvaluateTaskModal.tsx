@@ -28,10 +28,11 @@ import {
   computeAcceptedRemainderQuantity,
 } from '../../utils/evaluationRemainder';
 import { formatTaskStaffNames } from '../../utils/staff';
+import { isSplitParentTask } from '../../utils/creativePipeline';
 import {
   EVALUATION_LAYER_TITLES,
-  isCreativePastChToCmHandoff,
   canEvaluateCmHandoffPackage,
+  isCreativePastChToCmHandoff,
   type EvaluationWriteLayer,
 } from '../../utils/taskEvaluation';
 import editStyles from '../EditTaskModal/EditTaskModal.module.scss';
@@ -90,9 +91,20 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
   const [acceptedAtSpawn, setAcceptedAtSpawn] = useState<number | null>(null);
   const [adminLayer, setAdminLayer] = useState<EvaluationWriteLayer>('ch');
   const handoffPackage = Boolean(task && canEvaluateCmHandoffPackage(task));
+  const splitParent = Boolean(task && isSplitParentTask(task));
   const pastChToCm = Boolean(task && isCreativePastChToCmHandoff(task));
   const lockedLayer = resolveLockedLayer(role, handoffPackage, pastChToCm);
   const layer = lockedLayer ?? adminLayer;
+  const adminLayerOptions = useMemo(
+    () =>
+      [
+        { label: 'Creative Head', value: 'ch' as const },
+        { label: 'Gói của CM', value: 'handoff' as const },
+        // Staff scores live on children for split parents — Admin must open the child.
+        ...(splitParent ? [] : [{ label: 'Kết quả Staff', value: 'staff' as const }]),
+      ] as { label: string; value: EvaluationWriteLayer }[],
+    [splitParent],
+  );
 
   useEffect(() => {
     if (!open) {
@@ -104,6 +116,9 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
     }
     // After spawn in this session, ignore prop refreshes that would wipe accepted qty.
     if (task && !remainderLink) {
+      if (isSplitParentTask(task)) {
+        setAdminLayer((prev) => (prev === 'staff' ? 'handoff' : prev));
+      }
       setWorkingTask(task);
       const originalAssigned =
         task.originalAssignedQuantity != null
@@ -367,11 +382,7 @@ export function EvaluateTaskModal({ open, task, onClose }: EvaluateTaskModalProp
               block
               value={layer}
               onChange={(value) => setAdminLayer(value as EvaluationWriteLayer)}
-              options={[
-                { label: 'Creative Head', value: 'ch' },
-                { label: 'Gói của CM', value: 'handoff' },
-                { label: 'Kết quả Staff', value: 'staff' },
-              ]}
+              options={adminLayerOptions}
             />
           </Form.Item>
         ) : null}

@@ -25,25 +25,14 @@ export const EVALUATION_LAYER_BADGE_LABELS: Record<EvaluationWriteLayer, string>
 };
 
 /**
- * Creative task giao nguyên (legacy): already assigned to Staff, not split and not a revision.
- * New assigns use split (min 1 child); this shape remains readable until data is cleared.
- */
-export const isCreativeWholeAssigned = (task: MyTask): boolean =>
-  isCreativeDeptTask(task) &&
-  !isSplitChildTask(task) &&
-  !isSplitParentTask(task) &&
-  !isRevisionTask(task) &&
-  resolveEffectivePipelineStage(task) === 'assigned_staff';
-
-/**
  * Parent where CH/Head may score the CM package (handoff layer):
- * legacy giao nguyên, or split parent after CM ran assign-staff.
+ * split parent after CM ran assign-staff (min 1 child).
  */
 export const canEvaluateCmHandoffPackage = (task: MyTask): boolean => {
   if (!isCreativeDeptTask(task) || isSplitChildTask(task) || isRevisionTask(task)) {
     return false;
   }
-  return isCreativeWholeAssigned(task) || isSplitParentTask(task);
+  return isSplitParentTask(task);
 };
 
 /**
@@ -74,8 +63,8 @@ export const hasChEvaluation = (
 
 /**
  * Which score a save updates.
- * - Handoff package (legacy whole or split parent): handoff (CH/Head→CM) + ch (PM→CH);
- *   staff (CM) only on legacy whole parent — split parents use children for staff scores
+ * - Handoff package (split parent): handoff (CH/Head→CM) + ch (PM→CH);
+ *   staff scores live on children only
  * - Creative past CH→CM (incl. awaiting_cm): PM writes `ch`
  * - Other shapes: single staff score
  */
@@ -95,31 +84,24 @@ export const resolveEvaluationWriteLayer = (
   }
 
   if (canEvaluateCmHandoffPackage(task)) {
-    if (isSplitParentTask(task) && role === ROLES.CREATIVE_MANAGER) {
+    if (role === ROLES.CREATIVE_MANAGER) {
       throw new Error('đánh giá Staff trên từng task nhỏ, không trên task đã chia');
     }
 
     let layer = asked;
     if (!layer) {
-      if (role === ROLES.CREATIVE_MANAGER) layer = 'staff';
-      else if (role === ROLES.PM) layer = 'ch';
+      if (role === ROLES.PM) layer = 'ch';
       else if (role === ROLES.ADMIN) {
-        throw new Error('chọn lớp đánh giá (staff, handoff hoặc ch)');
+        throw new Error('chọn lớp đánh giá (handoff hoặc ch)');
       } else layer = 'handoff';
     }
-    if (layer !== 'staff' && layer !== 'handoff' && layer !== 'ch') {
-      throw new Error('layer không hợp lệ');
-    }
-    if (isSplitParentTask(task) && layer === 'staff') {
+    if (layer === 'staff') {
       throw new Error('đánh giá Staff trên từng task nhỏ, không trên task đã chia');
     }
-    if (role === ROLES.ADMIN) return layer as EvaluationWriteLayer;
-    if (role === ROLES.CREATIVE_MANAGER) {
-      if (layer !== 'staff') {
-        throw new Error('Creative Manager đánh giá kết quả Staff, không đánh giá gói của CM');
-      }
-      return 'staff';
+    if (layer !== 'handoff' && layer !== 'ch') {
+      throw new Error('layer không hợp lệ');
     }
+    if (role === ROLES.ADMIN) return layer as EvaluationWriteLayer;
     if (role === ROLES.PM) {
       if (layer !== 'ch') {
         throw new Error('PM đánh giá Creative Head, không ghi điểm Staff / gói CM');
@@ -136,7 +118,7 @@ export const resolveEvaluationWriteLayer = (
   }
 
   if (asked === 'handoff') {
-    throw new Error('đánh giá gói CM chỉ khi CM đã giao Staff (giao nguyên hoặc đã chia task con)');
+    throw new Error('đánh giá gói CM chỉ khi CM đã chia task con');
   }
   if (asked && asked !== 'staff' && asked !== 'ch') {
     throw new Error('layer không hợp lệ');
@@ -149,11 +131,9 @@ export const resolveEvaluationWriteLayer = (
   ) {
     return 'ch';
   }
-  // CH/Head never write Staff fields on Creative — only handoff on package parents.
+  // CH/Head never write Staff fields on Creative — only handoff on split parents.
   if ((role === ROLES.CREATIVE_HEAD || role === ROLES.HEAD) && isCreativeDeptTask(task)) {
-    throw new Error(
-      'Creative Head đánh giá gói CM sau khi CM đã giao Staff (giao nguyên hoặc đã chia)',
-    );
+    throw new Error('Creative Head đánh giá gói CM sau khi CM đã chia task con');
   }
   if (!canEvaluateTaskLayer(role, task)) {
     throw new Error('Bạn không được đánh giá task ở tầng này');
@@ -175,8 +155,8 @@ export const resolveEvaluationWriteLayerSafe = (
 /**
  * Layered evaluation visibility / CTA:
  * - PM: project staff; creative parents only after CH→CM
- * - CH / Head: Creative handoff on giao nguyên (legacy) or split parent; never Staff fields
- * - CM: staff execution (split children or legacy whole assigned_staff)
+ * - CH / Head: Creative handoff on split parent; never Staff fields
+ * - CM: staff execution on split children (and non-creative)
  * - Admin: any layer
  */
 export const canEvaluateTaskLayer = (role: Role | undefined, task: MyTask): boolean => {
@@ -187,7 +167,7 @@ export const canEvaluateTaskLayer = (role: Role | undefined, task: MyTask): bool
     if (isSplitChildTask(task)) return true;
     if (isSplitParentTask(task)) return false;
     if (!isCreativeDeptTask(task)) return true;
-    return resolveEffectivePipelineStage(task) === 'assigned_staff';
+    return false;
   }
 
   if (role === ROLES.PM) {

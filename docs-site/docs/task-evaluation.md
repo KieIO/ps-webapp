@@ -22,7 +22,7 @@ Thứ tự handoff: **PM → Creative Head → CM → Staff**.
 | **Đánh giá gói CM (bởi Creative Head)**   | Creative Head    | Gói giao cho CM |
 | **Đánh giá Staff (bởi Creative Manager)** | Creative Manager | Kết quả Staff   |
 
-**Creative Head — cửa sổ Evaluate:** sau khi CM đã giao Staff — trên **task cha đã chia** (handoff) hoặc **giao nguyên legacy**. Không Evaluate khi còn `awaiting_cm`; không ghi điểm Staff (CM chấm từng task con / legacy whole parent).
+**Creative Head — cửa sổ Evaluate:** sau khi CM đã chia task con — trên **task cha đã chia** (handoff). Không Evaluate khi còn `awaiting_cm`; không ghi điểm Staff (CM chấm từng task con).
 
 **Modal Evaluate (Staff / gói CM / CH):** nhập **Số lượng đạt** → hệ thống tự tính **% hoàn thành** và hiện **Tóm tắt** (`Đạt x / y · Còn z`). Tách phần còn lại (remainder) chỉ có ở lớp **Đánh giá Staff**.
 

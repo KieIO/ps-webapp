@@ -10,9 +10,13 @@ Trang này ghi lại các thay đổi sản phẩm đã đưa vào hệ thống.
 
 ---
 
+## 2026-11-25
+
+**Creative — gỡ read-path giao nguyên (sau wipe prod):** Badge/filter **Giao nguyên**, dual-eval trên parent `assigned_staff`, và `isCreativeWholeAssigned` đã gỡ. **CH** chỉ đánh giá **gói CM** trên task cha đã chia; **CM** chỉ đánh giá Staff trên task nhỏ. Admin Evaluate trên split parent không còn lớp Staff.
+
 ## 2026-11-24
 
-**Creative Queue — bỏ giao nguyên; chỉ chia task con:** Form **Giao Staff** không còn toggle Giao nguyên / Chia nhỏ. CM luôn **chia task con** (tối thiểu **1** phần — 1 Staff nhận cả gói vẫn dùng 1 child). API `mode=whole` bị từ chối; dead write-path `assignCreativeManagerWhole` đã gỡ. Task giao nguyên cũ vẫn **đọc** được (badge/filter/eval) đến khi wipe data. **Creative Head** đánh giá **gói CM (handoff)** trên task cha đã chia (cũng như giao nguyên legacy). Chi tiết: [Luồng chia task con](/split-task) · [Đánh giá](/tasks/evaluation).
+**Creative Queue — bỏ giao nguyên; chỉ chia task con:** Form **Giao Staff** không còn toggle Giao nguyên / Chia nhỏ. CM luôn **chia task con** (tối thiểu **1** phần — 1 Staff nhận cả gói vẫn dùng 1 child). API `mode=whole` bị từ chối; dead write-path `assignCreativeManagerWhole` đã gỡ. **Creative Head** đánh giá **gói CM (handoff)** trên task cha đã chia. Chi tiết: [Luồng chia task con](/split-task) · [Đánh giá](/tasks/evaluation).
 
 **Creative Queue (CH) — bỏ Deadline Creative khi giao CM:** Modal **Giao cho CM** / **Bổ sung brief & giao CM** không còn ô **Deadline Creative**. CH chỉ xem Deadline gốc; Deadline Creative do CM/Staff set ở bước sau. Chi tiết: [Creative Manager: Creative queue](/create-task#creative-manager-creative-queue).
 

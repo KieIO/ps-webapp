@@ -16,13 +16,10 @@ interface CreativeAssignModeSectionProps {
   allTasks: MyTask[];
 }
 
-const wholeAssignSummary = (names: string[]): string =>
-  names.length > 0 ? `Đã giao nguyên cho ${names.join(', ')}.` : 'Đã giao nguyên.';
-
 export function CreativeAssignModeSection({ task, allTasks }: CreativeAssignModeSectionProps) {
   const assignMode = resolveCreativeAssignMode(task);
   const subtasks = assignMode === 'split' ? getCreativeSplitSubtasks(task, allTasks) : [];
-  const wholeStaff = resolveWholeAssignStaff(task);
+  const childStaff = resolveWholeAssignStaff(task);
   const allocated = sumSplitChildrenQuantity(subtasks);
   const conserved = isSplitQuantityConserved(task.quantity, subtasks);
 
@@ -35,14 +32,6 @@ export function CreativeAssignModeSection({ task, allTasks }: CreativeAssignMode
         message="Chưa giao Staff"
         description="Dùng nút Giao cho Staff trên queue để chia task con (ít nhất 1 phần)."
       />
-    );
-  }
-
-  if (assignMode === 'whole') {
-    return (
-      <p className={styles.contextCard}>
-        {wholeAssignSummary(wholeStaff.map((member) => member.name))}
-      </p>
     );
   }
 
@@ -80,7 +69,7 @@ export function CreativeAssignModeSection({ task, allTasks }: CreativeAssignMode
           showIcon
           className={styles.banner}
           message="Chưa tải được danh sách task nhỏ"
-          description={`Staff đã giao: ${wholeStaff.map((member) => member.name).join(', ') || '—'}. Xem task con trong My Tasks (mã ${task.taskCode}-S…).`}
+          description={`Staff đã giao: ${childStaff.map((member) => member.name).join(', ') || '—'}. Xem task con trong My Tasks (mã ${task.taskCode}-S…).`}
         />
       )}
     </>

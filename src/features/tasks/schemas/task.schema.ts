@@ -54,8 +54,8 @@ export const BRIEF_OWNERS = ['pm', 'ch'] as const;
 
 export type BriefOwner = (typeof BRIEF_OWNERS)[number];
 
-/** `whole` = legacy read-only shape (assigned_staff parent); new writes are `split` only. */
-export const CREATIVE_ASSIGN_MODES = ['whole', 'split'] as const;
+/** CM assign-staff is always split (min 1 child). */
+export const CREATIVE_ASSIGN_MODES = ['split'] as const;
 
 export type CreativeAssignMode = (typeof CREATIVE_ASSIGN_MODES)[number];
 
